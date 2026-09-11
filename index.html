@@ -33,7 +33,8 @@ function api(action,params={}){
 }
 async function login(){try{document.getElementById('msg').textContent='Connecting...';let r=await api('login',{username:u.value,password:p.value});if(!r.ok)throw Error(r.error);USER=r.user;sessionStorage.setItem('mal_user',JSON.stringify(USER));await load();showApp()}catch(e){document.getElementById('msg').textContent=e.message}}
 async function load(){DB=await api('bootstrap');if(!DB.ok)throw Error(DB.error||'Unable to load data');ver.textContent=CONFIG.VERSION+' / '+DB.version}
-function showApp(){login.style.display='none';app.style.display='block';who.textContent=USER.name+' · '+USER.role;buildNav();page('dashboard')}
+function showApp(){document.getElementById('login').style.display = 'none';
+document.getElementById('app').style.display = 'block';who.textContent=USER.name+' · '+USER.role;buildNav();page('dashboard')}
 function logout(){sessionStorage.removeItem('mal_user');location.reload()}
 function toggleSide(){side.classList.toggle('open')}
 const navs=[['dashboard','📊 Dashboard'],['families','🏠 Families'],['members','👥 Members'],['income','💰 Income'],['expenditure','💳 Expenditure'],['contributions','🤝 Contributions'],['emergency','🚑 Emergency Cases'],['regularSupport','❤️ Regular Support'],['insurance','🛡️ Insurance'],['education','🎓 Education'],['medical','🏥 Medical']];
