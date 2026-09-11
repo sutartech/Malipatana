@@ -1,72 +1,53 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Village Welfare Dashboard</title>
-    <style>
-        body { font-family: Arial, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; }
-        .header { background: #2c3e50; color: white; padding: 15px; text-align: center; border-radius: 8px; margin-bottom: 20px; }
-        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
-        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); text-align: center; }
-        .card h3 { margin: 0; color: #7f8c8d; font-size: 14px; text-transform: uppercase; }
-        .card .value { font-size: 24px; font-weight: bold; color: #2c3e50; margin-top: 10px; }
-        .loading { text-align: center; font-style: italic; color: #7f8c8d; }
-    </style>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Malipatana Village Welfare Dashboard</title>
+<style>
+:root{--p:#176b87;--p2:#0d5268;--bg:#f3f8f9;--card:#fff;--ink:#17313d;--muted:#647983;--line:#d9e6ea;--good:#177245;--bad:#a33d3d}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--ink)}
+button,input,select{font:inherit}.login{min-height:100vh;display:grid;place-items:center;padding:20px;background:linear-gradient(135deg,#e9f6f7,#f8f3e6)}
+.loginbox{width:min(420px,100%);background:#fff;border:1px solid var(--line);border-radius:20px;padding:28px;box-shadow:0 18px 60px #1232}.logo{font-size:30px}.loginbox h1{margin:4px 0;font-size:25px}.muted{color:var(--muted);font-size:13px}.field{margin:14px 0}.field label{display:block;font-weight:800;font-size:13px;margin-bottom:6px}.field input{width:100%;padding:11px;border:1px solid var(--line);border-radius:10px}.primary{width:100%;padding:11px;border:0;border-radius:10px;background:var(--p);color:#fff;font-weight:800}
+.app{display:none;min-height:100vh}.top{height:62px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;padding:0 16px;position:sticky;top:0;z-index:10}.brand{font-weight:900;color:var(--p)}.spacer{flex:1}.ver{font-size:11px;color:var(--muted)}.user{font-size:13px;font-weight:800}.logout,.ghost{border:1px solid var(--line);background:#fff;border-radius:9px;padding:8px 11px}.layout{display:flex}.side{width:225px;min-height:calc(100vh - 62px);background:#123f50;padding:12px;position:sticky;top:62px;height:calc(100vh - 62px);overflow:auto}.nav{width:100%;text-align:left;border:0;background:transparent;color:#d9edf0;padding:10px 11px;border-radius:9px;margin:2px 0;font-weight:750}.nav:hover,.nav.active{background:#ffffff18;color:#fff}.main{flex:1;min-width:0;padding:18px}.head{display:flex;align-items:center;gap:12px;margin-bottom:14px}.head h2{margin:0}.grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:11px}.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;box-shadow:0 5px 18px #1231}.label{font-size:11px;color:var(--muted);font-weight:800}.value{font-size:23px;font-weight:900;margin-top:4px}.good{color:var(--good)}.bad{color:var(--bad)}.panel{background:#fff;border:1px solid var(--line);border-radius:14px;padding:15px;margin-top:13px}.panelhead{display:flex;align-items:center;justify-content:space-between;gap:10px}.panel h3{margin:0 0 10px}.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:9px}table{border-collapse:collapse;width:100%;font-size:12px}th,td{padding:8px 9px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}th{background:#eef6f7;font-weight:850}.search{padding:9px;border:1px solid var(--line);border-radius:9px;min-width:220px}.empty{text-align:center;color:var(--muted);padding:28px}.bar{height:10px;background:#e6eef0;border-radius:10px;overflow:hidden}.bar i{display:block;height:100%;background:var(--p)}.menu{display:none;border:0;background:#e9f2f4;border-radius:8px;padding:8px}
+@media(max-width:950px){.grid{grid-template-columns:repeat(3,1fr)}}@media(max-width:700px){.menu{display:block}.side{position:fixed;left:-235px;top:62px;z-index:20;transition:.2s}.side.open{left:0}.main{padding:12px}.grid{grid-template-columns:repeat(2,1fr)}.ver{display:none}.user{display:none}.search{min-width:0;width:48vw}}
+</style>
 </head>
 <body>
-
-    <div class="header">
-        <h1>🏠 Village Welfare & Management</h1>
-    </div>
-
-    <div id="loading" class="loading">Loading dashboard data from database...</div>
-
-    <div class="dashboard-grid" id="dashboard" style="display: none;">
-        <div class="card">
-            <h3>Total Families</h3>
-            <div class="value" id="val-families">--</div>
-        </div>
-        <div class="card">
-            <h3>Total Persons</h3>
-            <div class="value" id="val-persons">--</div>
-        </div>
-        <div class="card">
-            <h3>Emergency Fund</h3>
-            <div class="value" id="val-fund">--</div>
-        </div>
-        <div class="card">
-            <h3>Monthly Contribution</h3>
-            <div class="value" id="val-contrib">--</div>
-        </div>
-    </div>
-
-    <script>
-        // Replace this with your Google Apps Script Web App URL
-        const API_URL = 'const API_URL = 'https://script.google.com/macros/s/AKfycbzTy_-uSI9m_vVuv9G2Q8r0t0x2UWcSrkzrnQtDw9odZW_246TxnT7qj39IT1TQwt-O/exec?action=getDashboardData';';
-
-        async function loadDashboard() {
-            try {
-                const response = await fetch(API_URL);
-                const data = await response.json();
-
-                if(data.status === "success") {
-                    document.getElementById('val-families').innerText = data.families;
-                    document.getElementById('val-persons').innerText = data.persons;
-                    document.getElementById('val-fund').innerText = data.emergencyFund;
-                    document.getElementById('val-contrib').innerText = data.monthlyContribution;
-                    
-                    document.getElementById('loading').style.display = 'none';
-                    document.getElementById('dashboard').style.display = 'grid';
-                }
-            } catch (error) {
-                document.getElementById('loading').innerText = "Error loading data. Please check the connection.";
-                console.error("Dashboard Error:", error);
-            }
-        }
-
-        // Initialize dashboard on page load
-        window.onload = loadDashboard;
-    </script>
-</body>
-</html>
+<div id="login" class="login"><div class="loginbox"><div class="logo">🌾</div><h1>Malipatana Village</h1><div class="muted">Welfare & Management Dashboard</div><div class="field"><label>Username</label><input id="u"></div><div class="field"><label>Password</label><input id="p" type="password"></div><button class="primary" onclick="login()">Login</button><div id="msg" class="muted" style="margin-top:10px"></div></div></div>
+<div id="app" class="app"><header class="top"><button class="menu" onclick="toggleSide()">☰</button><div class="brand">🌾 Malipatana Village</div><div class="spacer"></div><div class="ver" id="ver">FE V1.0.0</div><div class="user" id="who"></div><button class="logout" onclick="logout()">Logout</button></header>
+<div class="layout"><aside id="side" class="side"></aside><main id="main" class="main"></main></div></div>
+<script>
+const CONFIG={API_URL:'https://script.google.com/macros/s/AKfycbzTy_-uSI9m_vVuv9G2Q8r0t0x2UWcSrkzrnQtDw9odZW_246TxnT7qj39IT1TQwt-O/exec',VERSION:'FE V1.0.0'};
+let DB=null,USER=null;
+const esc=x=>String(x??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+const money=x=>'₹'+Number(x||0).toLocaleString('en-IN',{maximumFractionDigits:0});
+function api(action,params={}){
+ return new Promise((resolve,reject)=>{
+  const cb='cb_'+Date.now()+'_'+Math.floor(Math.random()*99999),s=document.createElement('script');
+  const q=new URLSearchParams({action,...params,callback:cb});
+  const timer=setTimeout(()=>{cleanup();reject(new Error('Backend timeout'))},20000);
+  function cleanup(){clearTimeout(timer);delete window[cb];s.remove()}
+  window[cb]=d=>{cleanup();resolve(d)};s.onerror=()=>{cleanup();reject(new Error('Backend connection failed'))};
+  s.src=CONFIG.API_URL+'?'+q;s.referrerPolicy='no-referrer';document.body.appendChild(s);
+ });
+}
+async function login(){try{document.getElementById('msg').textContent='Connecting...';let r=await api('login',{username:u.value,password:p.value});if(!r.ok)throw Error(r.error);USER=r.user;sessionStorage.setItem('mal_user',JSON.stringify(USER));await load();showApp()}catch(e){document.getElementById('msg').textContent=e.message}}
+async function load(){DB=await api('bootstrap');if(!DB.ok)throw Error(DB.error||'Unable to load data');ver.textContent=CONFIG.VERSION+' / '+DB.version}
+function showApp(){login.style.display='none';app.style.display='block';who.textContent=USER.name+' · '+USER.role;buildNav();page('dashboard')}
+function logout(){sessionStorage.removeItem('mal_user');location.reload()}
+function toggleSide(){side.classList.toggle('open')}
+const navs=[['dashboard','📊 Dashboard'],['families','🏠 Families'],['members','👥 Members'],['income','💰 Income'],['expenditure','💳 Expenditure'],['contributions','🤝 Contributions'],['emergency','🚑 Emergency Cases'],['regularSupport','❤️ Regular Support'],['insurance','🛡️ Insurance'],['education','🎓 Education'],['medical','🏥 Medical']];
+function buildNav(){side.innerHTML=navs.map(x=>`<button class="nav" data-p="${x[0]}" onclick="page('${x[0]}')">${x[1]}</button>`).join('')}
+function page(p){document.querySelectorAll('.nav').forEach(x=>x.classList.toggle('active',x.dataset.p===p));side.classList.remove('open');if(p==='dashboard')dash();else tablePage(p)}
+function dash(){let s=DB.summary||{},t=Number(DB.settings?.['Emergency Fund Target']||0),pct=t?Math.min(100,Math.max(0,Math.round((s.availableFund/t)*100))):0;
+main.innerHTML=`<div class="head"><div><h2>Village Dashboard</h2><div class="muted">${esc(DB.settings?.['Village Name']||'Malipatana')} · Live summary</div></div></div>
+<div class="grid">${card('Families',s.families,'🏠')}${card('Members',s.members,'👥')}${card('Earning Members',s.earningMembers,'💼')}${card('Children',s.children,'🧒')}${card('Elderly',s.elderly,'👴')}${card('Contributions',money(s.contributions),'🤝')}${card('Income',money(s.income),'📈')}${card('Expenditure',money(s.expenditure),'📉')}${card('Available Fund',money(s.availableFund),'💰','good')}${card('Emergency Cases',s.emergencyCases,'🚑')}</div>
+<div class="panel"><div class="panelhead"><h3>Emergency Fund</h3><b>${pct}%</b></div><div class="bar"><i style="width:${pct}%"></i></div><div class="muted" style="margin-top:7px">${money(Math.max(0,s.availableFund))} available · target ${money(t)}</div></div>
+<div class="panel"><h3>Protection & Support</h3><div class="grid">${card('Insurance Coverage',s.insuranceCoverage+'%','🛡️')}${card('Regular Support',money(s.regularSupport),'❤️')}${card('Emergency Paid',money(s.emergencyPaid),'🚑','bad')}${card('Monthly Contribution',money(DB.settings?.['Monthly Contribution']||0),'📅')}${card('Village Code',DB.settings?.['Village Code']||'V001','🏷️')}</div></div>`}
+function card(l,v,i,c=''){return `<div class="card"><div>${i}</div><div class="label">${l}</div><div class="value ${c}">${v}</div></div>`}
+const COLS={families:['Family ID','Family Head','House No','Address/Area','Mobile','Total Members','Earning Members','Children','Elderly','Vulnerable Status','Family Status','Remarks'],members:['Member ID','Family ID','Name','Relation to Family Head','Gender','Date of Birth','Age','Education','Occupation','Earning Member','Monthly Income','Mobile','Insurance'],income:['Income ID','Date','Family ID','Member ID','Income Type','Source','Amount','Received By','Payment Mode'],expenditure:['Expense ID','Date','Category','Subcategory','Family ID','Description','Amount','Paid To','Payment Mode'],contributions:['Contribution ID','Date','Family ID','Member ID','Contributor','Month','Amount','Payment Mode','Receipt No'],emergency:['Case ID','Family ID','Affected Person','Case Type','Event Date','Earning Member','Immediate Assistance','Monthly Support','Support Months','Total Approved','Total Paid','Balance','Status'],regularSupport:['Support ID','Family ID','Beneficiary','Support Type','Amount','Frequency','Start Date','End Date','Active'],insurance:['Insurance ID','Family ID','Member ID','Name','Insurance Type','Provider','Sum Insured','Premium','Renewal Date','Status'],education:['Education ID','Family ID','Member ID','Student Name','School/College','Class/Course','Scholarship','Annual Fee','Village Assistance'],medical:['Medical ID','Date','Family ID','Member ID','Patient','Medical Issue','Hospital','Estimated Cost','Assistance','Paid','Status']};
+function tablePage(k){let a=DB[k]||[],cols=COLS[k]||Object.keys(a[0]||{});main.innerHTML=`<div class="head"><h2>${label(k)}</h2><div class="spacer"></div><input class="search" placeholder="Search..." oninput="filter(this.value)"></div><div class="panel">${a.length?`<div class="tablewrap"><table id="tbl"><tr>${cols.map(c=>`<th>${esc(c)}</th>`).join('')}</tr>${a.map(r=>`<tr>${cols.map(c=>`<td>${esc(r[c])}</td>`).join('')}</tr>`).join('')}</table></div>`:'<div class="empty">No records yet.</div>'}</div>`}
+function label(k){return k.replace(/([A-Z])/g,' $1').replace(/^./,x=>x.toUpperCase())}
+function filter(q){document.querySelectorAll('#tbl tr').forEach((r,i)=>{if(i)r.style.display=r.textContent.toLowerCase().includes(q.toLowerCase())?'':'none'})}
+(async()=>{let x=sessionStorage.getItem('mal_user');if(x){USER=JSON.parse(x);try{await load();showApp()}catch(e){sessionStorage.removeItem('mal_user')}}})();
+</script></body></html>
