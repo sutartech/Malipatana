@@ -36,12 +36,12 @@ async function load(){DB=await api('bootstrap');if(!DB.ok)throw Error(DB.error||
 function showApp(){document.getElementById('login').style.display = 'none';
 document.getElementById('app').style.display = 'block';who.textContent=USER.name+' · '+USER.role;buildNav();page('dashboard')}
 function logout(){sessionStorage.removeItem('mal_user');location.reload()}
-function toggleSide(){side.classList.toggle('open')}
+function toggleSide(){document.getElementById('side').classList.toggle('open');}
 const navs=[['dashboard','📊 Dashboard'],['families','🏠 Families'],['members','👥 Members'],['income','💰 Income'],['expenditure','💳 Expenditure'],['contributions','🤝 Contributions'],['emergency','🚑 Emergency Cases'],['regularSupport','❤️ Regular Support'],['insurance','🛡️ Insurance'],['education','🎓 Education'],['medical','🏥 Medical']];
 function buildNav(){side.innerHTML=navs.map(x=>`<button class="nav" data-p="${x[0]}" onclick="page('${x[0]}')">${x[1]}</button>`).join('')}
 function page(p){document.querySelectorAll('.nav').forEach(x=>x.classList.toggle('active',x.dataset.p===p));side.classList.remove('open');if(p==='dashboard')dash();else tablePage(p)}
 function dash(){let s=DB.summary||{},t=Number(DB.settings?.['Emergency Fund Target']||0),pct=t?Math.min(100,Math.max(0,Math.round((s.availableFund/t)*100))):0;
-main.innerHTML=`<div class="head"><div><h2>Village Dashboard</h2><div class="muted">${esc(DB.settings?.['Village Name']||'Malipatana')} · Live summary</div></div></div>
+document.getElementById('main').innerHTML = `<div class="head"><div><h2>Village Dashboard</h2><div class="muted">${esc(DB.settings?.['Village Name']||'Malipatana')} · Live summary</div></div></div>
 <div class="grid">${card('Families',s.families,'🏠')}${card('Members',s.members,'👥')}${card('Earning Members',s.earningMembers,'💼')}${card('Children',s.children,'🧒')}${card('Elderly',s.elderly,'👴')}${card('Contributions',money(s.contributions),'🤝')}${card('Income',money(s.income),'📈')}${card('Expenditure',money(s.expenditure),'📉')}${card('Available Fund',money(s.availableFund),'💰','good')}${card('Emergency Cases',s.emergencyCases,'🚑')}</div>
 <div class="panel"><div class="panelhead"><h3>Emergency Fund</h3><b>${pct}%</b></div><div class="bar"><i style="width:${pct}%"></i></div><div class="muted" style="margin-top:7px">${money(Math.max(0,s.availableFund))} available · target ${money(t)}</div></div>
 <div class="panel"><h3>Protection & Support</h3><div class="grid">${card('Insurance Coverage',s.insuranceCoverage+'%','🛡️')}${card('Regular Support',money(s.regularSupport),'❤️')}${card('Emergency Paid',money(s.emergencyPaid),'🚑','bad')}${card('Monthly Contribution',money(DB.settings?.['Monthly Contribution']||0),'📅')}${card('Village Code',DB.settings?.['Village Code']||'V001','🏷️')}</div></div>`}
