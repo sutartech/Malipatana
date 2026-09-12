@@ -49,7 +49,9 @@ label.lbl{display:block;font-size:12.5px;font-weight:700;color:var(--muted);marg
 
 /* ---------- login ---------- */
 #login{min-height:100dvh;display:grid;grid-template-columns:1.05fr .95fr}
-.login-art{background:var(--indigo);color:#f4efe4;padding:48px 40px;display:flex;flex-direction:column;justify-content:center;position:relative;overflow:hidden}
+.login-art{background:var(--indigo);color:#f4efe4;padding:48px 40px;display:flex;flex-direction:column;justify-content:center;position:relative;overflow:hidden;background-size:cover;background-position:center}
+.login-art .veil{position:absolute;inset:0;background:linear-gradient(165deg,#0e232ed9,#0e232ef2)}
+.login-art>*{position:relative}
 .login-art .jhoti{position:absolute;inset:auto 0 0 0;opacity:.22;pointer-events:none}
 .login-art .crest{font-size:13px;letter-spacing:.14em;color:#9fc0cf;margin-bottom:18px}
 .login-art h1{font-family:var(--display);font-size:clamp(34px,5vw,54px);line-height:1.08;margin:0 0 6px;font-weight:700}
@@ -99,6 +101,17 @@ main.main{flex:1;min-width:0;padding:20px 22px 60px;max-width:1240px}
 .pagehead h2{font-family:var(--display);font-size:26px;margin:0;font-weight:600;line-height:1.15}
 .pagehead .sub{font-size:13px;color:var(--muted);margin-top:2px}
 .pagehead .sp{flex:1}
+.hero{position:relative;border-radius:var(--r-lg);overflow:hidden;min-height:170px;display:flex;align-items:flex-end;
+  padding:20px 22px;color:#fff;margin-bottom:16px;background:var(--indigo)}
+.hero img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.hero .veil{position:absolute;inset:0;background:linear-gradient(180deg,#0e232e1f 35%,#0e232eeb)}
+.hero .txt{position:relative;width:100%;display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap}
+.hero h2{font-family:var(--display);font-size:clamp(22px,3.4vw,30px);margin:0;font-weight:600;line-height:1.15}
+.hero .sub{font-size:13px;color:#cfe1e8;margin-top:3px}
+.hero .sp{flex:1}
+.photobox{border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--surface-2);
+  aspect-ratio:16/8;display:grid;place-items:center;color:var(--muted);font-size:13px;margin-top:10px}
+.photobox img{width:100%;height:100%;object-fit:cover}
 @media(max-width:860px){
   main.main{padding:16px 14px 70px}
   .sidebar{position:fixed;left:0;top:58px;transform:translateX(-100%);transition:transform .18s ease;z-index:40;box-shadow:2px 0 18px #0004}
@@ -239,6 +252,7 @@ td.acts{text-align:right;white-space:nowrap}
 <!-- ===================== LOGIN ===================== -->
 <div id="login">
   <div class="login-art">
+    <div class="veil"></div>
     <div class="crest">JAGATSINGHPUR · ODISHA</div>
     <h1>ଆମ ମାଲିପାଟଣା ଗାଁ</h1>
     <h2>Malipatana Village Welfare</h2>
@@ -308,7 +322,10 @@ td.acts{text-align:right;white-space:nowrap}
 const CONFIG = {
   API_URL: 'https://script.google.com/macros/s/AKfycbzTy_-uSI9m_vVuv9G2Q8r0t0x2UWcSrkzrnQtDw9odZW_246TxnT7qj39IT1TQwt-O/exec',
   VERSION: 'FE V2.0.0',
-  IDLE_MINUTES: 30
+  IDLE_MINUTES: 30,
+  /* Photo shown when no photo has been set in Settings.
+     village.jpg sits in the same folder as this file on GitHub. */
+  DEFAULT_PHOTO: 'village.jpg'
 };
 
 let DB = null, USER = null, PAGE = 'dashboard';
@@ -326,6 +343,30 @@ const store = {
   set(k,v){ try { sessionStorage.setItem(k,v); } catch(e){ mem[k]=v; } },
   del(k){ try { sessionStorage.removeItem(k); } catch(e){ delete mem[k]; } }
 };
+const local = {
+  get(k){ try { return localStorage.getItem(k); } catch(e){ return mem['L' + k] ?? null; } },
+  set(k, v){ try { localStorage.setItem(k, v); } catch(e){ mem['L' + k] = v; } }
+};
+/* Turns a Google Drive share link into one an <img> tag can actually load. */
+function photoSrc(url){
+  const u = String(url || '').trim();
+  if(!u) return '';
+  const d = u.match(/drive\.google\.com\/file\/d\/([^/]+)/) || u.match(/[?&]id=([^&]+)/);
+  if(d && u.includes('drive.google.com')) return 'https://drive.google.com/thumbnail?id=' + d[1] + '&sz=w1600';
+  return u;
+}
+function photoOf(name){
+  const v = DB && DB.settings ? DB.settings[name] : '';
+  return photoSrc(v || CONFIG.DEFAULT_PHOTO);
+}
+function applyLoginPhoto(){
+  const url = photoSrc(local.get('mal_login_photo') || CONFIG.DEFAULT_PHOTO);
+  const art = document.querySelector('.login-art');
+  if(!art || !url) return;
+  const probe = new Image();
+  probe.onload = () => { art.style.backgroundImage = 'url("' + url.replace(/"/g, '%22') + '")'; };
+  probe.src = url;
+}
 function fmtDate(v){
   if(!v) return '';
   const s = String(v);
@@ -430,6 +471,7 @@ async function refresh(silent){
 }
 
 function enterApp(){
+  local.set('mal_login_photo', String(setting('Login Photo', CONFIG.DEFAULT_PHOTO)));
   $('#login').classList.add('hide');
   $('#app').classList.remove('hide');
   $('#whoName').textContent = USER.name || USER.username;
@@ -457,7 +499,8 @@ function buildNav(){
                  ['medical', '⚕', 'Medical', 'medical'], ['education', '✎', 'Education', 'education'],
                  ['insurance', '⛨', 'Insurance', 'insurance']]]
   ];
-  if(isAdmin()) groups.push(['ADMIN', [['users', '☺', 'Users', 'users'], ['settings', '⚙', 'Settings', 'settingsList']]]);
+  if(isAdmin()) groups.push(['ADMIN', [['users', '☺', 'Users', 'users'], ['photos', '❏', 'Photos', null],
+                                       ['settings', '⚙', 'Settings', 'settingsList']]]);
   let html = '';
   groups.forEach(([title, items]) => {
     if(title) html += '<div class="navgroup">' + title + '</div>';
@@ -481,6 +524,7 @@ function render(){
   buildNav();
   document.querySelectorAll('.nav').forEach(b => b.classList.toggle('active', b.dataset.page === PAGE));
   if(PAGE === 'dashboard') renderDashboard();
+  else if(PAGE === 'photos') renderPhotos();
   else renderModule(PAGE);
 }
 function openDrawer(){ $('#sidebar').classList.add('open'); $('#scrim').classList.add('show'); }
@@ -744,15 +788,25 @@ function renderDashboard(){
     ['out', 'Regular support committed', 'Active standing support per cycle', -num(s.regularSupport)]
   ];
 
+  const banner = photoOf('Dashboard Photo');
   const html = `
-  <div class="pagehead">
-    <div>
-      <h2>${esc(setting('Village Name','Malipatana'))} village fund</h2>
-      <div class="sub">Village code ${esc(setting('Village Code','V001'))} · updated just now</div>
-    </div>
-    <div class="sp"></div>
-    <button class="btn btn-sm" onclick="window.print()">Print</button>
-  </div>
+  ${banner ? `<div class="hero">
+      <img src="${esc(banner)}" alt="${esc(setting('Village Name','Malipatana'))}" onerror="this.remove()">
+      <div class="veil"></div>
+      <div class="txt">
+        <div>
+          <h2>${esc(setting('Village Name','Malipatana'))} village fund</h2>
+          <div class="sub">Village code ${esc(setting('Village Code','V001'))} · ${esc(setting('Village Area','Jagatsinghpur, Odisha'))}</div>
+        </div>
+        <div class="sp"></div>
+        <button class="btn btn-sm" onclick="window.print()">Print</button>
+      </div>
+    </div>`
+  : `<div class="pagehead">
+      <div><h2>${esc(setting('Village Name','Malipatana'))} village fund</h2>
+      <div class="sub">Village code ${esc(setting('Village Code','V001'))}</div></div>
+      <div class="sp"></div><button class="btn btn-sm" onclick="window.print()">Print</button>
+    </div>`}
 
   <div class="ledger">
     <div class="ledger-top">
@@ -1401,6 +1455,85 @@ function openProfile(id){
     </footer>`);
 }
 
+
+/* =========================================================================
+   PHOTOS (admin) — stores the two links as rows in the Settings sheet
+   ========================================================================= */
+function renderPhotos(){
+  if(!isAdmin()){ $('#main').innerHTML = '<div class="empty"><b>Admins only</b>Ask the village admin for access.</div>'; return; }
+  const loginVal = String(setting('Login Photo', '') || '');
+  const dashVal = String(setting('Dashboard Photo', '') || '');
+  $('#main').innerHTML = `
+  <div class="pagehead">
+    <div><h2>Photos <span class="muted" style="font-size:16px">ଫଟୋ</span></h2>
+    <div class="sub">Set the picture on the sign-in screen and across the top of the dashboard</div></div>
+  </div>
+  <div class="cols">
+    <div class="panel">
+      <div class="panel-head"><h3>Sign-in screen</h3></div>
+      <div class="panel-body">
+        <label class="lbl" for="photoLogin">Picture link</label>
+        <input class="input" id="photoLogin" value="${esc(loginVal)}" placeholder="village.jpg">
+        <div class="fieldnote">Everyone sees this before signing in.</div>
+        <div class="photobox" id="prevLogin">No picture</div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h3>Dashboard top</h3></div>
+      <div class="panel-body">
+        <label class="lbl" for="photoDash">Picture link</label>
+        <input class="input" id="photoDash" value="${esc(dashVal)}" placeholder="village.jpg">
+        <div class="fieldnote">Shown above the fund ledger after signing in.</div>
+        <div class="photobox" id="prevDash">No picture</div>
+      </div>
+    </div>
+  </div>
+  <div class="toolbar" style="margin-top:16px">
+    <button class="btn btn-primary" id="photoSave">Save pictures</button>
+    <button class="btn" id="photoReset">Use the village temple photo</button>
+    <span class="muted small" style="margin-left:auto">Leave a box empty to fall back to ${esc(CONFIG.DEFAULT_PHOTO)}</span>
+  </div>
+  <div class="panel" style="margin-top:16px">
+    <div class="panel-head"><h3>Where to get a link</h3></div>
+    <div class="panel-body small" style="line-height:1.7">
+      <p style="margin:0 0 10px"><b>Photo kept with the website.</b> Upload the picture into the same GitHub folder as
+      index.html, then type just its file name here, such as <b>village.jpg</b>. This is the fastest to load and works offline of Drive.</p>
+      <p style="margin:0 0 10px"><b>Photo in Google Drive.</b> Share the file as <i>Anyone with the link</i>, copy that link and
+      paste it here. The link is converted automatically.</p>
+      <p style="margin:0"><b>Photo anywhere on the web.</b> Paste the full address ending in .jpg or .png.</p>
+    </div>
+  </div>`;
+
+  const li = $('#photoLogin'), di = $('#photoDash');
+  const preview = (input, box) => {
+    const url = photoSrc(input.value || CONFIG.DEFAULT_PHOTO);
+    const el = $(box);
+    if(!url){ el.textContent = 'No picture'; return; }
+    el.innerHTML = '<img alt="preview">';
+    const img = el.querySelector('img');
+    img.onerror = () => { el.textContent = 'That link did not load. Check it is shared publicly.'; };
+    img.src = url;
+  };
+  const both = () => { preview(li, '#prevLogin'); preview(di, '#prevDash'); };
+  li.oninput = debounce(both, 500);
+  di.oninput = debounce(both, 500);
+  both();
+
+  $('#photoReset').onclick = () => { li.value = CONFIG.DEFAULT_PHOTO; di.value = CONFIG.DEFAULT_PHOTO; both(); };
+  $('#photoSave').onclick = async () => {
+    const b = $('#photoSave'); b.disabled = true; b.textContent = 'Saving…';
+    try {
+      await api('save', { sheet: 'Settings', record: JSON.stringify({ Setting: 'Login Photo', Value: li.value.trim() }) });
+      await api('save', { sheet: 'Settings', record: JSON.stringify({ Setting: 'Dashboard Photo', Value: di.value.trim() }) });
+      DB.settings['Login Photo'] = li.value.trim();
+      DB.settings['Dashboard Photo'] = di.value.trim();
+      local.set('mal_login_photo', li.value.trim() || CONFIG.DEFAULT_PHOTO);
+      toast('Pictures saved', 'good');
+    } catch(e){ toast(e.message, 'bad'); }
+    finally { b.disabled = false; b.textContent = 'Save pictures'; }
+  };
+}
+
 /* =========================================================================
    BOOT
    ========================================================================= */
@@ -1411,6 +1544,8 @@ $('#logoutBtn').onclick = doLogout;
 $('#refreshBtn').onclick = () => refresh(false);
 $('#menuBtn').onclick = () => $('#sidebar').classList.contains('open') ? closeDrawer() : openDrawer();
 $('#scrim').onclick = closeDrawer;
+
+applyLoginPhoto();
 
 (async () => {
   const saved = store.get('mal_user');
