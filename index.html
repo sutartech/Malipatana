@@ -372,7 +372,7 @@ main.main{padding:clamp(16px,2.2vw,28px) clamp(14px,2.2vw,30px) 80px;max-width:1
 .hero .sub,.pagehead .sub{margin-top:10px}
 .ledger-top .cap{white-space:nowrap}
 .ledger-top .big{margin-top:6px}
-.strip .v,.empty b,.panel-head h3,.modal header h3{overflow-wrap:anywhere}
+.empty b,.panel-head h3,.modal header h3{overflow-wrap:anywhere}
 .ledger-top .big{margin-top:2px}
 .hero .veil{background:linear-gradient(175deg,#0e232e14 20%,#0e232eab 66%,#0b1d27f2)}
 .hero .sub{font-size:14px}
@@ -506,6 +506,26 @@ table.grid tbody tr:hover{background:#fbfbf8}
 .panel-head h3,.modal header h3{line-height:1.5}
 .hero h2,.pagehead h2,.brandside h1,.ledger-top .big{padding-block:.04em;overflow-wrap:anywhere}
 .hero .sub,.pagehead .sub{margin-top:10px}
+/* ---------- inline links inside tables and panels ---------- */
+.linkish{background:none;border:0;padding:0;font:inherit;font-weight:600;color:var(--indigo-2);
+  cursor:pointer;text-align:left;text-decoration:underline;text-decoration-color:#22485c40;
+  text-underline-offset:3px}
+.linkish:hover{text-decoration-color:currentColor}
+.pill.warn{background:#fdf3dd;color:#8a5c04;border-color:#f0dba6}
+/* ---------- figures and modal chrome ---------- */
+.strip .v{white-space:nowrap;overflow-wrap:normal;word-break:keep-all}
+.modal .strip{grid-template-columns:repeat(auto-fit,minmax(118px,1fr))}
+.modal .strip div{border-right:0;border-bottom:1px solid var(--line-soft)}
+.modal footer .btn{white-space:nowrap}
+/* ---------- quick edit + column manager ---------- */
+.cellinput{width:100%;min-width:84px;padding:7px 9px;border:1px solid var(--line);border-radius:9px;
+  background:var(--surface);font:inherit;font-size:13px;transition:border-color .15s ease,box-shadow .15s ease}
+.cellinput:focus{border-color:var(--indigo-2);box-shadow:0 0 0 3px var(--indigo-soft);outline:none}
+tr.rowsaved td{background:#e9f3ec}
+.colgrid{display:flex;flex-direction:column;gap:8px;margin-bottom:6px}
+.colrow{display:flex;align-items:center;gap:10px;font-size:14px;flex-wrap:wrap}
+.colrow input[type=checkbox]{width:18px;height:18px;accent-color:var(--brick)}
+.colrow .input{flex:1;min-width:150px}
 </style>
 </head>
 <body>
@@ -628,7 +648,7 @@ const mem = {};                  // fallback store when sessionStorage is blocke
 const $ = s => document.querySelector(s);
 const esc = x => String(x ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 const num = v => { const n = Number(String(v ?? '').replace(/[₹,\s]/g, '')); return isNaN(n) ? 0 : n; };
-const money = v => '₹' + Math.round(num(v)).toLocaleString('en-IN');
+const money = v => { const n = Math.round(num(v)); return (n < 0 ? '−₹' : '₹') + Math.abs(n).toLocaleString('en-IN'); };
 const today = () => new Date().toISOString().slice(0, 10);
 const store = {
   get(k){ try { return sessionStorage.getItem(k); } catch(e){ return mem[k] ?? null; } },
@@ -907,7 +927,7 @@ function buildNav(){
     ['', [['dashboard', '▦', 'Dashboard', null]]],
     ['PEOPLE', [['families', '⌂', 'Families', 'families'], ['members', '☗', 'Members', 'members']]],
     ['MONEY', [['contributions', '◈', 'Contributions', 'contributions'], ['income', '↑', 'Income', 'income'],
-               ['expenditure', '↓', 'Expenditure', 'expenditure']]],
+               ['expenditure', '↓', 'Expenditure', 'expenditure'], ['events', '❋', 'Major functions', 'events']]],
     ['WELFARE', [['emergency', '✚', 'Emergency cases', 'emergency'], ['regularSupport', '❤', 'Regular support', 'regularSupport'],
                  ['medical', '⚕', 'Medical', 'medical'], ['education', '✎', 'Education', 'education'],
                  ['insurance', '⛨', 'Insurance', 'insurance']]]
@@ -995,6 +1015,23 @@ const MODULES = {
     ],
     list: ['Photo','Member ID','Name','Family ID','Relation to Family Head','Gender','Age','Occupation','Earning Member','Monthly Income','Mobile']
   },
+  events: {
+    sheet: 'Events', title: 'Major functions', odia: 'ପର୍ବପର୍ବାଣି', idField: 'Event ID', prefix: 'EVT',
+    blurb: 'Raja, Ratha Jatra, temple festivals and other village functions',
+    fields: [
+      { n:'Event ID', t:'text', auto:true },
+      { n:'Event Name', t:'text', req:true },
+      { n:'Type', t:'datalist', opts:['Raja Parba','Ratha Jatra','Durga Puja','Kartika Purnima','Temple Festival','Annual Meeting','Cleaning Drive','Sports','Other'] },
+      { n:'Year', t:'number', def:'thisYear' },
+      { n:'Start Date', t:'date', def:'today' },
+      { n:'End Date', t:'date' },
+      { n:'In Charge', t:'datalist' },
+      { n:'Budget', t:'money' },
+      { n:'Status', t:'select', opts:['Planned','Ongoing','Completed'] },
+      { n:'Remarks', t:'textarea' }
+    ],
+    list: ['Event ID','Event Name','Type','Year','Start Date','In Charge','Budget','Status']
+  },
   contributions: {
     sheet: 'Contributions', title: 'Contributions', odia: 'ଚାନ୍ଦା', idField: 'Contribution ID', prefix: 'CTR',
     blurb: 'Monthly collection from families',
@@ -1020,6 +1057,7 @@ const MODULES = {
       { n:'Date', t:'date', req:true, def:'today' },
       { n:'Family ID', t:'family' },
       { n:'Member ID', t:'member' },
+      { n:'Event ID', t:'event', hint:'Use this for donations collected for a function' },
       { n:'Income Type', t:'datalist', opts:['Donation','Grant','Interest','Rent','Fine','Sale','Other'] },
       { n:'Source', t:'datalist' },
       { n:'Amount', t:'money', req:true },
@@ -1037,6 +1075,7 @@ const MODULES = {
       { n:'Date', t:'date', req:true, def:'today' },
       { n:'Category', t:'datalist', opts:['Welfare','Medical','Education','Emergency','Administration','Festival','Infrastructure','Other'] },
       { n:'Subcategory', t:'datalist' },
+      { n:'Event ID', t:'event', hint:'Attach this bill to a village function such as Raja Parba' },
       { n:'Family ID', t:'family' },
       { n:'Description', t:'text' },
       { n:'Amount', t:'money', req:true },
@@ -1046,7 +1085,7 @@ const MODULES = {
       { n:'Approved By', t:'datalist' },
       { n:'Remarks', t:'textarea' }
     ],
-    list: ['Expense ID','Date','Category','Description','Family ID','Amount','Paid To','Payment Mode','Approved By']
+    list: ['Expense ID','Date','Category','Event ID','Description','Family ID','Amount','Paid To','Payment Mode','Approved By']
   },
   emergency: {
     sheet: 'Emergency Cases', title: 'Emergency cases', odia: 'ଜରୁରୀ', idField: 'Case ID', prefix: 'CASE',
@@ -1381,12 +1420,44 @@ const photoMaxPx = () => Math.min(2000, Math.max(320, num(setting('Photo Max Siz
 const photoRoot = () => String(setting('Photo Folder', 'Malipatana Photos')).trim() || 'Malipatana Photos';
 const photoColumns = () => yes(setting('Show Photo In Tables', 'Yes'));
 function listCols(key){
-  const l = MODULES[key].list || [];
+  const hidden = (() => { try { return JSON.parse(setting('Hidden ' + MODULES[key].sheet, '[]')) || []; } catch(e){ return []; } })();
+  const l = (MODULES[key].list || []).concat(customCols(key).map(c => c.n)).filter(c => !hidden.includes(c));
   if(photosOn() && photoColumns()) return l;
   return l.filter(c => fieldDef(key, c).t !== 'photo');
 }
 
-function fieldDef(key, col){ return (MODULES[key].fields || []).find(f => f.n === col) || { n: col, t: 'text' }; }
+/* ---------- custom columns (admin) ----------
+   The column list is stored as one Settings row per module, e.g.
+   Setting "Columns Members" / Value '[{"n":"Aadhaar","t":"text"}]'.
+   Sheet headers are created by the Apps Script add-on. */
+const COL_TYPES = ['text','number','money','date','tel','select','datalist','textarea'];
+function colKey(key){ return 'Columns ' + MODULES[key].sheet; }
+function customCols(key){
+  try {
+    const raw = setting(colKey(key), '');
+    const list = raw ? JSON.parse(raw) : [];
+    return Array.isArray(list) ? list.filter(c => c && c.n) : [];
+  } catch(e){ return []; }
+}
+function allFields(key){
+  const m = MODULES[key];
+  const extra = customCols(key).map(c => ({ n: c.n, t: COL_TYPES.includes(c.t) ? c.t : 'text', opts: c.opts, custom: true }));
+  return m.fields.concat(extra.filter(e => !m.fields.some(f => f.n === e.n)));
+}
+async function saveCols(key, list){
+  const rec = { Setting: colKey(key), Value: JSON.stringify(list) };
+  const r = await api('save', { sheet: MODULES.settingsList.sheet, record: JSON.stringify(rec) });
+  if(!r || !r.ok) throw new Error((r && r.error) || 'Could not save the column list');
+  DB.settings = DB.settings || {};
+  DB.settings[colKey(key)] = rec.Value;
+}
+/* header changes need the add-on; POST answers are unreadable, so we confirm by reload */
+async function sheetColumn(action, key, col, to){
+  const body = new URLSearchParams({ action: action, sheet: MODULES[key].sheet, column: col, to: to || '' });
+  await fetch(CONFIG.API_URL, { method: 'POST', mode: 'no-cors', body: body });
+}
+
+function fieldDef(key, col){ return allFields(key).find(f => f.n === col) || { n: col, t: 'text' }; }
 
 function cellHtml(key, row, col){
   const f = fieldDef(key, col);
@@ -1397,6 +1468,10 @@ function cellHtml(key, row, col){
     return { cls: 'photocell', html: u
       ? '<button class="cellav" data-photo="' + esc(u) + '" title="View photo"><img data-srcs="' + esc(photoSrcs(u, 160).join('|')) + '" alt="' + esc(nm) + '" loading="lazy"></button>'
       : '<span class="cellav none">' + esc(initials(nm)) + '</span>' };
+  }
+  if(f.t === 'event'){
+    const v = String(raw == null ? '' : raw).trim();
+    return { cls: '', html: v ? '<button class="linkish" data-event="' + esc(v) + '">' + esc(eventName(v) || v) + '</button>' : '' };
   }
   if(f.t === 'money'){ return { cls: 'num', html: raw === '' || raw == null ? '' : '<span class="tnum">' + money(raw) + '</span>' }; }
   if(f.t === 'number'){ return { cls: 'num', html: '<span class="tnum">' + esc(raw) + '</span>' }; }
@@ -1479,10 +1554,14 @@ function renderModule(key){
       ${(DB.families || []).map(f => `<option value="${esc(f['Family ID'])}" ${v.fam === String(f['Family ID']) ? 'selected' : ''}>${esc(f['Family ID'])} · ${esc(f['Family Head'])}</option>`).join('')}
     </select>` : ''}
     ${key === 'members' && canEdit() ? '<button class="btn btn-sm" data-act="heads">Add missing family heads</button>' : ''}
+    ${isAdmin() && ['families','members'].includes(key) ? `<button class="btn btn-sm" data-act="cols">Columns</button>
+      <button class="btn btn-sm ${VIEW[key] && VIEW[key].quick ? 'btn-primary' : ''}" data-act="quick">${VIEW[key] && VIEW[key].quick ? 'Done editing' : 'Quick edit'}</button>` : ''}
     <button class="btn btn-sm" data-act="csv">Export CSV</button>
     <button class="btn btn-sm" onclick="window.print()">Print</button>
     <span class="muted small" style="margin-left:auto">${rows.length} of ${all.length} records</span>
   </div>
+
+  ${key === 'expenditure' ? functionsPanel() : ''}
 
   <div class="tablewrap">
     ${rows.length ? `
@@ -1498,11 +1577,21 @@ function renderModule(key){
       <tbody>
         ${rows.map(r => {
           const id = esc(r[m.idField]);
-          return '<tr>' + cols.map(c => {
+          const quick = v.quick && isAdmin();
+          return '<tr' + (quick ? ' data-row="' + id + '"' : '') + '>' + cols.map(c => {
+            const f = fieldDef(key, c);
+            if(quick && c !== m.idField && f.t !== 'photo'){
+              const val = r[c] == null ? '' : String(r[c]);
+              const type = f.t === 'money' || f.t === 'number' ? 'number' : f.t === 'date' ? 'date' : 'text';
+              return `<td class="${['money','number'].includes(f.t) ? 'num' : ''}" data-label="${esc(c)}">
+                <input class="cellinput${['money','number'].includes(f.t) ? ' tnum' : ''}" type="${type}"
+                       data-col="${esc(c)}" value="${esc(f.t === 'date' ? toISO(val) : val)}"></td>`;
+            }
             const cell = cellHtml(key, r, c);
             return `<td class="${cell.cls}" data-label="${esc(c)}">${cell.html}</td>`;
           }).join('') + `<td class="acts" data-label="">
-            ${key === 'families' || key === 'members' ? `<button class="btn btn-sm" data-act="profile" data-id="${id}">View</button> ` : ''}
+            ${quick ? `<button class="btn btn-sm btn-primary" data-act="rowsave" data-id="${id}">Save</button> ` : ''}
+            ${['families','members','events'].includes(key) ? `<button class="btn btn-sm" data-act="profile" data-id="${id}">View</button> ` : ''}
             ${canEdit() ? `<button class="btn btn-sm" data-act="edit" data-id="${id}">Edit</button>
             <button class="btn btn-sm btn-danger" data-act="del" data-id="${id}">Delete</button>` : ''}
           </td></tr>`;
@@ -1527,6 +1616,7 @@ function renderModule(key){
     renderModule(key);
   });
   wirePhotoFallbacks($('#main'));
+  $('#main').querySelectorAll('[data-event]').forEach(b => { b.onclick = () => openEvent(b.dataset.event); });
   $('#main').querySelectorAll('[data-photo]').forEach(b => {
     b.onclick = () => openPhoto(b.dataset.photo, b.querySelector('img') ? b.querySelector('img').alt : '');
   });
@@ -1536,8 +1626,12 @@ function renderModule(key){
     if(act === 'edit') b.onclick = () => openForm(key, id);
     if(act === 'del') b.onclick = () => askDelete(key, id);
     if(act === 'heads') b.onclick = () => addMissingHeads();
+    if(act === 'cols') b.onclick = () => openColumns(key);
+    if(act === 'quick') b.onclick = () => { const v2 = VIEW[key]; v2.quick = !v2.quick; renderModule(key); };
+    if(act === 'rowsave') b.onclick = () => saveRow(key, id, b);
     if(act === 'csv') b.onclick = () => exportCsv(key, rows);
-    if(act === 'profile') b.onclick = () => (key === 'members' ? openMember(id) : openProfile(id));
+    if(act === 'profile') b.onclick = () =>
+      key === 'members' ? openMember(id) : key === 'events' ? openEvent(id) : openProfile(id);
   });
 }
 
@@ -1597,6 +1691,7 @@ function distinct(key, col){
 function defaultFor(f){
   if(f.def === 'today') return today();
   if(f.def === 'thisMonth') return new Date().toISOString().slice(0, 7);
+  if(f.def === 'thisYear') return new Date().getFullYear();
   if(f.def === 'monthlyContribution') return num(setting('Monthly Contribution', 0)) || '';
   return '';
 }
@@ -1611,7 +1706,7 @@ function openForm(key, id){
     if(m.prefix) rec[m.idField] = nextId(key);
   }
 
-  const body = m.fields.filter(f => !f.hidden && !(f.t === 'photo' && !photosOn())).map(f => fieldHtml(key, f, rec[f.n], !!existing)).join('');
+  const body = allFields(key).filter(f => !f.hidden && !(f.t === 'photo' && !photosOn())).map(f => fieldHtml(key, f, rec[f.n], !!existing)).join('');
   openModal(`
     <header>
       <div>
@@ -1697,6 +1792,10 @@ function fieldHtml(key, f, value, editing){
         (DB.families || []).map(x => `<option value="${esc(x['Family ID'])}" ${String(val) === String(x['Family ID']) ? 'selected' : ''}>${esc(x['Family ID'])} · ${esc(x['Family Head'])}</option>`).join('') + `</select>`; break;
     case 'member':
       input = `<select class="input" id="${id}" data-role="member"></select>`; break;
+    case 'event':
+      input = `<select class="input" id="${id}" data-role="event"><option value="">— not part of a function —</option>` +
+        (DB.events || []).map(x => `<option value="${esc(x['Event ID'])}" ${String(val) === String(x['Event ID']) ? 'selected' : ''}>${esc(x['Event Name'])} ${x['Year'] ? '· ' + esc(x['Year']) : ''}</option>`).join('') +
+        '</select>'; break;
     case 'money':
       input = `<input class="input tnum" id="${id}" type="number" inputmode="decimal" min="0" step="1" value="${esc(val)}">`; break;
     case 'number':
@@ -1910,9 +2009,10 @@ async function renameId(key, oldId, newId){
 async function saveRecord(key, rec, editing){
   const m = MODULES[key];
   const originalId = editing ? String(rec[m.idField] ?? '').trim() : '';
+  const FIELDS = allFields(key);
   const out = Object.assign({}, rec);
   const problems = [];
-  m.fields.forEach(f => {
+  FIELDS.forEach(f => {
     if(f.hidden) return;
     const el = document.getElementById(fid(f));
     if(!el) return;
@@ -2079,6 +2179,236 @@ function openProfile(id){
   });
 }
 
+
+/* ---------- quick edit: save a single row in place ---------- */
+async function saveRow(key, id, btn){
+  const m = MODULES[key];
+  const tr = $('#main').querySelector('[data-row="' + id.replace(/"/g, '\\"') + '"]');
+  if(!tr) return;
+  const row = rowsOf(key).find(r => String(r[m.idField]).trim() === String(id).trim());
+  if(!row) return;
+  const out = Object.assign({}, row);
+  tr.querySelectorAll('input[data-col]').forEach(inp => { out[inp.dataset.col] = inp.value.trim(); });
+  if(m.fields.some(f => f.n === 'Last Updated')) out['Last Updated'] = today();
+
+  btn.disabled = true; btn.textContent = 'Saving…';
+  try {
+    const r = await api('save', { sheet: m.sheet, record: JSON.stringify(out) });
+    if(!r || !r.ok) throw new Error((r && r.error) || 'the sheet refused the change');
+    upsertLocal(key, out);
+    btn.textContent = 'Saved';
+    tr.classList.add('rowsaved');
+    setTimeout(() => { btn.disabled = false; btn.textContent = 'Save'; tr.classList.remove('rowsaved'); }, 1600);
+  } catch(e){
+    toast(e.message || String(e), 'bad');
+    btn.disabled = false; btn.textContent = 'Save';
+  }
+}
+
+/* ---------- column manager (admin) ---------- */
+function openColumns(key){
+  if(!isAdmin()) return;
+  const m = MODULES[key];
+  const custom = customCols(key);
+  let hidden = [];
+  try { hidden = JSON.parse(setting('Hidden ' + m.sheet, '[]')) || []; } catch(e){}
+
+  const builtin = (m.list || []).filter(c => c !== m.idField);
+  openModal(`
+    <header>
+      <div><h3>Columns · ${esc(m.title)}</h3>
+      <div class="sub">Show or hide the standard columns, and add your own</div></div>
+      <div class="sp"></div><button class="btn btn-sm" onclick="closeModal()">Close</button>
+    </header>
+    <div class="body">
+      <h4 class="msec">Standard columns</h4>
+      <div class="colgrid">
+        ${builtin.map(c => `<label class="colrow"><input type="checkbox" data-hide="${esc(c)}" ${hidden.includes(c) ? '' : 'checked'}> ${esc(c)}</label>`).join('')}
+      </div>
+      <div class="fieldnote">Unticked columns stay in the sheet but leave the table.</div>
+
+      <h4 class="msec">Your own columns</h4>
+      ${custom.length ? `<div class="colgrid">${custom.map((c, i) => `
+        <div class="colrow">
+          <input class="input" data-cname="${i}" value="${esc(c.n)}">
+          <select class="input" data-ctype="${i}" style="max-width:130px">${COL_TYPES.map(t => `<option ${c.t === t ? 'selected' : ''}>${t}</option>`).join('')}</select>
+          <button class="btn btn-sm btn-danger" data-cdel="${esc(c.n)}">Delete</button>
+        </div>`).join('')}</div>` : '<div class="muted small">None yet.</div>'}
+
+      <h4 class="msec">Add a column</h4>
+      <div class="colrow">
+        <input class="input" id="newColName" placeholder="Column name, e.g. Aadhaar">
+        <select class="input" id="newColType" style="max-width:130px">${COL_TYPES.map(t => `<option>${t}</option>`).join('')}</select>
+        <button class="btn btn-sm" id="newColAdd">Add</button>
+      </div>
+      <div class="fieldnote">The column is created in the <b>${esc(m.sheet)}</b> sheet as well, so what you type in it is saved.</div>
+    </div>
+    <footer><button class="btn btn-primary" id="colsSave">Save changes</button></footer>`);
+
+  const modal = document.getElementById('modalRoot');
+  modal.querySelector('#newColAdd').onclick = async () => {
+    const name = modal.querySelector('#newColName').value.trim();
+    const type = modal.querySelector('#newColType').value;
+    if(!name) return;
+    if(allFields(key).some(f => f.n.toLowerCase() === name.toLowerCase())){ toast('That column already exists', 'bad'); return; }
+    try {
+      await saveCols(key, custom.concat([{ n: name, t: type }]));
+      await sheetColumn('addColumn', key, name);
+      toast('Column "' + name + '" added', 'good');
+      closeModal(); render(); openColumns(key);
+    } catch(e){ toast(e.message || String(e), 'bad'); }
+  };
+  modal.querySelectorAll('[data-cdel]').forEach(b => {
+    b.onclick = async () => {
+      const name = b.dataset.cdel;
+      if(!confirm('Remove the column "' + name + '"? Its values stay in the sheet.')) return;
+      try {
+        await saveCols(key, custom.filter(c => c.n !== name));
+        toast('Column removed from the dashboard', 'good');
+        closeModal(); render();
+      } catch(e){ toast(e.message || String(e), 'bad'); }
+    };
+  });
+  modal.querySelector('#colsSave').onclick = async () => {
+    const hide = [...modal.querySelectorAll('[data-hide]')].filter(x => !x.checked).map(x => x.dataset.hide);
+    const renamed = custom.map((c, i) => ({
+      n: (modal.querySelector('[data-cname="' + i + '"]') || {}).value ? modal.querySelector('[data-cname="' + i + '"]').value.trim() : c.n,
+      t: (modal.querySelector('[data-ctype="' + i + '"]') || {}).value || c.t,
+      was: c.n
+    }));
+    try {
+      for(const c of renamed){ if(c.was !== c.n) await sheetColumn('renameColumn', key, c.was, c.n); }
+      await saveCols(key, renamed.map(c => ({ n: c.n, t: c.t })));
+      const rec = { Setting: 'Hidden ' + m.sheet, Value: JSON.stringify(hide) };
+      const r = await api('save', { sheet: MODULES.settingsList.sheet, record: JSON.stringify(rec) });
+      if(!r || !r.ok) throw new Error((r && r.error) || 'could not save');
+      DB.settings['Hidden ' + m.sheet] = rec.Value;
+      closeModal(); render();
+      toast('Columns updated', 'good');
+    } catch(e){ toast(e.message || String(e), 'bad'); }
+  };
+}
+
+/* A completed function's whole cost belongs on the Expenditure page, so it is
+   summarised there — one line per function, click through for the bills. */
+function functionsPanel(){
+  const evs = (DB.events || []).slice().sort((a, b) =>
+    String(b['Start Date'] || b['Year'] || '').localeCompare(String(a['Start Date'] || a['Year'] || '')));
+  if(!evs.length) return '';
+  const row = e => {
+    const id = String(e['Event ID'] || '').trim();
+    const t = eventTotals(id);
+    const budget = num(e['Budget']);
+    const over = budget && t.spent > budget;
+    const st = String(e['Status'] || 'Planned');
+    const tone = st.toLowerCase() === 'completed' ? 'good' : st.toLowerCase() === 'ongoing' ? 'warn' : '';
+    return `<tr>
+      <td data-label="Function"><button class="linkish" data-event="${esc(id)}">${esc(e['Event Name'] || id)}</button>
+        <span class="muted small">${esc(e['Type'] || '')}${e['Year'] ? ' · ' + esc(e['Year']) : ''}</span></td>
+      <td data-label="Status"><span class="pill ${tone}">${esc(st)}</span></td>
+      <td class="num tnum" data-label="Budget">${budget ? money(budget) : '—'}</td>
+      <td class="num tnum" data-label="Collected">${money(t.raised)}</td>
+      <td class="num tnum" data-label="Spent" style="${over ? 'color:var(--brick);font-weight:700' : ''}">${money(t.spent)}</td>
+      <td class="num tnum" data-label="Bills">${t.bills}</td>
+    </tr>`;
+  };
+  const spentAll = evs.reduce((a, e) => a + eventTotals(String(e['Event ID'] || '').trim()).spent, 0);
+  return `<div class="panel" style="margin-bottom:16px">
+    <div class="panel-head"><h3>Village functions</h3>
+      <span class="muted small">total spent ${money(spentAll)}</span>
+      <div class="sp"></div>
+      <button class="btn btn-sm" onclick="go('events')">All functions</button>
+    </div>
+    <div class="tablewrap" style="max-height:none">
+      <table class="grid">
+        <thead><tr><th>Function</th><th>Status</th><th class="num">Budget</th><th class="num">Collected</th><th class="num">Spent</th><th class="num">Bills</th></tr></thead>
+        <tbody>${evs.slice(0, 6).map(row).join('')}</tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
+/* =========================================================================
+   MAJOR FUNCTIONS (Raja Parba and the like)
+   ========================================================================= */
+function eventRows(id){
+  const same = r => String(r['Event ID'] || '').trim() === String(id).trim();
+  return { spent: (DB.expenditure || []).filter(same), raised: (DB.income || []).filter(same) };
+}
+function eventTotals(id){
+  const { spent, raised } = eventRows(id);
+  return {
+    spent: spent.reduce((a, r) => a + num(r['Amount']), 0),
+    raised: raised.reduce((a, r) => a + num(r['Amount']), 0),
+    bills: spent.length, donations: raised.length
+  };
+}
+function eventName(id){
+  const e = (DB.events || []).find(x => String(x['Event ID']).trim() === String(id).trim());
+  return e ? e['Event Name'] : '';
+}
+
+function openEvent(id){
+  const e = (DB.events || []).find(x => String(x['Event ID']).trim() === String(id).trim());
+  if(!e) return;
+  const { spent, raised } = eventRows(id);
+  const t = eventTotals(id);
+  const budget = num(e['Budget']);
+  const pct = budget ? Math.min(100, Math.round(t.spent / budget * 100)) : 0;
+  const left = budget ? budget - t.spent : null;
+  const net = t.raised - t.spent;
+  const done = String(e['Status'] || '').toLowerCase() === 'completed';
+
+  const rowsTable = (title, list, cols) => !list.length ? '' :
+    `<h4 class="msec">${esc(title)}</h4><div class="tablewrap" style="max-height:none"><table class="grid"><thead><tr>${
+      cols.map(c => `<th class="${c === 'Amount' ? 'num' : ''}">${esc(c)}</th>`).join('')}</tr></thead><tbody>${
+      list.map(r => '<tr>' + cols.map(c => `<td class="${c === 'Amount' ? 'num tnum' : ''}" data-label="${esc(c)}">${
+        c === 'Amount' ? money(r[c]) : (c === 'Date' ? esc(fmtDate(r[c])) : esc(String(r[c] == null ? '' : r[c])))
+      }</td>`).join('') + '</tr>').join('')}</tbody></table></div>`;
+
+  openModal(`
+    <header>
+      <div><h3>${esc(e['Event Name'] || id)}</h3>
+      <div class="sub">${esc(id)} · ${esc(e['Type'] || 'Function')}${e['Year'] ? ' · ' + esc(e['Year']) : ''}${e['In Charge'] ? ' · in charge ' + esc(e['In Charge']) : ''}</div></div>
+      <div class="sp"></div><button class="btn btn-sm" onclick="closeModal()">Close</button>
+    </header>
+    <div class="body">
+      <div class="strip" style="margin-top:0">
+        <div><div class="k">Budget</div><div class="v tnum" style="font-size:17px">${budget ? money(budget) : '—'}</div></div>
+        <div><div class="k">Spent</div><div class="v tnum" style="font-size:17px">${money(t.spent)}</div></div>
+        <div><div class="k">Collected</div><div class="v tnum" style="font-size:17px">${money(t.raised)}</div></div>
+        <div><div class="k">Left in budget</div><div class="v tnum" style="font-size:17px;color:${left !== null && left < 0 ? 'var(--brick)' : 'var(--green)'}">${left === null ? '—' : money(left)}</div></div>
+        <div><div class="k">Collected − spent</div><div class="v tnum" style="font-size:17px;color:${net < 0 ? 'var(--brick)' : 'var(--green)'}">${money(net)}</div></div>
+        <div><div class="k">Status</div><div class="v" style="font-size:15px">${esc(e['Status'] || 'Planned')}</div></div>
+      </div>
+      ${budget ? `<div class="meter" style="margin-top:16px"><i style="width:${pct}%"></i></div>
+        <div class="small muted" style="margin-top:6px">${pct}% of the budget spent</div>` : ''}
+      ${rowsTable('Expenditure', spent, ['Expense ID','Date','Category','Description','Paid To','Amount'])}
+      ${rowsTable('Donations and income', raised, ['Income ID','Date','Income Type','Source','Amount'])}
+      ${!spent.length && !raised.length ? '<div class="muted small" style="margin-top:18px">Nothing recorded yet. Add expenditure or income and choose this function in the <b>Event ID</b> box.</div>' : ''}
+      ${e['Remarks'] ? `<div class="mremark" style="margin-top:18px">${esc(e['Remarks'])}</div>` : ''}
+    </div>
+    <footer>
+      ${canEdit() ? `<button class="btn" onclick="closeModal();openForm('expenditure')">Add expenditure</button>
+      ${done ? '' : `<button class="btn" id="evDone">Mark completed</button>`}
+      <button class="btn btn-primary" onclick="closeModal();openForm('events','${esc(id)}')">Edit function</button>` : ''}
+    </footer>`);
+
+  const dn = document.getElementById('evDone');
+  if(dn) dn.onclick = async () => {
+    dn.disabled = true; dn.textContent = 'Saving…';
+    const out = Object.assign({}, e, { Status: 'Completed' });
+    if(!out['End Date']) out['End Date'] = today();
+    try {
+      const r = await api('save', { sheet: MODULES.events.sheet, record: JSON.stringify(out) });
+      if(!r || !r.ok) throw new Error((r && r.error) || 'save failed');
+      upsertLocal('events', out);
+      closeModal();
+      toast(esc(out['Event Name']) + ' marked completed — its total now shows on the Expenditure page', 'good');
+      render();
+    } catch(err){ toast(err.message || String(err), 'bad'); dn.disabled = false; dn.textContent = 'Mark completed'; }
+  };
+}
 
 /* =========================================================================
    MEMBER DETAIL
