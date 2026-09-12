@@ -2,303 +2,1427 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Malipatana Village Welfare Dashboard</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#17303f">
+<title>Malipatana Village Welfare</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaina+2:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
-:root{--p:#176b87;--p2:#0d5268;--bg:#f3f8f9;--card:#fff;--ink:#17313d;--muted:#647983;--line:#d9e6ea;--good:#177245;--bad:#a33d3d}
+:root{
+  --ink:#16211c; --muted:#5c6b62; --line:#dbe2db; --line-soft:#edefea;
+  --paper:#f2f4f0; --surface:#fff; --surface-2:#f8faf6;
+  --brick:#a8341e; --brick-dark:#8a2916; --brick-soft:#fbeee9;
+  --indigo:#17303f; --indigo-2:#22485c; --indigo-soft:#e8eff2;
+  --turmeric:#b87b05; --turmeric-soft:#fdf3dd;
+  --green:#2c6b41; --green-soft:#e9f3ec;
+  --r:10px; --r-lg:16px;
+  --display:'Baloo Bhaina 2', system-ui, sans-serif;
+  --body:system-ui,-apple-system,'Segoe UI',Roboto,'Noto Sans Oriya',sans-serif;
+}
 *{box-sizing:border-box}
-body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--ink)}
-button,input,select{font:inherit}
-.login{min-height:100vh;display:grid;place-items:center;padding:20px;background:linear-gradient(135deg,#e9f6f7,#f8f3e6)}
-.loginbox{width:min(420px,100%);background:#fff;border:1px solid var(--line);border-radius:20px;padding:28px;box-shadow:0 18px 60px #1232}
-.logo{font-size:30px}
-.loginbox h1{margin:4px 0;font-size:25px}
-.muted{color:var(--muted);font-size:13px}
-.field{margin:14px 0}
-.field label{display:block;font-weight:800;font-size:13px;margin-bottom:6px}
-.field input{width:100%;padding:11px;border:1px solid var(--line);border-radius:10px}
-.primary{width:100%;padding:11px;border:0;border-radius:10px;background:var(--p);color:#fff;font-weight:800;cursor:pointer}
-.primary:disabled{opacity:0.7;cursor:not-allowed}
-.app{display:none;min-height:100vh}
-.top{height:62px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;padding:0 16px;position:sticky;top:0;z-index:10}
-.brand{font-weight:900;color:var(--p)}
-.spacer{flex:1}
-.ver{font-size:11px;color:var(--muted)}
-.user{font-size:13px;font-weight:800}
-.logout,.ghost{border:1px solid var(--line);background:#fff;border-radius:9px;padding:8px 11px;cursor:pointer}
-.layout{display:flex}
-.side{width:225px;min-height:calc(100vh - 62px);background:#123f50;padding:12px;position:sticky;top:62px;height:calc(100vh - 62px);overflow:auto}
-.nav{width:100%;text-align:left;border:0;background:transparent;color:#d9edf0;padding:10px 11px;border-radius:9px;margin:2px 0;font-weight:750;cursor:pointer}
-.nav:hover,.nav.active{background:#ffffff18;color:#fff}
-.main{flex:1;min-width:0;padding:18px}
-.head{display:flex;align-items:center;gap:12px;margin-bottom:14px}
-.head h2{margin:0}
-.grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:11px}
-.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;box-shadow:0 5px 18px #1231}
-.label{font-size:11px;color:var(--muted);font-weight:800}
-.value{font-size:23px;font-weight:900;margin-top:4px}
-.good{color:var(--good)}
-.bad{color:var(--bad)}
-.panel{background:#fff;border:1px solid var(--line);border-radius:14px;padding:15px;margin-top:13px}
-.panelhead{display:flex;align-items:center;justify-content:space-between;gap:10px}
-.panel h3{margin:0 0 10px}
-.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:9px}
-table{border-collapse:collapse;width:100%;font-size:12px}
-th,td{padding:8px 9px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
-th{background:#eef6f7;font-weight:850}
-.search{padding:9px;border:1px solid var(--line);border-radius:9px;min-width:220px}
-.empty{text-align:center;color:var(--muted);padding:28px}
-.bar{height:10px;background:#e6eef0;border-radius:10px;overflow:hidden}
-.bar i{display:block;height:100%;background:var(--p)}
-.menu{display:none;border:0;background:#e9f2f4;border-radius:8px;padding:8px;cursor:pointer}
-@media(max-width:950px){.grid{grid-template-columns:repeat(3,1fr)}}
-@media(max-width:700px){
-    .menu{display:block}
-    .side{position:fixed;left:-235px;top:62px;z-index:20;transition:.2s}
-    .side.open{left:0}
-    .main{padding:12px}
-    .grid{grid-template-columns:repeat(2,1fr)}
-    .ver,.user{display:none}
-    .search{min-width:0;width:48vw}
+html,body{margin:0;padding:0}
+body{font-family:var(--body);background:var(--paper);color:var(--ink);-webkit-text-size-adjust:100%}
+button,input,select,textarea{font:inherit;color:inherit}
+.tnum{font-variant-numeric:tabular-nums}
+.hide{display:none !important}
+:focus-visible{outline:2px solid var(--brick);outline-offset:2px;border-radius:4px}
+@media (prefers-reduced-motion:reduce){*{transition:none !important;animation:none !important}}
+
+/* ---------- generic controls ---------- */
+.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);
+  border-radius:var(--r);padding:9px 13px;font-weight:600;cursor:pointer;line-height:1.2;min-height:40px}
+.btn:hover{background:var(--surface-2)}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+.btn-primary{background:var(--brick);border-color:var(--brick);color:#fff}
+.btn-primary:hover{background:var(--brick-dark)}
+.btn-danger{color:var(--brick);border-color:#e6c8c0}
+.btn-danger:hover{background:var(--brick-soft)}
+.btn-sm{padding:5px 9px;min-height:32px;font-size:13px;border-radius:8px}
+.input,select.input,textarea.input{width:100%;padding:10px 11px;border:1px solid var(--line);
+  border-radius:var(--r);background:var(--surface);min-height:42px}
+.input:focus{border-color:var(--indigo-2);outline:none;box-shadow:0 0 0 3px var(--indigo-soft)}
+textarea.input{min-height:76px;resize:vertical}
+label.lbl{display:block;font-size:12.5px;font-weight:700;color:var(--muted);margin-bottom:5px}
+.muted{color:var(--muted)}
+.small{font-size:12.5px}
+
+/* ---------- login ---------- */
+#login{min-height:100dvh;display:grid;grid-template-columns:1.05fr .95fr}
+.login-art{background:var(--indigo);color:#f4efe4;padding:48px 40px;display:flex;flex-direction:column;justify-content:center;position:relative;overflow:hidden}
+.login-art .jhoti{position:absolute;inset:auto 0 0 0;opacity:.22;pointer-events:none}
+.login-art .crest{font-size:13px;letter-spacing:.14em;color:#9fc0cf;margin-bottom:18px}
+.login-art h1{font-family:var(--display);font-size:clamp(34px,5vw,54px);line-height:1.08;margin:0 0 6px;font-weight:700}
+.login-art h2{font-family:var(--display);font-size:clamp(19px,2.4vw,25px);margin:0 0 18px;font-weight:500;color:#cfe1e8}
+.login-art p{max-width:38ch;color:#b6cdd6;line-height:1.65;margin:0}
+.login-form{display:flex;align-items:center;justify-content:center;padding:32px 24px;background:var(--surface)}
+.login-card{width:min(390px,100%)}
+.login-card h3{font-family:var(--display);font-size:27px;margin:0 0 4px;font-weight:600}
+.field{margin:16px 0}
+.msg{margin-top:14px;font-size:13.5px;font-weight:600;min-height:20px}
+.msg.err{color:var(--brick)}
+.msg.info{color:var(--muted);font-weight:500}
+@media(max-width:820px){
+  #login{grid-template-columns:1fr}
+  .login-art{padding:36px 24px 30px}
+  .login-art p{display:none}
+  .login-form{padding:26px 20px 48px}
+}
+
+/* ---------- app frame ---------- */
+#app{min-height:100dvh}
+.topbar{position:sticky;top:0;z-index:30;height:58px;background:var(--indigo);color:#fff;
+  display:flex;align-items:center;gap:12px;padding:0 14px}
+.topbar .brand{font-family:var(--display);font-weight:600;font-size:19px;letter-spacing:.01em;white-space:nowrap}
+.topbar .brand small{display:block;font-family:var(--body);font-size:10.5px;font-weight:500;color:#a9c6d2;letter-spacing:.06em}
+.topbar .sp{flex:1}
+.iconbtn{background:#ffffff1a;border:0;color:#fff;border-radius:9px;width:38px;height:38px;cursor:pointer;font-size:16px}
+.iconbtn:hover{background:#ffffff2e}
+.whochip{display:flex;align-items:center;gap:8px;background:#ffffff14;border-radius:999px;padding:5px 12px 5px 6px;font-size:13px}
+.avatar{width:27px;height:27px;border-radius:50%;background:var(--turmeric);color:#241a00;display:grid;place-items:center;font-weight:700;font-size:12px}
+.whochip b{font-weight:600}
+.whochip .role{color:#a9c6d2;font-size:11.5px}
+.shell{display:flex;align-items:flex-start}
+.sidebar{width:218px;flex:none;background:var(--indigo);min-height:calc(100dvh - 58px);
+  position:sticky;top:58px;height:calc(100dvh - 58px);overflow-y:auto;padding:10px 8px 24px}
+.navgroup{color:#7fa4b4;font-size:10.5px;font-weight:700;letter-spacing:.12em;padding:14px 12px 6px}
+.nav{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:transparent;border:0;
+  color:#cfe0e7;padding:9px 12px;border-radius:8px;cursor:pointer;font-weight:600;font-size:14px;
+  border-left:3px solid transparent}
+.nav:hover{background:#ffffff12;color:#fff}
+.nav.active{background:#ffffff1c;color:#fff;border-left-color:var(--turmeric)}
+.nav .ic{width:19px;text-align:center;font-size:14px;opacity:.95}
+.nav .count{margin-left:auto;font-size:11px;color:#8fb2c1;font-variant-numeric:tabular-nums}
+.scrim{display:none}
+main.main{flex:1;min-width:0;padding:20px 22px 60px;max-width:1240px}
+.pagehead{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:16px}
+.pagehead h2{font-family:var(--display);font-size:26px;margin:0;font-weight:600;line-height:1.15}
+.pagehead .sub{font-size:13px;color:var(--muted);margin-top:2px}
+.pagehead .sp{flex:1}
+@media(max-width:860px){
+  main.main{padding:16px 14px 70px}
+  .sidebar{position:fixed;left:0;top:58px;transform:translateX(-100%);transition:transform .18s ease;z-index:40;box-shadow:2px 0 18px #0004}
+  .sidebar.open{transform:none}
+  .scrim.show{display:block;position:fixed;inset:58px 0 0;background:#0f1c2399;z-index:35}
+  .whochip .role{display:none}
+}
+
+/* ---------- ledger (dashboard hero) ---------- */
+.ledger{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden}
+.ledger-top{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-end;justify-content:space-between;
+  padding:20px 22px;background:linear-gradient(180deg,#fbfcfa,#fff);border-bottom:1px solid var(--line-soft)}
+.ledger-top .cap{font-size:12.5px;font-weight:700;color:var(--muted);margin-bottom:4px}
+.ledger-top .big{font-family:var(--display);font-size:clamp(32px,5.2vw,46px);font-weight:700;line-height:1;color:var(--indigo)}
+.ledger-rows{padding:6px 22px 18px}
+.lrow{display:flex;align-items:baseline;gap:12px;padding:9px 0;border-bottom:1px dotted var(--line)}
+.lrow:last-child{border-bottom:0}
+.lrow .nm{flex:1;font-size:14px}
+.lrow .nm em{font-style:normal;color:var(--muted);font-size:12.5px;display:block}
+.lrow .amt{font-weight:700;font-size:15px}
+.lrow.in .amt{color:var(--green)}
+.lrow.out .amt{color:var(--brick)}
+.lrow.total{border-top:2px solid var(--ink);border-bottom:0;margin-top:6px;padding-top:12px}
+.lrow.total .nm{font-weight:700;font-size:15px}
+.lrow.total .amt{font-size:20px;font-family:var(--display)}
+.meter{height:8px;background:var(--line-soft);border-radius:99px;overflow:hidden;margin-top:14px}
+.meter i{display:block;height:100%;background:var(--turmeric);border-radius:99px}
+
+/* ---------- stat strip ---------- */
+.strip{display:grid;grid-template-columns:repeat(6,1fr);background:var(--surface);
+  border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;margin-top:16px}
+.strip div{padding:14px 16px;border-right:1px solid var(--line-soft)}
+.strip div:last-child{border-right:0}
+.strip .k{font-size:12px;color:var(--muted);font-weight:600}
+.strip .v{font-size:22px;font-weight:700;margin-top:3px;font-family:var(--display)}
+@media(max-width:900px){.strip{grid-template-columns:repeat(3,1fr)}.strip div:nth-child(3n){border-right:0}
+  .strip div{border-bottom:1px solid var(--line-soft)}}
+@media(max-width:480px){.strip{grid-template-columns:repeat(2,1fr)}.strip div:nth-child(3n){border-right:1px solid var(--line-soft)}
+  .strip div:nth-child(2n){border-right:0}}
+
+.cols{display:grid;grid-template-columns:1.25fr .85fr;gap:16px;margin-top:16px;align-items:start}
+@media(max-width:960px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden}
+.panel-head{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--line-soft)}
+.panel-head h3{font-family:var(--display);font-size:17px;margin:0;font-weight:600}
+.panel-head .sp{flex:1}
+.panel-body{padding:16px 18px}
+.alert{display:flex;gap:11px;align-items:flex-start;padding:11px 18px;border-bottom:1px solid var(--line-soft);font-size:13.5px}
+.alert:last-child{border-bottom:0}
+.alert .dot{width:8px;height:8px;border-radius:50%;margin-top:6px;flex:none}
+.alert b{display:block;font-size:13.5px}
+.alert .go{margin-left:auto;font-size:12.5px;color:var(--indigo-2);background:none;border:0;cursor:pointer;font-weight:700;white-space:nowrap}
+.d-red{background:var(--brick)}.d-yellow{background:var(--turmeric)}.d-green{background:var(--green)}.d-blue{background:var(--indigo-2)}
+.legend{display:flex;gap:16px;font-size:12.5px;color:var(--muted);padding:0 18px 14px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px}
+
+/* ---------- toolbar + table ---------- */
+.toolbar{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.toolbar .grow{flex:1;min-width:170px}
+.tablewrap{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);overflow:auto;max-height:calc(100dvh - 250px)}
+table.grid{border-collapse:collapse;width:100%;font-size:13px}
+table.grid th{position:sticky;top:0;background:var(--surface-2);text-align:left;font-weight:700;font-size:12px;
+  color:var(--muted);padding:11px 13px;border-bottom:1px solid var(--line);white-space:nowrap;cursor:pointer;z-index:2}
+table.grid th:hover{color:var(--ink)}
+table.grid th .ar{opacity:.5;font-size:10px}
+table.grid td{padding:11px 13px;border-bottom:1px solid var(--line-soft);white-space:nowrap;vertical-align:top}
+table.grid tbody tr:hover{background:var(--surface-2)}
+table.grid tbody tr:last-child td{border-bottom:0}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+td.acts{text-align:right;white-space:nowrap}
+.pill{display:inline-block;padding:2px 9px;border-radius:99px;font-size:11.5px;font-weight:700;background:var(--line-soft);color:var(--muted)}
+.pill.ok{background:var(--green-soft);color:var(--green)}
+.pill.warn{background:var(--turmeric-soft);color:var(--turmeric)}
+.pill.bad{background:var(--brick-soft);color:var(--brick)}
+.idcell{font-weight:700}
+.empty{padding:46px 20px;text-align:center;color:var(--muted)}
+.empty b{display:block;font-family:var(--display);font-size:19px;color:var(--ink);margin-bottom:6px;font-weight:600}
+.tfoot{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;padding:11px 16px;color:var(--muted);font-size:13px}
+.tfoot b{color:var(--ink)}
+
+@media(max-width:760px){
+  .tablewrap{border:0;background:transparent;max-height:none;overflow:visible}
+  table.grid,table.grid tbody,table.grid tr,table.grid td{display:block;width:100%}
+  table.grid thead{display:none}
+  table.grid tr{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);margin-bottom:10px;padding:6px 4px}
+  table.grid td{border-bottom:1px solid var(--line-soft);white-space:normal;display:flex;gap:12px;padding:9px 13px}
+  table.grid td:last-child{border-bottom:0}
+  table.grid td::before{content:attr(data-label);flex:none;width:42%;color:var(--muted);font-size:12.5px;font-weight:600}
+  td.num{text-align:left}
+  td.acts{justify-content:flex-end}
+  td.acts::before{content:''}
+  td.empty-cell{display:none}
+}
+
+/* ---------- modal ---------- */
+.overlay{position:fixed;inset:0;background:#0f1c2359;z-index:60;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal{background:var(--surface);border-radius:var(--r-lg);width:min(760px,100%);max-height:92dvh;display:flex;flex-direction:column;box-shadow:0 24px 60px #0f1c2340}
+.modal header{display:flex;align-items:center;gap:12px;padding:16px 20px;border-bottom:1px solid var(--line-soft)}
+.modal header h3{font-family:var(--display);font-size:20px;margin:0;font-weight:600}
+.modal header .sub{font-size:12.5px;color:var(--muted)}
+.modal header .sp{flex:1}
+.modal .body{padding:18px 20px;overflow:auto}
+.modal footer{display:flex;gap:10px;justify-content:flex-end;padding:14px 20px;border-top:1px solid var(--line-soft);background:var(--surface-2);border-radius:0 0 var(--r-lg) var(--r-lg)}
+.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.formgrid .wide{grid-column:1/-1}
+.fieldnote{font-size:11.5px;color:var(--muted);margin-top:4px}
+.input[readonly]{background:var(--surface-2);color:var(--muted)}
+.reqmark{color:var(--brick)}
+.errline{color:var(--brick);font-size:13px;font-weight:600;margin-bottom:10px}
+.confirm p{margin:0 0 8px;line-height:1.6}
+@media(max-width:640px){
+  .overlay{padding:0;align-items:flex-end}
+  .modal{width:100%;max-height:96dvh;border-radius:var(--r-lg) var(--r-lg) 0 0}
+  .formgrid{grid-template-columns:1fr}
+  .modal footer{position:sticky;bottom:0}
+}
+
+/* ---------- toast ---------- */
+#toasts{position:fixed;left:50%;transform:translateX(-50%);bottom:22px;z-index:90;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
+.toast{background:var(--ink);color:#fff;padding:11px 16px;border-radius:99px;font-size:13.5px;font-weight:600;box-shadow:0 8px 24px #0f1c2340}
+.toast.good{background:var(--green)}
+.toast.bad{background:var(--brick)}
+#loading{position:fixed;inset:0;background:#f2f4f0e0;display:grid;place-items:center;z-index:80;font-weight:600;color:var(--muted)}
+.spin{width:26px;height:26px;border:3px solid var(--line);border-top-color:var(--brick);border-radius:50%;animation:sp .7s linear infinite;margin:0 auto 12px}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+@media print{
+  .topbar,.sidebar,.toolbar,.scrim,#toasts,.acts,.panel-head .btn{display:none !important}
+  main.main{padding:0;max-width:none}
+  .tablewrap{max-height:none;overflow:visible;border:0}
+  table.grid th{position:static}
+  body{background:#fff}
 }
 </style>
 </head>
 <body>
 
-<div id="login-view" class="login">
-    <div class="loginbox">
-        <div class="logo">🌾</div>
-        <h1>Malipatana Village</h1>
-        <div class="muted">Welfare & Management Dashboard</div>
-        <div class="field">
-            <label>Username</label>
-            <input id="u" type="text" autocomplete="username">
-        </div>
-        <div class="field">
-            <label>Password</label>
-            <input id="p" type="password" autocomplete="current-password">
-        </div>
-        <button id="login-btn" class="primary" onclick="doLogin()">Login</button>
-        <div id="msg" class="muted" style="margin-top:10px; text-align:center; color:#a33d3d; font-weight:bold;"></div>
+<!-- ===================== LOGIN ===================== -->
+<div id="login">
+  <div class="login-art">
+    <div class="crest">JAGATSINGHPUR · ODISHA</div>
+    <h1>ଆମ ମାଲିପାଟଣା ଗାଁ</h1>
+    <h2>Malipatana Village Welfare</h2>
+    <p>One register for every family, every rupee and every case of help the village fund has given.</p>
+    <svg class="jhoti" viewBox="0 0 600 60" preserveAspectRatio="none" aria-hidden="true" height="52" width="100%">
+      <g fill="none" stroke="#f4efe4" stroke-width="2">
+        <path d="M0 46 H600"/>
+        <path d="M10 46 q15 -26 30 0 q15 -26 30 0 q15 -26 30 0 q15 -26 30 0 q15 -26 30 0 q15 -26 30 0
+                 q15 -26 30 0 q15 -26 30 0 q15 -26 30 0 q15 -26 30 0 q15 -26 30 0 q15 -26 30 0
+                 q15 -26 30 0 q15 -26 30 0 q15 -26 30 0 q15 -26 30 0 q15 -26 30 0 q15 -26 30 0 q15 -26 30 0"/>
+      </g>
+      <g fill="#f4efe4">
+        <circle cx="25" cy="55" r="2.5"/><circle cx="85" cy="55" r="2.5"/><circle cx="145" cy="55" r="2.5"/>
+        <circle cx="205" cy="55" r="2.5"/><circle cx="265" cy="55" r="2.5"/><circle cx="325" cy="55" r="2.5"/>
+        <circle cx="385" cy="55" r="2.5"/><circle cx="445" cy="55" r="2.5"/><circle cx="505" cy="55" r="2.5"/>
+        <circle cx="565" cy="55" r="2.5"/>
+      </g>
+    </svg>
+  </div>
+  <div class="login-form">
+    <div class="login-card">
+      <h3>Sign in</h3>
+      <div class="muted small">Village committee members only</div>
+      <div class="field">
+        <label class="lbl" for="u">Username</label>
+        <input id="u" class="input" type="text" autocomplete="username" autocapitalize="off" spellcheck="false">
+      </div>
+      <div class="field">
+        <label class="lbl" for="p">Password</label>
+        <input id="p" class="input" type="password" autocomplete="current-password">
+      </div>
+      <button id="loginBtn" class="btn btn-primary" style="width:100%;justify-content:center">Sign in</button>
+      <div id="loginMsg" class="msg"></div>
+      <div class="small muted" style="margin-top:22px;line-height:1.6">
+        Trouble signing in? Ask the village admin to check your row in the Users sheet.
+      </div>
     </div>
+  </div>
 </div>
 
-<div id="app" class="app">
-    <header class="top">
-        <button class="menu" onclick="toggleSide()">☰</button>
-        <div class="brand">🌾 Malipatana Village</div>
-        <div class="spacer"></div>
-        <div class="ver" id="ver">FE V1.0.0</div>
-        <div class="user" id="who"></div>
-        <button class="logout" onclick="doLogout()">Logout</button>
-    </header>
-    <div class="layout">
-        <aside id="side" class="side"></aside>
-        <main id="main" class="main"></main>
-    </div>
+<!-- ===================== APP ===================== -->
+<div id="app" class="hide">
+  <header class="topbar">
+    <button class="iconbtn" id="menuBtn" title="Menu" aria-label="Menu">&#9776;</button>
+    <div class="brand">ମାଲିପାଟଣା<small id="brandSub">MALIPATANA VILLAGE</small></div>
+    <div class="sp"></div>
+    <button class="iconbtn" id="refreshBtn" title="Reload data from the sheet" aria-label="Reload">&#8635;</button>
+    <div class="whochip"><span class="avatar" id="avatar">–</span><span><b id="whoName"></b><span class="role" id="whoRole"></span></span></div>
+    <button class="iconbtn" id="logoutBtn" title="Sign out" aria-label="Sign out">&#9099;</button>
+  </header>
+  <div class="shell">
+    <aside class="sidebar" id="sidebar"></aside>
+    <div class="scrim" id="scrim"></div>
+    <main class="main" id="main"></main>
+  </div>
 </div>
+
+<div id="modalRoot"></div>
+<div id="toasts"></div>
 
 <script>
+/* =========================================================================
+   MALIPATANA VILLAGE WELFARE DASHBOARD — Frontend V2.0.0
+   Works with the existing Apps Script backend (BE V1.0.0). No backend change
+   is required: saving and deleting use the same JSONP doGet endpoint.
+   ========================================================================= */
 const CONFIG = {
-    API_URL: 'https://script.google.com/macros/s/AKfycbzTy_-uSI9m_vVuv9G2Q8r0t0x2UWcSrkzrnQtDw9odZW_246TxnT7qj39IT1TQwt-O/exec',
-    VERSION: 'FE V1.0.0'
+  API_URL: 'https://script.google.com/macros/s/AKfycbzTy_-uSI9m_vVuv9G2Q8r0t0x2UWcSrkzrnQtDw9odZW_246TxnT7qj39IT1TQwt-O/exec',
+  VERSION: 'FE V2.0.0',
+  IDLE_MINUTES: 30
 };
-let DB = null, USER = null;
 
+let DB = null, USER = null, PAGE = 'dashboard';
+const VIEW = {};                 // per-module view state: search, sort, filter
+const mem = {};                  // fallback store when sessionStorage is blocked
+
+/* ---------- tiny helpers ---------- */
+const $ = s => document.querySelector(s);
 const esc = x => String(x ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
-const money = x => '₹' + Number(x || 0).toLocaleString('en-IN', {maximumFractionDigits:0});
-
-function api(action, params = {}) {
-    return new Promise((resolve, reject) => {
-        const cb = 'cb_' + Date.now() + '_' + Math.floor(Math.random() * 99999);
-        const s = document.createElement('script');
-        const q = new URLSearchParams({ action, ...params, callback: cb });
-        const timer = setTimeout(() => { cleanup(); reject(new Error('Backend timeout. Check connection.')); }, 20000);
-        
-        function cleanup() { clearTimeout(timer); delete window[cb]; s.remove(); }
-        
-        window[cb] = d => { cleanup(); resolve(d); };
-        s.onerror = () => { cleanup(); reject(new Error('Backend connection failed')); };
-        s.src = CONFIG.API_URL + '?' + q;
-        s.referrerPolicy = 'no-referrer';
-        document.body.appendChild(s);
-    });
+const num = v => { const n = Number(String(v ?? '').replace(/[₹,\s]/g, '')); return isNaN(n) ? 0 : n; };
+const money = v => '₹' + Math.round(num(v)).toLocaleString('en-IN');
+const today = () => new Date().toISOString().slice(0, 10);
+const store = {
+  get(k){ try { return sessionStorage.getItem(k); } catch(e){ return mem[k] ?? null; } },
+  set(k,v){ try { sessionStorage.setItem(k,v); } catch(e){ mem[k]=v; } },
+  del(k){ try { sessionStorage.removeItem(k); } catch(e){ delete mem[k]; } }
+};
+function fmtDate(v){
+  if(!v) return '';
+  const s = String(v);
+  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(!m) return s;
+  return m[3] + '/' + m[2] + '/' + m[1];
 }
-
-async function doLogin() {
-    const btn = document.getElementById('login-btn');
-    const msg = document.getElementById('msg');
-    const userVal = document.getElementById('u').value.trim();
-    const passVal = document.getElementById('p').value;
-
-    if(!userVal || !passVal) {
-        msg.textContent = 'Please enter both username and password.';
-        return;
+function toISO(v){
+  if(!v) return '';
+  const s = String(v).trim();
+  if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  const d = new Date(s);
+  return isNaN(d) ? '' : d.toISOString().slice(0,10);
+}
+function monthKey(v){ const i = toISO(v); return i ? i.slice(0,7) : ''; }
+function toast(text, kind){
+  const el = document.createElement('div');
+  el.className = 'toast ' + (kind || '');
+  el.textContent = text;
+  $('#toasts').appendChild(el);
+  setTimeout(() => el.remove(), 3200);
+}
+function busy(on, label){
+  let el = $('#loading');
+  if(on){
+    if(!el){
+      el = document.createElement('div');
+      el.id = 'loading';
+      document.body.appendChild(el);
     }
+    el.innerHTML = '<div style="text-align:center"><div class="spin"></div>' + esc(label || 'Working…') + '</div>';
+  } else if(el){ el.remove(); }
+}
 
-    try {
-        btn.disabled = true;
-        msg.textContent = 'Connecting to database...';
-        msg.style.color = 'var(--muted)';
-        
-        let r = await api('login', { username: userVal, password: passVal });
-        
-        if (!r.ok) throw Error(r.error);
-        
-        USER = r.user;
-        sessionStorage.setItem('mal_user', JSON.stringify(USER));
-        await load();
-        showApp();
-    } catch (e) {
-        msg.style.color = 'var(--bad)';
-        msg.textContent = e.message;
-    } finally {
-        btn.disabled = false;
+/* ---------- API (JSONP — avoids Apps Script CORS problems) ---------- */
+function api(action, params){
+  params = params || {};
+  return new Promise((resolve, reject) => {
+    const cb = 'mcb_' + Date.now() + '_' + Math.floor(Math.random() * 1e6);
+    const q = new URLSearchParams(Object.assign({ action: action }, params, { callback: cb, _: Date.now() }));
+    const url = CONFIG.API_URL + '?' + q.toString();
+    if(url.length > 7500){
+      reject(new Error('This record is too long to send. Shorten the remarks or description and try again.'));
+      return;
     }
+    const s = document.createElement('script');
+    const timer = setTimeout(() => { done(); reject(new Error('The sheet did not answer in time. Check your internet and try again.')); }, 28000);
+    function done(){ clearTimeout(timer); try { delete window[cb]; } catch(e){ window[cb] = undefined; } s.remove(); }
+    window[cb] = d => { done(); resolve(d); };
+    s.onerror = () => { done(); reject(new Error('Could not reach the sheet. Check the web app URL and that access is set to Anyone.')); };
+    s.referrerPolicy = 'no-referrer';
+    s.src = url;
+    document.body.appendChild(s);
+  });
 }
 
-async function load() {
-    DB = await api('bootstrap');
-    if (!DB.ok) throw Error(DB.error || 'Unable to load data from database');
-    document.getElementById('ver').textContent = CONFIG.VERSION + ' / ' + DB.version;
+/* ---------- auth ---------- */
+async function doLogin(){
+  const btn = $('#loginBtn'), msg = $('#loginMsg');
+  const username = $('#u').value.trim(), password = $('#p').value;
+  if(!username || !password){ msg.className = 'msg err'; msg.textContent = 'Enter your username and password.'; return; }
+  btn.disabled = true;
+  msg.className = 'msg info'; msg.textContent = 'Checking with the sheet…';
+  try {
+    const r = await api('login', { username, password });
+    if(!r || !r.ok) throw new Error((r && r.error) || 'Sign in failed.');
+    USER = r.user;
+    store.set('mal_user', JSON.stringify(USER));
+    msg.textContent = 'Loading village records…';
+    await load();
+    enterApp();
+  } catch(e){
+    msg.className = 'msg err';
+    msg.textContent = e.message;
+  } finally { btn.disabled = false; }
+}
+function doLogout(){ store.del('mal_user'); location.reload(); }
+const canEdit = () => ['admin','editor'].includes(String(USER && USER.role || '').toLowerCase());
+const isAdmin = () => String(USER && USER.role || '').toLowerCase() === 'admin';
+
+let idleTimer = null;
+function resetIdle(){
+  clearTimeout(idleTimer);
+  idleTimer = setTimeout(() => { toast('Signed out after ' + CONFIG.IDLE_MINUTES + ' idle minutes'); setTimeout(doLogout, 900); }, CONFIG.IDLE_MINUTES * 60000);
 }
 
-function showApp() {
-    document.getElementById('login-view').style.display = 'none';
-    document.getElementById('app').style.display = 'block';
-    document.getElementById('who').textContent = USER.name + ' · ' + USER.role;
-    buildNav();
-    page('dashboard');
+/* ---------- data ---------- */
+async function load(){
+  const r = await api('bootstrap');
+  if(!r || !r.ok) throw new Error((r && r.error) || 'Could not read the village sheet.');
+  DB = r;
+  return DB;
+}
+async function refresh(silent){
+  try {
+    if(!silent) busy(true, 'Reloading…');
+    await load();
+    render();
+    if(!silent) toast('Records reloaded', 'good');
+  } catch(e){ toast(e.message, 'bad'); }
+  finally { if(!silent) busy(false); }
 }
 
-function doLogout() {
-    sessionStorage.removeItem('mal_user');
-    location.reload();
+function enterApp(){
+  $('#login').classList.add('hide');
+  $('#app').classList.remove('hide');
+  $('#whoName').textContent = USER.name || USER.username;
+  $('#whoRole').textContent = USER.role || 'Viewer';
+  $('#avatar').textContent = String(USER.name || USER.username || '?').trim().charAt(0).toUpperCase();
+  $('#brandSub').textContent = (DB.settings && DB.settings['Village Name'] ? String(DB.settings['Village Name']).toUpperCase() : 'MALIPATANA') + ' · ' + CONFIG.VERSION;
+  if(DB.settings && DB.settings['Auto Logout']){
+    const m = parseInt(String(DB.settings['Auto Logout']), 10);
+    if(m > 0) CONFIG.IDLE_MINUTES = m;
+  }
+  buildNav();
+  go('dashboard');
+  ['click','keydown','touchstart'].forEach(ev => document.addEventListener(ev, resetIdle, { passive: true }));
+  resetIdle();
 }
 
-function toggleSide() {
-    document.getElementById('side').classList.toggle('open');
+/* ---------- navigation ---------- */
+function buildNav(){
+  const groups = [
+    ['', [['dashboard', '▦', 'Dashboard', null]]],
+    ['PEOPLE', [['families', '⌂', 'Families', 'families'], ['members', '☗', 'Members', 'members']]],
+    ['MONEY', [['contributions', '◈', 'Contributions', 'contributions'], ['income', '↑', 'Income', 'income'],
+               ['expenditure', '↓', 'Expenditure', 'expenditure']]],
+    ['WELFARE', [['emergency', '✚', 'Emergency cases', 'emergency'], ['regularSupport', '❤', 'Regular support', 'regularSupport'],
+                 ['medical', '⚕', 'Medical', 'medical'], ['education', '✎', 'Education', 'education'],
+                 ['insurance', '⛨', 'Insurance', 'insurance']]]
+  ];
+  if(isAdmin()) groups.push(['ADMIN', [['users', '☺', 'Users', 'users'], ['settings', '⚙', 'Settings', 'settingsList']]]);
+  let html = '';
+  groups.forEach(([title, items]) => {
+    if(title) html += '<div class="navgroup">' + title + '</div>';
+    html += items.map(([key, ic, label, dataKey]) => {
+      const n = dataKey ? (rowsOf(dataKey) || []).length : '';
+      return '<button class="nav" data-page="' + key + '"><span class="ic">' + ic + '</span>' + esc(label) +
+             (n !== '' ? '<span class="count">' + n + '</span>' : '') + '</button>';
+    }).join('');
+  });
+  $('#sidebar').innerHTML = html;
+  $('#sidebar').querySelectorAll('.nav').forEach(b => b.onclick = () => go(b.dataset.page));
 }
-
-const navs = [
-    ['dashboard', '📊 Dashboard'], ['families', '🏠 Families'], ['members', '👥 Members'], 
-    ['income', '💰 Income'], ['expenditure', '💳 Expenditure'], ['contributions', '🤝 Contributions'], 
-    ['emergency', '🚑 Emergency Cases'], ['regularSupport', '❤️ Regular Support'], 
-    ['insurance', '🛡️ Insurance'], ['education', '🎓 Education'], ['medical', '🏥 Medical']
-];
-
-function buildNav() {
-    document.getElementById('side').innerHTML = navs.map(x => 
-        `<button class="nav" data-p="${x[0]}" onclick="page('${x[0]}')">${x[1]}</button>`
-    ).join('');
+function go(page){
+  PAGE = page;
+  document.querySelectorAll('.nav').forEach(b => b.classList.toggle('active', b.dataset.page === page));
+  closeDrawer();
+  render();
+  window.scrollTo({ top: 0 });
 }
-
-function page(p) {
-    document.querySelectorAll('.nav').forEach(x => x.classList.toggle('active', x.dataset.p === p));
-    document.getElementById('side').classList.remove('open');
-    if (p === 'dashboard') dash(); else tablePage(p);
+function render(){
+  buildNav();
+  document.querySelectorAll('.nav').forEach(b => b.classList.toggle('active', b.dataset.page === PAGE));
+  if(PAGE === 'dashboard') renderDashboard();
+  else renderModule(PAGE);
 }
+function openDrawer(){ $('#sidebar').classList.add('open'); $('#scrim').classList.add('show'); }
+function closeDrawer(){ $('#sidebar').classList.remove('open'); $('#scrim').classList.remove('show'); }
 
-function dash() {
-    let s = DB.summary || {};
-    let t = Number(DB.settings?.['Emergency Fund Target'] || 0);
-    let pct = t ? Math.min(100, Math.max(0, Math.round((s.availableFund / t) * 100))) : 0;
-    
-    document.getElementById('main').innerHTML = `
-        <div class="head">
-            <div>
-                <h2>Village Dashboard</h2>
-                <div class="muted">${esc(DB.settings?.['Village Name'] || 'Malipatana')} · Live summary</div>
-            </div>
-        </div>
-        <div class="grid">
-            ${card('Families', s.families, '🏠')}
-            ${card('Members', s.members, '👥')}
-            ${card('Earning Members', s.earningMembers, '💼')}
-            ${card('Children', s.children, '🧒')}
-            ${card('Elderly', s.elderly, '👴')}
-            ${card('Contributions', money(s.contributions), '🤝')}
-            ${card('Income', money(s.income), '📈')}
-            ${card('Expenditure', money(s.expenditure), '📉')}
-            ${card('Available Fund', money(s.availableFund), '💰', 'good')}
-            ${card('Emergency Cases', s.emergencyCases, '🚑')}
-        </div>
-        <div class="panel">
-            <div class="panelhead"><h3>Emergency Fund</h3><b>${pct}%</b></div>
-            <div class="bar"><i style="width:${pct}%"></i></div>
-            <div class="muted" style="margin-top:7px">${money(Math.max(0, s.availableFund))} available · target ${money(t)}</div>
-        </div>
-        <div class="panel">
-            <h3>Protection & Support</h3>
-            <div class="grid">
-                ${card('Insurance Coverage', s.insuranceCoverage + '%', '🛡️')}
-                ${card('Regular Support', money(s.regularSupport), '❤️')}
-                ${card('Emergency Paid', money(s.emergencyPaid), '🚑', 'bad')}
-                ${card('Monthly Contribution', money(DB.settings?.['Monthly Contribution'] || 0), '📅')}
-                ${card('Village Code', DB.settings?.['Village Code'] || 'V001', '🏷️')}
-            </div>
-        </div>`;
-}
+/* =========================================================================
+   MODULE SCHEMA — one entry per sheet. `fields` must list every sheet column
+   in sheet order, because the backend rewrites the whole row on save.
+   ========================================================================= */
+const YESNO = ['Yes', 'No'];
+const PAYMODES = ['Cash', 'UPI', 'Bank Transfer', 'Cheque'];
 
-function card(l, v, i, c = '') {
-    return `<div class="card"><div>${i}</div><div class="label">${l}</div><div class="value ${c}">${v || 0}</div></div>`;
-}
-
-const COLS = {
-    families: ['Family ID', 'Family Head', 'House No', 'Address/Area', 'Mobile', 'Total Members', 'Earning Members', 'Children', 'Elderly', 'Vulnerable Status', 'Family Status', 'Remarks'],
-    members: ['Member ID', 'Family ID', 'Name', 'Relation to Family Head', 'Gender', 'Date of Birth', 'Age', 'Education', 'Occupation', 'Earning Member', 'Monthly Income', 'Mobile', 'Insurance'],
-    income: ['Income ID', 'Date', 'Family ID', 'Member ID', 'Income Type', 'Source', 'Amount', 'Received By', 'Payment Mode'],
-    expenditure: ['Expense ID', 'Date', 'Category', 'Subcategory', 'Family ID', 'Description', 'Amount', 'Paid To', 'Payment Mode'],
-    contributions: ['Contribution ID', 'Date', 'Family ID', 'Member ID', 'Contributor', 'Month', 'Amount', 'Payment Mode', 'Receipt No'],
-    emergency: ['Case ID', 'Family ID', 'Affected Person', 'Case Type', 'Event Date', 'Earning Member', 'Immediate Assistance', 'Monthly Support', 'Support Months', 'Total Approved', 'Total Paid', 'Balance', 'Status'],
-    regularSupport: ['Support ID', 'Family ID', 'Beneficiary', 'Support Type', 'Amount', 'Frequency', 'Start Date', 'End Date', 'Active'],
-    insurance: ['Insurance ID', 'Family ID', 'Member ID', 'Name', 'Insurance Type', 'Provider', 'Sum Insured', 'Premium', 'Renewal Date', 'Status'],
-    education: ['Education ID', 'Family ID', 'Member ID', 'Student Name', 'School/College', 'Class/Course', 'Scholarship', 'Annual Fee', 'Village Assistance'],
-    medical: ['Medical ID', 'Date', 'Family ID', 'Member ID', 'Patient', 'Medical Issue', 'Hospital', 'Estimated Cost', 'Assistance', 'Paid', 'Status']
+const MODULES = {
+  families: {
+    sheet: 'Families', title: 'Families', odia: 'ପରିବାର', idField: 'Family ID', prefix: 'FAM',
+    blurb: 'Every household in the village register',
+    fields: [
+      { n:'Family ID', t:'text', auto:true },
+      { n:'Family Head', t:'text', req:true },
+      { n:'House No', t:'text' },
+      { n:'Address/Area', t:'datalist' },
+      { n:'Mobile', t:'tel' },
+      { n:'Total Members', t:'number' },
+      { n:'Earning Members', t:'number' },
+      { n:'Children', t:'number' },
+      { n:'Elderly', t:'number' },
+      { n:'Vulnerable Status', t:'select', opts:['Normal','Vulnerable','Highly Vulnerable'] },
+      { n:'Family Status', t:'select', opts:['Active','Inactive','Shifted'] },
+      { n:'Remarks', t:'textarea' },
+      { n:'Created Date', t:'date', hidden:true },
+      { n:'Last Updated', t:'date', hidden:true }
+    ],
+    list: ['Family ID','Family Head','House No','Address/Area','Mobile','Total Members','Earning Members','Vulnerable Status','Family Status']
+  },
+  members: {
+    sheet: 'Members', title: 'Members', odia: 'ସଦସ୍ୟ', idField: 'Member ID', prefix: 'MEM',
+    blurb: 'People inside each family',
+    fields: [
+      { n:'Member ID', t:'text', auto:true },
+      { n:'Family ID', t:'family', req:true },
+      { n:'Name', t:'text', req:true },
+      { n:'Relation to Family Head', t:'datalist', opts:['Self','Wife','Husband','Son','Daughter','Father','Mother','Brother','Sister','Daughter-in-law','Son-in-law','Grandson','Granddaughter','Other'] },
+      { n:'Gender', t:'select', opts:['Male','Female','Other'] },
+      { n:'Date of Birth', t:'date' },
+      { n:'Age', t:'number', hint:'Filled automatically from date of birth' },
+      { n:'Education', t:'datalist', opts:['Illiterate','Primary','Class 10','Class 12','ITI/Diploma','Graduate','Post Graduate'] },
+      { n:'Occupation', t:'datalist', opts:['Farmer','Daily Wage','Fisherman','Shop','Private Job','Government Job','Student','Homemaker','Unemployed','Retired'] },
+      { n:'Earning Member', t:'select', opts:YESNO },
+      { n:'Monthly Income', t:'money' },
+      { n:'Mobile', t:'tel' },
+      { n:'Disability', t:'select', opts:['No','Yes'] },
+      { n:'Insurance', t:'select', opts:YESNO },
+      { n:'Remarks', t:'textarea' }
+    ],
+    list: ['Member ID','Name','Family ID','Relation to Family Head','Gender','Age','Occupation','Earning Member','Monthly Income','Mobile']
+  },
+  contributions: {
+    sheet: 'Contributions', title: 'Contributions', odia: 'ଚାନ୍ଦା', idField: 'Contribution ID', prefix: 'CTR',
+    blurb: 'Monthly collection from families',
+    fields: [
+      { n:'Contribution ID', t:'text', auto:true },
+      { n:'Date', t:'date', req:true, def:'today' },
+      { n:'Family ID', t:'family', req:true },
+      { n:'Member ID', t:'member' },
+      { n:'Contributor', t:'text' },
+      { n:'Month', t:'month', def:'thisMonth' },
+      { n:'Amount', t:'money', req:true, def:'monthlyContribution' },
+      { n:'Payment Mode', t:'datalist', opts:PAYMODES },
+      { n:'Receipt No', t:'text' },
+      { n:'Remarks', t:'textarea' }
+    ],
+    list: ['Contribution ID','Date','Month','Family ID','Contributor','Amount','Payment Mode','Receipt No']
+  },
+  income: {
+    sheet: 'Income', title: 'Income', odia: 'ଆୟ', idField: 'Income ID', prefix: 'INC',
+    blurb: 'Money coming into the village fund',
+    fields: [
+      { n:'Income ID', t:'text', auto:true },
+      { n:'Date', t:'date', req:true, def:'today' },
+      { n:'Family ID', t:'family' },
+      { n:'Member ID', t:'member' },
+      { n:'Income Type', t:'datalist', opts:['Donation','Grant','Interest','Rent','Fine','Sale','Other'] },
+      { n:'Source', t:'datalist' },
+      { n:'Amount', t:'money', req:true },
+      { n:'Received By', t:'datalist' },
+      { n:'Payment Mode', t:'datalist', opts:PAYMODES },
+      { n:'Remarks', t:'textarea' }
+    ],
+    list: ['Income ID','Date','Income Type','Source','Family ID','Amount','Received By','Payment Mode']
+  },
+  expenditure: {
+    sheet: 'Expenditure', title: 'Expenditure', odia: 'ଖର୍ଚ୍ଚ', idField: 'Expense ID', prefix: 'EXP',
+    blurb: 'Money paid out of the village fund',
+    fields: [
+      { n:'Expense ID', t:'text', auto:true },
+      { n:'Date', t:'date', req:true, def:'today' },
+      { n:'Category', t:'datalist', opts:['Welfare','Medical','Education','Emergency','Administration','Festival','Infrastructure','Other'] },
+      { n:'Subcategory', t:'datalist' },
+      { n:'Family ID', t:'family' },
+      { n:'Description', t:'text' },
+      { n:'Amount', t:'money', req:true },
+      { n:'Paid To', t:'text' },
+      { n:'Payment Mode', t:'datalist', opts:PAYMODES },
+      { n:'Bill/Receipt', t:'text' },
+      { n:'Approved By', t:'datalist' },
+      { n:'Remarks', t:'textarea' }
+    ],
+    list: ['Expense ID','Date','Category','Description','Family ID','Amount','Paid To','Payment Mode','Approved By']
+  },
+  emergency: {
+    sheet: 'Emergency Cases', title: 'Emergency cases', odia: 'ଜରୁରୀ', idField: 'Case ID', prefix: 'CASE',
+    blurb: 'Help sanctioned after a death, accident or disaster',
+    fields: [
+      { n:'Case ID', t:'text', auto:true },
+      { n:'Family ID', t:'family', req:true },
+      { n:'Affected Person', t:'text', req:true },
+      { n:'Case Type', t:'datalist', opts:['Death','Accident','Serious Illness','Fire','Flood','Cyclone','Crop Loss','Other'] },
+      { n:'Event Date', t:'date', def:'today' },
+      { n:'Earning Member', t:'select', opts:YESNO },
+      { n:'Immediate Assistance', t:'money' },
+      { n:'Monthly Support', t:'money' },
+      { n:'Support Months', t:'number' },
+      { n:'Education Assistance', t:'money' },
+      { n:'Medical Assistance', t:'money' },
+      { n:'Other Assistance', t:'money' },
+      { n:'Total Approved', t:'money', ro:true, calc:'approved', hint:'Immediate + (monthly × months) + education + medical + other' },
+      { n:'Total Paid', t:'money' },
+      { n:'Balance', t:'money', ro:true, calc:'balance', hint:'Approved minus paid' },
+      { n:'Status', t:'select', opts:['Open','Ongoing','Closed'] },
+      { n:'Remarks', t:'textarea' }
+    ],
+    list: ['Case ID','Family ID','Affected Person','Case Type','Event Date','Total Approved','Total Paid','Balance','Status']
+  },
+  regularSupport: {
+    sheet: 'Regular Support', title: 'Regular support', odia: 'ନିୟମିତ ସହାୟତା', idField: 'Support ID', prefix: 'SUP',
+    blurb: 'Standing help such as widow or old-age support',
+    fields: [
+      { n:'Support ID', t:'text', auto:true },
+      { n:'Family ID', t:'family', req:true },
+      { n:'Beneficiary', t:'text', req:true },
+      { n:'Support Type', t:'datalist', opts:['Widow Support','Old Age','Disability','Education','Medical','Ration','Other'] },
+      { n:'Amount', t:'money' },
+      { n:'Frequency', t:'select', opts:['Monthly','Quarterly','Half Yearly','Yearly','One Time'] },
+      { n:'Start Date', t:'date', def:'today' },
+      { n:'End Date', t:'date' },
+      { n:'Active', t:'select', opts:YESNO },
+      { n:'Reason', t:'text' },
+      { n:'Remarks', t:'textarea' }
+    ],
+    list: ['Support ID','Family ID','Beneficiary','Support Type','Amount','Frequency','Start Date','End Date','Active']
+  },
+  medical: {
+    sheet: 'Medical', title: 'Medical', odia: 'ଚିକିତ୍ସା', idField: 'Medical ID', prefix: 'MED',
+    blurb: 'Treatment costs and village assistance',
+    fields: [
+      { n:'Medical ID', t:'text', auto:true },
+      { n:'Family ID', t:'family', req:true },
+      { n:'Member ID', t:'member' },
+      { n:'Patient', t:'text', req:true },
+      { n:'Date', t:'date', def:'today' },
+      { n:'Medical Issue', t:'datalist' },
+      { n:'Hospital', t:'datalist' },
+      { n:'Estimated Cost', t:'money' },
+      { n:'Assistance', t:'money' },
+      { n:'Paid', t:'money' },
+      { n:'Status', t:'select', opts:['Ongoing','Completed','Referred'] },
+      { n:'Remarks', t:'textarea' }
+    ],
+    list: ['Medical ID','Date','Patient','Family ID','Medical Issue','Hospital','Estimated Cost','Assistance','Paid','Status']
+  },
+  education: {
+    sheet: 'Education', title: 'Education', odia: 'ଶିକ୍ଷା', idField: 'Education ID', prefix: 'EDU',
+    blurb: 'Students and the fees the village helps with',
+    fields: [
+      { n:'Education ID', t:'text', auto:true },
+      { n:'Family ID', t:'family', req:true },
+      { n:'Member ID', t:'member' },
+      { n:'Student Name', t:'text', req:true },
+      { n:'School/College', t:'datalist' },
+      { n:'Class/Course', t:'datalist' },
+      { n:'Scholarship', t:'select', opts:YESNO },
+      { n:'Annual Fee', t:'money' },
+      { n:'Village Assistance', t:'money' },
+      { n:'Remarks', t:'textarea' }
+    ],
+    list: ['Education ID','Student Name','Family ID','School/College','Class/Course','Scholarship','Annual Fee','Village Assistance']
+  },
+  insurance: {
+    sheet: 'Insurance', title: 'Insurance', odia: 'ବୀମା', idField: 'Insurance ID', prefix: 'INS',
+    blurb: 'Policies held by villagers and their renewal dates',
+    fields: [
+      { n:'Insurance ID', t:'text', auto:true },
+      { n:'Family ID', t:'family', req:true },
+      { n:'Member ID', t:'member' },
+      { n:'Name', t:'text', req:true },
+      { n:'Insurance Type', t:'datalist', opts:['Life','Health','Accident','Crop','Vehicle','PMJJBY','PMSBY','Other'] },
+      { n:'Provider', t:'datalist', opts:['LIC','SBI Life','New India','Star Health','Other'] },
+      { n:'Policy No', t:'text' },
+      { n:'Sum Insured', t:'money' },
+      { n:'Premium', t:'money' },
+      { n:'Renewal Date', t:'date' },
+      { n:'Status', t:'select', opts:['Active','Lapsed','Claimed'] },
+      { n:'Remarks', t:'textarea' }
+    ],
+    list: ['Insurance ID','Name','Family ID','Insurance Type','Provider','Policy No','Sum Insured','Premium','Renewal Date','Status']
+  },
+  settingsList: {
+    sheet: 'Settings', title: 'Settings', odia: 'ସେଟିଂ', idField: 'Setting', blurb: 'Village name, targets and fund opening balance',
+    fields: [{ n:'Setting', t:'text', req:true }, { n:'Value', t:'text' }],
+    list: ['Setting','Value'], adminOnly: true
+  },
+  users: {
+    sheet: 'Users', title: 'Users', odia: 'ବ୍ୟବହାରକାରୀ', idField: 'Username', blurb: 'Who can sign in to this dashboard',
+    fields: [
+      { n:'Username', t:'text', req:true },
+      { n:'Password', t:'text', hint:'Leave blank when editing to keep the current password' },
+      { n:'Role', t:'select', opts:['Admin','Editor','Viewer'] },
+      { n:'Active', t:'select', opts:['YES','NO'] }, { n:'Name', t:'text' }
+    ],
+    list: ['Username','Name','Role','Active'], adminOnly: true
+  }
 };
 
-function tablePage(k) {
-    let a = DB[k] || [];
-    let cols = COLS[k] || Object.keys(a[0] || {});
-    
-    document.getElementById('main').innerHTML = `
-        <div class="head">
-            <h2>${label(k)}</h2>
-            <div class="spacer"></div>
-            <input class="search" placeholder="Search..." oninput="filterTable(this.value)">
-        </div>
-        <div class="panel">
-            ${a.length ? `
-            <div class="tablewrap">
-                <table id="tbl">
-                    <tr>${cols.map(c => `<th>${esc(c)}</th>`).join('')}</tr>
-                    ${a.map(r => `<tr>${cols.map(c => `<td>${esc(r[c])}</td>`).join('')}</tr>`).join('')}
-                </table>
-            </div>` : '<div class="empty">No records yet.</div>'}
-        </div>`;
+function rowsOf(key){
+  if(!DB) return [];
+  if(key === 'settingsList') return Object.keys(DB.settings || {}).map(k => ({ Setting: k, Value: DB.settings[k] }));
+  if(key === 'users') return DB.users || [];
+  return DB[key] || [];
+}
+function setting(name, fallback){
+  const v = DB && DB.settings ? DB.settings[name] : undefined;
+  return (v === undefined || v === '') ? fallback : v;
+}
+function familyName(id){
+  if(!id) return '';
+  const f = (DB.families || []).find(x => String(x['Family ID']).trim() === String(id).trim());
+  return f ? f['Family Head'] : '';
+}
+function memberName(id){
+  if(!id) return '';
+  const m = (DB.members || []).find(x => String(x['Member ID']).trim() === String(id).trim());
+  return m ? m['Name'] : '';
 }
 
-function label(k) {
-    return k.replace(/([A-Z])/g, ' $1').replace(/^./, x => x.toUpperCase());
+/* =========================================================================
+   DASHBOARD
+   ========================================================================= */
+function renderDashboard(){
+  const s = DB.summary || {};
+  const opening = num(setting('Opening Fund', 0));
+  const target = num(setting('Emergency Fund Target', 0));
+  const available = num(s.availableFund);
+  const pct = target ? Math.max(0, Math.min(100, Math.round(available / target * 100))) : 0;
+
+  const ledger = [
+    ['in', 'Opening fund', 'Balance carried into the register', opening],
+    ['in', 'Contributions collected', (DB.contributions || []).length + ' entries', num(s.contributions)],
+    ['in', 'Other income', 'Donations, grants, interest', num(s.income)],
+    ['out', 'Expenditure', (DB.expenditure || []).length + ' entries', -num(s.expenditure)],
+    ['out', 'Emergency help paid', s.emergencyCases + ' cases recorded', -num(s.emergencyPaid)],
+    ['out', 'Regular support committed', 'Active standing support per cycle', -num(s.regularSupport)]
+  ];
+
+  const html = `
+  <div class="pagehead">
+    <div>
+      <h2>${esc(setting('Village Name','Malipatana'))} village fund</h2>
+      <div class="sub">Village code ${esc(setting('Village Code','V001'))} · updated just now</div>
+    </div>
+    <div class="sp"></div>
+    <button class="btn btn-sm" onclick="window.print()">Print</button>
+  </div>
+
+  <div class="ledger">
+    <div class="ledger-top">
+      <div>
+        <div class="cap">Fund available today</div>
+        <div class="big tnum">${money(available)}</div>
+      </div>
+      <div style="min-width:230px;flex:1;max-width:360px">
+        <div class="small muted">Emergency fund target ${money(target)}</div>
+        <div class="meter"><i style="width:${pct}%"></i></div>
+        <div class="small muted" style="margin-top:6px">${pct}% of the target is in hand</div>
+      </div>
+    </div>
+    <div class="ledger-rows">
+      ${ledger.map(([kind, name, note, amt]) => `
+        <div class="lrow ${kind}">
+          <div class="nm">${esc(name)}<em>${esc(note)}</em></div>
+          <div class="amt tnum">${amt < 0 ? '−' : '+'} ${money(Math.abs(amt))}</div>
+        </div>`).join('')}
+      <div class="lrow total">
+        <div class="nm">Balance in hand</div>
+        <div class="amt tnum">${money(available)}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="strip">
+    <div><div class="k">Families</div><div class="v tnum">${num(s.families)}</div></div>
+    <div><div class="k">Members</div><div class="v tnum">${num(s.members)}</div></div>
+    <div><div class="k">Earning</div><div class="v tnum">${num(s.earningMembers)}</div></div>
+    <div><div class="k">Children</div><div class="v tnum">${num(s.children)}</div></div>
+    <div><div class="k">Elderly</div><div class="v tnum">${num(s.elderly)}</div></div>
+    <div><div class="k">Insured</div><div class="v tnum">${num(s.insuranceCoverage)}%</div></div>
+  </div>
+
+  <div class="cols">
+    <div class="panel">
+      <div class="panel-head"><h3>Money in and out, last 12 months</h3></div>
+      <div class="panel-body" style="padding-bottom:6px">${barChart()}</div>
+      <div class="legend"><span><i style="background:var(--green)"></i>In</span><span><i style="background:var(--brick)"></i>Out</span></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h3>Needs attention</h3></div>
+      ${attentionList()}
+    </div>
+  </div>
+
+  <div class="cols">
+    <div class="panel">
+      <div class="panel-head"><h3>Latest entries</h3></div>
+      ${recentList()}
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h3>Quick add</h3></div>
+      <div class="panel-body" style="display:flex;flex-wrap:wrap;gap:9px">
+        ${canEdit() ? `
+          <button class="btn btn-primary btn-sm" onclick="openForm('contributions')">Contribution</button>
+          <button class="btn btn-sm" onclick="openForm('expenditure')">Expenditure</button>
+          <button class="btn btn-sm" onclick="openForm('income')">Income</button>
+          <button class="btn btn-sm" onclick="openForm('families')">Family</button>
+          <button class="btn btn-sm" onclick="openForm('members')">Member</button>
+          <button class="btn btn-sm" onclick="openForm('emergency')">Emergency case</button>`
+        : '<div class="muted small">Your account can view records but not change them.</div>'}
+      </div>
+    </div>
+  </div>`;
+  $('#main').innerHTML = html;
 }
 
-function filterTable(q) {
-    document.querySelectorAll('#tbl tr').forEach((r, i) => {
-        if (i) r.style.display = r.textContent.toLowerCase().includes(q.toLowerCase()) ? '' : 'none';
+function lastMonths(n){
+  const out = [], d = new Date();
+  d.setDate(1);
+  for(let i = n - 1; i >= 0; i--){
+    const x = new Date(d.getFullYear(), d.getMonth() - i, 1);
+    out.push(x.toISOString().slice(0, 7));
+  }
+  return out;
+}
+function barChart(){
+  const months = lastMonths(12);
+  const inM = {}, outM = {};
+  months.forEach(m => { inM[m] = 0; outM[m] = 0; });
+  (DB.contributions || []).forEach(r => { const m = monthKey(r['Month'] || r['Date']); if(m in inM) inM[m] += num(r['Amount']); });
+  (DB.income || []).forEach(r => { const m = monthKey(r['Date']); if(m in inM) inM[m] += num(r['Amount']); });
+  (DB.expenditure || []).forEach(r => { const m = monthKey(r['Date']); if(m in outM) outM[m] += num(r['Amount']); });
+  const max = Math.max(1, ...months.map(m => Math.max(inM[m], outM[m])));
+  const W = 720, H = 190, pad = 26, bw = (W - pad * 2) / months.length;
+  let bars = '', labels = '';
+  months.forEach((m, i) => {
+    const x = pad + i * bw;
+    const hi = Math.round((inM[m] / max) * (H - 52));
+    const ho = Math.round((outM[m] / max) * (H - 52));
+    bars += `<rect x="${x + bw * .12}" y="${H - 28 - hi}" width="${bw * .34}" height="${hi}" rx="2" fill="var(--green)"><title>${m} in ${money(inM[m])}</title></rect>`;
+    bars += `<rect x="${x + bw * .52}" y="${H - 28 - ho}" width="${bw * .34}" height="${ho}" rx="2" fill="var(--brick)"><title>${m} out ${money(outM[m])}</title></rect>`;
+    labels += `<text x="${x + bw / 2}" y="${H - 10}" text-anchor="middle" font-size="10" fill="#5c6b62">${m.slice(5)}/${m.slice(2,4)}</text>`;
+  });
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto" role="img" aria-label="Monthly money in and out">
+    <line x1="${pad}" y1="${H-28}" x2="${W-pad}" y2="${H-28}" stroke="#dbe2db"/>
+    <text x="${pad}" y="16" font-size="11" fill="#5c6b62">peak ${money(max)}</text>
+    ${bars}${labels}</svg>`;
+}
+
+function attentionList(){
+  const items = [];
+  const now = new Date(), in30 = new Date(Date.now() + 30 * 864e5);
+  const renew = (DB.insurance || []).filter(r => {
+    const d = toISO(r['Renewal Date']); if(!d) return false;
+    const dt = new Date(d); return dt >= new Date(now.toDateString()) && dt <= in30;
+  });
+  if(renew.length) items.push(['d-yellow', renew.length + ' insurance renewal' + (renew.length > 1 ? 's' : '') + ' due within 30 days', renew.slice(0,3).map(r => r['Name']).join(', '), 'insurance']);
+
+  const open = (DB.emergency || []).filter(r => String(r['Status'] || '').toLowerCase() !== 'closed');
+  if(open.length) items.push(['d-red', open.length + ' emergency case' + (open.length > 1 ? 's' : '') + ' still open', 'Pending balance ' + money(open.reduce((a, r) => a + num(r['Balance']), 0)), 'emergency']);
+
+  const thisMonth = new Date().toISOString().slice(0, 7);
+  const paid = new Set((DB.contributions || []).filter(r => monthKey(r['Month'] || r['Date']) === thisMonth).map(r => String(r['Family ID']).trim()));
+  const activeFams = (DB.families || []).filter(f => String(f['Family Status'] || 'Active').toLowerCase() !== 'inactive');
+  const pending = activeFams.filter(f => !paid.has(String(f['Family ID']).trim()));
+  if(pending.length) items.push(['d-blue', pending.length + ' families have not paid this month', 'Expected ' + money(pending.length * num(setting('Monthly Contribution', 0))), 'contributions']);
+
+  const noMembers = (DB.families || []).filter(f => !(DB.members || []).some(m => String(m['Family ID']).trim() === String(f['Family ID']).trim()));
+  if(noMembers.length) items.push(['d-yellow', noMembers.length + ' families have no members listed', noMembers.slice(0,3).map(f => f['Family Head']).join(', '), 'members']);
+
+  const vuln = (DB.families || []).filter(f => String(f['Vulnerable Status'] || '').toLowerCase().includes('vulnerable'));
+  if(vuln.length) items.push(['d-red', vuln.length + ' families marked vulnerable', 'Review support arrangements', 'families']);
+
+  if(!items.length) return '<div class="empty"><b>All clear</b>Nothing is overdue or unfinished right now.</div>';
+  return items.map(([dot, title, note, page]) => `
+    <div class="alert"><span class="dot ${dot}"></span>
+      <div><b>${esc(title)}</b><span class="muted small">${esc(note)}</span></div>
+      <button class="go" onclick="go('${page}')">Open</button>
+    </div>`).join('');
+}
+
+function recentList(){
+  const rows = [];
+  (DB.contributions || []).forEach(r => rows.push([toISO(r['Date']), 'Contribution', (r['Contributor'] || familyName(r['Family ID']) || r['Family ID']), num(r['Amount']), 1]));
+  (DB.income || []).forEach(r => rows.push([toISO(r['Date']), 'Income', (r['Source'] || r['Income Type'] || ''), num(r['Amount']), 1]));
+  (DB.expenditure || []).forEach(r => rows.push([toISO(r['Date']), 'Expenditure', (r['Description'] || r['Category'] || ''), num(r['Amount']), -1]));
+  rows.sort((a, b) => String(b[0]).localeCompare(String(a[0])));
+  const top = rows.slice(0, 7);
+  if(!top.length) return '<div class="empty"><b>No entries yet</b>Add a contribution or an expense to start the register.</div>';
+  return top.map(([d, kind, what, amt, sign]) => `
+    <div class="alert">
+      <div style="min-width:74px" class="muted small tnum">${esc(fmtDate(d))}</div>
+      <div><b>${esc(what || kind)}</b><span class="muted small">${esc(kind)}</span></div>
+      <div style="margin-left:auto;font-weight:700;color:${sign > 0 ? 'var(--green)' : 'var(--brick)'}" class="tnum">${sign > 0 ? '+' : '−'} ${money(amt)}</div>
+    </div>`).join('');
+}
+
+/* =========================================================================
+   LIST PAGES
+   ========================================================================= */
+function fieldDef(key, col){ return (MODULES[key].fields || []).find(f => f.n === col) || { n: col, t: 'text' }; }
+
+function cellHtml(key, row, col){
+  const f = fieldDef(key, col);
+  const raw = row[col];
+  if(f.t === 'money'){ return { cls: 'num', html: raw === '' || raw == null ? '' : '<span class="tnum">' + money(raw) + '</span>' }; }
+  if(f.t === 'number'){ return { cls: 'num', html: '<span class="tnum">' + esc(raw) + '</span>' }; }
+  if(f.t === 'date'){ return { cls: 'tnum', html: esc(fmtDate(raw)) }; }
+  if(f.t === 'family'){
+    const nm = familyName(raw);
+    return { cls: '', html: esc(raw) + (nm ? ' <span class="muted small">' + esc(nm) + '</span>' : '') };
+  }
+  if(f.t === 'member'){
+    const nm = memberName(raw);
+    return { cls: '', html: esc(raw) + (nm ? ' <span class="muted small">' + esc(nm) + '</span>' : '') };
+  }
+  if(col === 'Status' || col === 'Active' || col === 'Family Status' || col === 'Vulnerable Status' || col === 'Earning Member' || col === 'Scholarship'){
+    const v = String(raw || '').trim();
+    if(!v) return { cls: '', html: '' };
+    const low = v.toLowerCase();
+    let tone = '';
+    if(['active','closed','completed','yes','normal'].includes(low)) tone = 'ok';
+    if(['ongoing','open','referred','lapsed','shifted'].includes(low)) tone = 'warn';
+    if(['inactive','no','claimed'].includes(low) || low.includes('vulnerable')) tone = 'bad';
+    return { cls: '', html: '<span class="pill ' + tone + '">' + esc(v) + '</span>' };
+  }
+  if(col === MODULES[key].idField) return { cls: 'idcell', html: esc(raw) };
+  return { cls: '', html: esc(raw) };
+}
+
+function filterRows(key){
+  const m = MODULES[key], v = VIEW[key] || (VIEW[key] = { q: '', sort: '', dir: 1, fam: '' });
+  let rows = rowsOf(key).slice();
+  if(v.fam) rows = rows.filter(r => String(r['Family ID'] || '').trim() === v.fam);
+  if(v.q){
+    const q = v.q.toLowerCase();
+    rows = rows.filter(r => m.fields.some(f => String(r[f.n] ?? '').toLowerCase().includes(q)) ||
+                            String(familyName(r['Family ID']) || '').toLowerCase().includes(q));
+  }
+  if(v.sort){
+    const f = fieldDef(key, v.sort);
+    const numeric = ['money', 'number'].includes(f.t);
+    rows.sort((a, b) => {
+      const x = a[v.sort], y = b[v.sort];
+      const r = numeric ? num(x) - num(y) : String(x ?? '').localeCompare(String(y ?? ''), 'en', { numeric: true });
+      return r * v.dir;
     });
+  }
+  return rows;
 }
+
+function renderModule(key){
+  const m = MODULES[key];
+  if(!m){ $('#main').innerHTML = '<div class="empty"><b>Page not found</b></div>'; return; }
+  if(m.adminOnly && !isAdmin()){ $('#main').innerHTML = '<div class="empty"><b>Admins only</b>Ask the village admin for access.</div>'; return; }
+  if(key === 'users' && !DB.users){
+    $('#main').innerHTML = '<div class="pagehead"><h2>Users</h2></div><div class="panel"><div class="empty"><b>Not available yet</b>' +
+      'The backend does not send the user list. Add users directly in the Users sheet, or apply the optional backend update.</div></div>';
+    return;
+  }
+  const v = VIEW[key] || (VIEW[key] = { q: '', sort: '', dir: 1, fam: '' });
+  const rows = filterRows(key);
+  const all = rowsOf(key);
+  const moneyCols = m.list.filter(c => fieldDef(key, c).t === 'money');
+  const totals = moneyCols.map(c => c + ' ' + money(rows.reduce((a, r) => a + num(r[c]), 0)));
+  const hasFamily = m.fields.some(f => f.t === 'family');
+
+  $('#main').innerHTML = `
+  <div class="pagehead">
+    <div>
+      <h2>${esc(m.title)} <span class="muted" style="font-size:16px">${esc(m.odia || '')}</span></h2>
+      <div class="sub">${esc(m.blurb || '')}</div>
+    </div>
+    <div class="sp"></div>
+    ${canEdit() ? `<button class="btn btn-primary" data-act="add">+ Add ${esc(m.title.replace(/s$/, '').toLowerCase())}</button>` : ''}
+  </div>
+
+  <div class="toolbar">
+    <input class="input grow" id="q" placeholder="Search ${esc(m.title.toLowerCase())}…" value="${esc(v.q)}">
+    ${hasFamily ? `<select class="input" id="famFilter" style="max-width:230px">
+      <option value="">All families</option>
+      ${(DB.families || []).map(f => `<option value="${esc(f['Family ID'])}" ${v.fam === String(f['Family ID']) ? 'selected' : ''}>${esc(f['Family ID'])} · ${esc(f['Family Head'])}</option>`).join('')}
+    </select>` : ''}
+    <button class="btn btn-sm" data-act="csv">Export CSV</button>
+    <button class="btn btn-sm" onclick="window.print()">Print</button>
+    <span class="muted small" style="margin-left:auto">${rows.length} of ${all.length} records</span>
+  </div>
+
+  <div class="tablewrap">
+    ${rows.length ? `
+    <table class="grid">
+      <thead><tr>
+        ${m.list.map(c => {
+          const f = fieldDef(key, c), cls = ['money', 'number'].includes(f.t) ? 'num' : '';
+          const ar = v.sort === c ? (v.dir > 0 ? ' ▲' : ' ▼') : '';
+          return `<th class="${cls}" data-sort="${esc(c)}">${esc(c)}<span class="ar">${ar}</span></th>`;
+        }).join('')}
+        <th style="text-align:right">Actions</th>
+      </tr></thead>
+      <tbody>
+        ${rows.map(r => {
+          const id = esc(r[m.idField]);
+          return '<tr>' + m.list.map(c => {
+            const cell = cellHtml(key, r, c);
+            return `<td class="${cell.cls}" data-label="${esc(c)}">${cell.html}</td>`;
+          }).join('') + `<td class="acts" data-label="">
+            ${key === 'families' ? `<button class="btn btn-sm" data-act="profile" data-id="${id}">View</button> ` : ''}
+            ${canEdit() ? `<button class="btn btn-sm" data-act="edit" data-id="${id}">Edit</button>
+            <button class="btn btn-sm btn-danger" data-act="del" data-id="${id}">Delete</button>` : ''}
+          </td></tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+    <div class="tfoot"><span>${rows.length} rows shown</span>${totals.map(t => `<span class="tnum"><b>${esc(t)}</b></span>`).join('')}</div>`
+    : `<div class="empty"><b>${all.length ? 'Nothing matches that search' : 'No ' + esc(m.title.toLowerCase()) + ' yet'}</b>
+        ${all.length ? 'Clear the search or the family filter to see all records.' : (canEdit() ? 'Add the first record to start this register.' : 'Records will appear here once they are added.')}
+       </div>`}
+  </div>`;
+
+  const q = $('#q');
+  if(q){
+    q.oninput = debounce(() => { v.q = q.value.trim(); const pos = q.selectionStart; renderModule(key); const nq = $('#q'); if(nq){ nq.focus(); nq.setSelectionRange(pos, pos); } }, 220);
+  }
+  const ff = $('#famFilter');
+  if(ff) ff.onchange = () => { v.fam = ff.value; renderModule(key); };
+  $('#main').querySelectorAll('th[data-sort]').forEach(th => th.onclick = () => {
+    const c = th.dataset.sort;
+    if(v.sort === c) v.dir *= -1; else { v.sort = c; v.dir = 1; }
+    renderModule(key);
+  });
+  $('#main').querySelectorAll('[data-act]').forEach(b => {
+    const act = b.dataset.act, id = b.dataset.id;
+    if(act === 'add') b.onclick = () => openForm(key);
+    if(act === 'edit') b.onclick = () => openForm(key, id);
+    if(act === 'del') b.onclick = () => askDelete(key, id);
+    if(act === 'csv') b.onclick = () => exportCsv(key, rows);
+    if(act === 'profile') b.onclick = () => openProfile(id);
+  });
+}
+
+let debTimer;
+function debounce(fn, ms){ return function(){ clearTimeout(debTimer); debTimer = setTimeout(fn, ms); }; }
+
+function exportCsv(key, rows){
+  const m = MODULES[key];
+  const cols = m.fields.map(f => f.n);
+  const lines = [cols.join(',')].concat(rows.map(r => cols.map(c => {
+    const v = String(r[c] ?? '');
+    return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
+  }).join(',')));
+  const blob = new Blob(['\ufeff' + lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'malipatana-' + key + '-' + today() + '.csv';
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+  toast('CSV downloaded', 'good');
+}
+
+/* =========================================================================
+   MODAL
+   ========================================================================= */
+function openModal(html){
+  $('#modalRoot').innerHTML = '<div class="overlay" id="overlay"><div class="modal" role="dialog" aria-modal="true">' + html + '</div></div>';
+  $('#overlay').onclick = e => { if(e.target.id === 'overlay') closeModal(); };
+  document.addEventListener('keydown', escClose);
+}
+function closeModal(){ $('#modalRoot').innerHTML = ''; document.removeEventListener('keydown', escClose); }
+function escClose(e){ if(e.key === 'Escape') closeModal(); }
+
+/* =========================================================================
+   ADD / EDIT
+   ========================================================================= */
+function nextId(key){
+  const m = MODULES[key];
+  if(!m.prefix) return '';
+  const rows = rowsOf(key);
+  let max = 0, prefix = m.prefix, width = 3;
+  rows.forEach(r => {
+    const s = String(r[m.idField] ?? '').trim();
+    const mm = s.match(/^([^\d]*)(\d+)$/);
+    if(mm){
+      const n = parseInt(mm[2], 10);
+      if(n >= max){ max = n; if(mm[1]) prefix = mm[1]; width = Math.max(3, mm[2].length); }
+    }
+  });
+  return prefix + String(max + 1).padStart(width, '0');
+}
+function distinct(key, col){
+  const set = new Set();
+  rowsOf(key).forEach(r => { const v = String(r[col] ?? '').trim(); if(v) set.add(v); });
+  return [...set].sort();
+}
+function defaultFor(f){
+  if(f.def === 'today') return today();
+  if(f.def === 'thisMonth') return new Date().toISOString().slice(0, 7);
+  if(f.def === 'monthlyContribution') return num(setting('Monthly Contribution', 0)) || '';
+  return '';
+}
+
+function openForm(key, id){
+  if(!canEdit()) { toast('Your account cannot change records', 'bad'); return; }
+  const m = MODULES[key];
+  const existing = id ? rowsOf(key).find(r => String(r[m.idField]).trim() === String(id).trim()) : null;
+  const rec = existing ? Object.assign({}, existing) : {};
+  if(!existing){
+    m.fields.forEach(f => { const d = defaultFor(f); if(d !== '') rec[f.n] = d; });
+    if(m.prefix) rec[m.idField] = nextId(key);
+  }
+
+  const body = m.fields.filter(f => !f.hidden).map(f => fieldHtml(key, f, rec[f.n], !!existing)).join('');
+  openModal(`
+    <header>
+      <div>
+        <h3>${existing ? 'Edit' : 'Add'} ${esc(m.title.replace(/s$/, '').toLowerCase())}</h3>
+        <div class="sub">${existing ? esc(m.idField) + ' ' + esc(id) : 'Saves straight into the ' + esc(m.sheet) + ' sheet'}</div>
+      </div>
+      <div class="sp"></div>
+      <button class="btn btn-sm" onclick="closeModal()">Close</button>
+    </header>
+    <div class="body">
+      <div id="formErr" class="errline hide"></div>
+      <div class="formgrid" id="formGrid">${body}</div>
+    </div>
+    <footer>
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" id="saveBtn">${existing ? 'Save changes' : 'Add record'}</button>
+    </footer>`);
+
+  wireForm(key, rec, !!existing);
+  $('#saveBtn').onclick = () => saveRecord(key, rec, !!existing);
+  const first = $('#formGrid').querySelector('input:not([readonly]),select,textarea');
+  if(first) first.focus();
+}
+
+function fieldHtml(key, f, value, editing){
+  const id = 'f_' + f.n.replace(/[^a-z0-9]/gi, '_');
+  if(editing && f.n === MODULES[key].idField && !f.auto){
+    return `<div><label class="lbl" for="${id}">${esc(f.n)}</label>
+            <input class="input" id="${id}" value="${esc(value == null ? '' : String(value))}" readonly>
+            <div class="fieldnote">Delete and add again if this has to change.</div></div>`;
+  }
+  const req = f.req ? ' <span class="reqmark">*</span>' : '';
+  const wide = ['textarea'].includes(f.t) ? ' wide' : '';
+  const val = value == null ? '' : String(value);
+  let input;
+
+  if(f.auto){
+    input = `<input class="input" id="${id}" value="${esc(val)}" ${editing ? 'readonly' : ''}>`;
+    return `<div class="${wide}"><label class="lbl" for="${id}">${esc(f.n)}</label>${input}
+            <div class="fieldnote">${editing ? 'The ID cannot be changed.' : 'Suggested automatically — change it if your village uses a different code.'}</div></div>`;
+  }
+  switch(f.t){
+    case 'textarea':
+      input = `<textarea class="input" id="${id}">${esc(val)}</textarea>`; break;
+    case 'select':
+      input = `<select class="input" id="${id}"><option value=""></option>` +
+        (f.opts || []).map(o => `<option ${String(val) === o ? 'selected' : ''}>${esc(o)}</option>`).join('') +
+        (val && !(f.opts || []).includes(val) ? `<option selected>${esc(val)}</option>` : '') + `</select>`; break;
+    case 'datalist': {
+      const opts = [...new Set([...(f.opts || []), ...distinct(key, f.n)])];
+      input = `<input class="input" id="${id}" list="${id}_dl" value="${esc(val)}" autocomplete="off">
+               <datalist id="${id}_dl">${opts.map(o => `<option value="${esc(o)}"></option>`).join('')}</datalist>`; break;
+    }
+    case 'family':
+      input = `<select class="input" id="${id}" data-role="family"><option value=""></option>` +
+        (DB.families || []).map(x => `<option value="${esc(x['Family ID'])}" ${String(val) === String(x['Family ID']) ? 'selected' : ''}>${esc(x['Family ID'])} · ${esc(x['Family Head'])}</option>`).join('') + `</select>`; break;
+    case 'member':
+      input = `<select class="input" id="${id}" data-role="member"></select>`; break;
+    case 'money':
+      input = `<input class="input tnum" id="${id}" type="number" inputmode="decimal" min="0" step="1" value="${esc(val)}">`; break;
+    case 'number':
+      input = `<input class="input tnum" id="${id}" type="number" inputmode="numeric" step="1" value="${esc(val)}" ${f.ro ? 'readonly' : ''}>`; break;
+    case 'date':
+      input = `<input class="input" id="${id}" type="date" value="${esc(toISO(val))}">`; break;
+    case 'month':
+      input = `<input class="input" id="${id}" type="month" value="${esc(String(val).slice(0, 7))}">`; break;
+    case 'tel':
+      input = `<input class="input tnum" id="${id}" type="tel" inputmode="numeric" maxlength="10" value="${esc(val)}">`; break;
+    default:
+      input = `<input class="input" id="${id}" value="${esc(val)}" ${f.ro ? 'readonly' : ''}>`;
+  }
+  if(f.ro && f.t === 'money') input = `<input class="input tnum" id="${id}" value="${esc(val)}" readonly>`;
+  return `<div class="${wide}"><label class="lbl" for="${id}">${esc(f.n)}${req}</label>${input}
+          ${f.hint ? `<div class="fieldnote">${esc(f.hint)}</div>` : ''}</div>`;
+}
+
+function fid(f){ return 'f_' + f.n.replace(/[^a-z0-9]/gi, '_'); }
+function readField(f){ const el = document.getElementById(fid(f)); return el ? el.value : ''; }
+
+function wireForm(key, rec){
+  const m = MODULES[key];
+  const famEl = $('#formGrid').querySelector('[data-role="family"]');
+  const memEl = $('#formGrid').querySelector('[data-role="member"]');
+  const memField = m.fields.find(f => f.t === 'member');
+
+  function fillMembers(){
+    if(!memEl) return;
+    const famId = famEl ? famEl.value : '';
+    const list = (DB.members || []).filter(x => !famId || String(x['Family ID']).trim() === String(famId).trim());
+    const current = memField ? String(rec[memField.n] ?? '') : '';
+    memEl.innerHTML = '<option value=""></option>' + list.map(x =>
+      `<option value="${esc(x['Member ID'])}" ${current === String(x['Member ID']) ? 'selected' : ''}>${esc(x['Member ID'])} · ${esc(x['Name'])}</option>`).join('');
+    if(current && !list.some(x => String(x['Member ID']) === current)) memEl.innerHTML += `<option value="${esc(current)}" selected>${esc(current)}</option>`;
+  }
+  fillMembers();
+  if(famEl) famEl.addEventListener('change', () => { fillMembers(); autoFillFromFamily(key); });
+
+  const dobField = m.fields.find(f => f.n === 'Date of Birth');
+  if(dobField){
+    const dob = document.getElementById(fid(dobField));
+    const ageEl = document.getElementById('f_Age');
+    if(dob && ageEl) dob.addEventListener('change', () => {
+      if(!dob.value) return;
+      const b = new Date(dob.value), n = new Date();
+      let a = n.getFullYear() - b.getFullYear();
+      if(n < new Date(n.getFullYear(), b.getMonth(), b.getDate())) a--;
+      if(a >= 0 && a < 130) ageEl.value = a;
+    });
+  }
+
+  if(m.fields.some(f => f.calc)){
+    const recalc = () => {
+      const g = n => num(readField({ n }));
+      const approved = g('Immediate Assistance') + g('Monthly Support') * g('Support Months') +
+                       g('Education Assistance') + g('Medical Assistance') + g('Other Assistance');
+      const ta = document.getElementById('f_Total_Approved'), bal = document.getElementById('f_Balance');
+      if(ta) ta.value = approved;
+      if(bal) bal.value = approved - g('Total Paid');
+    };
+    $('#formGrid').addEventListener('input', recalc);
+    recalc();
+  }
+}
+
+function autoFillFromFamily(key){
+  const famEl = $('#formGrid').querySelector('[data-role="family"]');
+  if(!famEl || !famEl.value) return;
+  const f = (DB.families || []).find(x => String(x['Family ID']) === famEl.value);
+  if(!f) return;
+  const contributor = document.getElementById('f_Contributor');
+  if(contributor && !contributor.value) contributor.value = f['Family Head'] || '';
+  const benef = document.getElementById('f_Beneficiary');
+  if(benef && !benef.value) benef.value = f['Family Head'] || '';
+}
+
+async function saveRecord(key, rec, editing){
+  const m = MODULES[key];
+  const out = Object.assign({}, rec);
+  const problems = [];
+  m.fields.forEach(f => {
+    if(f.hidden) return;
+    const el = document.getElementById(fid(f));
+    if(!el) return;
+    let v = el.value;
+    if(f.t === 'tel' && v && !/^\d{10}$/.test(v.trim())) problems.push(f.n + ' should be a 10 digit mobile number');
+    if(f.req && !String(v).trim()) problems.push(f.n + ' is required');
+    out[f.n] = v;
+  });
+  if(problems.length){
+    const box = $('#formErr');
+    box.classList.remove('hide');
+    box.textContent = problems[0];
+    return;
+  }
+  if(key === 'users' && !editing && !String(out['Password'] || '').trim()){
+    const box = $('#formErr'); box.classList.remove('hide'); box.textContent = 'Set a password for the new user.';
+    return;
+  }
+  if(!editing && rowsOf(key).some(r => String(r[m.idField]).trim() === String(out[m.idField]).trim())){
+    const box = $('#formErr'); box.classList.remove('hide');
+    box.textContent = m.idField + ' ' + out[m.idField] + ' already exists. Change it and try again.';
+    return;
+  }
+  if(m.fields.some(f => f.n === 'Last Updated')) out['Last Updated'] = today();
+  if(m.fields.some(f => f.n === 'Created Date') && !out['Created Date']) out['Created Date'] = today();
+
+  const btn = $('#saveBtn');
+  btn.disabled = true; btn.textContent = 'Saving…';
+  try {
+    const r = await api('save', { sheet: m.sheet, record: JSON.stringify(out) });
+    if(!r || !r.ok) throw new Error((r && r.error) || 'The sheet refused the save.');
+    upsertLocal(key, out);
+    closeModal();
+    toast(editing ? 'Changes saved' : 'Record added', 'good');
+    render();
+    refresh(true);
+  } catch(e){
+    const box = $('#formErr'); box.classList.remove('hide'); box.textContent = e.message;
+    btn.disabled = false; btn.textContent = editing ? 'Save changes' : 'Add record';
+  }
+}
+
+function upsertLocal(key, rec){
+  const m = MODULES[key];
+  if(key === 'settingsList'){ DB.settings = DB.settings || {}; DB.settings[rec['Setting']] = rec['Value']; return; }
+  if(key === 'users'){ DB.users = DB.users || []; }
+  const arr = key === 'users' ? DB.users : (DB[key] = DB[key] || []);
+  const i = arr.findIndex(r => String(r[m.idField]).trim() === String(rec[m.idField]).trim());
+  if(i >= 0) arr[i] = rec; else arr.push(rec);
+}
+function removeLocal(key, id){
+  const m = MODULES[key];
+  if(key === 'settingsList'){ delete DB.settings[id]; return; }
+  const arr = key === 'users' ? (DB.users || []) : (DB[key] || []);
+  const i = arr.findIndex(r => String(r[m.idField]).trim() === String(id).trim());
+  if(i >= 0) arr.splice(i, 1);
+}
+
+/* =========================================================================
+   DELETE
+   ========================================================================= */
+function askDelete(key, id){
+  const m = MODULES[key];
+  const row = rowsOf(key).find(r => String(r[m.idField]).trim() === String(id).trim()) || {};
+  const nameCol = m.fields.find(f => ['Family Head', 'Name', 'Student Name', 'Patient', 'Beneficiary', 'Affected Person', 'Description', 'Setting'].includes(f.n));
+  const label = nameCol ? row[nameCol.n] : '';
+  let linked = '';
+  if(key === 'families'){
+    const kids = ['members', 'contributions', 'income', 'expenditure', 'emergency', 'regularSupport', 'insurance', 'education', 'medical']
+      .map(k => [k, (DB[k] || []).filter(r => String(r['Family ID'] || '').trim() === String(id).trim()).length])
+      .filter(([, n]) => n > 0);
+    if(kids.length) linked = '<p class="muted">This family is used by ' + kids.map(([k, n]) => n + ' ' + (MODULES[k] ? MODULES[k].title.toLowerCase() : k)).join(', ') +
+      '. Those rows stay in the sheet and will show an unknown family.</p>';
+  }
+  openModal(`
+    <header><h3>Delete ${esc(m.title.replace(/s$/, '').toLowerCase())}?</h3></header>
+    <div class="body confirm">
+      <p><b>${esc(id)}</b>${label ? ' — ' + esc(label) : ''} will be removed from the ${esc(m.sheet)} sheet.</p>
+      ${linked}
+      <p class="muted">This cannot be undone from here. You can still recover it from the sheet's version history.</p>
+    </div>
+    <footer>
+      <button class="btn" onclick="closeModal()">Keep it</button>
+      <button class="btn btn-primary" id="delBtn" style="background:var(--brick);border-color:var(--brick)">Delete</button>
+    </footer>`);
+  $('#delBtn').onclick = async () => {
+    const b = $('#delBtn'); b.disabled = true; b.textContent = 'Deleting…';
+    try {
+      const r = await api('delete', { sheet: m.sheet, idField: m.idField, idValue: id });
+      if(!r || !r.ok) throw new Error((r && r.error) || 'Delete failed.');
+      removeLocal(key, id);
+      closeModal();
+      toast('Deleted', 'good');
+      render();
+      refresh(true);
+    } catch(e){ toast(e.message, 'bad'); b.disabled = false; b.textContent = 'Delete'; }
+  };
+}
+
+/* =========================================================================
+   FAMILY PROFILE
+   ========================================================================= */
+function openProfile(id){
+  const f = (DB.families || []).find(x => String(x['Family ID']).trim() === String(id).trim());
+  if(!f) return;
+  const mem = (DB.members || []).filter(x => String(x['Family ID']).trim() === String(id).trim());
+  const give = (DB.contributions || []).filter(x => String(x['Family ID']).trim() === String(id).trim());
+  const cases = (DB.emergency || []).filter(x => String(x['Family ID']).trim() === String(id).trim());
+  const sup = (DB.regularSupport || []).filter(x => String(x['Family ID']).trim() === String(id).trim());
+  const helped = cases.reduce((a, r) => a + num(r['Total Paid']), 0) +
+                 (DB.medical || []).filter(x => String(x['Family ID']).trim() === String(id).trim()).reduce((a, r) => a + num(r['Assistance']), 0) +
+                 (DB.education || []).filter(x => String(x['Family ID']).trim() === String(id).trim()).reduce((a, r) => a + num(r['Village Assistance']), 0);
+  const given = give.reduce((a, r) => a + num(r['Amount']), 0);
+
+  openModal(`
+    <header>
+      <div><h3>${esc(f['Family Head'] || id)}</h3>
+      <div class="sub">${esc(id)} · House ${esc(f['House No'] || '—')} · ${esc(f['Address/Area'] || '')} ${f['Mobile'] ? '· ' + esc(f['Mobile']) : ''}</div></div>
+      <div class="sp"></div><button class="btn btn-sm" onclick="closeModal()">Close</button>
+    </header>
+    <div class="body">
+      <div class="strip" style="margin-top:0">
+        <div><div class="k">Members</div><div class="v tnum">${mem.length}</div></div>
+        <div><div class="k">Contributed</div><div class="v tnum" style="font-size:17px">${money(given)}</div></div>
+        <div><div class="k">Help received</div><div class="v tnum" style="font-size:17px">${money(helped)}</div></div>
+        <div><div class="k">Cases</div><div class="v tnum">${cases.length}</div></div>
+        <div><div class="k">Support</div><div class="v tnum">${sup.filter(x => String(x['Active']).toLowerCase() !== 'no').length}</div></div>
+        <div><div class="k">Status</div><div class="v" style="font-size:15px">${esc(f['Family Status'] || 'Active')}</div></div>
+      </div>
+      <h4 style="font-family:var(--display);margin:20px 0 8px;font-size:16px">Members</h4>
+      ${mem.length ? `<div class="tablewrap" style="max-height:none"><table class="grid">
+        <thead><tr><th>ID</th><th>Name</th><th>Relation</th><th class="num">Age</th><th>Occupation</th><th class="num">Income</th></tr></thead>
+        <tbody>${mem.map(x => `<tr><td data-label="ID">${esc(x['Member ID'])}</td><td data-label="Name">${esc(x['Name'])}</td>
+          <td data-label="Relation">${esc(x['Relation to Family Head'])}</td><td class="num" data-label="Age">${esc(x['Age'])}</td>
+          <td data-label="Occupation">${esc(x['Occupation'])}</td><td class="num" data-label="Income">${x['Monthly Income'] ? money(x['Monthly Income']) : ''}</td></tr>`).join('')}</tbody>
+      </table></div>` : '<div class="muted small">No members recorded yet.</div>'}
+      ${f['Remarks'] ? `<h4 style="font-family:var(--display);margin:20px 0 6px;font-size:16px">Remarks</h4><div class="small">${esc(f['Remarks'])}</div>` : ''}
+    </div>
+    <footer>
+      ${canEdit() ? `<button class="btn" onclick="closeModal();openForm('members')">Add member</button>
+      <button class="btn btn-primary" onclick="closeModal();openForm('families','${esc(id)}')">Edit family</button>` : ''}
+    </footer>`);
+}
+
+/* =========================================================================
+   BOOT
+   ========================================================================= */
+$('#loginBtn').onclick = doLogin;
+$('#p').addEventListener('keydown', e => { if(e.key === 'Enter') doLogin(); });
+$('#u').addEventListener('keydown', e => { if(e.key === 'Enter') $('#p').focus(); });
+$('#logoutBtn').onclick = doLogout;
+$('#refreshBtn').onclick = () => refresh(false);
+$('#menuBtn').onclick = () => $('#sidebar').classList.contains('open') ? closeDrawer() : openDrawer();
+$('#scrim').onclick = closeDrawer;
 
 (async () => {
-    let x = sessionStorage.getItem('mal_user');
-    if (x) {
-        USER = JSON.parse(x);
-        try {
-            await load();
-            showApp();
-        } catch (e) {
-            sessionStorage.removeItem('mal_user');
-        }
-    }
+  const saved = store.get('mal_user');
+  if(!saved) return;
+  try {
+    USER = JSON.parse(saved);
+    busy(true, 'Loading village records…');
+    await load();
+    enterApp();
+  } catch(e){
+    store.del('mal_user');
+  } finally { busy(false); }
 })();
 </script>
 </body>
