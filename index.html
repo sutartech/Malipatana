@@ -363,15 +363,19 @@ main.main{padding:clamp(16px,2.2vw,28px) clamp(14px,2.2vw,30px) 80px;max-width:1
 .hero{border-radius:22px;min-height:210px;padding:26px 28px;animation:mp-up .5s var(--ease) both}
 .hero .btn{color:var(--ink)}
 .hero .btn-primary{color:#fff}
-/* Odia matras and conjuncts need a much taller line box than Latin display type */
-.brandside h1,.brandside h2,.hero h2,.pagehead h2,.ledger-top .big,.panel-head h3,.modal header h3,.strip .v,.empty b,.lrow.total .amt{line-height:1.8}
-.hero h2,.pagehead h2,.brandside h1,.ledger-top .big{padding-block:.12em;overflow:visible}
-.hero .sub,.pagehead .sub{margin-top:8px}
+/* Baloo Bhaina 2's Odia matras and conjuncts need ~1.5em to contain their ink.
+   The box must grow with the text, and headings must not sit exactly on the
+   wrap boundary — hence the smaller clamp maxima below. */
+.brandside h1,.brandside h2,.hero h2,.pagehead h2,.ledger-top .big,.panel-head h3,.modal header h3,.strip .v,.empty b,.lrow.total .amt{line-height:1.5}
+.hero h2,.pagehead h2,.brandside h1,.ledger-top .big{padding-block:.04em}
+.hero .txt,.hero .txt>div,.pagehead>div{min-width:0}
+.hero .sub,.pagehead .sub{margin-top:10px}
+.ledger-top .cap{white-space:nowrap}
+.ledger-top .big{margin-top:6px}
+.strip .v,.empty b,.panel-head h3,.modal header h3{overflow-wrap:anywhere}
 .ledger-top .big{margin-top:2px}
 .hero .veil{background:linear-gradient(175deg,#0e232e14 20%,#0e232eab 66%,#0b1d27f2)}
-.hero h2{font-size:clamp(26px,3.4vw,38px)}
 .hero .sub{font-size:14px}
-.pagehead h2{font-size:30px}
 .pagehead .sub{font-size:13.5px}
 
 /* ---------- cards, ledger, panels ---------- */
@@ -379,14 +383,13 @@ main.main{padding:clamp(16px,2.2vw,28px) clamp(14px,2.2vw,30px) 80px;max-width:1
 .ledger,.panel,.strip,.tablewrap{border-radius:var(--r-lg)}
 .ledger-top{padding:24px 26px 20px}
 .ledger-top .cap{font-size:12px;letter-spacing:.1em}
-.ledger-top .big{font-size:clamp(38px,5.4vw,54px)}
 .meter{height:9px;margin-top:18px}
 .meter i{background:linear-gradient(90deg,#b87b05,#e0a02f);animation:mp-sweep .9s .2s var(--ease) both}
 .strip{animation:mp-up .5s .12s var(--ease) both;grid-auto-rows:auto}
 .strip div{padding:14px 16px;transition:background .2s ease;min-width:0}
 .strip div:hover{background:var(--surface-2)}
-.strip .k{font-size:11.5px;line-height:1.35}
-.strip .v{font-size:24px;line-height:1.4}
+.strip .k{font-size:11.5px;line-height:1.4}
+.strip .v{font-size:22px;line-height:1.5}
 @media(max-width:620px){.strip{grid-template-columns:repeat(2,1fr)}.strip div:nth-child(2n){border-right:0}}
 .panel{animation:mp-up .5s .18s var(--ease) both}
 .panel-head{padding:16px 22px}
@@ -444,19 +447,27 @@ table.grid tbody tr:hover{background:#fbfbf8}
   td.photocell{display:flex}
   .cellav{width:52px;height:52px}
 }
-/* ---------- login brand side: photo on top, wording below ---------- */
-.brandside{justify-content:flex-start}
-.photoframe{margin-top:0;margin-bottom:0}
-.photoframe img{aspect-ratio:4/3}
-.photocap{margin-bottom:20px}
-.brandtext{margin-top:auto}
+/* ---------- login brand side: photo on top, wording below ----------
+   Nothing here may be clipped or pushed out of view: the panel grows with its
+   content and the photo gives up height first. */
+.brandside{justify-content:flex-start;min-height:0;overflow:visible}
+.photoframe{margin-top:0;margin-bottom:0;flex:0 1 auto;min-height:0}
+.photoframe img{aspect-ratio:16/10;max-height:34dvh;height:auto}
+.photocap{margin-bottom:18px}
+.brandtext{margin-top:18px;flex:none}
 .brandtext .eyebrow{margin-bottom:6px}
 .brandside h1{margin-top:0}
+.brandside p{display:block;margin-bottom:16px}
 .pills{margin-bottom:0}
 @media(max-width:860px){
-  .photoframe img{aspect-ratio:16/9}
-  .photocap{margin-bottom:14px}
-  .brandtext{margin-top:0}
+  .photoframe img{aspect-ratio:16/9;max-height:26dvh}
+  .photocap{margin-bottom:12px}
+  .brandtext{margin-top:12px}
+}
+@media(max-height:760px){
+  .photoframe img{max-height:24dvh}
+  .brandtext{margin-top:12px}
+  .brandside p{margin-bottom:12px}
 }
 /* ---------- photo fallbacks ---------- */
 .photonote{display:none;color:var(--muted);font-size:13px;line-height:1.6;max-width:46ch;margin:0 auto}
@@ -465,6 +476,36 @@ table.grid tbody tr:hover{background:#fbfbf8}
 .photoav.photofail img,.cellav.photofail img{display:none}
 .photoav.photofail::after{content:'Not viewable';color:var(--muted);font-size:11.5px;text-align:center;padding:0 8px}
 .cellav.photofail::after{content:'⛶';color:var(--muted);font-size:14px}
+/* ---------- member detail ---------- */
+.mprofile{display:flex;gap:22px;flex-wrap:wrap;align-items:flex-start}
+.mphoto{width:190px;flex:none;aspect-ratio:3/4;border-radius:18px;overflow:hidden;border:1px solid var(--line);
+  background:var(--surface-2);display:grid;place-items:center}
+.mphoto img{width:100%;height:100%;object-fit:cover;display:block}
+.mphoto.none span{font-family:var(--display);font-size:44px;font-weight:700;color:var(--muted)}
+.mfacts{flex:1;min-width:240px}
+.dlgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:2px 18px;margin:0}
+.dl{padding:8px 0;border-bottom:1px dotted var(--line);min-width:0}
+.dl dt{font-size:11.5px;color:var(--muted);font-weight:700;letter-spacing:.05em;text-transform:uppercase}
+.dl dd{margin:3px 0 0;font-size:14.5px;font-weight:600;overflow-wrap:anywhere}
+.mremark{margin-top:14px;padding:12px 14px;border-radius:12px;background:var(--surface-2);
+  border:1px solid var(--line);font-size:13.5px;line-height:1.6}
+.mfacts .btn{margin-top:14px}
+.msec{font-family:var(--display);margin:22px 0 8px;font-size:16px;line-height:1.5}
+@media(max-width:620px){
+  .mprofile{gap:16px}
+  .mphoto{width:130px}
+  .mphoto.none span{font-size:32px}
+}
+/* ---------- display type: final word on size and line box ----------
+   Baloo Bhaina 2 needs ~1.5em to contain Odia matra ink, and these headings
+   must never sit on the wrap boundary, so the maxima stay conservative. */
+.hero h2{font-size:clamp(21px,2.4vw,27px);line-height:1.5}
+.pagehead h2{font-size:clamp(21px,2.4vw,26px);line-height:1.5}
+.brandside h1{font-size:clamp(24px,2.8vw,36px);line-height:1.5}
+.ledger-top .big{font-size:clamp(30px,4.2vw,42px);line-height:1.5;margin-top:6px}
+.panel-head h3,.modal header h3{line-height:1.5}
+.hero h2,.pagehead h2,.brandside h1,.ledger-top .big{padding-block:.04em;overflow-wrap:anywhere}
+.hero .sub,.pagehead .sub{margin-top:10px}
 </style>
 </head>
 <body>
@@ -1448,7 +1489,7 @@ function renderModule(key){
             const cell = cellHtml(key, r, c);
             return `<td class="${cell.cls}" data-label="${esc(c)}">${cell.html}</td>`;
           }).join('') + `<td class="acts" data-label="">
-            ${key === 'families' ? `<button class="btn btn-sm" data-act="profile" data-id="${id}">View</button> ` : ''}
+            ${key === 'families' || key === 'members' ? `<button class="btn btn-sm" data-act="profile" data-id="${id}">View</button> ` : ''}
             ${canEdit() ? `<button class="btn btn-sm" data-act="edit" data-id="${id}">Edit</button>
             <button class="btn btn-sm btn-danger" data-act="del" data-id="${id}">Delete</button>` : ''}
           </td></tr>`;
@@ -1483,7 +1524,7 @@ function renderModule(key){
     if(act === 'del') b.onclick = () => askDelete(key, id);
     if(act === 'heads') b.onclick = () => addMissingHeads();
     if(act === 'csv') b.onclick = () => exportCsv(key, rows);
-    if(act === 'profile') b.onclick = () => openProfile(id);
+    if(act === 'profile') b.onclick = () => (key === 'members' ? openMember(id) : openProfile(id));
   });
 }
 
@@ -1991,10 +2032,15 @@ function openProfile(id){
       </div>
       <h4 style="font-family:var(--display);margin:20px 0 8px;font-size:16px">Members</h4>
       ${mem.length ? `<div class="tablewrap" style="max-height:none"><table class="grid">
-        <thead><tr><th>ID</th><th>Name</th><th>Relation</th><th class="num">Age</th><th>Occupation</th><th class="num">Income</th></tr></thead>
-        <tbody>${mem.map(x => `<tr><td data-label="ID">${esc(x['Member ID'])}</td><td data-label="Name">${esc(x['Name'])}</td>
+        <thead><tr><th></th><th>ID</th><th>Name</th><th>Relation</th><th class="num">Age</th><th>Occupation</th><th class="num">Income</th><th></th></tr></thead>
+        <tbody>${mem.map(x => `<tr><td data-label="" class="photocell">${
+            String(x['Photo'] || '').trim()
+              ? `<span class="cellav"><img data-srcs="${esc(photoSrcs(x['Photo'], 120).join('|'))}" alt="${esc(x['Name'] || '')}" loading="lazy"></span>`
+              : `<span class="cellav none">${esc(initials(x['Name']))}</span>`
+          }</td><td data-label="ID">${esc(x['Member ID'])}</td><td data-label="Name">${esc(x['Name'])}</td>
           <td data-label="Relation">${esc(x['Relation to Family Head'])}</td><td class="num" data-label="Age">${esc(x['Age'])}</td>
-          <td data-label="Occupation">${esc(x['Occupation'])}</td><td class="num" data-label="Income">${x['Monthly Income'] ? money(x['Monthly Income']) : ''}</td></tr>`).join('')}</tbody>
+          <td data-label="Occupation">${esc(x['Occupation'])}</td><td class="num" data-label="Income">${x['Monthly Income'] ? money(x['Monthly Income']) : ''}</td>
+          <td class="acts"><button class="btn btn-sm" data-member="${esc(x['Member ID'])}">View</button></td></tr>`).join('')}</tbody>
       </table></div>` : '<div class="muted small">No members recorded yet.</div>'}
       ${f['Remarks'] ? `<h4 style="font-family:var(--display);margin:20px 0 6px;font-size:16px">Remarks</h4><div class="small">${esc(f['Remarks'])}</div>` : ''}
     </div>
@@ -2002,8 +2048,84 @@ function openProfile(id){
       ${canEdit() ? `<button class="btn" onclick="closeModal();openForm('members')">Add member</button>
       <button class="btn btn-primary" onclick="closeModal();openForm('families','${esc(id)}')">Edit family</button>` : ''}
     </footer>`);
+
+  wirePhotoFallbacks(document.getElementById('modalRoot') || document);
+  document.querySelectorAll('[data-member]').forEach(b => {
+    b.onclick = () => { closeModal(); openMember(b.dataset.member); };
+  });
 }
 
+
+/* =========================================================================
+   MEMBER DETAIL
+   ========================================================================= */
+function openMember(id){
+  const x = (DB.members || []).find(r => String(r['Member ID']).trim() === String(id).trim());
+  if(!x) return;
+  const famId = String(x['Family ID'] || '').trim();
+  const fam = (DB.families || []).find(r => String(r['Family ID']).trim() === famId);
+  const photo = String(x['Photo'] || '').trim();
+  const isHead = String(x['Relation to Family Head'] || '').trim().toLowerCase() === 'self';
+
+  const rowsFor = k => (DB[k] || []).filter(r =>
+    String(r['Member ID'] || '').trim() === String(id).trim() ||
+    String(r['Beneficiary'] || r['Patient'] || r['Student Name'] || r['Affected Person'] || '').trim().toLowerCase() === String(x['Name'] || '').trim().toLowerCase());
+  const med = rowsFor('medical'), edu = rowsFor('education'), ins = rowsFor('insurance'), sup = rowsFor('regularSupport');
+
+  const line = (k, v) => v === '' || v == null ? '' :
+    `<div class="dl"><dt>${esc(k)}</dt><dd>${esc(String(v))}</dd></div>`;
+
+  const helpBlock = (title, list, cols) => !list.length ? '' :
+    `<h4 class="msec">${esc(title)}</h4><div class="tablewrap" style="max-height:none"><table class="grid"><thead><tr>${
+      cols.map(c => `<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${
+      list.map(r => '<tr>' + cols.map(c => `<td data-label="${esc(c)}">${esc(String(r[c] == null ? '' : r[c]))}</td>`).join('') + '</tr>').join('')
+    }</tbody></table></div>`;
+
+  openModal(`
+    <header>
+      <div><h3>${esc(x['Name'] || id)}</h3>
+      <div class="sub">${esc(id)}${isHead ? ' · Family head' : ''}${famId ? ' · ' + esc(famId) : ''}${fam ? ' · ' + esc(fam['Family Head'] || '') : ''}</div></div>
+      <div class="sp"></div><button class="btn btn-sm" onclick="closeModal()">Close</button>
+    </header>
+    <div class="body">
+      <div class="mprofile">
+        <div class="mphoto${photo ? '' : ' none'}">
+          ${photo ? `<img data-srcs="${esc(photoSrcs(photo, 520).join('|'))}" alt="${esc(x['Name'] || '')}">` : `<span>${esc(initials(x['Name']))}</span>`}
+        </div>
+        <div class="mfacts">
+          <dl class="dlgrid">
+            ${line('Relation', x['Relation to Family Head'])}
+            ${line('Gender', x['Gender'])}
+            ${line('Age', x['Age'])}
+            ${line('Date of birth', x['Date of Birth'] ? fmtDate(x['Date of Birth']) : '')}
+            ${line('Education', x['Education'])}
+            ${line('Occupation', x['Occupation'])}
+            ${line('Earning member', x['Earning Member'])}
+            ${line('Monthly income', x['Monthly Income'] ? money(x['Monthly Income']) : '')}
+            ${line('Mobile', x['Mobile'])}
+            ${line('Disability', x['Disability'])}
+            ${line('Insurance', x['Insurance'])}
+          </dl>
+          ${x['Remarks'] ? `<div class="mremark">${esc(x['Remarks'])}</div>` : ''}
+          ${photo ? `<button class="btn btn-sm" id="mBig">View photo full size</button>` : ''}
+        </div>
+      </div>
+      ${helpBlock('Medical', med, ['Medical ID','Date','Illness','Hospital','Total Cost','Assistance'])}
+      ${helpBlock('Education', edu, ['Education ID','Institution','Class/Course','Year','Total Fees','Village Assistance'])}
+      ${helpBlock('Regular support', sup, ['Support ID','Support Type','Monthly Amount','Start Date','Active'])}
+      ${helpBlock('Insurance', ins, ['Insurance ID','Policy Type','Company','Policy Number','Renewal Date'])}
+      ${!med.length && !edu.length && !sup.length && !ins.length
+        ? '<div class="muted small" style="margin-top:18px">No medical, education, support or insurance records for this person.</div>' : ''}
+    </div>
+    <footer>
+      ${famId ? `<button class="btn" onclick="closeModal();openProfile('${esc(famId)}')">Open family</button>` : ''}
+      ${canEdit() ? `<button class="btn btn-primary" onclick="closeModal();openForm('members','${esc(id)}')">Edit member</button>` : ''}
+    </footer>`);
+
+  wirePhotoFallbacks(document.getElementById('modalRoot') || document);
+  const big = document.getElementById('mBig');
+  if(big) big.onclick = () => openPhoto(photo, x['Name'] || '');
+}
 
 /* =========================================================================
    PHOTOS (admin) — stores the two links as rows in the Settings sheet
