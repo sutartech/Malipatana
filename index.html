@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#17303f">
 <title>Malipatana Village Welfare</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="alternate icon" href="favicon-32.png" sizes="32x32">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaina+2:wght@500;600;700&display=swap" rel="stylesheet">
@@ -48,30 +51,81 @@ label.lbl{display:block;font-size:12.5px;font-weight:700;color:var(--muted);marg
 .small{font-size:12.5px}
 
 /* ---------- login ---------- */
-#login{min-height:100dvh;display:grid;grid-template-columns:1.05fr .95fr}
-.login-art{background:var(--indigo);color:#f4efe4;padding:48px 40px;display:flex;flex-direction:column;justify-content:center;position:relative;overflow:hidden;background-size:cover;background-position:58% center;background-color:#0b1f2a}
-.login-art .veil{position:absolute;inset:0;
-  background:linear-gradient(105deg,#0b1f2ad9 0%,#0b1f2aa1 48%,#0b1f2a4d 100%)}
-.login-art>*{position:relative}
-.login-art .jhoti{position:absolute;inset:auto 0 0 0;opacity:.22;pointer-events:none}
-.login-art .crest{font-size:13px;letter-spacing:.14em;color:#cfe3ec;margin-bottom:18px;text-shadow:0 1px 8px #08161ecc}
-.login-art h1{font-family:var(--display);font-size:clamp(34px,5vw,54px);line-height:1.08;margin:0 0 6px;font-weight:700;
-  text-shadow:0 2px 18px #08161ee6}
-.login-art h2{font-family:var(--display);font-size:clamp(19px,2.4vw,25px);margin:0 0 18px;font-weight:500;color:#e3eef3;
-  text-shadow:0 2px 14px #08161ee6}
-.login-art p{max-width:38ch;color:#d4e3ea;line-height:1.65;margin:0;text-shadow:0 1px 10px #08161edd}
-.login-form{display:flex;align-items:center;justify-content:center;padding:32px 24px;background:var(--surface)}
-.login-card{width:min(390px,100%)}
-.login-card h3{font-family:var(--display);font-size:27px;margin:0 0 4px;font-weight:600}
-.field{margin:16px 0}
-.msg{margin-top:14px;font-size:13.5px;font-weight:600;min-height:20px}
+#login{position:relative;min-height:100dvh;display:grid;place-items:center;padding:18px;
+  background:linear-gradient(125deg,#e7f1f6 0%,#f6efe6 42%,#eef5ef 72%,#f2e9f0 100%)}
+.loginshell{width:min(1180px,100%);min-height:min(88dvh,840px);display:grid;grid-template-columns:1fr 1fr;
+  border-radius:26px;overflow:hidden;background:var(--surface);box-shadow:0 26px 70px #1b3a4a26}
+
+.brandside{position:relative;overflow:hidden;padding:40px 40px 36px;color:#fff;display:flex;flex-direction:column}
+#loginPhoto{position:absolute;inset:-2%;background:#14344a center/cover no-repeat;transform:scale(1.03);
+  animation:drift 40s ease-in-out infinite alternate}
+@keyframes drift{to{transform:scale(1.13) translate3d(-1.5%,-1%,0)}}
+@media (prefers-reduced-motion:reduce){#loginPhoto{animation:none}}
+#loginWash{position:absolute;inset:0;background:
+  linear-gradient(152deg,#12344be6 0%,#5a2350cc 46%,#a8341ebf 78%,#c9761fb3 100%)}
+.orb{position:absolute;border-radius:50%;background:#ffffff14;pointer-events:none}
+.orb.a{width:420px;height:420px;right:-130px;top:-110px}
+.orb.b{width:300px;height:300px;right:40px;top:150px;background:#ffffff0f}
+.orb.c{width:360px;height:360px;left:-140px;bottom:-150px;background:#e0a02f1f}
+.brandside>*{position:relative}
+.wordmark{display:flex;align-items:center;gap:12px}
+.wordmark .chip{width:50px;height:50px;border-radius:15px;display:grid;place-items:center;
+  background:linear-gradient(140deg,#c1521e,#e0a02f);box-shadow:0 8px 20px #00000038}
+.wordmark b{font-family:var(--display);font-size:23px;font-weight:600}
+.brandside .grow{flex:1;min-height:26px}
+.eyebrow{font-size:11.5px;letter-spacing:.18em;color:#ffd9b0}
+.brandside h1{font-family:var(--display);font-size:clamp(34px,4.6vw,58px);line-height:1.06;margin:12px 0 8px;
+  font-weight:700;text-shadow:0 3px 20px #07131bb3}
+.brandside h2{font-family:var(--display);font-size:clamp(17px,2vw,22px);font-weight:500;margin:0 0 16px;color:#ffe6cc}
+.brandside p{max-width:40ch;color:#e6eef2;line-height:1.7;margin:0 0 22px;font-size:14.5px;text-shadow:0 1px 10px #07131b99}
+.pills{display:flex;flex-wrap:wrap;gap:9px}
+.pills span{background:#ffffff1f;border:1px solid #ffffff2e;border-radius:999px;padding:7px 14px;font-size:13px;font-weight:600}
+
+.formside{padding:44px 44px;background:linear-gradient(168deg,#fffefb,#f0f5f2 60%,#f6eef4);
+  display:flex;flex-direction:column;justify-content:center}
+.formside .kicker{font-size:11.5px;letter-spacing:.18em;font-weight:700;color:var(--brick)}
+.formside h3{font-family:var(--display);font-size:clamp(34px,4vw,46px);margin:8px 0 6px;font-weight:700;line-height:1.05}
+.formside .lead{color:var(--muted);font-size:14.5px;margin:0 0 22px;line-height:1.6}
+.formbox{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:20px;
+  box-shadow:0 10px 28px #1b3a4a12}
+.field{margin-bottom:14px}
+.field .input{border-radius:12px;min-height:48px;background:#fdfdfb}
+.field .input:focus{border-color:var(--turmeric);box-shadow:0 0 0 3px #e8a33d33}
+.pwwrap{position:relative}
+.pwwrap .input{padding-right:74px}
+.pwtoggle{position:absolute;right:6px;top:6px;bottom:6px;border:0;border-radius:9px;padding:0 13px;
+  background:var(--surface-2);color:var(--indigo-2);font-weight:700;font-size:13px;cursor:pointer}
+.pwtoggle:hover{background:var(--indigo-soft)}
+.remember{display:flex;align-items:center;gap:9px;font-size:13.5px;color:var(--muted);margin:4px 0 16px}
+.remember input{width:18px;height:18px;accent-color:var(--brick)}
+.signin{width:100%;border:0;border-radius:13px;padding:14px;min-height:52px;cursor:pointer;color:#fff;
+  font-weight:700;font-size:16px;background:linear-gradient(100deg,#9d2f1b,#c1521e 52%,#dd9a2c);
+  box-shadow:0 12px 26px #a8341e40}
+.signin:hover{filter:brightness(1.06)}
+.signin:disabled{opacity:.6;cursor:not-allowed;filter:none}
+.msg{margin-top:13px;font-size:13.5px;font-weight:600;min-height:20px;text-align:center}
 .msg.err{color:var(--brick)}
 .msg.info{color:var(--muted);font-weight:500}
-@media(max-width:820px){
-  #login{grid-template-columns:1fr}
-  .login-art{padding:36px 24px 30px}
-  .login-art p{display:none}
-  .login-form{padding:26px 20px 48px}
+.vrow{display:flex;justify-content:center;gap:9px;flex-wrap:wrap;margin-top:22px}
+.vchip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 14px;
+  font-size:12.5px;font-weight:700;color:var(--muted)}
+.vchip.ok{border-color:#bfe0cb;background:var(--green-soft);color:var(--green)}
+.vchip.bad{border-color:#e8c8c0;background:var(--brick-soft);color:var(--brick)}
+.repair{display:block;margin:12px auto 0;border:1px solid var(--line);background:var(--surface);
+  border-radius:12px;padding:10px 16px;font-size:13px;font-weight:600;color:var(--indigo-2);cursor:pointer}
+.repair:hover{background:var(--indigo-soft)}
+.helpline{margin-top:16px;font-size:12.5px;color:var(--muted);line-height:1.6;text-align:center}
+
+@media(max-width:900px){
+  #login{padding:0}
+  .loginshell{grid-template-columns:1fr;border-radius:0;min-height:100dvh;box-shadow:none}
+  .brandside{padding:26px 22px 30px}
+  .brandside p{display:none}
+  .brandside .grow{display:none}
+  .brandside h1{margin:14px 0 6px}
+  .formside{padding:26px 20px 40px}
+  .orb.a{width:260px;height:260px;right:-90px;top:-80px}
+  .orb.b,.orb.c{display:none}
 }
 
 /* ---------- app frame ---------- */
@@ -254,45 +308,66 @@ td.acts{text-align:right;white-space:nowrap}
 
 <!-- ===================== LOGIN ===================== -->
 <div id="login">
-  <div class="login-art">
-    <div class="veil"></div>
-    <div class="crest">JAGATSINGHPUR · ODISHA</div>
-    <h1>ଆମ ଗାଁ ମାଳିପାଟଣା</h1>
-    <h2>Malipatana Village Welfare</h2>
-    <p>One register for every family, every rupee and every case of help the village fund has given.</p>
-    <svg class="jhoti" viewBox="0 0 600 60" preserveAspectRatio="none" aria-hidden="true" height="52" width="100%">
-      <g fill="none" stroke="#f4efe4" stroke-width="2">
-        <path d="M0 46 H600"/>
-        <path d="M10 46 q15 -26 30 0 q15 -26 30 0 q15 -26 30 0 q15 -26 30 0 q15 -26 30 0 q15 -26 30 0
-                 q15 -26 30 0 q15 -26 30 0 q15 -26 30 0 q15 -26 30 0 q15 -26 30 0 q15 -26 30 0
-                 q15 -26 30 0 q15 -26 30 0 q15 -26 30 0 q15 -26 30 0 q15 -26 30 0 q15 -26 30 0 q15 -26 30 0"/>
-      </g>
-      <g fill="#f4efe4">
-        <circle cx="25" cy="55" r="2.5"/><circle cx="85" cy="55" r="2.5"/><circle cx="145" cy="55" r="2.5"/>
-        <circle cx="205" cy="55" r="2.5"/><circle cx="265" cy="55" r="2.5"/><circle cx="325" cy="55" r="2.5"/>
-        <circle cx="385" cy="55" r="2.5"/><circle cx="445" cy="55" r="2.5"/><circle cx="505" cy="55" r="2.5"/>
-        <circle cx="565" cy="55" r="2.5"/>
-      </g>
-    </svg>
-  </div>
-  <div class="login-form">
-    <div class="login-card">
-      <h3>Sign in</h3>
-      <div class="muted small">Village committee members only</div>
-      <div class="field">
-        <label class="lbl" for="u">Username</label>
-        <input id="u" class="input" type="text" autocomplete="username" autocapitalize="off" spellcheck="false">
+  <div class="loginshell">
+
+    <div class="brandside">
+      <div id="loginPhoto"></div>
+      <div id="loginWash"></div>
+      <span class="orb a"></span><span class="orb b"></span><span class="orb c"></span>
+
+      <div class="wordmark">
+        <span class="chip">
+          <svg width="28" height="28" viewBox="0 0 64 64" aria-hidden="true" fill="#fff">
+            <path d="M31 6h1.6v9H31z"/><path d="M32.6 6.4 43 9.6l-10.4 3.2z"/>
+            <circle cx="31.8" cy="17.4" r="3.1"/><path d="M17 50 31.8 20 46.6 50z"/>
+            <rect x="12" y="50" width="40" height="5" rx="1.6"/>
+          </svg>
+        </span>
+        <b>ମାଳିପାଟଣା</b>
       </div>
-      <div class="field">
-        <label class="lbl" for="p">Password</label>
-        <input id="p" class="input" type="password" autocomplete="current-password">
-      </div>
-      <button id="loginBtn" class="btn btn-primary" style="width:100%;justify-content:center">Sign in</button>
-      <div id="loginMsg" class="msg"></div>
-      <div class="small muted" style="margin-top:22px;line-height:1.6">
-        Trouble signing in? Ask the village admin to check your row in the Users sheet.
+
+      <div class="grow"></div>
+
+      <div class="eyebrow">JAGATSINGHPUR · ODISHA</div>
+      <h1>ଆମ ଗାଁ ମାଳିପାଟଣା</h1>
+      <h2>Malipatana Village Welfare</h2>
+      <p>One register for every family, every rupee and every case of help the village fund has given.</p>
+      <div class="pills">
+        <span>Families</span><span>Contributions</span><span>Emergency help</span><span>Reports</span>
       </div>
     </div>
+
+    <div class="formside">
+      <div class="kicker">VILLAGE COMMITTEE ACCESS</div>
+      <h3>Welcome</h3>
+      <p class="lead">Enter the username and password given to you by the village admin.</p>
+
+      <div class="formbox">
+        <div class="field">
+          <label class="lbl" for="u">Username</label>
+          <input id="u" class="input" type="text" placeholder="Enter username"
+                 autocomplete="username" autocapitalize="off" spellcheck="false">
+        </div>
+        <div class="field">
+          <label class="lbl" for="p">Password</label>
+          <div class="pwwrap">
+            <input id="p" class="input" type="password" placeholder="Enter password" autocomplete="current-password">
+            <button class="pwtoggle" id="pwToggle" type="button">Show</button>
+          </div>
+        </div>
+        <label class="remember"><input type="checkbox" id="rememberMe"> Remember username on this device</label>
+        <button id="loginBtn" class="signin">Sign in</button>
+        <div id="loginMsg" class="msg"></div>
+      </div>
+
+      <div class="vrow">
+        <span class="vchip" id="feChip">FE —</span>
+        <span class="vchip" id="beChip">BE checking…</span>
+      </div>
+      <button class="repair" id="repairBtn">↻ Repair cache / session</button>
+      <div class="helpline">Trouble signing in? Ask the village admin to check your row in the Users sheet.</div>
+    </div>
+
   </div>
 </div>
 
@@ -324,7 +399,7 @@ td.acts{text-align:right;white-space:nowrap}
    ========================================================================= */
 const CONFIG = {
   API_URL: 'https://script.google.com/macros/s/AKfycbzTy_-uSI9m_vVuv9G2Q8r0t0x2UWcSrkzrnQtDw9odZW_246TxnT7qj39IT1TQwt-O/exec',
-  VERSION: 'FE V2.0.0',
+  VERSION: 'FE V2.1.0',
   IDLE_MINUTES: 30,
   /* Photo shown when no photo has been set in Settings.
      village.jpg sits in the same folder as this file on GitHub. */
@@ -364,7 +439,7 @@ function photoOf(name){
 }
 function applyLoginPhoto(){
   const url = photoSrc(local.get('mal_login_photo') || CONFIG.DEFAULT_PHOTO);
-  const art = document.querySelector('.login-art');
+  const art = document.getElementById('loginPhoto');
   if(!art || !url) return;
   const probe = new Image();
   probe.onload = () => { art.style.backgroundImage = 'url("' + url.replace(/"/g, '%22') + '")'; };
@@ -438,6 +513,8 @@ async function doLogin(){
     if(!r || !r.ok) throw new Error((r && r.error) || 'Sign in failed.');
     USER = r.user;
     store.set('mal_user', JSON.stringify(USER));
+    if($('#rememberMe') && $('#rememberMe').checked) local.set('mal_saved_user', username);
+    else { try { localStorage.removeItem('mal_saved_user'); } catch(e){} }
     msg.textContent = 'Loading village records…';
     await load();
     enterApp();
@@ -480,7 +557,8 @@ function enterApp(){
   $('#whoName').textContent = USER.name || USER.username;
   $('#whoRole').textContent = USER.role || 'Viewer';
   $('#avatar').textContent = String(USER.name || USER.username || '?').trim().charAt(0).toUpperCase();
-  $('#brandSub').textContent = (DB.settings && DB.settings['Village Name'] ? String(DB.settings['Village Name']).toUpperCase() : 'MALIPATANA') + ' · ' + CONFIG.VERSION;
+  $('#brandSub').textContent = (DB.settings && DB.settings['Village Name'] ? String(DB.settings['Village Name']).toUpperCase() : 'MALIPATANA')
+    + ' · ' + CONFIG.VERSION + ' · ' + (DB.version || '');
   if(DB.settings && DB.settings['Auto Logout']){
     const m = parseInt(String(DB.settings['Auto Logout']), 10);
     if(m > 0) CONFIG.IDLE_MINUTES = m;
@@ -1539,6 +1617,65 @@ function renderPhotos(){
 }
 
 /* =========================================================================
+   LOGIN SCREEN EXTRAS
+   ========================================================================= */
+function initLoginScreen(){
+  $('#feChip').textContent = CONFIG.VERSION.replace('FE ', 'FE ');
+
+  const saved = local.get('mal_saved_user');
+  if(saved){ $('#u').value = saved; $('#rememberMe').checked = true; $('#p').focus(); }
+
+  $('#pwToggle').onclick = () => {
+    const p = $('#p'), showing = p.type === 'text';
+    p.type = showing ? 'password' : 'text';
+    $('#pwToggle').textContent = showing ? 'Show' : 'Hide';
+    p.focus();
+  };
+
+  $('#repairBtn').onclick = repairCache;
+  bePing();
+}
+
+/* Confirms the sheet is reachable and shows which backend version answered. */
+async function bePing(){
+  const chip = $('#beChip');
+  if(!chip) return;
+  try {
+    const r = await api('health');
+    if(r && r.ok){ chip.textContent = String(r.version || 'BE ?'); chip.className = 'vchip ok'; }
+    else { chip.textContent = 'BE error'; chip.className = 'vchip bad'; }
+  } catch(e){
+    chip.textContent = 'BE unreachable';
+    chip.className = 'vchip bad';
+  }
+}
+
+/* Clears everything this site has stored on the device and reloads a fresh copy.
+   Useful when an old version of the page is stuck in the browser cache. */
+async function repairCache(){
+  const btn = $('#repairBtn');
+  btn.disabled = true;
+  btn.textContent = 'Clearing…';
+  const keepUser = local.get('mal_saved_user');
+  try { sessionStorage.clear(); } catch(e){}
+  try { localStorage.clear(); } catch(e){}
+  try {
+    if(window.caches){ const names = await caches.keys(); await Promise.all(names.map(n => caches.delete(n))); }
+  } catch(e){}
+  try {
+    if(navigator.serviceWorker){
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map(r => r.unregister()));
+    }
+  } catch(e){}
+  if(keepUser){ try { localStorage.setItem('mal_saved_user', keepUser); } catch(e){} }
+  btn.textContent = 'Reloading…';
+  const u = new URL(location.href);
+  u.searchParams.set('fresh', Date.now());
+  location.replace(u.toString());
+}
+
+/* =========================================================================
    BOOT
    ========================================================================= */
 $('#loginBtn').onclick = doLogin;
@@ -1550,6 +1687,7 @@ $('#menuBtn').onclick = () => $('#sidebar').classList.contains('open') ? closeDr
 $('#scrim').onclick = closeDrawer;
 
 applyLoginPhoto();
+initLoginScreen();
 
 (async () => {
   const saved = store.get('mal_user');
