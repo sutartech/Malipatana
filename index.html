@@ -82,8 +82,8 @@ label.lbl{display:block;font-size:12.5px;font-weight:700;color:var(--muted);marg
 .iconbtn:hover{background:#ffffff2e}
 .whochip{display:flex;align-items:center;gap:8px;background:#ffffff14;border-radius:999px;padding:5px 12px 5px 6px;font-size:13px}
 .avatar{width:27px;height:27px;border-radius:50%;background:var(--turmeric);color:#241a00;display:grid;place-items:center;font-weight:700;font-size:12px}
-.whochip b{font-weight:600}
-.whochip .role{color:#a9c6d2;font-size:11.5px}
+.whochip b{font-weight:600;display:block;line-height:1.2}
+.whochip .role{display:block;color:#a9c6d2;font-size:11px;line-height:1.25;margin-top:1px}
 .shell{display:flex;align-items:flex-start}
 .sidebar{width:218px;flex:none;background:var(--indigo);min-height:calc(100dvh - 58px);
   position:sticky;top:58px;height:calc(100dvh - 58px);overflow-y:auto;padding:10px 8px 24px}
@@ -500,7 +500,7 @@ function buildNav(){
                  ['insurance', '⛨', 'Insurance', 'insurance']]]
   ];
   if(isAdmin()) groups.push(['ADMIN', [['users', '☺', 'Users', 'users'], ['photos', '❏', 'Photos', null],
-                                       ['settings', '⚙', 'Settings', 'settingsList']]]);
+                                       ['settingsList', '⚙', 'Settings', 'settingsList']]]);
   let html = '';
   groups.forEach(([title, items]) => {
     if(title) html += '<div class="navgroup">' + title + '</div>';
@@ -1013,7 +1013,8 @@ function filterRows(key){
 
 function renderModule(key){
   const m = MODULES[key];
-  if(!m){ $('#main').innerHTML = '<div class="empty"><b>Page not found</b></div>'; return; }
+  if(!m){ $('#main').innerHTML = '<div class="empty"><b>Page not found</b>That link is not part of the dashboard. ' +
+    '<button class="btn btn-sm" onclick="go(\'dashboard\')" style="margin-top:12px">Back to dashboard</button></div>'; return; }
   if(m.adminOnly && !isAdmin()){ $('#main').innerHTML = '<div class="empty"><b>Admins only</b>Ask the village admin for access.</div>'; return; }
   if(key === 'users' && !DB.users){
     $('#main').innerHTML = '<div class="pagehead"><h2>Users</h2></div><div class="panel"><div class="empty"><b>Not available yet</b>' +
