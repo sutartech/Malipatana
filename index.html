@@ -382,10 +382,12 @@ main.main{padding:clamp(16px,2.2vw,28px) clamp(14px,2.2vw,30px) 80px;max-width:1
 .ledger-top .big{font-size:clamp(38px,5.4vw,54px)}
 .meter{height:9px;margin-top:18px}
 .meter i{background:linear-gradient(90deg,#b87b05,#e0a02f);animation:mp-sweep .9s .2s var(--ease) both}
-.strip{animation:mp-up .5s .12s var(--ease) both}
-.strip div{padding:16px 18px;transition:background .2s ease}
+.strip{animation:mp-up .5s .12s var(--ease) both;grid-auto-rows:auto}
+.strip div{padding:14px 16px;transition:background .2s ease;min-width:0}
 .strip div:hover{background:var(--surface-2)}
-.strip .v{font-size:26px}
+.strip .k{font-size:11.5px;line-height:1.35}
+.strip .v{font-size:24px;line-height:1.4}
+@media(max-width:620px){.strip{grid-template-columns:repeat(2,1fr)}.strip div:nth-child(2n){border-right:0}}
 .panel{animation:mp-up .5s .18s var(--ease) both}
 .panel-head{padding:16px 22px}
 .panel-head h3{font-size:18px;white-space:nowrap}
@@ -1370,6 +1372,7 @@ function renderModule(key){
       <option value="">All families</option>
       ${(DB.families || []).map(f => `<option value="${esc(f['Family ID'])}" ${v.fam === String(f['Family ID']) ? 'selected' : ''}>${esc(f['Family ID'])} · ${esc(f['Family Head'])}</option>`).join('')}
     </select>` : ''}
+    ${key === 'members' && canEdit() ? '<button class="btn btn-sm" data-act="heads">Add missing family heads</button>' : ''}
     <button class="btn btn-sm" data-act="csv">Export CSV</button>
     <button class="btn btn-sm" onclick="window.print()">Print</button>
     <span class="muted small" style="margin-left:auto">${rows.length} of ${all.length} records</span>
@@ -1425,6 +1428,7 @@ function renderModule(key){
     if(act === 'add') b.onclick = () => openForm(key);
     if(act === 'edit') b.onclick = () => openForm(key, id);
     if(act === 'del') b.onclick = () => askDelete(key, id);
+    if(act === 'heads') b.onclick = () => addMissingHeads();
     if(act === 'csv') b.onclick = () => exportCsv(key, rows);
     if(act === 'profile') b.onclick = () => openProfile(id);
   });
@@ -1521,16 +1525,21 @@ function openForm(key, id){
 
   wireForm(key, rec, !!existing);
   $('#saveBtn').onclick = () => saveRecord(key, rec, !!existing);
-  const first = $('#formGrid').querySelector('input:not([readonly]),select,textarea');
+  const idSel = '#' + fid({ n: MODULES[key].idField });
+  const first = $('#formGrid').querySelector('input:not([readonly]):not(' + idSel + '),select,textarea')
+             || $('#formGrid').querySelector('input:not([readonly]),select,textarea');
   if(first) first.focus();
 }
 
 function fieldHtml(key, f, value, editing){
   const id = 'f_' + f.n.replace(/[^a-z0-9]/gi, '_');
   if(editing && f.n === MODULES[key].idField && !f.auto){
+    const ro = isAdmin() ? '' : 'readonly';
     return `<div><label class="lbl" for="${id}">${esc(f.n)}</label>
-            <input class="input" id="${id}" value="${esc(value == null ? '' : String(value))}" readonly>
-            <div class="fieldnote">Delete and add again if this has to change.</div></div>`;
+            <input class="input" id="${id}" value="${esc(value == null ? '' : String(value))}" ${ro}>
+            <div class="fieldnote">${isAdmin()
+              ? 'Admins may change this. The old row is replaced by a new one with the new ID.'
+              : 'Only an admin can change an ID.'}</div></div>`;
   }
   const req = f.req ? ' <span class="reqmark">*</span>' : '';
   const wide = ['textarea'].includes(f.t) ? ' wide' : '';
@@ -1538,9 +1547,12 @@ function fieldHtml(key, f, value, editing){
   let input;
 
   if(f.auto){
-    input = `<input class="input" id="${id}" value="${esc(val)}" ${editing ? 'readonly' : ''}>`;
+    const lock = editing && !isAdmin() ? 'readonly' : '';
+    input = `<input class="input" id="${id}" value="${esc(val)}" ${lock}>`;
     return `<div class="${wide}"><label class="lbl" for="${id}">${esc(f.n)}</label>${input}
-            <div class="fieldnote">${editing ? 'The ID cannot be changed.' : 'Suggested automatically — change it if your village uses a different code.'}</div></div>`;
+            <div class="fieldnote">${editing
+              ? (isAdmin() ? 'Admins may change this. The old row is replaced by a new one with the new ID.' : 'Only an admin can change an ID.')
+              : 'Suggested automatically — change it if your village uses a different code.'}</div></div>`;
   }
   switch(f.t){
     case 'photo': {
@@ -1684,7 +1696,7 @@ function autoFillFromFamily(key){
 
 /* A new family always has at least one member: the head. Create that row
    automatically with Relation = Self so nobody types the name twice. */
-async function addHeadAsMember(fam){
+async function addHeadAsMember(fam, quiet){
   const head = String(fam['Family Head'] || '').trim();
   const famId = String(fam['Family ID'] || '').trim();
   if(!head || !famId) return;
@@ -1704,15 +1716,52 @@ async function addHeadAsMember(fam){
     const r = await api('save', { sheet: MODULES.members.sheet, record: JSON.stringify(rec) });
     if(!r || !r.ok) throw new Error((r && r.error) || 'save failed');
     upsertLocal('members', rec);
-    toast(head + ' added as member ' + rec['Member ID'], 'good');
-    render();
+    if(!quiet){ toast(head + ' added as member ' + rec['Member ID'], 'good'); render(); }
   } catch(e){
-    toast('Family saved, but the head could not be added as a member', 'bad');
+    if(!quiet) toast('Family saved, but the head could not be added as a member', 'bad');
+    else throw e;
+  }
+}
+
+/* Families created before this feature existed: add the missing head rows. */
+async function addMissingHeads(){
+  const missing = (DB.families || []).filter(f => {
+    const head = String(f['Family Head'] || '').trim();
+    const id = String(f['Family ID'] || '').trim();
+    if(!head || !id) return false;
+    return !(DB.members || []).some(x =>
+      String(x['Family ID'] || '').trim() === id &&
+      String(x['Name'] || '').trim().toLowerCase() === head.toLowerCase());
+  });
+  if(!missing.length){ toast('Every family head is already a member', 'good'); return; }
+  busy(true, 'Adding ' + missing.length + ' family heads as members…');
+  let done = 0;
+  for(const f of missing){
+    try { await addHeadAsMember(f, true); done++; } catch(e){}
+  }
+  busy(false);
+  await refresh(true);
+  render();
+  toast(done + ' family head' + (done === 1 ? '' : 's') + ' added as members', 'good');
+}
+
+/* The backend finds rows by their ID, so a changed ID cannot be an update —
+   the old row is removed and the record is written under the new ID. */
+async function renameId(key, oldId, newId){
+  const m = MODULES[key];
+  const r = await api('delete', { sheet: m.sheet, idField: m.idField, idValue: oldId });
+  if(!r || !r.ok) throw new Error((r && r.error) || 'Could not replace the old ID');
+  removeLocal(key, oldId);
+  if(key === 'members'){
+    (DB.families || []).forEach(f => {
+      if(String(f['Head Member ID'] || '').trim() === String(oldId)) f['Head Member ID'] = newId;
+    });
   }
 }
 
 async function saveRecord(key, rec, editing){
   const m = MODULES[key];
+  const originalId = editing ? String(rec[m.idField] ?? '').trim() : '';
   const out = Object.assign({}, rec);
   const problems = [];
   m.fields.forEach(f => {
@@ -1734,9 +1783,11 @@ async function saveRecord(key, rec, editing){
     const box = $('#formErr'); box.classList.remove('hide'); box.textContent = 'Set a password for the new user.';
     return;
   }
-  if(!editing && rowsOf(key).some(r => String(r[m.idField]).trim() === String(out[m.idField]).trim())){
+  const newId = String(out[m.idField] ?? '').trim();
+  const idChanged = editing && originalId && newId && newId !== originalId;
+  if((!editing || idChanged) && rowsOf(key).some(r => String(r[m.idField]).trim() === newId)){
     const box = $('#formErr'); box.classList.remove('hide');
-    box.textContent = m.idField + ' ' + out[m.idField] + ' already exists. Change it and try again.';
+    box.textContent = m.idField + ' ' + newId + ' already exists. Change it and try again.';
     return;
   }
   if(m.fields.some(f => f.n === 'Last Updated')) out['Last Updated'] = today();
@@ -1745,14 +1796,15 @@ async function saveRecord(key, rec, editing){
   const btn = $('#saveBtn');
   btn.disabled = true; btn.textContent = 'Saving…';
   try {
+    if(idChanged) await renameId(key, originalId, newId);
     const r = await api('save', { sheet: m.sheet, record: JSON.stringify(out) });
     if(!r || !r.ok) throw new Error((r && r.error) || 'The sheet refused the save.');
     upsertLocal(key, out);
     const pending = PENDING_PHOTO, removing = REMOVE_PHOTO;
     closeModal();
-    toast(editing ? 'Changes saved' : 'Record added', 'good');
+    toast(idChanged ? ('ID changed to ' + newId) : (editing ? 'Changes saved' : 'Record added'), 'good');
     if(pending || removing) sendPhoto(key, out, pending, removing);
-    if(key === 'families' && !editing) addHeadAsMember(out);
+    if(key === 'families') await addHeadAsMember(out);
     render();
     refresh(true);
   } catch(e){
