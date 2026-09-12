@@ -554,7 +554,33 @@ tr.rowsaved td{background:#e9f3ec}
   #printArea .ptotals{margin-top:10px;font-size:10pt;border-top:1px solid #000;padding-top:6px}
   #printArea .psign{display:flex;gap:24px;margin-top:34px;font-size:9.5pt;color:#333}
   #printArea .psign span{flex:1;border-top:1px solid #000;padding-top:4px;text-align:center}
-}</style>
+}
+/* ---------- data tables: compact, pinned identity column, calmer rhythm ----------
+   Long registers are read on a phone in the village, so rows stay short and the
+   first columns never scroll away. */
+.tablewrap{border-radius:var(--r-lg);contain:paint}
+table.grid{font-size:13.5px}
+table.grid th{padding:10px 14px;font-size:11px;letter-spacing:.07em;background:#f7f8f4;
+  position:sticky;top:0;z-index:3;box-shadow:inset 0 -1px 0 var(--line)}
+table.grid td{padding:9px 14px;vertical-align:middle;line-height:1.45}
+table.grid tbody tr:nth-child(even) td{background:#fcfcfa}
+table.grid tbody tr:hover td{background:#f4f7f3}
+table.grid tbody tr{content-visibility:auto;contain-intrinsic-size:auto 44px}
+table.grid th:first-child,table.grid td:first-child{position:sticky;left:0;z-index:2;background:var(--surface)}
+table.grid th:first-child{z-index:4}
+table.grid tbody tr:nth-child(even) td:first-child{background:#fcfcfa}
+table.grid tbody tr:hover td:first-child{background:#f4f7f3}
+table.grid td.photocell,table.grid th.photocell{width:52px;padding-right:6px}
+.cellav{width:34px;height:34px;border-radius:10px}
+.cellav.none{font-size:11.5px}
+table.grid td.acts{white-space:nowrap;text-align:right;padding:6px 12px}
+table.grid td.acts .btn{padding:5px 10px;min-height:30px;font-size:12.5px;border-radius:8px}
+table.grid td.acts .btn+.btn{margin-left:4px}
+@media(max-width:760px){
+  table.grid th:first-child,table.grid td:first-child{position:static}
+  table.grid tbody tr:nth-child(even) td{background:transparent}
+}
+</style>
 </head>
 <body>
 
@@ -1626,6 +1652,7 @@ function renderModule(key){
   const rows = filterRows(key);
   const all = rowsOf(key);
   const cols = listCols(key);
+  ROWCACHE[key] = rows;
   const moneyCols = cols.filter(c => fieldDef(key, c).t === 'money');
   const totals = moneyCols.map(c => c + ' ' + money(rows.reduce((a, r) => a + num(r[c]), 0)));
   const hasFamily = m.fields.some(f => f.t === 'family');
@@ -1716,8 +1743,36 @@ function renderModule(key){
   $('#main').querySelectorAll('[data-photo]').forEach(b => {
     b.onclick = () => openPhoto(b.dataset.photo, b.querySelector('img') ? b.querySelector('img').alt : '');
   });
-  $('#main').querySelectorAll('[data-act]').forEach(b => {
+  const main = $('#main');
+  if(!main.dataset.delegated){
+    main.dataset.delegated = '1';
+    main.addEventListener('click', ev => {
+      const b = ev.target.closest('[data-act],[data-pay],[data-event],[data-photo]');
+      if(!b || !main.contains(b)) return;
+      const k = PAGE, id = b.dataset.id;
+      try {
+        if(b.dataset.photo) return openPhoto(b.dataset.photo, b.querySelector('img') ? b.querySelector('img').alt : '');
+        if(b.dataset.event) return openEvent(b.dataset.event);
+        if(b.dataset.pay) return payRecurring(b.dataset.pay, b);
+        switch(b.dataset.act){
+          case 'add': return openForm(k);
+          case 'edit': return openForm(k, id);
+          case 'del': return askDelete(k, id);
+          case 'heads': return addMissingHeads();
+          case 'cols': return openColumns(k);
+          case 'access': return openAccess(id);
+          case 'rowsave': return saveRow(k, id, b);
+          case 'quick': { const vq = VIEW[k] || (VIEW[k] = {}); vq.quick = !vq.quick; return renderModule(k); }
+          case 'print': return isAdmin() ? openPrint(k, currentRows(k)) : window.print();
+          case 'csv': return exportCsv(k, currentRows(k));
+          case 'profile': return k === 'members' ? openMember(id) : k === 'events' ? openEvent(id) : openProfile(id);
+        }
+      } catch(e){ console.error('action failed', b.dataset, e); toast('That did not work: ' + (e.message || e), 'bad'); }
+    });
+  }
+  main.querySelectorAll('[data-act]').forEach(b => {
     const act = b.dataset.act, id = b.dataset.id;
+    b.type = 'button';
     if(act === 'add') b.onclick = () => openForm(key);
     if(act === 'edit') b.onclick = () => openForm(key, id);
     if(act === 'del') b.onclick = () => askDelete(key, id);
@@ -1732,6 +1787,9 @@ function renderModule(key){
       key === 'members' ? openMember(id) : key === 'events' ? openEvent(id) : openProfile(id);
   });
 }
+
+const ROWCACHE = {};
+function currentRows(key){ return ROWCACHE[key] || rowsOf(key); }
 
 let debTimer;
 function debounce(fn, ms){ return function(){ clearTimeout(debTimer); debTimer = setTimeout(fn, ms); }; }
@@ -1794,7 +1852,11 @@ function defaultFor(f){
   return '';
 }
 
-function openForm(key, id){
+function openForm(key, id, prefill){
+  try { return openFormInner(key, id, prefill); }
+  catch(e){ console.error('openForm failed', e); toast('Could not open the form: ' + (e.message || e), 'bad'); }
+}
+function openFormInner(key, id, prefill){
   if(!canEdit()) { toast('Your account cannot change records', 'bad'); return; }
   const m = MODULES[key];
   const existing = id ? rowsOf(key).find(r => String(r[m.idField]).trim() === String(id).trim()) : null;
@@ -1934,8 +1996,8 @@ function wireForm(key, rec){
   fillMembers();
   if(famEl) famEl.addEventListener('change', () => { fillMembers(); autoFillFromFamily(key); });
 
-  PENDING_PHOTO = null;
-  const photoField = m.fields.find(f => f.t === 'photo');
+  PENDING_PHOTO = null; REMOVE_PHOTO = false;
+  const photoField = allFields(key).find(f => f.t === 'photo' && document.getElementById(fid(f)));
   if(photoField){
     const base = fid(photoField);
     const fileEl = document.getElementById(base + '_file');
