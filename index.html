@@ -444,6 +444,27 @@ table.grid tbody tr:hover{background:#fbfbf8}
   td.photocell{display:flex}
   .cellav{width:52px;height:52px}
 }
+/* ---------- login brand side: photo on top, wording below ---------- */
+.brandside{justify-content:flex-start}
+.photoframe{margin-top:0;margin-bottom:0}
+.photoframe img{aspect-ratio:4/3}
+.photocap{margin-bottom:20px}
+.brandtext{margin-top:auto}
+.brandtext .eyebrow{margin-bottom:6px}
+.brandside h1{margin-top:0}
+.pills{margin-bottom:0}
+@media(max-width:860px){
+  .photoframe img{aspect-ratio:16/9}
+  .photocap{margin-bottom:14px}
+  .brandtext{margin-top:0}
+}
+/* ---------- photo fallbacks ---------- */
+.photonote{display:none;color:var(--muted);font-size:13px;line-height:1.6;max-width:46ch;margin:0 auto}
+.photobox.photofail .photofull{display:none}
+.photobox.photofail .photonote{display:block}
+.photoav.photofail img,.cellav.photofail img{display:none}
+.photoav.photofail::after{content:'Not viewable';color:var(--muted);font-size:11.5px;text-align:center;padding:0 8px}
+.cellav.photofail::after{content:'⛶';color:var(--muted);font-size:14px}
 </style>
 </head>
 <body>
@@ -475,6 +496,10 @@ table.grid tbody tr:hover{background:#fbfbf8}
         <b>ମାଳିପାଟଣା</b>
       </div>
 
+      <div class="photoframe"><img id="loginPhoto" alt="Malipatana village temple"></div>
+      <div class="photocap">ଗାଁ ମନ୍ଦିର · the village temple</div>
+
+      <div class="brandtext">
       <div class="eyebrow">JAGATSINGHPUR · ODISHA</div>
       <h1>ଆମ ଗାଁ ମାଳିପାଟଣା</h1>
       <h2>Malipatana Village Welfare</h2>
@@ -482,9 +507,7 @@ table.grid tbody tr:hover{background:#fbfbf8}
       <div class="pills">
         <span>Families</span><span>Contributions</span><span>Emergency help</span><span>Reports</span>
       </div>
-
-      <div class="photoframe"><img id="loginPhoto" alt="Malipatana village temple"></div>
-      <div class="photocap">ଗାଁ ମନ୍ଦିର · the village temple</div>
+      </div>
     </div>
 
     <div class="formside">
@@ -645,6 +668,33 @@ function thumbUrl(u, w){
   const id = driveId(u);
   return id ? 'https://drive.google.com/thumbnail?id=' + id + '&sz=w' + (w || 200) : String(u || '');
 }
+function photoSrcs(u, w){
+  const id = driveId(u);
+  if(!id) return [String(u || '')];
+  return [
+    'https://lh3.googleusercontent.com/d/' + id + '=w' + (w || 200),
+    'https://drive.google.com/thumbnail?id=' + id + '&sz=w' + (w || 200),
+    'https://drive.usercontent.google.com/download?id=' + id + '&export=view'
+  ];
+}
+/* <img data-srcs="a|b|c"> — step through the list on each error. */
+function wirePhotoFallbacks(root){
+  (root || document).querySelectorAll('img[data-srcs]').forEach(img => {
+    if(img.dataset.wired) return;
+    img.dataset.wired = '1';
+    const list = img.dataset.srcs.split('|').filter(Boolean);
+    let i = 0;
+    img.onerror = () => {
+      i++;
+      if(i < list.length){ img.src = list[i]; return; }
+      img.onerror = null;
+      const host = img.closest('.photoav,.cellav,.photobox');
+      if(host) host.classList.add('photofail');
+    };
+    img.src = list[0];
+  });
+}
+
 function fullUrl(u){
   const id = driveId(u);
   return id ? 'https://drive.google.com/file/d/' + id + '/view' : String(u || '');
@@ -700,9 +750,11 @@ async function sendPhoto(key, rec, pending, removing){
 function openPhoto(url, caption){
   openModal('<header><div><h3>Photo</h3><div class="sub">' + esc(caption || '') + '</div></div><div class="sp"></div>' +
     '<button class="btn btn-sm" onclick="closeModal()">Close</button></header>' +
-    '<div class="body" style="text-align:center"><img class="photofull" src="' + esc(thumbUrl(url, 900)) + '" alt=""></div>' +
+    '<div class="body photobox" style="text-align:center"><img class="photofull" data-srcs="' + esc(photoSrcs(url, 1000).join('|')) + '" alt="">' +
+    '<div class="photonote">This photo is in Drive but not viewable here yet. Open it in Drive, or set its sharing to <b>Anyone with the link · Viewer</b>.</div></div>' +
     '<footer><a class="btn" href="' + esc(fullUrl(url)) + '" target="_blank" rel="noreferrer">Open in Drive</a>' +
     '<button class="btn btn-primary" onclick="closeModal()">Done</button></footer>');
+  wirePhotoFallbacks(document.getElementById('modal') || document);
 }
 
 /* ---------- API (JSONP — avoids Apps Script CORS problems) ---------- */
@@ -1289,7 +1341,7 @@ function cellHtml(key, row, col){
     const u = String(raw == null ? '' : raw).trim();
     const nm = String(row['Name'] || row[MODULES[key].idField] || '?').trim();
     return { cls: 'photocell', html: u
-      ? '<button class="cellav" data-photo="' + esc(u) + '" title="View photo"><img src="' + esc(thumbUrl(u, 120)) + '" alt="' + esc(nm) + '" loading="lazy"></button>'
+      ? '<button class="cellav" data-photo="' + esc(u) + '" title="View photo"><img data-srcs="' + esc(photoSrcs(u, 160).join('|')) + '" alt="' + esc(nm) + '" loading="lazy"></button>'
       : '<span class="cellav none">' + esc(initials(nm)) + '</span>' };
   }
   if(f.t === 'money'){ return { cls: 'num', html: raw === '' || raw == null ? '' : '<span class="tnum">' + money(raw) + '</span>' }; }
@@ -1420,6 +1472,7 @@ function renderModule(key){
     if(v.sort === c) v.dir *= -1; else { v.sort = c; v.dir = 1; }
     renderModule(key);
   });
+  wirePhotoFallbacks($('#main'));
   $('#main').querySelectorAll('[data-photo]').forEach(b => {
     b.onclick = () => openPhoto(b.dataset.photo, b.querySelector('img') ? b.querySelector('img').alt : '');
   });
@@ -1524,6 +1577,7 @@ function openForm(key, id){
     </footer>`);
 
   wireForm(key, rec, !!existing);
+  wirePhotoFallbacks(document.getElementById('modal') || document);
   $('#saveBtn').onclick = () => saveRecord(key, rec, !!existing);
   const idSel = '#' + fid({ n: MODULES[key].idField });
   const first = $('#formGrid').querySelector('input:not([readonly]):not(' + idSel + '),select,textarea')
@@ -1559,7 +1613,7 @@ function fieldHtml(key, f, value, editing){
       const u = val.trim();
       return `<div class="wide"><label class="lbl">${esc(f.n)}</label>
         <div class="photopick">
-          <div class="photoav" id="${id}_prev">${u ? `<img src="${esc(thumbUrl(u, 260))}" alt="">` : '<span>No photo</span>'}</div>
+          <div class="photoav" id="${id}_prev">${u ? `<img data-srcs="${esc(photoSrcs(u, 320).join('|'))}" alt="">` : '<span>No photo</span>'}</div>
           <div class="photopick-side">
             <input type="file" accept="image/*" id="${id}_file" class="hide">
             <div class="photopick-btns">
@@ -1650,6 +1704,7 @@ function wireForm(key, rec){
         PENDING_PHOTO = { data: d.split(',')[1], mime: 'image/jpeg' };
         REMOVE_PHOTO = false;
         prev.innerHTML = '<img src="' + d + '" alt="">';
+        prev.classList.remove('photofail');
         if(clear) clear.classList.remove('hide');
       } catch(e){ prev.innerHTML = '<span>No photo</span>'; toast('Could not read that image', 'bad'); }
       fileEl.value = '';
