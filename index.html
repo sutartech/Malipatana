@@ -1682,6 +1682,35 @@ function autoFillFromFamily(key){
   if(benef && !benef.value) benef.value = f['Family Head'] || '';
 }
 
+/* A new family always has at least one member: the head. Create that row
+   automatically with Relation = Self so nobody types the name twice. */
+async function addHeadAsMember(fam){
+  const head = String(fam['Family Head'] || '').trim();
+  const famId = String(fam['Family ID'] || '').trim();
+  if(!head || !famId) return;
+  const already = (DB.members || []).some(x =>
+    String(x['Family ID'] || '').trim() === famId &&
+    String(x['Name'] || '').trim().toLowerCase() === head.toLowerCase());
+  if(already) return;
+
+  const rec = {};
+  MODULES.members.fields.forEach(f => { rec[f.n] = ''; });
+  rec['Member ID'] = nextId('members');
+  rec['Family ID'] = famId;
+  rec['Name'] = head;
+  rec['Relation to Family Head'] = 'Self';
+  rec['Mobile'] = fam['Mobile'] || '';
+  try {
+    const r = await api('save', { sheet: MODULES.members.sheet, record: JSON.stringify(rec) });
+    if(!r || !r.ok) throw new Error((r && r.error) || 'save failed');
+    upsertLocal('members', rec);
+    toast(head + ' added as member ' + rec['Member ID'], 'good');
+    render();
+  } catch(e){
+    toast('Family saved, but the head could not be added as a member', 'bad');
+  }
+}
+
 async function saveRecord(key, rec, editing){
   const m = MODULES[key];
   const out = Object.assign({}, rec);
@@ -1723,6 +1752,7 @@ async function saveRecord(key, rec, editing){
     closeModal();
     toast(editing ? 'Changes saved' : 'Record added', 'good');
     if(pending || removing) sendPhoto(key, out, pending, removing);
+    if(key === 'families' && !editing) addHeadAsMember(out);
     render();
     refresh(true);
   } catch(e){
