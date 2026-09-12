@@ -450,7 +450,7 @@ table.grid tbody tr:hover{background:#fbfbf8}
 /* ---------- login brand side: photo on top, wording below ----------
    Nothing here may be clipped or pushed out of view: the panel grows with its
    content and the photo gives up height first. */
-.brandside{justify-content:flex-start;min-height:0;overflow:visible}
+.brandside{justify-content:flex-start;min-height:0;overflow:hidden}
 .photoframe{margin-top:0;margin-bottom:0;flex:0 1 auto;min-height:0}
 .photoframe img{aspect-ratio:16/10;max-height:34dvh;height:auto}
 .photocap{margin-bottom:18px}
@@ -501,7 +501,7 @@ table.grid tbody tr:hover{background:#fbfbf8}
    must never sit on the wrap boundary, so the maxima stay conservative. */
 .hero h2{font-size:clamp(21px,2.4vw,27px);line-height:1.5}
 .pagehead h2{font-size:clamp(21px,2.4vw,26px);line-height:1.5}
-.brandside h1{font-size:clamp(24px,2.8vw,36px);line-height:1.5}
+.brandside h1{font-size:clamp(24px,2.8vw,36px);line-height:1.6;margin-bottom:10px}
 .ledger-top .big{font-size:clamp(30px,4.2vw,42px);line-height:1.5;margin-top:6px}
 .panel-head h3,.modal header h3{line-height:1.5}
 .hero h2,.pagehead h2,.brandside h1,.ledger-top .big{padding-block:.04em;overflow-wrap:anywhere}
@@ -580,6 +580,13 @@ table.grid td.acts .btn+.btn{margin-left:4px}
   table.grid th:first-child,table.grid td:first-child{position:static}
   table.grid tbody tr:nth-child(even) td{background:transparent}
 }
+
+/* ---------- deceased members ---------- */
+.pill.gone{background:#eceff1;color:#455a64;border-color:#cfd8dc}
+tr.gonerow td{opacity:.62}
+tr.gonerow td:first-child,tr.gonerow td.acts{opacity:1}
+tr.gonerow .cellav{filter:grayscale(1)}
+.modal header h3 .pill{vertical-align:middle;font-size:11.5px;margin-left:6px}
 </style>
 </head>
 <body>
@@ -1108,9 +1115,11 @@ const MODULES = {
       { n:'Disability', t:'select', opts:['No','Yes'] },
       { n:'Insurance', t:'select', opts:YESNO },
       { n:'Remarks', t:'textarea' },
-      { n:'Photo', t:'photo', hint:'Saved in the village Google Drive folder' }
+      { n:'Photo', t:'photo', hint:'Saved in the village Google Drive folder' },
+      { n:'Life Status', t:'select', opts:['Alive','Deceased'] },
+      { n:'Date of Death', t:'date', hint:'Only for a deceased member' }
     ],
-    list: ['Photo','Member ID','Name','Family ID','Relation to Family Head','Gender','Age','Occupation','Earning Member','Monthly Income','Mobile']
+    list: ['Photo','Member ID','Name','Family ID','Relation to Family Head','Gender','Age','Occupation','Earning Member','Monthly Income','Mobile','Life Status']
   },
   recurring: {
     sheet: 'Recurring Expenses', title: 'Recurring expenses', odia: 'ନିୟମିତ ଖର୍ଚ୍ଚ', idField: 'Recurring ID', prefix: 'REC',
@@ -1407,6 +1416,7 @@ function renderDashboard(){
     <div><div class="k">Earning</div><div class="v tnum">${num(s.earningMembers)}</div></div>
     <div><div class="k">Children</div><div class="v tnum">${num(s.children)}</div></div>
     <div><div class="k">Elderly</div><div class="v tnum">${num(s.elderly)}</div></div>
+    ${deathsThisYear() ? `<div><div class="k">Deaths ${new Date().getFullYear()}</div><div class="v tnum">${deathsThisYear()}</div></div>` : ''}
     <div><div class="k">Insured</div><div class="v tnum">${num(s.insuranceCoverage)}%</div></div>
   </div>
 
@@ -1443,7 +1453,7 @@ function renderDashboard(){
     </div>
   </div>`;
   $('#main').innerHTML = html;
-  $('#main').querySelectorAll('[data-pay]').forEach(b => { b.onclick = () => payRecurring(b.dataset.pay, b); });
+  wireActions($('#main'));
   wirePhotoFallbacks($('#main'));
 }
 
@@ -1602,6 +1612,12 @@ function cellHtml(key, row, col){
     const nm = memberName(raw);
     return { cls: '', html: esc(raw) + (nm ? ' <span class="muted small">' + esc(nm) + '</span>' : '') };
   }
+  if(col === 'Life Status'){
+    const v = String(raw || '').trim();
+    if(!v || v.toLowerCase() === 'alive') return { cls: '', html: '' };
+    const d = toISO(row['Date of Death']);
+    return { cls: '', html: '<span class="pill gone">Deceased</span>' + (d ? ' <span class="muted small">' + esc(fmtDate(d)) + '</span>' : '') };
+  }
   if(col === 'Status' || col === 'Active' || col === 'Family Status' || col === 'Vulnerable Status' || col === 'Earning Member' || col === 'Scholarship'){
     const v = String(raw || '').trim();
     if(!v) return { cls: '', html: '' };
@@ -1698,7 +1714,8 @@ function renderModule(key){
         ${rows.map(r => {
           const id = esc(r[m.idField]);
           const quick = v.quick && isAdmin();
-          return '<tr' + (quick ? ' data-row="' + id + '"' : '') + '>' + cols.map(c => {
+          const gone = key === 'members' && isDeceased(r);
+          return '<tr' + (quick ? ' data-row="' + id + '"' : '') + (gone ? ' class="gonerow"' : '') + '>' + cols.map(c => {
             const f = fieldDef(key, c);
             if(quick && c !== m.idField && f.t !== 'photo'){
               const val = r[c] == null ? '' : String(r[c]);
@@ -1714,6 +1731,7 @@ function renderModule(key){
             ${key === 'recurring' && canEdit() ? `<button class="btn btn-sm" data-pay="${id}">Mark paid</button> ` : ''}
             ${['families','members','events'].includes(key) ? `<button class="btn btn-sm" data-act="profile" data-id="${id}">View</button> ` : ''}
             ${key === 'users' && isAdmin() ? `<button class="btn btn-sm" data-act="access" data-id="${id}">Access</button> ` : ''}
+            ${key === 'members' && canEdit() && !isDeceased(r) ? `<button class="btn btn-sm" data-act="death" data-id="${id}">Died</button> ` : ''}
             ${canEdit() ? `<button class="btn btn-sm" data-act="edit" data-id="${id}">Edit</button>` : ''}
             ${canDelete() ? `<button class="btn btn-sm btn-danger" data-act="del" data-id="${id}">Delete</button>` : ''}
           </td></tr>`;
@@ -1738,54 +1756,41 @@ function renderModule(key){
     renderModule(key);
   });
   wirePhotoFallbacks($('#main'));
-  $('#main').querySelectorAll('[data-event]').forEach(b => { b.onclick = () => openEvent(b.dataset.event); });
-  $('#main').querySelectorAll('[data-pay]').forEach(b => { b.onclick = () => payRecurring(b.dataset.pay, b); });
-  $('#main').querySelectorAll('[data-photo]').forEach(b => {
-    b.onclick = () => openPhoto(b.dataset.photo, b.querySelector('img') ? b.querySelector('img').alt : '');
+  wireActions($('#main'));
+}
+
+/* ---------- one delegated listener per container ----------
+   #main survives innerHTML replacement, so wiring individual buttons would
+   either go stale or (worse) double up with this. Delegation only. */
+function wireActions(root){
+  root.querySelectorAll('[data-act],[data-pay],[data-event],[data-photo]').forEach(b => { b.type = 'button'; });
+  if(root.dataset.delegated) return root;
+  root.dataset.delegated = '1';
+  root.addEventListener('click', ev => {
+    const b = ev.target.closest('[data-act],[data-pay],[data-event],[data-photo]');
+    if(!b || !root.contains(b)) return;
+    const k = PAGE, id = b.dataset.id;
+    try {
+      if(b.dataset.photo) return openPhoto(b.dataset.photo, b.querySelector('img') ? b.querySelector('img').alt : '');
+      if(b.dataset.event) return openEvent(b.dataset.event);
+      if(b.dataset.pay) return payRecurring(b.dataset.pay, b);
+      switch(b.dataset.act){
+        case 'add': return openForm(k);
+        case 'edit': return openForm(k, id);
+        case 'del': return askDelete(k, id);
+        case 'heads': return addMissingHeads();
+        case 'cols': return openColumns(k);
+        case 'access': return openAccess(id);
+        case 'death': return markDeceased(id);
+        case 'rowsave': return saveRow(k, id, b);
+        case 'quick': { const vq = VIEW[k] || (VIEW[k] = {}); vq.quick = !vq.quick; return renderModule(k); }
+        case 'print': return isAdmin() ? openPrint(k, currentRows(k)) : window.print();
+        case 'csv': return exportCsv(k, currentRows(k));
+        case 'profile': return k === 'members' ? openMember(id) : k === 'events' ? openEvent(id) : openProfile(id);
+      }
+    } catch(e){ console.error('action failed', b.dataset, e); toast('That did not work: ' + (e.message || e), 'bad'); }
   });
-  const main = $('#main');
-  if(!main.dataset.delegated){
-    main.dataset.delegated = '1';
-    main.addEventListener('click', ev => {
-      const b = ev.target.closest('[data-act],[data-pay],[data-event],[data-photo]');
-      if(!b || !main.contains(b)) return;
-      const k = PAGE, id = b.dataset.id;
-      try {
-        if(b.dataset.photo) return openPhoto(b.dataset.photo, b.querySelector('img') ? b.querySelector('img').alt : '');
-        if(b.dataset.event) return openEvent(b.dataset.event);
-        if(b.dataset.pay) return payRecurring(b.dataset.pay, b);
-        switch(b.dataset.act){
-          case 'add': return openForm(k);
-          case 'edit': return openForm(k, id);
-          case 'del': return askDelete(k, id);
-          case 'heads': return addMissingHeads();
-          case 'cols': return openColumns(k);
-          case 'access': return openAccess(id);
-          case 'rowsave': return saveRow(k, id, b);
-          case 'quick': { const vq = VIEW[k] || (VIEW[k] = {}); vq.quick = !vq.quick; return renderModule(k); }
-          case 'print': return isAdmin() ? openPrint(k, currentRows(k)) : window.print();
-          case 'csv': return exportCsv(k, currentRows(k));
-          case 'profile': return k === 'members' ? openMember(id) : k === 'events' ? openEvent(id) : openProfile(id);
-        }
-      } catch(e){ console.error('action failed', b.dataset, e); toast('That did not work: ' + (e.message || e), 'bad'); }
-    });
-  }
-  main.querySelectorAll('[data-act]').forEach(b => {
-    const act = b.dataset.act, id = b.dataset.id;
-    b.type = 'button';
-    if(act === 'add') b.onclick = () => openForm(key);
-    if(act === 'edit') b.onclick = () => openForm(key, id);
-    if(act === 'del') b.onclick = () => askDelete(key, id);
-    if(act === 'heads') b.onclick = () => addMissingHeads();
-    if(act === 'cols') b.onclick = () => openColumns(key);
-    if(act === 'access') b.onclick = () => openAccess(id);
-    if(act === 'quick') b.onclick = () => { const v2 = VIEW[key]; v2.quick = !v2.quick; renderModule(key); };
-    if(act === 'rowsave') b.onclick = () => saveRow(key, id, b);
-    if(act === 'csv') b.onclick = () => exportCsv(key, rows);
-    if(act === 'print') b.onclick = () => (isAdmin() ? openPrint(key, rows) : window.print());
-    if(act === 'profile') b.onclick = () =>
-      key === 'members' ? openMember(id) : key === 'events' ? openEvent(id) : openProfile(id);
-  });
+  return root;
 }
 
 const ROWCACHE = {};
@@ -2111,7 +2116,7 @@ async function addHeadAsMember(fam, quiet){
 
 function headMemberOf(famId, head){
   const h = String(head).trim().toLowerCase();
-  return (DB.members || []).find(x =>
+  return (DB.members || []).filter(x => !isDeceased(x)).find(x =>
     String(x['Family ID'] || '').trim() === String(famId).trim() &&
     (String(x['Name'] || '').trim().toLowerCase() === h ||
      String(x['Relation to Family Head'] || '').trim().toLowerCase() === 'self'));
@@ -2512,6 +2517,102 @@ function openAccess(username){
 }
 
 /* =========================================================================
+   DECEASED MEMBERS
+   -------------------------------------------------------------------------
+   A person who has died stays in the register with their photo and history —
+   only the living are counted. Nothing is ever deleted.
+   ========================================================================= */
+const isDeceased = r => String(r['Life Status'] || '').trim().toLowerCase() === 'deceased';
+const livingMembers = () => (DB.members || []).filter(r => !isDeceased(r));
+function familyMembers(famId, includeDeceased){
+  const list = (DB.members || []).filter(r => String(r['Family ID'] || '').trim() === String(famId).trim());
+  return includeDeceased ? list : list.filter(r => !isDeceased(r));
+}
+function deathsThisYear(){
+  const y = String(new Date().getFullYear());
+  return (DB.members || []).filter(r => isDeceased(r) && String(toISO(r['Date of Death']) || '').slice(0, 4) === y).length;
+}
+
+/* Recording a death: mark the person, then settle the family head if needed. */
+async function markDeceased(memberId){
+  if(!canEdit()) { toast('Your account cannot change records', 'bad'); return; }
+  const x = (DB.members || []).find(r => String(r['Member ID']).trim() === String(memberId).trim());
+  if(!x) return;
+  const famId = String(x['Family ID'] || '').trim();
+  const fam = (DB.families || []).find(r => String(r['Family ID']).trim() === famId);
+  const wasHead = fam && String(fam['Family Head'] || '').trim().toLowerCase() === String(x['Name'] || '').trim().toLowerCase();
+  const others = familyMembers(famId).filter(r => String(r['Member ID']) !== String(memberId));
+
+  openModal(`
+    <header>
+      <div><h3>Record a death</h3><div class="sub">${esc(x['Name'] || memberId)} · ${esc(memberId)}${famId ? ' · ' + esc(famId) : ''}</div></div>
+      <div class="sp"></div><button class="btn btn-sm" onclick="closeModal()">Close</button>
+    </header>
+    <div class="body">
+      <div class="fieldnote" style="margin-bottom:14px">The person stays in the register with their photo and records. They simply stop being counted as living.</div>
+      <label class="lbl" for="dcDate">Date of death</label>
+      <input class="input" type="date" id="dcDate" value="${today()}" max="${today()}">
+      ${wasHead ? `
+        <h4 class="msec">This person is the family head</h4>
+        ${others.length ? `
+          <label class="lbl" for="dcHead">Who becomes the head of ${esc(famId)}?</label>
+          <select class="input" id="dcHead">
+            ${others.map(r => `<option value="${esc(r['Member ID'])}">${esc(r['Name'])} · ${esc(r['Relation to Family Head'] || '')}${r['Age'] ? ' · ' + esc(r['Age']) : ''}</option>`).join('')}
+            <option value="">— decide later —</option>
+          </select>
+          <div class="fieldnote">The family record is updated and that member's relation becomes Self.</div>`
+          : '<div class="fieldnote">No other living member is recorded in this family, so the family head is left blank.</div>'}` : ''}
+      <label class="lbl" for="dcNote" style="margin-top:14px;display:block">Remark (optional)</label>
+      <input class="input" id="dcNote" placeholder="e.g. funeral help given from the village fund">
+    </div>
+    <footer>
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" id="dcGo">Record death</button>
+    </footer>`);
+
+  const modal = document.getElementById('modalRoot');
+  modal.querySelector('#dcGo').onclick = async () => {
+    const btn = modal.querySelector('#dcGo');
+    const when = modal.querySelector('#dcDate').value || today();
+    const note = modal.querySelector('#dcNote').value.trim();
+    const heir = (modal.querySelector('#dcHead') || {}).value || '';
+    btn.disabled = true; btn.textContent = 'Saving…';
+    try {
+      const out = Object.assign({}, x, {
+        'Life Status': 'Deceased',
+        'Date of Death': when,
+        'Earning Member': 'NO',
+        'Remarks': [x['Remarks'], note].filter(Boolean).join(' · ')
+      });
+      let r = await api('save', { sheet: MODULES.members.sheet, record: JSON.stringify(out) });
+      if(!r || !r.ok) throw new Error((r && r.error) || 'the sheet refused the change');
+      upsertLocal('members', out);
+
+      if(wasHead){
+        const heirRec = heir ? (DB.members || []).find(m2 => String(m2['Member ID']) === String(heir)) : null;
+        const famOut = Object.assign({}, fam, { 'Family Head': heirRec ? String(heirRec['Name'] || '') : '' });
+        if(heirRec) famOut['Mobile'] = famOut['Mobile'] || heirRec['Mobile'] || '';
+        r = await api('save', { sheet: MODULES.families.sheet, record: JSON.stringify(famOut) });
+        if(!r || !r.ok) throw new Error((r && r.error) || 'family not updated');
+        upsertLocal('families', famOut);
+        if(heirRec){
+          const hOut = Object.assign({}, heirRec, { 'Relation to Family Head': 'Self' });
+          r = await api('save', { sheet: MODULES.members.sheet, record: JSON.stringify(hOut) });
+          if(r && r.ok) upsertLocal('members', hOut);
+        }
+      }
+      closeModal();
+      render();
+      toast(String(x['Name'] || memberId) + ' recorded as deceased' +
+        (wasHead && heir ? ' · new head saved' : ''), 'good');
+    } catch(e){
+      toast(e.message || String(e), 'bad');
+      btn.disabled = false; btn.textContent = 'Record death';
+    }
+  };
+}
+
+/* =========================================================================
    RECURRING EXPENSES
    ========================================================================= */
 const FREQ_MONTHS = { 'Monthly': 1, 'Quarterly': 3, 'Half Yearly': 6, 'Yearly': 12 };
@@ -2905,8 +3006,9 @@ function openMember(id){
 
   openModal(`
     <header>
-      <div><h3>${esc(x['Name'] || id)}</h3>
-      <div class="sub">${esc(id)}${isHead ? ' · Family head' : ''}${famId ? ' · ' + esc(famId) : ''}${fam ? ' · ' + esc(fam['Family Head'] || '') : ''}</div></div>
+      <div><h3>${esc(x['Name'] || id)}${isDeceased(x) ? ' <span class="pill gone">Deceased</span>' : ''}</h3>
+      <div class="sub">${esc(id)}${isHead ? ' · Family head' : ''}${famId ? ' · ' + esc(famId) : ''}${
+        isDeceased(x) && toISO(x['Date of Death']) ? ' · died ' + esc(fmtDate(x['Date of Death'])) : ''}</div></div>
       <div class="sp"></div><button class="btn btn-sm" onclick="closeModal()">Close</button>
     </header>
     <div class="body">
@@ -2941,10 +3043,13 @@ function openMember(id){
     </div>
     <footer>
       ${famId ? `<button class="btn" onclick="closeModal();openProfile('${esc(famId)}')">Open family</button>` : ''}
+      ${canEdit() && !isDeceased(x) ? `<button class="btn" data-act="death" data-id="${esc(id)}">Record death</button>` : ''}
       ${canEdit() ? `<button class="btn btn-primary" onclick="closeModal();openForm('members','${esc(id)}')">Edit member</button>` : ''}
     </footer>`);
 
-  wirePhotoFallbacks(document.getElementById('modalRoot') || document);
+  const mroot = document.getElementById('modalRoot');
+  wirePhotoFallbacks(mroot || document);
+  if(mroot) wireActions(mroot);
   const big = document.getElementById('mBig');
   if(big) big.onclick = () => openPhoto(photo, x['Name'] || '');
 }
