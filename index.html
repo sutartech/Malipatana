@@ -778,14 +778,27 @@ async function sendPhoto(key, rec, pending, removing){
     root: photoRoot(),
     mime: pending ? pending.mime : '', data: pending ? pending.data : ''
   });
+  const idVal = String(rec[m.idField] || '');
   try {
     toast(pending ? 'Uploading photo to Drive…' : 'Removing photo…');
     await fetch(CONFIG.API_URL, { method: 'POST', mode: 'no-cors', body: body });
-    setTimeout(() => refresh(true), 3500);
-    setTimeout(() => { refresh(true); toast(pending ? 'Photo saved to Drive' : 'Photo removed', 'good'); }, 8000);
   } catch(e){
-    toast('Photo did not upload — the record itself was saved', 'bad');
+    toast('Photo did not reach Drive: ' + (e.message || e), 'bad');
+    return;
   }
+  /* The POST answer is unreadable (no-cors), so confirm by re-reading the sheet. */
+  for(let i = 0; i < 5; i++){
+    await new Promise(r => setTimeout(r, 3000));
+    await refresh(true);
+    const row = (DB[key] || []).find(r => String(r[m.idField] || '') === idVal) || {};
+    const got = String(row['Photo'] || '').trim();
+    if(pending && got){ render(); toast('Photo saved to Drive', 'good'); return; }
+    if(!pending && !got){ render(); toast('Photo removed', 'good'); return; }
+  }
+  render();
+  toast(pending
+    ? 'Drive did not store the photo. The Apps Script photo add-on is probably not deployed — paste a photo link instead.'
+    : 'Could not clear the photo in the sheet.', 'bad');
 }
 
 function openPhoto(url, caption){
@@ -1662,7 +1675,9 @@ function fieldHtml(key, f, value, editing){
               <button type="button" class="btn btn-sm btn-danger ${u ? '' : 'hide'}" id="${id}_clear">Remove</button>
             </div>
             <div class="fieldnote">Stored in Google Drive under <b>${esc(photoRoot())} › Members › Family ID</b>. The picture is resized before upload, so a phone camera photo is fine.</div>
-            <input type="hidden" id="${id}" value="${esc(u)}">
+            <label class="lbl" for="${id}" style="margin-top:12px;display:block">Or paste a photo link</label>
+            <input class="input" id="${id}" value="${esc(u)}" placeholder="https://drive.google.com/file/d/…/view">
+            <div class="fieldnote">Any Drive link shared as <b>Anyone with the link · Viewer</b>, or a normal image URL. Saved with the record — no add-on needed.</div>
           </div>
         </div></div>`;
     }
@@ -1731,6 +1746,14 @@ function wireForm(key, rec){
     const hidden = document.getElementById(base);
     const pick = document.getElementById(base + '_pick');
     if(pick) pick.onclick = () => fileEl.click();
+    if(hidden) hidden.oninput = () => {
+      const v = hidden.value.trim();
+      PENDING_PHOTO = null; REMOVE_PHOTO = false;
+      prev.classList.remove('photofail');
+      prev.innerHTML = v ? '<img data-srcs="' + esc(photoSrcs(v, 320).join('|')) + '" alt="">' : '<span>No photo</span>';
+      wirePhotoFallbacks(prev);
+      if(clear) clear.classList.toggle('hide', !v);
+    };
     if(clear) clear.onclick = () => {
       PENDING_PHOTO = null; REMOVE_PHOTO = !!hidden.value; hidden.value = '';
       prev.innerHTML = '<span>No photo</span>'; clear.classList.add('hide');
@@ -1746,6 +1769,7 @@ function wireForm(key, rec){
         REMOVE_PHOTO = false;
         prev.innerHTML = '<img src="' + d + '" alt="">';
         prev.classList.remove('photofail');
+        if(hidden && !hidden.value.trim()) hidden.placeholder = 'Uploading to Drive on save…';
         if(clear) clear.classList.remove('hide');
       } catch(e){ prev.innerHTML = '<span>No photo</span>'; toast('Could not read that image', 'bad'); }
       fileEl.value = '';
