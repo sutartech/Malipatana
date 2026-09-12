@@ -526,7 +526,35 @@ tr.rowsaved td{background:#e9f3ec}
 .colrow{display:flex;align-items:center;gap:10px;font-size:14px;flex-wrap:wrap}
 .colrow input[type=checkbox]{width:18px;height:18px;accent-color:var(--brick)}
 .colrow .input{flex:1;min-width:150px}
-</style>
+/* ---------- inline expenditure line inside a function ---------- */
+.evadd{display:grid;grid-template-columns:150px minmax(140px,1fr) minmax(120px,.8fr) 120px auto;gap:8px;align-items:center}
+.evadd .input{min-height:44px}
+@media(max-width:760px){.evadd{grid-template-columns:1fr 1fr}.evadd .btn{grid-column:1/-1}}
+/* ---------- access editor ---------- */
+.pagegrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:6px 16px}
+/* ---------- chosen-column print sheet ---------- */
+#printArea{display:none}
+@media print{
+  body.printing>*:not(#printArea){display:none !important}
+  body.printing #printArea{display:block;padding:0;color:#000;font-size:10.5pt}
+  body.printing #printArea.land{font-size:9.5pt}
+  body.printing #printArea.land th,body.printing #printArea.land td{padding:3px 5px}
+  body.printing{background:#fff}
+  
+  #printArea .phead{display:flex;align-items:flex-end;gap:16px;border-bottom:2px solid #000;padding-bottom:8px;margin-bottom:12px}
+  #printArea h1{font-family:var(--display);font-size:17pt;margin:0;line-height:1.5}
+  #printArea .psub{font-size:9pt;color:#333;margin-top:2px}
+  #printArea .pstamp{margin-left:auto;font-family:var(--display);font-size:12pt}
+  #printArea table{width:100%;border-collapse:collapse}
+  #printArea th,#printArea td{border:1px solid #999;padding:4px 6px;text-align:left;vertical-align:top}
+  #printArea th{background:#eee;font-size:9pt;text-transform:uppercase;letter-spacing:.04em}
+  #printArea td.num,#printArea th.num{text-align:right;white-space:nowrap}
+  #printArea thead{display:table-header-group}
+  #printArea tr{break-inside:avoid}
+  #printArea .ptotals{margin-top:10px;font-size:10pt;border-top:1px solid #000;padding-top:6px}
+  #printArea .psign{display:flex;gap:24px;margin-top:34px;font-size:9.5pt;color:#333}
+  #printArea .psign span{flex:1;border-top:1px solid #000;padding-top:4px;text-align:center}
+}</style>
 </head>
 <body>
 
@@ -876,8 +904,49 @@ async function doLogin(){
   } finally { btn.disabled = false; }
 }
 function doLogout(){ store.del('mal_user'); location.reload(); }
-const canEdit = () => ['admin','editor'].includes(String(USER && USER.role || '').toLowerCase());
 const isAdmin = () => String(USER && USER.role || '').toLowerCase() === 'admin';
+
+/* ---------- who may see and do what ----------
+   Stored as one Settings row per user: Setting "Access <username>",
+   Value '{"pages":["dashboard","families"],"edit":true,"del":false}'.
+   No row means "whatever the role allows", so nothing changes until an admin
+   sets something. */
+const ALL_PAGES = [
+  ['dashboard', 'Dashboard'], ['families', 'Families'], ['members', 'Members'],
+  ['contributions', 'Contributions'], ['income', 'Income'], ['expenditure', 'Expenditure'],
+  ['events', 'Major functions'], ['recurring', 'Recurring expenses'],
+  ['emergency', 'Emergency cases'], ['regularSupport', 'Regular support'],
+  ['medical', 'Medical'], ['education', 'Education'], ['insurance', 'Insurance']
+];
+function accessKey(username){ return 'Access ' + String(username || '').trim(); }
+function accessOf(username){
+  try {
+    const raw = setting(accessKey(username), '');
+    if(!raw) return null;
+    const o = JSON.parse(raw);
+    return o && typeof o === 'object' ? o : null;
+  } catch(e){ return null; }
+}
+function myAccess(){
+  const u = USER && (USER.username || USER.Username || USER.name);
+  return isAdmin() ? null : accessOf(u);
+}
+const roleCanEdit = () => ['admin','editor'].includes(String(USER && USER.role || '').toLowerCase());
+function canEdit(){
+  const a = myAccess();
+  return a && a.edit !== undefined ? !!a.edit : roleCanEdit();
+}
+function canDelete(){
+  const a = myAccess();
+  if(a && a.del !== undefined) return !!a.del;
+  return isAdmin();
+}
+function canSee(page){
+  if(isAdmin()) return true;
+  const a = myAccess();
+  if(!a || !Array.isArray(a.pages) || !a.pages.length) return true;
+  return page === 'dashboard' || a.pages.includes(page);
+}
 
 let idleTimer = null;
 function resetIdle(){
@@ -927,11 +996,13 @@ function buildNav(){
     ['', [['dashboard', '▦', 'Dashboard', null]]],
     ['PEOPLE', [['families', '⌂', 'Families', 'families'], ['members', '☗', 'Members', 'members']]],
     ['MONEY', [['contributions', '◈', 'Contributions', 'contributions'], ['income', '↑', 'Income', 'income'],
-               ['expenditure', '↓', 'Expenditure', 'expenditure'], ['events', '❋', 'Major functions', 'events']]],
+               ['expenditure', '↓', 'Expenditure', 'expenditure'], ['events', '❋', 'Major functions', 'events'],
+               ['recurring', '↻', 'Recurring expenses', 'recurring']]],
     ['WELFARE', [['emergency', '✚', 'Emergency cases', 'emergency'], ['regularSupport', '❤', 'Regular support', 'regularSupport'],
                  ['medical', '⚕', 'Medical', 'medical'], ['education', '✎', 'Education', 'education'],
                  ['insurance', '⛨', 'Insurance', 'insurance']]]
   ];
+  groups.forEach(g => { g[1] = g[1].filter(it => canSee(it[0])); });
   if(isAdmin()) groups.push(['ADMIN', [['users', '☺', 'Users', 'users'], ['photos', '❏', 'Photos', null],
                                        ['settingsList', '⚙', 'Settings', 'settingsList']]]);
   let html = '';
@@ -1014,6 +1085,24 @@ const MODULES = {
       { n:'Photo', t:'photo', hint:'Saved in the village Google Drive folder' }
     ],
     list: ['Photo','Member ID','Name','Family ID','Relation to Family Head','Gender','Age','Occupation','Earning Member','Monthly Income','Mobile']
+  },
+  recurring: {
+    sheet: 'Recurring Expenses', title: 'Recurring expenses', odia: 'ନିୟମିତ ଖର୍ଚ୍ଚ', idField: 'Recurring ID', prefix: 'REC',
+    blurb: 'Bills the village pays again and again — electricity, priest, sweeper, temple upkeep',
+    fields: [
+      { n:'Recurring ID', t:'text', auto:true },
+      { n:'Expense Name', t:'text', req:true },
+      { n:'Category', t:'datalist', opts:['Administration','Temple','Electricity','Water','Salary','Rent','Maintenance','Welfare','Other'] },
+      { n:'Amount', t:'money', req:true },
+      { n:'Frequency', t:'select', opts:['Monthly','Quarterly','Half Yearly','Yearly'] },
+      { n:'Paid To', t:'text' },
+      { n:'Start Date', t:'date', def:'today' },
+      { n:'Next Due', t:'date', def:'today' },
+      { n:'Last Paid', t:'date' },
+      { n:'Active', t:'select', opts:YESNO },
+      { n:'Remarks', t:'textarea' }
+    ],
+    list: ['Recurring ID','Expense Name','Category','Amount','Frequency','Next Due','Last Paid','Paid To','Active']
   },
   events: {
     sheet: 'Events', title: 'Major functions', odia: 'ପର୍ବପର୍ବାଣି', idField: 'Event ID', prefix: 'EVT',
@@ -1252,7 +1341,7 @@ function renderDashboard(){
           <div class="sub">Village code ${esc(setting('Village Code','V001'))} · ${esc(setting('Village Area','Jagatsinghpur, Odisha'))}</div>
         </div>
         <div class="sp"></div>
-        <button class="btn btn-sm" onclick="window.print()">Print</button>
+        <button class="btn btn-sm" data-act="print">Print</button>
       </div>
     </div>`
   : `<div class="pagehead">
@@ -1308,6 +1397,7 @@ function renderDashboard(){
   </div>
 
   <div class="cols">
+    ${recurringPanel()}
     <div class="panel">
       <div class="panel-head"><h3>Latest entries</h3></div>
       ${recentList()}
@@ -1327,6 +1417,8 @@ function renderDashboard(){
     </div>
   </div>`;
   $('#main').innerHTML = html;
+  $('#main').querySelectorAll('[data-pay]').forEach(b => { b.onclick = () => payRecurring(b.dataset.pay, b); });
+  wirePhotoFallbacks($('#main'));
 }
 
 function lastMonths(n){
@@ -1524,6 +1616,7 @@ function renderModule(key){
   if(!m){ $('#main').innerHTML = '<div class="empty"><b>Page not found</b>That link is not part of the dashboard. ' +
     '<button class="btn btn-sm" onclick="go(\'dashboard\')" style="margin-top:12px">Back to dashboard</button></div>'; return; }
   if(m.adminOnly && !isAdmin()){ $('#main').innerHTML = '<div class="empty"><b>Admins only</b>Ask the village admin for access.</div>'; return; }
+  if(!canSee(key)){ $('#main').innerHTML = '<div class="empty"><b>Not available to your account</b>The village admin decides which pages you can open.</div>'; return; }
   if(key === 'users' && !DB.users){
     $('#main').innerHTML = '<div class="pagehead"><h2>Users</h2></div><div class="panel"><div class="empty"><b>Not available yet</b>' +
       'The backend does not send the user list. Add users directly in the Users sheet, or apply the optional backend update.</div></div>';
@@ -1557,7 +1650,7 @@ function renderModule(key){
     ${isAdmin() && ['families','members'].includes(key) ? `<button class="btn btn-sm" data-act="cols">Columns</button>
       <button class="btn btn-sm ${VIEW[key] && VIEW[key].quick ? 'btn-primary' : ''}" data-act="quick">${VIEW[key] && VIEW[key].quick ? 'Done editing' : 'Quick edit'}</button>` : ''}
     <button class="btn btn-sm" data-act="csv">Export CSV</button>
-    <button class="btn btn-sm" onclick="window.print()">Print</button>
+    <button class="btn btn-sm" data-act="print">Print</button>
     <span class="muted small" style="margin-left:auto">${rows.length} of ${all.length} records</span>
   </div>
 
@@ -1591,9 +1684,11 @@ function renderModule(key){
             return `<td class="${cell.cls}" data-label="${esc(c)}">${cell.html}</td>`;
           }).join('') + `<td class="acts" data-label="">
             ${quick ? `<button class="btn btn-sm btn-primary" data-act="rowsave" data-id="${id}">Save</button> ` : ''}
+            ${key === 'recurring' && canEdit() ? `<button class="btn btn-sm" data-pay="${id}">Mark paid</button> ` : ''}
             ${['families','members','events'].includes(key) ? `<button class="btn btn-sm" data-act="profile" data-id="${id}">View</button> ` : ''}
-            ${canEdit() ? `<button class="btn btn-sm" data-act="edit" data-id="${id}">Edit</button>
-            <button class="btn btn-sm btn-danger" data-act="del" data-id="${id}">Delete</button>` : ''}
+            ${key === 'users' && isAdmin() ? `<button class="btn btn-sm" data-act="access" data-id="${id}">Access</button> ` : ''}
+            ${canEdit() ? `<button class="btn btn-sm" data-act="edit" data-id="${id}">Edit</button>` : ''}
+            ${canDelete() ? `<button class="btn btn-sm btn-danger" data-act="del" data-id="${id}">Delete</button>` : ''}
           </td></tr>`;
         }).join('')}
       </tbody>
@@ -1617,6 +1712,7 @@ function renderModule(key){
   });
   wirePhotoFallbacks($('#main'));
   $('#main').querySelectorAll('[data-event]').forEach(b => { b.onclick = () => openEvent(b.dataset.event); });
+  $('#main').querySelectorAll('[data-pay]').forEach(b => { b.onclick = () => payRecurring(b.dataset.pay, b); });
   $('#main').querySelectorAll('[data-photo]').forEach(b => {
     b.onclick = () => openPhoto(b.dataset.photo, b.querySelector('img') ? b.querySelector('img').alt : '');
   });
@@ -1627,9 +1723,11 @@ function renderModule(key){
     if(act === 'del') b.onclick = () => askDelete(key, id);
     if(act === 'heads') b.onclick = () => addMissingHeads();
     if(act === 'cols') b.onclick = () => openColumns(key);
+    if(act === 'access') b.onclick = () => openAccess(id);
     if(act === 'quick') b.onclick = () => { const v2 = VIEW[key]; v2.quick = !v2.quick; renderModule(key); };
     if(act === 'rowsave') b.onclick = () => saveRow(key, id, b);
     if(act === 'csv') b.onclick = () => exportCsv(key, rows);
+    if(act === 'print') b.onclick = () => (isAdmin() ? openPrint(key, rows) : window.print());
     if(act === 'profile') b.onclick = () =>
       key === 'members' ? openMember(id) : key === 'events' ? openEvent(id) : openProfile(id);
   });
@@ -1705,6 +1803,7 @@ function openForm(key, id){
     m.fields.forEach(f => { const d = defaultFor(f); if(d !== '') rec[f.n] = d; });
     if(m.prefix) rec[m.idField] = nextId(key);
   }
+  if(prefill) Object.keys(prefill).forEach(k => { rec[k] = prefill[k]; });
 
   const body = allFields(key).filter(f => !f.hidden && !(f.t === 'photo' && !photosOn())).map(f => fieldHtml(key, f, rec[f.n], !!existing)).join('');
   openModal(`
@@ -2180,6 +2279,268 @@ function openProfile(id){
 }
 
 
+/* =========================================================================
+   PRINT — admins choose the columns
+   ========================================================================= */
+const PRINT_PREF = k => 'Print ' + MODULES[k].sheet;
+
+function openPrint(key, rows){
+  const m = MODULES[key];
+  const every = allFields(key).filter(f => f.t !== 'photo').map(f => f.n);
+  let chosen = [];
+  try { chosen = JSON.parse(setting(PRINT_PREF(key), '[]')) || []; } catch(e){}
+  if(!chosen.length) chosen = listCols(key).filter(c => fieldDef(key, c).t !== 'photo');
+
+  openModal(`
+    <header>
+      <div><h3>Print ${esc(m.title.toLowerCase())}</h3>
+      <div class="sub">${rows.length} row${rows.length === 1 ? '' : 's'} · tick the columns you want on paper</div></div>
+      <div class="sp"></div><button class="btn btn-sm" onclick="closeModal()">Close</button>
+    </header>
+    <div class="body">
+      <div class="pagegrid">
+        ${every.map(c => `<label class="colrow"><input type="checkbox" data-pc="${esc(c)}" ${chosen.includes(c) ? 'checked' : ''}> ${esc(c)}</label>`).join('')}
+      </div>
+      <div class="colrow" style="margin-top:14px">
+        <button class="btn btn-sm" id="pcAll">Tick all</button>
+        <button class="btn btn-sm" id="pcNone">Untick all</button>
+      </div>
+      <h4 class="msec">Page</h4>
+      <div class="colrow" style="margin-bottom:10px">
+        <label class="colrow" style="gap:7px"><input type="radio" name="pcOrient" value="portrait"> Portrait</label>
+        <label class="colrow" style="gap:7px"><input type="radio" name="pcOrient" value="landscape" checked> Landscape <span class="muted small">(fits more columns)</span></label>
+      </div>
+      <div class="colgrid">
+        <label class="colrow"><input type="checkbox" id="pcTotals" checked> Print money totals at the end</label>
+        <label class="colrow"><input type="checkbox" id="pcRemember" checked> Remember these columns for everyone</label>
+      </div>
+      <label class="lbl" for="pcTitle" style="margin-top:14px;display:block">Heading on the paper</label>
+      <input class="input" id="pcTitle" value="${esc(String(setting('Village Name', 'Malipatana')) + ' · ' + m.title)}">
+    </div>
+    <footer><button class="btn btn-primary" id="pcGo">Print</button></footer>`);
+
+  const modal = document.getElementById('modalRoot');
+  modal.querySelector('#pcAll').onclick = () => modal.querySelectorAll('[data-pc]').forEach(x => x.checked = true);
+  modal.querySelector('#pcNone').onclick = () => modal.querySelectorAll('[data-pc]').forEach(x => x.checked = false);
+  modal.querySelector('#pcGo').onclick = async () => {
+    const cols = [...modal.querySelectorAll('[data-pc]')].filter(x => x.checked).map(x => x.dataset.pc);
+    if(!cols.length){ toast('Tick at least one column', 'bad'); return; }
+    const opts = {
+      land: (modal.querySelector('input[name="pcOrient"]:checked') || {}).value === 'landscape',
+      totals: modal.querySelector('#pcTotals').checked,
+      title: modal.querySelector('#pcTitle').value.trim()
+    };
+    if(modal.querySelector('#pcRemember').checked){
+      const rec = { Setting: PRINT_PREF(key), Value: JSON.stringify(cols) };
+      try {
+        const r = await api('save', { sheet: MODULES.settingsList.sheet, record: JSON.stringify(rec) });
+        if(r && r.ok){ DB.settings = DB.settings || {}; DB.settings[PRINT_PREF(key)] = rec.Value; }
+      } catch(e){}
+    }
+    closeModal();
+    printRows(key, rows, cols, opts);
+  };
+}
+
+function printRows(key, rows, cols, opts){
+  const m = MODULES[key];
+  const moneyCols = cols.filter(c => fieldDef(key, c).t === 'money');
+  const cell = (r, c) => {
+    const f = fieldDef(key, c), v = r[c];
+    if(f.t === 'money') return v === '' || v == null ? '' : money(v);
+    if(f.t === 'date') return fmtDate(v);
+    if(f.t === 'event') return eventName(v) || (v || '');
+    return v == null ? '' : String(v);
+  };
+  const totals = moneyCols.map(c => `${esc(c)}: <b>${money(rows.reduce((a, r) => a + num(r[c]), 0))}</b>`).join(' · ');
+
+  const old = document.getElementById('printArea');
+  if(old) old.remove();
+  const el = document.createElement('div');
+  el.id = 'printArea';
+  el.className = opts.land ? 'land' : '';
+  el.innerHTML = `
+    <div class="phead">
+      <div>
+        <h1>${esc(opts.title || m.title)}</h1>
+        <div class="psub">${rows.length} record${rows.length === 1 ? '' : 's'} · printed ${esc(fmtDate(today()))}</div>
+      </div>
+      <div class="pstamp">ଆମ ଗାଁ ମାଳିପାଟଣା</div>
+    </div>
+    <table>
+      <thead><tr>${cols.map(c => `<th class="${['money','number'].includes(fieldDef(key, c).t) ? 'num' : ''}">${esc(c)}</th>`).join('')}</tr></thead>
+      <tbody>${rows.map(r => '<tr>' + cols.map(c =>
+        `<td class="${['money','number'].includes(fieldDef(key, c).t) ? 'num' : ''}">${esc(cell(r, c))}</td>`).join('') + '</tr>').join('')}</tbody>
+    </table>
+    ${opts.totals && totals ? `<div class="ptotals">${totals}</div>` : ''}
+    <div class="psign"><span>Secretary</span><span>Treasurer</span><span>President</span></div>`;
+  document.body.appendChild(el);
+  let pageRule = document.getElementById('printPage');
+  if(!pageRule){ pageRule = document.createElement('style'); pageRule.id = 'printPage'; document.head.appendChild(pageRule); }
+  pageRule.textContent = '@page{size:A4 ' + (opts.land ? 'landscape' : 'portrait') + ';margin:12mm}';
+  document.body.classList.add('printing');
+  const cleanup = () => {
+    document.body.classList.remove('printing'); el.remove();
+    const pr = document.getElementById('printPage'); if(pr) pr.remove();
+    window.removeEventListener('afterprint', cleanup);
+  };
+  window.addEventListener('afterprint', cleanup);
+  setTimeout(() => window.print(), 60);
+}
+
+/* =========================================================================
+   PER-USER ACCESS (admin)
+   ========================================================================= */
+function openAccess(username){
+  if(!isAdmin()) return;
+  const u = (DB.users || []).find(x => String(x['Username']).trim() === String(username).trim()) || { Username: username };
+  const role = String(u['Role'] || 'Viewer');
+  const a = accessOf(username) || {};
+  const pages = Array.isArray(a.pages) ? a.pages : [];
+  const usingRole = !a.pages && a.edit === undefined && a.del === undefined;
+
+  openModal(`
+    <header>
+      <div><h3>Access · ${esc(u['Name'] || username)}</h3>
+      <div class="sub">${esc(username)} · role ${esc(role)}${usingRole ? ' · following the role' : ' · custom'}</div></div>
+      <div class="sp"></div><button class="btn btn-sm" onclick="closeModal()">Close</button>
+    </header>
+    <div class="body">
+      <h4 class="msec">What this person can do</h4>
+      <div class="colgrid">
+        <label class="colrow"><input type="checkbox" id="acEdit" ${(a.edit !== undefined ? a.edit : ['admin','editor'].includes(role.toLowerCase())) ? 'checked' : ''}> Add and edit records</label>
+        <label class="colrow"><input type="checkbox" id="acDel" ${(a.del !== undefined ? a.del : role.toLowerCase() === 'admin') ? 'checked' : ''}> Delete records</label>
+      </div>
+
+      <h4 class="msec">Pages they can open</h4>
+      <div class="fieldnote" style="margin-bottom:8px">Nothing ticked means every page. The dashboard is always available.</div>
+      <div class="pagegrid">
+        ${ALL_PAGES.filter(p => p[0] !== 'dashboard').map(p =>
+          `<label class="colrow"><input type="checkbox" data-page="${p[0]}" ${pages.includes(p[0]) ? 'checked' : ''}> ${esc(p[1])}</label>`).join('')}
+      </div>
+      <div class="fieldnote">Admin pages (Users, Photos, Settings) stay admin-only whatever is set here.</div>
+    </div>
+    <footer>
+      <button class="btn" id="acClear">Follow the role instead</button>
+      <button class="btn btn-primary" id="acSave">Save access</button>
+    </footer>`);
+
+  const modal = document.getElementById('modalRoot');
+  const write = async (value) => {
+    const rec = { Setting: accessKey(username), Value: value };
+    const r = await api('save', { sheet: MODULES.settingsList.sheet, record: JSON.stringify(rec) });
+    if(!r || !r.ok) throw new Error((r && r.error) || 'could not save');
+    DB.settings = DB.settings || {};
+    DB.settings[accessKey(username)] = value;
+  };
+  modal.querySelector('#acSave').onclick = async () => {
+    const picked = [...modal.querySelectorAll('[data-page]')].filter(x => x.checked).map(x => x.dataset.page);
+    const value = JSON.stringify({
+      pages: picked,
+      edit: modal.querySelector('#acEdit').checked,
+      del: modal.querySelector('#acDel').checked
+    });
+    try { await write(value); closeModal(); render(); toast('Access updated for ' + username, 'good'); }
+    catch(e){ toast(e.message || String(e), 'bad'); }
+  };
+  modal.querySelector('#acClear').onclick = async () => {
+    try { await write(''); closeModal(); render(); toast(username + ' now follows the ' + role + ' role', 'good'); }
+    catch(e){ toast(e.message || String(e), 'bad'); }
+  };
+}
+
+/* =========================================================================
+   RECURRING EXPENSES
+   ========================================================================= */
+const FREQ_MONTHS = { 'Monthly': 1, 'Quarterly': 3, 'Half Yearly': 6, 'Yearly': 12 };
+function addMonths(iso, n){
+  const d = new Date(iso || today());
+  if(isNaN(d)) return today();
+  const day = d.getDate();
+  d.setMonth(d.getMonth() + n);
+  if(d.getDate() < day) d.setDate(0);
+  return d.toISOString().slice(0, 10);
+}
+function recurringDue(daysAhead){
+  const limit = addDays(today(), daysAhead === undefined ? 7 : daysAhead);
+  return (DB.recurring || []).filter(r =>
+    String(r['Active'] || 'YES').toUpperCase() !== 'NO' &&
+    String(r['Next Due'] || '') && toISO(r['Next Due']) <= limit)
+    .sort((a, b) => String(toISO(a['Next Due'])).localeCompare(String(toISO(b['Next Due']))));
+}
+function addDays(iso, n){
+  const d = new Date(iso);
+  d.setDate(d.getDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+function recurringMonthly(){
+  return (DB.recurring || []).reduce((a, r) =>
+    String(r['Active'] || 'YES').toUpperCase() === 'NO' ? a
+      : a + num(r['Amount']) / (FREQ_MONTHS[String(r['Frequency'] || 'Monthly')] || 1), 0);
+}
+
+/* One click turns a due bill into a real expenditure row and moves the due date on. */
+async function payRecurring(id, btn){
+  const r0 = (DB.recurring || []).find(x => String(x['Recurring ID']).trim() === String(id).trim());
+  if(!r0) return;
+  const due = toISO(r0['Next Due']) || today();
+  const exp = {
+    'Expense ID': nextId('expenditure'),
+    'Date': today(),
+    'Category': String(r0['Category'] || 'Administration'),
+    'Subcategory': 'Recurring · ' + String(r0['Frequency'] || ''),
+    'Description': String(r0['Expense Name'] || '') + ' (' + String(r0['Frequency'] || '') + ', due ' + fmtDate(due) + ')',
+    'Amount': String(num(r0['Amount'])),
+    'Paid To': String(r0['Paid To'] || ''),
+    'Payment Mode': 'Cash'
+  };
+  const next = Object.assign({}, r0, {
+    'Last Paid': today(),
+    'Next Due': addMonths(due, FREQ_MONTHS[String(r0['Frequency'] || 'Monthly')] || 1)
+  });
+  if(btn){ btn.disabled = true; btn.textContent = 'Saving…'; }
+  try {
+    const a = await api('save', { sheet: MODULES.expenditure.sheet, record: JSON.stringify(exp) });
+    if(!a || !a.ok) throw new Error((a && a.error) || 'expenditure not saved');
+    upsertLocal('expenditure', exp);
+    const b = await api('save', { sheet: MODULES.recurring.sheet, record: JSON.stringify(next) });
+    if(!b || !b.ok) throw new Error((b && b.error) || 'due date not updated');
+    upsertLocal('recurring', next);
+    toast(money(exp['Amount']) + ' recorded · next due ' + fmtDate(next['Next Due']), 'good');
+    render();
+  } catch(e){
+    toast(e.message || String(e), 'bad');
+    if(btn){ btn.disabled = false; btn.textContent = 'Mark paid'; }
+  }
+}
+
+function recurringPanel(){
+  const due = recurringDue(7);
+  const monthly = recurringMonthly();
+  if(!(DB.recurring || []).length){
+    return `<div class="panel"><div class="panel-head"><h3>Recurring expenses</h3></div>
+      <div class="empty"><b>Nothing set up yet</b>Add the bills the village pays every month — electricity, priest, sweeper.
+      ${canEdit() ? '<button class="btn btn-sm" style="margin-top:12px" onclick="go(\'recurring\')">Set up</button>' : ''}</div></div>`;
+  }
+  return `<div class="panel">
+    <div class="panel-head"><h3>Recurring expenses</h3>
+      <span class="muted small">about ${money(monthly)} a month</span>
+      <div class="sp"></div>
+      <button class="btn btn-sm" onclick="go('recurring')">All</button>
+    </div>
+    ${due.length ? due.map(r => {
+      const d = toISO(r['Next Due']);
+      const late = d < today();
+      return `<div class="alert">
+        <span class="dot" style="background:${late ? 'var(--brick)' : 'var(--turmeric)'}"></span>
+        <span><b>${esc(r['Expense Name'])} · ${money(r['Amount'])}</b>
+          <span class="muted">${late ? 'overdue since ' : 'due '}${esc(fmtDate(d))} · ${esc(r['Frequency'] || '')}${r['Paid To'] ? ' · ' + esc(r['Paid To']) : ''}</span></span>
+        ${canEdit() ? `<button class="btn btn-sm btn-primary" data-pay="${esc(r['Recurring ID'])}" style="margin-left:auto;white-space:nowrap">Mark paid</button>` : ''}
+      </div>`;
+    }).join('') : '<div class="alert"><span class="dot" style="background:var(--green)"></span><span><b>Nothing due this week</b><span class="muted">All recurring bills are up to date</span></span></div>'}
+  </div>`;
+}
+
 /* ---------- quick edit: save a single row in place ---------- */
 async function saveRow(key, id, btn){
   const m = MODULES[key];
@@ -2313,9 +2674,10 @@ function functionsPanel(){
     </tr>`;
   };
   const spentAll = evs.reduce((a, e) => a + eventTotals(String(e['Event ID'] || '').trim()).spent, 0);
+  const doneCount = evs.filter(e => String(e['Status'] || '').toLowerCase() === 'completed').length;
   return `<div class="panel" style="margin-bottom:16px">
     <div class="panel-head"><h3>Village functions</h3>
-      <span class="muted small">total spent ${money(spentAll)}</span>
+      <span class="muted small">total spent ${money(spentAll)} · ${doneCount} completed</span>
       <div class="sp"></div>
       <button class="btn btn-sm" onclick="go('events')">All functions</button>
     </div>
@@ -2384,15 +2746,59 @@ function openEvent(id){
       ${budget ? `<div class="meter" style="margin-top:16px"><i style="width:${pct}%"></i></div>
         <div class="small muted" style="margin-top:6px">${pct}% of the budget spent</div>` : ''}
       ${rowsTable('Expenditure', spent, ['Expense ID','Date','Category','Description','Paid To','Amount'])}
+      ${canEdit() ? `
+      <h4 class="msec">Add an expenditure for this function</h4>
+      <div class="evadd">
+        <input class="input" type="date" id="evDate" value="${today()}" aria-label="Date">
+        <input class="input" id="evDesc" placeholder="What was bought or paid for" aria-label="Description">
+        <input class="input" id="evTo" placeholder="Paid to" aria-label="Paid to">
+        <input class="input tnum" id="evAmt" type="number" min="0" step="1" placeholder="Amount" aria-label="Amount">
+        <button class="btn btn-primary" id="evSave">Add</button>
+      </div>
+      <div class="fieldnote">Each line is saved in the Expenditure sheet tagged to ${esc(e['Event Name'] || id)}, so it also appears on the main Expenditure page.</div>` : ''}
       ${rowsTable('Donations and income', raised, ['Income ID','Date','Income Type','Source','Amount'])}
       ${!spent.length && !raised.length ? '<div class="muted small" style="margin-top:18px">Nothing recorded yet. Add expenditure or income and choose this function in the <b>Event ID</b> box.</div>' : ''}
       ${e['Remarks'] ? `<div class="mremark" style="margin-top:18px">${esc(e['Remarks'])}</div>` : ''}
     </div>
     <footer>
-      ${canEdit() ? `<button class="btn" onclick="closeModal();openForm('expenditure')">Add expenditure</button>
+      ${canEdit() ? `<button class="btn" id="evFull">More detail</button>
       ${done ? '' : `<button class="btn" id="evDone">Mark completed</button>`}
       <button class="btn btn-primary" onclick="closeModal();openForm('events','${esc(id)}')">Edit function</button>` : ''}
     </footer>`);
+
+  const full = document.getElementById('evFull');
+  if(full) full.onclick = () => { closeModal(); openForm('expenditure', null, {
+    'Event ID': id, 'Category': 'Festival', 'Subcategory': String(e['Type'] || ''), 'Approved By': String(e['In Charge'] || '')
+  }); };
+
+  const addBtn = document.getElementById('evSave');
+  if(addBtn) addBtn.onclick = async () => {
+    const desc = document.getElementById('evDesc').value.trim();
+    const amt = document.getElementById('evAmt').value.trim();
+    if(!desc || !num(amt)){ toast('Write what it was for and the amount', 'bad'); return; }
+    const rec = {
+      'Expense ID': nextId('expenditure'),
+      'Date': document.getElementById('evDate').value || today(),
+      'Category': 'Festival',
+      'Subcategory': String(e['Type'] || ''),
+      'Event ID': id,
+      'Description': desc,
+      'Amount': amt,
+      'Paid To': document.getElementById('evTo').value.trim(),
+      'Approved By': String(e['In Charge'] || '')
+    };
+    addBtn.disabled = true; addBtn.textContent = 'Saving…';
+    try {
+      const r = await api('save', { sheet: MODULES.expenditure.sheet, record: JSON.stringify(rec) });
+      if(!r || !r.ok) throw new Error((r && r.error) || 'the sheet refused the row');
+      upsertLocal('expenditure', rec);
+      toast(money(amt) + ' added to ' + (e['Event Name'] || id), 'good');
+      closeModal(); openEvent(id);
+    } catch(err){
+      toast(err.message || String(err), 'bad');
+      addBtn.disabled = false; addBtn.textContent = 'Add';
+    }
+  };
 
   const dn = document.getElementById('evDone');
   if(dn) dn.onclick = async () => {
