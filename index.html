@@ -1700,27 +1700,56 @@ async function addHeadAsMember(fam, quiet){
   const head = String(fam['Family Head'] || '').trim();
   const famId = String(fam['Family ID'] || '').trim();
   if(!head || !famId) return;
-  const already = (DB.members || []).some(x =>
-    String(x['Family ID'] || '').trim() === famId &&
-    String(x['Name'] || '').trim().toLowerCase() === head.toLowerCase());
-  if(already) return;
+  if(headMemberOf(famId, head)) return;
 
-  const rec = {};
-  MODULES.members.fields.forEach(f => { rec[f.n] = ''; });
-  rec['Member ID'] = nextId('members');
-  rec['Family ID'] = famId;
-  rec['Name'] = head;
-  rec['Relation to Family Head'] = 'Self';
-  rec['Mobile'] = fam['Mobile'] || '';
+  /* Only fill the columns that exist, and never send blanks — some sheets
+     reject a full-width blank row, which is why this used to fail silently. */
+  const rec = {
+    'Member ID': freeMemberId(),
+    'Family ID': famId,
+    'Name': head,
+    'Relation to Family Head': 'Self',
+    'Gender': String(fam['Head Gender'] || '').trim(),
+    'Mobile': String(fam['Mobile'] || '').trim(),
+    'Earning Member': 'YES',
+    'Remarks': 'Family head (added automatically)'
+  };
+  Object.keys(rec).forEach(k => { if(rec[k] === '') delete rec[k]; });
+
   try {
     const r = await api('save', { sheet: MODULES.members.sheet, record: JSON.stringify(rec) });
-    if(!r || !r.ok) throw new Error((r && r.error) || 'save failed');
+    if(!r || !r.ok) throw new Error((r && r.error) || 'the sheet refused the row');
     upsertLocal('members', rec);
     if(!quiet){ toast(head + ' added as member ' + rec['Member ID'], 'good'); render(); }
+    return rec;
   } catch(e){
-    if(!quiet) toast('Family saved, but the head could not be added as a member', 'bad');
-    else throw e;
+    console.error('addHeadAsMember failed', e, rec);
+    if(quiet) throw e;
+    toast('Head not added as member: ' + (e.message || e), 'bad');
   }
+}
+
+function headMemberOf(famId, head){
+  const h = String(head).trim().toLowerCase();
+  return (DB.members || []).find(x =>
+    String(x['Family ID'] || '').trim() === String(famId).trim() &&
+    (String(x['Name'] || '').trim().toLowerCase() === h ||
+     String(x['Relation to Family Head'] || '').trim().toLowerCase() === 'self'));
+}
+
+/* nextId() can repeat an ID while several rows are written in one pass, which
+   silently overwrites an existing member. Track what this session has issued. */
+const ISSUED = new Set();
+function freeMemberId(){
+  const taken = new Set((DB.members || []).map(x => String(x['Member ID'] || '').trim()));
+  let id = nextId('members'), guard = 0;
+  while((taken.has(id) || ISSUED.has(id)) && guard++ < 999){
+    const m = String(id).match(/^(\D*)(\d+)$/);
+    if(!m) break;
+    id = m[1] + String(parseInt(m[2], 10) + 1).padStart(m[2].length, '0');
+  }
+  ISSUED.add(id);
+  return id;
 }
 
 /* Families created before this feature existed: add the missing head rows. */
@@ -1728,21 +1757,20 @@ async function addMissingHeads(){
   const missing = (DB.families || []).filter(f => {
     const head = String(f['Family Head'] || '').trim();
     const id = String(f['Family ID'] || '').trim();
-    if(!head || !id) return false;
-    return !(DB.members || []).some(x =>
-      String(x['Family ID'] || '').trim() === id &&
-      String(x['Name'] || '').trim().toLowerCase() === head.toLowerCase());
+    return head && id && !headMemberOf(id, head);
   });
   if(!missing.length){ toast('Every family head is already a member', 'good'); return; }
   busy(true, 'Adding ' + missing.length + ' family heads as members…');
-  let done = 0;
+  let done = 0, err = '';
   for(const f of missing){
-    try { await addHeadAsMember(f, true); done++; } catch(e){}
+    try { await addHeadAsMember(f, true); done++; }
+    catch(e){ if(!err) err = e.message || String(e); }
   }
   busy(false);
   await refresh(true);
   render();
-  toast(done + ' family head' + (done === 1 ? '' : 's') + ' added as members', 'good');
+  if(done) toast(done + ' family head' + (done === 1 ? '' : 's') + ' added as members', 'good');
+  if(err) toast((missing.length - done) + ' failed: ' + err, 'bad');
 }
 
 /* The backend finds rows by their ID, so a changed ID cannot be an update —
@@ -1806,7 +1834,13 @@ async function saveRecord(key, rec, editing){
     if(pending || removing) sendPhoto(key, out, pending, removing);
     if(key === 'families') await addHeadAsMember(out);
     render();
-    refresh(true);
+    await refresh(true);
+    if(key === 'families'){
+      const head = String(out['Family Head'] || '').trim();
+      const fid2 = String(out['Family ID'] || '').trim();
+      if(head && fid2 && !headMemberOf(fid2, head))
+        toast('Head is not in Members yet — open Members and use "Add missing family heads"', 'bad');
+    }
   } catch(e){
     const box = $('#formErr'); box.classList.remove('hide'); box.textContent = e.message;
     btn.disabled = false; btn.textContent = editing ? 'Save changes' : 'Add record';
