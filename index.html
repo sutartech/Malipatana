@@ -527,7 +527,7 @@ tr.rowsaved td{background:#e9f3ec}
 .colrow{display:flex;align-items:center;gap:10px;font-size:14px;flex-wrap:wrap}
 .colrow input[type=checkbox]{width:18px;height:18px;accent-color:var(--brick)}
 .colrow .input{flex:1;min-width:150px}
-/* ---------- inline expenditure line inside a function ---------- */
+/* ---------- inline bill line inside a major expense ---------- */
 .evadd{display:grid;grid-template-columns:150px minmax(140px,1fr) minmax(120px,.8fr) 120px auto;gap:8px;align-items:center}
 .evadd .input{min-height:44px}
 @media(max-width:760px){.evadd{grid-template-columns:1fr 1fr}.evadd .btn{grid-column:1/-1}}
@@ -623,6 +623,14 @@ tr.gonerow .cellav{filter:grayscale(1)}
 /* money reads at a glance: in is green, out is brick, everywhere */
 .pos,.amt.pos{color:var(--green)}
 .neg,.amt.neg{color:var(--brick)}
+
+/* ---------- data entry ---------- */
+.input.bad{border-color:var(--brick);box-shadow:0 0 0 3px var(--brick-soft)}
+.fielderr{font-size:11.5px;color:var(--brick);font-weight:600;margin-top:4px}
+.btn.armed{box-shadow:0 0 0 3px var(--turmeric-soft)}
+.keyhint{font-size:11.5px;color:var(--label);margin-right:auto;align-self:center}
+.keyhint kbd{font:inherit;font-weight:700;background:var(--surface-2);border:1px solid var(--line);
+  border-radius:5px;padding:1px 5px}
 </style>
 </head>
 <body>
@@ -983,7 +991,7 @@ const isAdmin = () => String(USER && USER.role || '').toLowerCase() === 'admin';
 const ALL_PAGES = [
   ['dashboard', 'Dashboard'], ['families', 'Families'], ['members', 'Members'],
   ['contributions', 'Contributions'], ['income', 'Income'], ['expenditure', 'Expenditure'],
-  ['events', 'Major functions'], ['recurring', 'Recurring expenses'],
+  ['events', 'Major expenses'], ['recurring', 'Recurring expenses'],
   ['emergency', 'Emergency cases'], ['regularSupport', 'Regular support'],
   ['medical', 'Medical'], ['education', 'Education'], ['insurance', 'Insurance']
 ];
@@ -1065,7 +1073,7 @@ function buildNav(){
     ['', [['dashboard', '▦', 'Dashboard', null]]],
     ['PEOPLE', [['families', '⌂', 'Families', 'families'], ['members', '☗', 'Members', 'members']]],
     ['MONEY', [['contributions', '◈', 'Contributions', 'contributions'], ['income', '↑', 'Income', 'income'],
-               ['expenditure', '↓', 'Expenditure', 'expenditure'], ['events', '❋', 'Major functions', 'events'],
+               ['expenditure', '↓', 'Expenditure', 'expenditure'], ['events', '❋', 'Major expenses', 'events'],
                ['recurring', '↻', 'Recurring expenses', 'recurring']]],
     ['WELFARE', [['emergency', '✚', 'Emergency cases', 'emergency'], ['regularSupport', '❤', 'Regular support', 'regularSupport'],
                  ['medical', '⚕', 'Medical', 'medical'], ['education', '✎', 'Education', 'education'],
@@ -1176,11 +1184,11 @@ const MODULES = {
     list: ['Recurring ID','Expense Name','Category','Amount','Frequency','Next Due','Last Paid','Paid To','Active']
   },
   events: {
-    sheet: 'Events', title: 'Major functions', odia: 'ପର୍ବପର୍ବାଣି', idField: 'Event ID', prefix: 'EVT',
-    blurb: 'Raja, Ratha Jatra, temple festivals and other village functions',
+    sheet: 'Events', title: 'Major expenses', odia: 'ବଡ଼ ଖର୍ଚ୍ଚ', idField: 'Event ID', prefix: 'EVT',
+    blurb: 'Raja, Ratha Jatra, temple festivals and other big one-off village spending',
     fields: [
       { n:'Event ID', t:'text', auto:true },
-      { n:'Event Name', t:'text', req:true },
+      { n:'Event Name', t:'text', req:true, hint:'e.g. Raja Parba 2026, temple roof repair' },
       { n:'Type', t:'datalist', opts:['Raja Parba','Ratha Jatra','Durga Puja','Kartika Purnima','Temple Festival','Annual Meeting','Cleaning Drive','Sports','Other'] },
       { n:'Year', t:'number', def:'thisYear' },
       { n:'Start Date', t:'date', def:'today' },
@@ -1217,7 +1225,7 @@ const MODULES = {
       { n:'Date', t:'date', req:true, def:'today' },
       { n:'Family ID', t:'family' },
       { n:'Member ID', t:'member' },
-      { n:'Event ID', t:'event', hint:'Use this for donations collected for a function' },
+      { n:'Event ID', t:'event', hint:'Use this for donations collected for a major expense' },
       { n:'Income Type', t:'datalist', opts:['Donation','Grant','Interest','Rent','Fine','Sale','Other'] },
       { n:'Source', t:'datalist' },
       { n:'Amount', t:'money', req:true },
@@ -1235,7 +1243,7 @@ const MODULES = {
       { n:'Date', t:'date', req:true, def:'today' },
       { n:'Category', t:'datalist', opts:['Welfare','Medical','Education','Emergency','Administration','Festival','Infrastructure','Other'] },
       { n:'Subcategory', t:'datalist' },
-      { n:'Event ID', t:'event', hint:'Attach this bill to a village function such as Raja Parba' },
+      { n:'Event ID', t:'event', hint:'Attach this bill to a major expense such as Raja Parba' },
       { n:'Family ID', t:'family' },
       { n:'Description', t:'text' },
       { n:'Amount', t:'money', req:true },
@@ -1930,17 +1938,17 @@ function openFormInner(key, id, prefill){
       <div class="formgrid" id="formGrid">${body}</div>
     </div>
     <footer>
+      <span class="keyhint"><kbd>Enter</kbd> next field · <kbd>Ctrl</kbd>+<kbd>Enter</kbd> save</span>
       <button class="btn" onclick="closeModal()">Cancel</button>
+      ${existing ? '' : '<button class="btn" id="saveMoreBtn">Save and add another</button>'}
       <button class="btn btn-primary" id="saveBtn">${existing ? 'Save changes' : 'Add record'}</button>
     </footer>`);
 
   wireForm(key, rec, !!existing);
   wirePhotoFallbacks(document.getElementById('modal') || document);
   $('#saveBtn').onclick = () => saveRecord(key, rec, !!existing);
-  const idSel = '#' + fid({ n: MODULES[key].idField });
-  const first = $('#formGrid').querySelector('input:not([readonly]):not(' + idSel + '),select,textarea')
-             || $('#formGrid').querySelector('input:not([readonly]),select,textarea');
-  if(first) first.focus();
+  const more = $('#saveMoreBtn');
+  if(more) more.onclick = () => saveRecord(key, rec, false, { again: true });
 }
 
 function fieldHtml(key, f, value, editing, rec){
@@ -2010,7 +2018,7 @@ function fieldHtml(key, f, value, editing, rec){
     case 'member':
       input = `<select class="input" id="${id}" data-role="member"></select>`; break;
     case 'event':
-      input = `<select class="input" id="${id}" data-role="event"><option value="">— not part of a function —</option>` +
+      input = `<select class="input" id="${id}" data-role="event"><option value="">— not part of a major expense —</option>` +
         (DB.events || []).map(x => `<option value="${esc(x['Event ID'])}" ${String(val) === String(x['Event ID']) ? 'selected' : ''}>${esc(x['Event Name'])} ${x['Year'] ? '· ' + esc(x['Year']) : ''}</option>`).join('') +
         '</select>'; break;
     case 'money':
@@ -2051,6 +2059,8 @@ function wireForm(key, rec){
   }
   fillMembers();
   if(famEl) famEl.addEventListener('change', () => { fillMembers(); autoFillFromFamily(key); });
+
+  wireFormKeys(key, rec);
 
   PENDING_PHOTO = null; REMOVE_PHOTO = false;
   const photoField = allFields(key).find(f => f.t === 'photo' && document.getElementById(fid(f)));
@@ -2117,6 +2127,66 @@ function wireForm(key, rec){
     $('#formGrid').addEventListener('input', recalc);
     recalc();
   }
+}
+
+/* ---------- data entry that feels like paper, not a web form ----------
+   Enter walks down the fields, Ctrl/Cmd+Enter saves, a required field says so
+   the moment you leave it, and nothing is lost by a stray Escape. */
+function wireFormKeys(key, rec){
+  const grid = $('#formGrid');
+  if(!grid) return;
+  const fields = allFields(key);
+  const inputs = [...grid.querySelectorAll('.input:not([readonly]):not([type=hidden])')];
+  const saveBtn = $('#saveBtn');
+
+  /* first real field, not the ID */
+  const first = inputs.find(el => el.id !== 'f_' + String(MODULES[key].idField).replace(/[^a-z0-9]/gi, '_'));
+  if(first) setTimeout(() => { try { first.focus({ preventScroll: true }); if(first.select) first.select(); } catch(e){} }, 40);
+
+  const defOf = el => fields.find(f => fid(f) === el.id) || { n: '', t: 'text' };
+  const checkOne = el => {
+    const f = defOf(el);
+    const v = String(el.value || '').trim();
+    const holder = el.closest('div');
+    const old = holder ? holder.querySelector('.fielderr') : null;
+    if(old) old.remove();
+    el.classList.remove('bad');
+    let msg = '';
+    if(f.req && !v) msg = f.n + ' is needed';
+    else if(v && f.t === 'tel' && !/^\d{10}$/.test(v.replace(/[\s\-+]/g, ''))) msg = 'Needs 10 digits';
+    else if(v && (f.t === 'money' || f.t === 'number') && isNaN(Number(v))) msg = 'Numbers only';
+    else if(v && f.t === 'date' && toISO(v) === '') msg = 'Check the date';
+    if(msg && holder){
+      el.classList.add('bad');
+      const d = document.createElement('div');
+      d.className = 'fielderr';
+      d.textContent = msg;
+      holder.appendChild(d);
+    }
+    return !msg;
+  };
+  inputs.forEach(el => {
+    el.addEventListener('blur', () => checkOne(el));
+    el.addEventListener('input', () => {
+      if(el.classList.contains('bad')) checkOne(el);
+      grid.dataset.dirty = '1';
+      if(saveBtn) saveBtn.classList.add('armed');
+    });
+  });
+
+  grid.addEventListener('keydown', ev => {
+    const el = ev.target;
+    if(!el.classList || !el.classList.contains('input')) return;
+    if(ev.key === 'Enter' && (ev.ctrlKey || ev.metaKey)){ ev.preventDefault(); if(saveBtn) saveBtn.click(); return; }
+    if(ev.key === 'Enter' && el.tagName !== 'TEXTAREA'){
+      ev.preventDefault();
+      checkOne(el);
+      const i = inputs.indexOf(el);
+      const next = inputs[i + 1];
+      if(next){ next.focus(); if(next.select) next.select(); }
+      else if(saveBtn) saveBtn.click();
+    }
+  });
 }
 
 function autoFillFromFamily(key){
@@ -2223,7 +2293,7 @@ async function renameId(key, oldId, newId){
   }
 }
 
-async function saveRecord(key, rec, editing){
+async function saveRecord(key, rec, editing, opts){
   const m = MODULES[key];
   const originalId = editing ? String(rec[m.idField] ?? '').trim() : '';
   const FIELDS = allFields(key);
@@ -2238,11 +2308,14 @@ async function saveRecord(key, rec, editing){
     const el = document.getElementById(fid(f));
     if(!el) return;
     let v = el.value;
-    if(f.t === 'tel' && v && !/^\d{10}$/.test(v.trim())) problems.push(f.n + ' should be a 10 digit mobile number');
+    if(f.t === 'tel' && v && !/^\d{10}$/.test(v.trim().replace(/[\s\-+]/g, ''))) problems.push(f.n + ' should be a 10 digit mobile number');
     if(f.req && !String(v).trim()) problems.push(f.n + ' is required');
     out[f.n] = v;
   });
   if(problems.length){
+    const firstBad = FIELDS.find(f => problems.some(p => String(p).indexOf(f.n) === 0));
+    const el0 = firstBad ? document.getElementById(fid(firstBad)) : null;
+    if(el0){ el0.classList.add('bad'); try { el0.focus(); } catch(e){} }
     const box = $('#formErr');
     box.classList.remove('hide');
     box.textContent = problems[0];
@@ -2262,7 +2335,9 @@ async function saveRecord(key, rec, editing){
   if(m.fields.some(f => f.n === 'Last Updated')) out['Last Updated'] = today();
   if(m.fields.some(f => f.n === 'Created Date') && !out['Created Date']) out['Created Date'] = today();
 
-  const btn = $('#saveBtn');
+  const again = !!(opts && opts.again);
+  const btn = (again ? $('#saveMoreBtn') : $('#saveBtn')) || $('#saveBtn');
+  const label = btn.textContent;
   btn.disabled = true; btn.textContent = 'Saving…';
   try {
     if(idChanged) await renameId(key, originalId, newId);
@@ -2270,7 +2345,7 @@ async function saveRecord(key, rec, editing){
     if(!r || !r.ok) throw new Error((r && r.error) || 'The sheet refused the save.');
     upsertLocal(key, out);
     const pending = PENDING_PHOTO, removing = REMOVE_PHOTO;
-    closeModal();
+    if(again) reopenBlank(key, out); else closeModal();
     toast(idChanged ? ('ID changed to ' + newId) : (editing ? 'Changes saved' : 'Record added'), 'good');
     if(pending || removing) sendPhoto(key, out, pending, removing);
     if(key === 'families') await addHeadAsMember(out);
@@ -2284,8 +2359,18 @@ async function saveRecord(key, rec, editing){
     }
   } catch(e){
     const box = $('#formErr'); box.classList.remove('hide'); box.textContent = e.message;
-    btn.disabled = false; btn.textContent = editing ? 'Save changes' : 'Add record';
+    btn.disabled = false; btn.textContent = label;
   }
+}
+
+/* "Save and add another": a fresh blank form that keeps the fields a person
+   would otherwise retype — family, date, category. */
+function reopenBlank(key, prev){
+  const keep = {};
+  ['Family ID','Date','Month','Category','Event ID','Payment Mode','Frequency','Paid To','Address/Area']
+    .forEach(c => { if(prev[c] !== undefined && prev[c] !== '') keep[c] = prev[c]; });
+  closeModal();
+  setTimeout(() => openForm(key, null, keep), 30);
 }
 
 function upsertLocal(key, rec){
@@ -2881,8 +2966,8 @@ function openColumns(key){
   };
 }
 
-/* A completed function's whole cost belongs on the Expenditure page, so it is
-   summarised there — one line per function, click through for the bills. */
+/* A completed major expense's whole cost belongs on the Expenditure page, so
+   it is summarised there — one line each, click through for the bills. */
 function functionsPanel(){
   const evs = (DB.events || []).slice().sort((a, b) =>
     String(b['Start Date'] || b['Year'] || '').localeCompare(String(a['Start Date'] || a['Year'] || '')));
@@ -2895,7 +2980,7 @@ function functionsPanel(){
     const st = String(e['Status'] || 'Planned');
     const tone = st.toLowerCase() === 'completed' ? 'good' : st.toLowerCase() === 'ongoing' ? 'warn' : '';
     return `<tr>
-      <td data-label="Function"><button class="linkish" data-event="${esc(id)}">${esc(e['Event Name'] || id)}</button>
+      <td data-label="Major expense"><button class="linkish" data-event="${esc(id)}">${esc(e['Event Name'] || id)}</button>
         <span class="muted small">${esc(e['Type'] || '')}${e['Year'] ? ' · ' + esc(e['Year']) : ''}</span></td>
       <td data-label="Status"><span class="pill ${tone}">${esc(st)}</span></td>
       <td class="num tnum" data-label="Budget">${budget ? money(budget) : '—'}</td>
@@ -2907,10 +2992,10 @@ function functionsPanel(){
   const spentAll = evs.reduce((a, e) => a + eventTotals(String(e['Event ID'] || '').trim()).spent, 0);
   const doneCount = evs.filter(e => String(e['Status'] || '').toLowerCase() === 'completed').length;
   return `<div class="panel" style="margin-bottom:16px">
-    <div class="panel-head"><h3>Village functions</h3>
+    <div class="panel-head"><h3>Major expenses</h3>
       <span class="muted small">total spent ${money(spentAll)} · ${doneCount} completed</span>
       <div class="sp"></div>
-      <button class="btn btn-sm" onclick="go('events')">All functions</button>
+      <button class="btn btn-sm" onclick="go('events')">All major expenses</button>
     </div>
     <div class="tablewrap" style="max-height:none">
       <table class="grid">
@@ -2922,7 +3007,7 @@ function functionsPanel(){
 }
 
 /* =========================================================================
-   MAJOR FUNCTIONS (Raja Parba and the like)
+   MAJOR EXPENSES (Raja Parba and the like)
    ========================================================================= */
 function eventRows(id){
   const same = r => String(r['Event ID'] || '').trim() === String(id).trim();
@@ -2962,7 +3047,7 @@ function openEvent(id){
   openModal(`
     <header>
       <div><h3>${esc(e['Event Name'] || id)}</h3>
-      <div class="sub">${esc(id)} · ${esc(e['Type'] || 'Function')}${e['Year'] ? ' · ' + esc(e['Year']) : ''}${e['In Charge'] ? ' · in charge ' + esc(e['In Charge']) : ''}</div></div>
+      <div class="sub">${esc(id)} · ${esc(e['Type'] || 'Major expense')}${e['Year'] ? ' · ' + esc(e['Year']) : ''}${e['In Charge'] ? ' · in charge ' + esc(e['In Charge']) : ''}</div></div>
       <div class="sp"></div><button class="btn btn-sm" onclick="closeModal()">Close</button>
     </header>
     <div class="body">
@@ -2978,7 +3063,7 @@ function openEvent(id){
         <div class="small muted" style="margin-top:6px">${pct}% of the budget spent</div>` : ''}
       ${rowsTable('Expenditure', spent, ['Expense ID','Date','Category','Description','Paid To','Amount'])}
       ${canEdit() ? `
-      <h4 class="msec">Add an expenditure for this function</h4>
+      <h4 class="msec">Add a bill to this expense</h4>
       <div class="evadd">
         <input class="input" type="date" id="evDate" value="${today()}" aria-label="Date">
         <input class="input" id="evDesc" placeholder="What was bought or paid for" aria-label="Description">
@@ -2988,13 +3073,13 @@ function openEvent(id){
       </div>
       <div class="fieldnote">Each line is saved in the Expenditure sheet tagged to ${esc(e['Event Name'] || id)}, so it also appears on the main Expenditure page.</div>` : ''}
       ${rowsTable('Donations and income', raised, ['Income ID','Date','Income Type','Source','Amount'])}
-      ${!spent.length && !raised.length ? '<div class="muted small" style="margin-top:18px">Nothing recorded yet. Add expenditure or income and choose this function in the <b>Event ID</b> box.</div>' : ''}
+      ${!spent.length && !raised.length ? '<div class="muted small" style="margin-top:18px">Nothing recorded yet. Add expenditure or income and choose this major expense in the <b>Event ID</b> box.</div>' : ''}
       ${e['Remarks'] ? `<div class="mremark" style="margin-top:18px">${esc(e['Remarks'])}</div>` : ''}
     </div>
     <footer>
       ${canEdit() ? `<button class="btn" id="evFull">More detail</button>
       ${done ? '' : `<button class="btn" id="evDone">Mark completed</button>`}
-      <button class="btn btn-primary" onclick="closeModal();openForm('events','${esc(id)}')">Edit function</button>` : ''}
+      <button class="btn btn-primary" onclick="closeModal();openForm('events','${esc(id)}')">Edit major expense</button>` : ''}
     </footer>`);
 
   const full = document.getElementById('evFull');
