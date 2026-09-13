@@ -793,6 +793,75 @@ a.btn.btn-danger,a.btn.btn-danger:hover{color:#fff}
 @media(max-width:700px){.stickymore{right:12px;bottom:12px}}
 
 .stickymore{position:fixed;right:auto;bottom:auto;left:0;top:0}
+
+/* ---------- notes: right edge tab ---------- */
+.sktab{position:fixed;right:0;top:50%;transform:translateY(-50%);z-index:62;
+  writing-mode:vertical-rl;background:var(--indigo);color:#fff;border:0;
+  border-radius:12px 0 0 12px;padding:16px 9px;font:inherit;font-size:12px;font-weight:700;
+  letter-spacing:.08em;cursor:pointer;display:flex;align-items:center;gap:9px;
+  box-shadow:-6px 0 22px -10px #17303f8c;transition:padding .18s ease,background .18s ease}
+.sktab:hover{padding-right:13px;background:#183a4b}
+.sktab.hasLate{background:var(--brick)}
+.sktab .cnt{writing-mode:horizontal-tb;background:#ffffff2e;border-radius:999px;
+  min-width:19px;padding:1px 5px;text-align:center;font-size:11px}
+body.skOpen .sktab{right:min(380px,92vw)}
+
+/* ---------- notes: slide-in panel ---------- */
+.skdrawer{position:fixed;top:0;right:0;height:100dvh;width:min(380px,92vw);z-index:63;
+  background:var(--surface);border-left:1px solid var(--line);
+  box-shadow:-24px 0 60px -24px #17303f5c;display:flex;flex-direction:column;
+  transform:translateX(100%);transition:transform .26s cubic-bezier(.2,.7,.2,1)}
+.skdrawer.open{transform:none}
+.skdrawer-head{position:relative;padding:20px 22px 16px;border-bottom:1px solid var(--line-soft);
+  background:linear-gradient(170deg,#fffefb,#f4f6f2)}
+.skdrawer-head .eyebrow{font-size:10px;letter-spacing:.18em;font-weight:700;color:var(--label)}
+.skdrawer-head h3{font-family:var(--display);font-size:22px;margin:8px 0 4px;font-weight:600;line-height:1.5}
+.skdrawer-head p{margin:0;font-size:12.5px;color:var(--label);line-height:1.55;max-width:32ch}
+.skclose{position:absolute;right:14px;top:14px;width:32px;height:32px;border-radius:10px;
+  border:1px solid var(--line);background:var(--surface);font-size:19px;line-height:1;
+  color:var(--label);cursor:pointer}
+.skclose:hover{background:var(--surface-2)}
+.skdrawer-body{flex:1;overflow-y:auto;padding:18px 22px 40px}
+.skhead{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.skhead .eyebrow{font-size:10px;letter-spacing:.16em;font-weight:700;color:var(--label)}
+.skhead b{display:block;font-family:var(--display);font-size:17px;font-weight:600;line-height:1.5}
+.skhead .btn{margin-left:auto}
+.skhint{background:var(--surface-2);border:1px solid var(--line);border-radius:12px;
+  padding:10px 12px;font-size:12px;color:var(--label);line-height:1.55;margin-bottom:14px}
+.skcard{border:1px solid #e4dcc2;border-radius:14px;padding:13px 14px;margin-bottom:12px;
+  background:linear-gradient(170deg,#fffbe9,#fff6d8)}
+.skcard.rem{border-color:#cfe0e7;background:linear-gradient(170deg,#f4fbff,#e9f3f8)}
+.skcard.late{border-color:#e8c8c0;background:linear-gradient(170deg,#fff5f2,#fbe9e4)}
+.skcard-top{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.skcard-top .tag{font-size:10px;font-weight:700;letter-spacing:.1em;color:#8a5c04;
+  background:#00000010;border-radius:6px;padding:2px 7px}
+.skcard.rem .skcard-top .tag{color:var(--indigo-2)}
+.skcard.late .skcard-top .tag{color:var(--brick)}
+.skcard-top .due{font-size:11.5px;font-weight:700;color:var(--label);margin-left:auto}
+.skcard.late .skcard-top .due{color:var(--brick)}
+.skcard b{display:block;font-family:var(--display);font-size:16px;font-weight:600;line-height:1.5}
+.skcard p{margin:3px 0 0;font-size:13px;line-height:1.6;color:#4a4531;white-space:pre-wrap}
+.skcard-acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:11px}
+.skcard-acts .btn{padding:5px 10px;min-height:30px;font-size:12px;border-radius:8px}
+.skdone{display:flex;gap:10px;align-items:flex-start;padding:11px 0;border-bottom:1px solid var(--line-soft)}
+.skdone:last-child{border-bottom:0}
+.skdone>span:nth-child(2){flex:1;min-width:0}
+.skdone b{display:block;font-weight:600;font-size:13.5px}
+.skdone em{font-style:normal;display:block;font-size:12px;color:var(--label);margin-top:2px;line-height:1.5}
+@media(max-width:700px){
+  .sktab{padding:14px 8px;font-size:11px}
+  body.skOpen .sktab{right:min(340px,88vw)}
+  .skdrawer{width:min(340px,88vw)}
+}
+@media print{.sktab,.skdrawer{display:none}}
+
+/* ---------- dragging a note ---------- */
+.sticky{cursor:grab;touch-action:none;user-select:none}
+.sticky:active{cursor:grabbing}
+.sticky.dragging{cursor:grabbing}
+.sticky button,.sticky a{cursor:pointer;touch-action:auto}
+.sticky-top{cursor:grab}
+.sticky-body p,.sticky-body b{user-select:text}
 </style>
 </head>
 <body>
@@ -1147,13 +1216,27 @@ function stickyDueLabel(n){
   return days <= 7 ? 'Due in ' + days + ' day' + (days === 1 ? '' : 's') : 'Due ' + fmtDate(d);
 }
 
+/* A tab on the right edge, the way a notice board hangs on a wall — always
+   there, never in the way. */
+function buildStickyTab(){
+  if(document.getElementById('skTab')) return;
+  const t = document.createElement('button');
+  t.id = 'skTab';
+  t.className = 'sktab';
+  t.setAttribute('aria-label', 'Notes, targets and reminders');
+  t.onclick = () => toggleStickyDrawer();
+  document.body.appendChild(t);
+  stickyBadge();
+}
+
 function stickyBadge(){
-  const b = document.getElementById('skBtn');
-  if(!b) return;
+  const t = document.getElementById('skTab');
+  if(!t) return;
   const open = stickyAll().filter(n => !n.done);
   const late = open.filter(n => n.due && toISO(n.due) < today()).length;
-  b.innerHTML = '<span>✎</span> Notes' + (open.length ? ' <kbd>' + open.length + '</kbd>' : '');
-  b.classList.toggle('hasLate', late > 0);
+  t.innerHTML = '<span class="lbl">Notes &amp; targets</span>' +
+    (open.length ? '<span class="cnt">' + open.length + '</span>' : '');
+  t.classList.toggle('hasLate', late > 0);
 }
 
 function paintSticky(){
@@ -1163,7 +1246,9 @@ function paintSticky(){
     layer.id = 'stickyLayer';
     document.body.appendChild(layer);
   }
-  const open = stickyAll().filter(n => !n.done);
+  /* Only pinned notes float over the dashboard. Everything else lives in the
+     side panel, which is what keeps the board calm. */
+  const open = stickyAll().filter(n => !n.done && n.pin);
   const pos = stickyPos();
 
   /* Pass 1 — draw the cards. Un-placed ones are hidden until measured, so a
@@ -1187,11 +1272,11 @@ function paintSticky(){
         <b>${esc(n.title || 'Note')}</b>
         ${n.text ? `<p>${esc(n.text)}</p>` : ''}
       </div>
-      <div class="sticky-acts">
+      ${isAdmin() ? `<div class="sticky-acts">
         <button class="btn btn-sm" data-sdone="${esc(n.id)}">✓ Completed</button>
         <button class="btn btn-sm" data-sedit="${esc(n.id)}">Edit</button>
         <button class="btn btn-sm btn-danger" data-sdel="${esc(n.id)}">Delete</button>
-      </div>
+      </div>` : ''}
     </div>`;
   }).join('');
 
@@ -1323,27 +1408,39 @@ function layoutSticky(layer){
 }
 
 function wireSticky(layer){
-  layer.querySelectorAll('[data-drag]').forEach(handle => {
-    handle.addEventListener('pointerdown', ev => {
-      const card = handle.closest('.sticky');
-      const id = handle.dataset.drag;
+  /* The whole note is the handle — a villager should be able to push the paper
+     from wherever their thumb lands, not just a thin strip. Buttons, links and
+     text selection are left alone. */
+  layer.querySelectorAll('.sticky').forEach(card => {
+    card.addEventListener('pointerdown', ev => {
+      if(ev.button !== 0 && ev.pointerType === 'mouse') return;
+      if(ev.target.closest('button, a, input, textarea, select')) return;
+      const handle = card;
+      const id = card.dataset.sid;
       const r = card.getBoundingClientRect();
       const dx = ev.clientX - r.left, dy = ev.clientY - r.top;
+      let moved = false;
       card.classList.add('dragging');
-      handle.setPointerCapture(ev.pointerId);
+      card.removeAttribute('data-unplaced');      // a dragged note keeps its spot
+      try { handle.setPointerCapture(ev.pointerId); } catch(e){}
       const move = e => {
+        if(!moved && Math.abs(e.clientX - ev.clientX) + Math.abs(e.clientY - ev.clientY) < 3) return;
+        moved = true;
+        e.preventDefault();
         const x = Math.max(4, Math.min(window.innerWidth - r.width - 4, e.clientX - dx));
         const y = Math.max(4, Math.min(window.innerHeight - r.height - 4, e.clientY - dy));
         card.style.left = x + 'px'; card.style.top = y + 'px';
       };
-      const up = e => {
+      const up = () => {
         card.classList.remove('dragging');
         handle.removeEventListener('pointermove', move);
         handle.removeEventListener('pointerup', up);
-        stickyPosSet(id, parseInt(card.style.left, 10), parseInt(card.style.top, 10));
+        handle.removeEventListener('pointercancel', up);
+        if(moved) stickyPosSet(id, parseInt(card.style.left, 10), parseInt(card.style.top, 10));
       };
       handle.addEventListener('pointermove', move);
       handle.addEventListener('pointerup', up);
+      handle.addEventListener('pointercancel', up);
     });
   });
 
@@ -1358,6 +1455,7 @@ function wireSticky(layer){
   });
   layer.querySelectorAll('[data-sdel]').forEach(b => {
     b.onclick = async () => {
+      if(!isAdmin()){ toast('Only the village admin can delete a note', 'bad'); return; }
       if(!confirm('Delete this note?')) return;
       try { await stickySave(stickyAll().filter(n => n.id !== b.dataset.sdel)); paintSticky(); toast('Note deleted', 'good'); }
       catch(e){ toast(e.message || String(e), 'bad'); }
@@ -1366,6 +1464,9 @@ function wireSticky(layer){
 }
 
 async function stickyComplete(id){
+  /* Notes are admin-controlled: completing one writes into the shared history
+     with a name against it, so it cannot be open to every account. */
+  if(!isAdmin()){ toast('Only the village admin can change notes', 'bad'); return; }
   const list = stickyAll();
   const n = list.find(x => x.id === id);
   if(!n) return;
@@ -1420,59 +1521,128 @@ function stickyForm(id){
     };
     const i = list.findIndex(x => x.id === rec.id);
     if(i >= 0) list[i] = Object.assign({}, list[i], rec); else list.push(rec);
-    try { await stickySave(list); closeModal(); paintSticky(); toast('Note saved', 'good'); }
+    try {
+      await stickySave(list); closeModal(); paintSticky(); stickyBadge();
+      if(document.getElementById('skDrawer')) stickyDrawer();
+      toast('Note saved', 'good');
+    }
     catch(e){ toast(e.message || String(e), 'bad'); btn.disabled = false; btn.textContent = id ? 'Save' : 'Add note'; }
   };
 }
 
-function stickyPanel(){
+function toggleStickyDrawer(force){
+  let d = document.getElementById('skDrawer');
+  const openNow = d && d.classList.contains('open');
+  const want = force === undefined ? !openNow : force;
+  if(!want){ if(d) d.classList.remove('open'); document.body.classList.remove('skOpen'); return; }
+  stickyDrawer();
+}
+
+/* The right utility panel: everything about notes in one place, so the
+   dashboard itself stays uncluttered. */
+function stickyDrawer(){
   const all = stickyAll();
-  const open = all.filter(n => !n.done), done = all.filter(n => n.done);
-  openModal(`
-    <header><div><h3>Notes, targets and reminders</h3>
-      <div class="sub">${open.length} on the board · ${done.length} completed</div></div>
-      <div class="sp"></div>
-      <button class="btn btn-sm" id="skReset" title="Move every note back to the right edge">Tidy the board</button>
-      ${isAdmin() ? '<button class="btn btn-sm btn-primary" id="skNew">+ Add note</button>' : ''}
-      <button class="btn btn-sm" onclick="closeModal()">Close</button></header>
-    <div class="body">
-      <h4 class="msec">On the board</h4>
-      ${open.length ? open.map(n => `<div class="skrow">
-        <span class="pill ${n.kind === 'reminder' ? '' : 'warn'}">${n.kind === 'reminder' ? 'Reminder' : 'Target'}</span>
-        <span><b>${esc(n.title)}</b>${n.text ? '<em>' + esc(n.text) + '</em>' : ''}</span>
-        <span class="muted small">${esc(stickyDueLabel(n))}</span>
-        ${isAdmin() ? `<button class="btn btn-sm" data-pdone="${esc(n.id)}">✓ Done</button>` : ''}
-      </div>`).join('') : '<div class="muted small">Nothing on the board.</div>'}
+  const open = all.filter(n => !n.done);
+  const done = all.filter(n => n.done);
+  const pinned = open.filter(n => n.pin).length;
 
-      <h4 class="msec">Completed history</h4>
-      ${done.length ? done.slice().reverse().map(n => `<div class="skrow done">
+  let d = document.getElementById('skDrawer');
+  if(!d){
+    d = document.createElement('aside');
+    d.id = 'skDrawer';
+    d.className = 'skdrawer';
+    document.body.appendChild(d);
+  }
+
+  const card = n => {
+    const late = n.due && toISO(n.due) < today();
+    return `<div class="skcard ${n.kind === 'reminder' ? 'rem' : 'tgt'}${late ? ' late' : ''}">
+      <div class="skcard-top">
+        <span class="tag">${n.kind === 'reminder' ? 'REMINDER' : 'TARGET'}</span>
+        ${n.due ? `<span class="due">${esc(stickyDueLabel(n))}</span>` : ''}
+      </div>
+      <b>${esc(n.title || 'Note')}</b>
+      ${n.text ? `<p>${esc(n.text)}</p>` : ''}
+      <div class="skcard-acts">
+        ${isAdmin() ? `<button class="btn btn-sm ${n.pin ? 'btn-primary' : ''}" data-dpin="${esc(n.id)}">${n.pin ? '📍 Pinned' : '📍 Pin'}</button>
+        <button class="btn btn-sm" data-ddone="${esc(n.id)}">✓ Completed</button>
+        <button class="btn btn-sm" data-dedit="${esc(n.id)}">Edit</button>
+        <button class="btn btn-sm btn-danger" data-ddel="${esc(n.id)}">Delete</button>` : ''}
+      </div>
+    </div>`;
+  };
+
+  d.innerHTML = `
+    <div class="skdrawer-head">
+      <div class="eyebrow">RIGHT UTILITY PANEL</div>
+      <h3>Notes &amp; targets</h3>
+      <p>Targets and reminders, without taking up dashboard space.</p>
+      <button class="skclose" aria-label="Close" data-dclose="1">×</button>
+    </div>
+    <div class="skdrawer-body">
+      <div class="skhead">
+        <div><div class="eyebrow">STICKY NOTES</div><b>Targets &amp; reminders</b></div>
+        <span class="muted small">${open.length} active</span>
+        ${isAdmin() ? '<button class="btn btn-sm btn-primary" data-dnew="1">+ Add sticky</button>' : ''}
+      </div>
+      <div class="skhint">📍 Pin a note to keep it floating above the dashboard. It can then be
+        dragged anywhere, and Completed and Delete stay available while pinned.${
+        pinned ? ' <b>' + pinned + ' pinned now.</b>' : ''}</div>
+
+      ${open.length ? open.map(card).join('') : '<div class="muted small" style="padding:6px 0">Nothing on the board yet.</div>'}
+
+      <div class="skhead" style="margin-top:26px">
+        <div><div class="eyebrow">STICKY NOTE DIARY</div><b>Completed history</b></div>
+        <span class="pill ok">${done.length} completed</span>
+      </div>
+      <div class="skhint">Completed notes are kept here so the village has a record of what was done.</div>
+      ${done.length ? done.slice().reverse().map(n => `<div class="skdone">
         <span class="pill ok">✓</span>
-        <span><b>${esc(n.title)}</b><em>${esc(n.doneAt || '')}${n.doneBy ? ' · ' + esc(n.doneBy) : ''}</em></span>
-        ${isAdmin() ? `<button class="btn btn-sm" data-pback="${esc(n.id)}">Put back</button>` : ''}
-      </div>`).join('') : '<div class="muted small">Nothing completed yet.</div>'}
-    </div>`);
+        <span><b>${esc(n.title)}</b><em>${esc(n.doneAt || '')}${n.doneBy ? ' · ' + esc(n.doneBy) : ''}${
+          n.due ? ' · was due ' + esc(fmtDate(n.due)) : ''}</em>${n.text ? '<em>' + esc(n.text) + '</em>' : ''}</span>
+        ${isAdmin() ? `<button class="btn btn-sm" data-dback="${esc(n.id)}">Put back</button>` : ''}
+      </div>`).join('') : '<div class="muted small" style="padding:6px 0">Nothing completed yet.</div>'}
 
-  const root = document.getElementById('modalRoot');
-  const nb = root.querySelector('#skNew');
-  if(nb) nb.onclick = () => { closeModal(); stickyForm(); };
-  const rb = root.querySelector('#skReset');
-  if(rb) rb.onclick = () => {
+      ${pinned ? '<button class="btn btn-sm" data-dtidy="1" style="margin-top:22px">Tidy the pinned notes</button>' : ''}
+    </div>`;
+
+  requestAnimationFrame(() => { d.classList.add('open'); document.body.classList.add('skOpen'); });
+
+  const refresh = () => { stickyDrawer(); paintSticky(); stickyBadge(); };
+  d.querySelector('[data-dclose]').onclick = () => toggleStickyDrawer(false);
+  const nb = d.querySelector('[data-dnew]');
+  if(nb) nb.onclick = () => stickyForm();
+  d.querySelectorAll('[data-dpin]').forEach(b => b.onclick = async () => {
+    if(!isAdmin()){ toast('Only the village admin can pin a note', 'bad'); return; }
+    const list = stickyAll(); const n = list.find(x => x.id === b.dataset.dpin);
+    if(!n) return;
+    n.pin = !n.pin;
+    try { await stickySave(list); refresh(); toast(n.pin ? 'Pinned to the dashboard' : 'Unpinned', 'good'); }
+    catch(e){ toast(e.message || String(e), 'bad'); }
+  });
+  d.querySelectorAll('[data-ddone]').forEach(b => b.onclick = async () => { await stickyComplete(b.dataset.ddone); refresh(); });
+  d.querySelectorAll('[data-dedit]').forEach(b => b.onclick = () => stickyForm(b.dataset.dedit));
+  d.querySelectorAll('[data-ddel]').forEach(b => b.onclick = async () => {
+    if(!isAdmin()){ toast('Only the village admin can delete a note', 'bad'); return; }
+    if(!confirm('Delete this note?')) return;
+    try { await stickySave(stickyAll().filter(n => n.id !== b.dataset.ddel)); refresh(); toast('Note deleted', 'good'); }
+    catch(e){ toast(e.message || String(e), 'bad'); }
+  });
+  d.querySelectorAll('[data-dback]').forEach(b => b.onclick = async () => {
+    if(!isAdmin()){ toast('Only the village admin can change notes', 'bad'); return; }
+    const list = stickyAll(); const n = list.find(x => x.id === b.dataset.dback);
+    if(n){ n.done = false; try { await stickySave(list); refresh(); } catch(e){ toast(e.message, 'bad'); } }
+  });
+  const tb = d.querySelector('[data-dtidy]');
+  if(tb) tb.onclick = () => {
     try { local.set(STICKY_POS, '{}'); } catch(e){}
     paintSticky();
-    closeModal();
-    toast('Notes moved back to the right edge', 'good');
+    toast('Pinned notes moved back to the right edge', 'good');
   };
-  root.querySelectorAll('[data-pdone]').forEach(b => {
-    b.onclick = async () => { await stickyComplete(b.dataset.pdone); closeModal(); stickyPanel(); };
-  });
-  root.querySelectorAll('[data-pback]').forEach(b => {
-    b.onclick = async () => {
-      const list = stickyAll();
-      const n = list.find(x => x.id === b.dataset.pback);
-      if(n){ n.done = false; try { await stickySave(list); paintSticky(); closeModal(); stickyPanel(); } catch(e){ toast(e.message, 'bad'); } }
-    };
-  });
 }
+
+/* keep the old name working */
+function stickyPanel(){ stickyDrawer(); }
 
 /* =========================================================================
    GUIDANCE — a family needing advice, and the villager assigned to give it
@@ -1927,8 +2097,7 @@ const ALL_PAGES = [
   ['dashboard', 'Dashboard'], ['families', 'Families'], ['members', 'Members'],
   ['contributions', 'Contributions'], ['income', 'Income'], ['expenditure', 'Expenditure'],
   ['events', 'Major expenses'], ['recurring', 'Recurring expenses'],
-  ['emergency', 'Emergency cases'], ['regularSupport', 'Regular support'],
-  ['medical', 'Medical'], ['education', 'Education'], ['insurance', 'Insurance']
+  ['emergency', 'Emergency cases'], ['regularSupport', 'Regular support']
 ];
 function accessKey(username){ return 'Access ' + String(username || '').trim(); }
 function accessOf(username){
@@ -2041,10 +2210,7 @@ function enterApp(){
     host.parentNode.insertBefore(big, host.nextSibling);
     host.parentNode.insertBefore(od, host.nextSibling);
 
-    const nb = document.createElement('button');
-    nb.id = 'skBtn'; nb.className = 'searchchip'; nb.title = 'Notes, targets and reminders';
-    nb.onclick = stickyPanel;
-    host.parentNode.insertBefore(nb, host.nextSibling);
+    buildStickyTab();
     applyComfort();
     paintSticky();
     stickyBadge();
@@ -2077,9 +2243,7 @@ function buildNav(){
     ['MONEY', [['contributions', '◈', 'Contributions', 'contributions'], ['income', '↑', 'Income', 'income'],
                ['expenditure', '↓', 'Expenditure', 'expenditure'], ['events', '❋', 'Major expenses', 'events'],
                ['recurring', '↻', 'Recurring expenses', 'recurring']]],
-    ['WELFARE', [['emergency', '✚', 'Emergency cases', 'emergency'], ['regularSupport', '❤', 'Regular support', 'regularSupport'],
-                 ['medical', '⚕', 'Medical', 'medical'], ['education', '✎', 'Education', 'education'],
-                 ['insurance', '⛨', 'Insurance', 'insurance']]]
+    ['WELFARE', [['emergency', '✚', 'Emergency cases', 'emergency'], ['regularSupport', '❤', 'Regular support', 'regularSupport']]]
   ];
   groups.forEach(g => { g[1] = g[1].filter(it => canSee(it[0])); });
   if(local.get('mal_odia') === '1'){
@@ -2184,7 +2348,7 @@ const MODULES = {
       { n:'Life Status', t:'select', opts:['Alive','Deceased'] },
       { n:'Date of Death', t:'date', hint:'Only for a deceased member' }
     ],
-    list: ['Photo','Member ID','Name','Family ID','Relation to Family Head','Gender','Age','Occupation','Earning Member','Monthly Income','Mobile','Life Status']
+    list: ['Photo','Member ID','Name','Family ID','Relation to Family Head','Gender','Age','Education','Occupation','Earning Member','Monthly Income','Mobile','Life Status']
   },
   recurring: {
     sheet: 'Recurring Expenses', title: 'Recurring expenses', odia: 'ନିୟମିତ ଖର୍ଚ୍ଚ', idField: 'Recurring ID', prefix: 'REC',
