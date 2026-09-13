@@ -713,6 +713,21 @@ html.odia .nav{font-family:var(--display);font-size:17px}
 .langbtn:hover{background:#ffffff2e;color:#fff}
 .langbtn[aria-pressed="true"],.iconbtn[aria-pressed="true"]{background:var(--turmeric);color:#2b1d00;border-color:transparent}
 @media(max-width:700px){.langbtn{padding:0 10px;font-size:12.5px}}
+
+/* ---------- stat strip: labels must not wrap into towers ---------- */
+.strip{grid-template-columns:repeat(auto-fit,minmax(132px,1fr))}
+.strip div{padding:13px 15px;display:flex;flex-direction:column;justify-content:flex-start;gap:2px}
+.strip .k{font-size:11px;letter-spacing:.05em;line-height:1.3;text-wrap:balance}
+.strip .v{font-size:24px;line-height:1.25;margin-top:2px}
+@media(max-width:900px){.strip{grid-template-columns:repeat(auto-fit,minmax(118px,1fr))}}
+@media(max-width:560px){.strip{grid-template-columns:repeat(2,1fr)}}
+
+/* ---------- in-place notice ---------- */
+.notice{background:#fdf3dd;border:1px solid #f0dba6;border-radius:var(--r-lg);padding:14px 18px;
+  margin-bottom:16px;font-size:13.5px;line-height:1.6;color:#6b4a02}
+.notice b{display:block;font-weight:700;margin-bottom:2px}
+.notice code{background:#00000010;border-radius:5px;padding:1px 6px;font-size:12.5px;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
 </style>
 </head>
 <body>
@@ -1346,6 +1361,7 @@ function resetIdle(){
    hand in Apps Script). Without this, a record saved here would be wiped by the
    next reload and appear to vanish. */
 const OPTIONAL_SHEETS = ['events', 'recurring'];
+let SERVER_SHEETS = [];
 function cacheKey(k){ return 'mal_local_' + k; }
 function stashLocal(k){
   try { local.set(cacheKey(k), JSON.stringify(DB[k] || [])); } catch(e){}
@@ -1362,6 +1378,7 @@ let MISSING_WARNED = false;
 async function load(){
   const r = await api('bootstrap');
   if(!r || !r.ok) throw new Error((r && r.error) || 'Could not read the village sheet.');
+  SERVER_SHEETS = OPTIONAL_SHEETS.filter(k => Array.isArray(r[k]));
   const keptLocal = {};
   OPTIONAL_SHEETS.forEach(k => {
     if(!Array.isArray(r[k])) keptLocal[k] = (DB && DB[k] && DB[k].length) ? DB[k] : restoreLocal(k);
@@ -1375,8 +1392,7 @@ async function load(){
   OPTIONAL_SHEETS.forEach(k => { if(Array.isArray(DB[k])) stashLocal(k); });
   if(missing.length && !MISSING_WARNED){
     MISSING_WARNED = true;
-    setTimeout(() => toast('The sheet is not sending ' + missing.join(' and ') +
-      ' yet — ask the admin to add the bootstrap line, or those records will not reach other users', 'bad'), 1200);
+    setTimeout(() => toast(missing.join(' and ') + ' saved on this device only', 'bad'), 1200);
   }
   cacheDb();
   return DB;
@@ -1829,8 +1845,10 @@ function renderDashboard(){
             <div class="nm">${esc(name)}<em>${esc(note)}</em></div>
             <div class="amt tnum">${amt < 0 ? '−' : '+'} ${money(Math.abs(amt))}</div>
           </div>`).join('') +
-          (zeros.length ? `<div class="lrow zero"><div class="nm">${
-            zeros.map(z => esc(z[1])).join(' · ')}<em>nothing recorded yet</em></div>
+          (zeros.length ? `<div class="lrow zero"><div class="nm">Nothing recorded yet<em>${
+            zeros.length} line${zeros.length === 1 ? '' : 's'} waiting: ${
+            zeros.slice(0, 3).map(z => esc(z[1].toLowerCase())).join(', ')}${
+            zeros.length > 3 ? ' and ' + (zeros.length - 3) + ' more' : ''}</em></div>
             <div class="amt tnum">${money(0)}</div></div>` : '');
       })()}
       <div class="lrow total">
@@ -1889,6 +1907,45 @@ function renderDashboard(){
 
 /* An empty register should read as "here is what to do first", not as a page
    full of zeros. Shown only until the first entry exists. */
+/* One number, asked for plainly, instead of a settings table. */
+function openOpeningFund(){
+  if(!isAdmin()){ go('settingsList'); return; }
+  const current = num(setting('Opening Fund', 0));
+  openModal(`
+    <header><div><h3>Opening fund</h3>
+      <div class="sub">What the village fund already held before this register began</div></div>
+      <div class="sp"></div><button class="btn btn-sm" onclick="closeModal()">Close</button></header>
+    <div class="body">
+      <label class="lbl" for="ofAmt">Amount in hand</label>
+      <input class="input tnum" id="ofAmt" type="number" min="0" step="1" value="${current || ''}"
+             placeholder="e.g. 25000" style="font-size:20px;min-height:56px">
+      <div class="fieldnote">Every figure on the dashboard starts from this number. Leave it 0 if the fund is starting fresh.</div>
+    </div>
+    <footer>
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" id="ofSave">Save</button>
+    </footer>`);
+  const box = document.getElementById('ofAmt');
+  const btn = document.getElementById('ofSave');
+  setTimeout(() => { box.focus(); box.select(); }, 50);
+  box.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); btn.click(); } });
+  btn.onclick = async () => {
+    btn.disabled = true; btn.textContent = 'Saving…';
+    const rec = { Setting: 'Opening Fund', Value: String(num(box.value)) };
+    try {
+      const r = await saveThrough('save', { sheet: 'Settings', record: JSON.stringify(rec) }, 'Opening fund');
+      if(!r || !r.ok) throw new Error((r && r.error) || 'could not save');
+      DB.settings = DB.settings || {};
+      DB.settings['Opening Fund'] = rec.Value;
+      closeModal(); render();
+      toast('Opening fund set to ' + money(rec.Value), 'good');
+    } catch(e){
+      toast(e.message || String(e), 'bad');
+      btn.disabled = false; btn.textContent = 'Save';
+    }
+  };
+}
+
 function startPanel(){
   const fams = (DB.families || []).length;
   const mems = (DB.members || []).length;
@@ -1899,7 +1956,7 @@ function startPanel(){
     { done: mems > fams, n: 'Add the members', d: mems ? mems + ' people recorded' : 'Each person in those households',
       act: "openForm('members')", go: 'members', cta: 'Add a member' },
     { done: opening > 0, n: 'Set the opening fund', d: opening ? money(opening) + ' carried in' : 'What the fund already holds',
-      act: "go('settings')", go: 'settings', cta: 'Open settings' },
+      act: "openOpeningFund()", go: 'settingsList', cta: 'Set the amount' },
     { done: (DB.contributions || []).length > 0, n: "Record this month's ଚାନ୍ଦା", d: 'Contributions from each family',
       act: "openForm('contributions')", go: 'contributions', cta: 'Add a contribution' }
   ];
@@ -2169,6 +2226,11 @@ function renderModule(key){
     <span class="muted small" style="margin-left:auto">${rows.length} of ${all.length} records</span>
   </div>
 
+  ${OPTIONAL_SHEETS.includes(key) && !SERVER_SHEETS.includes(key) ? `<div class="notice">
+    <b>These records stay on this device</b>
+    The sheet is not sending ${esc(MODULES[key].sheet)} yet. Ask the admin to add
+    <code>${esc(key)}: read_('${esc(MODULES[key].sheet)}'),</code> to the bootstrap function in Apps Script and redeploy,
+    so everyone can see them.</div>` : ''}
   ${key === 'expenditure' ? functionsPanel() : ''}
 
   <div class="tablewrap">
