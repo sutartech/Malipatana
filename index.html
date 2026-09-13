@@ -862,6 +862,78 @@ body.skOpen .sktab{right:min(380px,92vw)}
 .sticky button,.sticky a{cursor:pointer;touch-action:auto}
 .sticky-top{cursor:grab}
 .sticky-body p,.sticky-body b{user-select:text}
+
+/* ---------- sticky note paper colours ---------- */
+.c-amber{background:linear-gradient(170deg,#ffe680,#ffd24d);border-color:#e0a800}
+.c-lime{background:linear-gradient(170deg,#ccf279,#aee442);border-color:#7fbb1e}
+.c-sky{background:linear-gradient(170deg,#a8e4ff,#7ed2fb);border-color:#2aa4dc}
+.c-rose{background:linear-gradient(170deg,#ffc2d4,#ff9ebb);border-color:#e45c86}
+.c-lilac{background:linear-gradient(170deg,#dcc9ff,#c3a7fb);border-color:#8f6ae0}
+.c-stone{background:linear-gradient(170deg,#ffd0a8,#ffb673);border-color:#e08128}
+.sticky[class*="c-"] .sticky-body p,.skcard[class*="c-"] .sticky-body p{color:#22282c}
+.sticky[class*="c-"] .sticky-body b,.skcard[class*="c-"] .sticky-body b{color:#14191c}
+.sticky[class*="c-"] .sticky-top{background:#0000000f;border-bottom-color:#00000024}
+.sticky[class*="c-"] .sticky-top .tag{background:#ffffffb3;color:#1d2428;border-color:#00000026}
+.sticky[class*="c-"] .sticky-top .due{color:#2a3136}
+.sticky[class*="c-"] .sticky-top .x{color:#2a3136}
+.sticky[class*="c-"]{box-shadow:0 18px 40px -16px #17303f66,0 2px 0 #00000014 inset}
+/* an overdue note still shouts, whatever colour it was given */
+.sticky.late,.sticky.late.c-amber,.sticky.late.c-lime,.sticky.late.c-sky,
+.sticky.late.c-rose,.sticky.late.c-lilac,.sticky.late.c-stone,
+.skcard.late,.skcard.late.c-amber,.skcard.late.c-lime,.skcard.late.c-sky,
+.skcard.late.c-rose,.skcard.late.c-lilac,.skcard.late.c-stone{
+  border-color:#e8c8c0;background:linear-gradient(170deg,#fff5f2,#fbe9e4)}
+.sticky.late,.sticky.late.c-amber,.sticky.late.c-lime,.sticky.late.c-sky,
+.sticky.late.c-rose,.sticky.late.c-lilac,.sticky.late.c-stone{
+  border-color:#c1281e;background:linear-gradient(170deg,#ffb3a6,#ff8f7d)}
+.sticky[data-lock] .sticky-top .x{display:none}
+.lockpin{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;
+  letter-spacing:.06em;color:#8a5c04}
+/* the colour chooser in the note form */
+.swatches{display:flex;gap:9px;flex-wrap:wrap;margin:2px 0 4px}
+.swatches input{position:absolute;opacity:0;pointer-events:none}
+.swatches label{width:34px;height:34px;border-radius:10px;cursor:pointer;border:2px solid;
+  display:block;transition:transform .14s ease,box-shadow .14s ease,border-color .14s ease}
+.swatches label:hover{transform:translateY(-2px)}
+.swatches input:checked + label{border-color:var(--ink);box-shadow:0 0 0 3px #17303f22;transform:translateY(-2px)}
+.swatches input:focus-visible + label{box-shadow:0 0 0 4px #e8a33d55}
+
+/* ---------- a modal always beats the notes ---------- */
+/* Pinned notes float above the dashboard, but nothing may sit over a form the
+   user is filling in — so the whole note layer steps aside while a modal or
+   the notes drawer is open, rather than fighting it on z-index. */
+.overlay{z-index:120}
+#stickyLayer{z-index:50}
+body.modalOpen #stickyLayer{opacity:.12;pointer-events:none;filter:saturate(.4)}
+#skDrawer,#skTab{z-index:130}
+
+/* ---------- swatch borders ---------- */
+.swatches label{border:2px solid #00000018 !important}
+.swatches label.c-amber{border-color:#d8c070 !important}
+.swatches label.c-lime{border-color:#9ccb90 !important}
+.swatches label.c-sky{border-color:#8fc0da !important}
+.swatches label.c-rose{border-color:#e5a3ac !important}
+.swatches label.c-lilac{border-color:#b49ee0 !important}
+.swatches label.c-stone{border-color:#c2c2ba !important}
+.swatches input:checked + label{border-color:var(--ink) !important;
+  box-shadow:0 0 0 3px #17303f2e,0 6px 14px -6px #17303f66}
+.swatches input:checked + label::after{content:'✓';display:grid;place-items:center;height:100%;
+  font-size:15px;font-weight:700;color:var(--ink)}
+
+/* the kind radios sit on their own row, each a proper inline pair */
+.skkind{display:flex;gap:18px;flex-wrap:wrap;margin-bottom:14px}
+.skkind label{display:inline-flex;align-items:center;gap:7px;font-size:14px;font-weight:600;cursor:pointer}
+
+/* ---------- resizing a note ---------- */
+.sticky{min-width:180px;min-height:110px;overflow:hidden;display:flex;flex-direction:column}
+.sticky .sticky-body{flex:1;overflow:auto}
+.sticky.resizing{box-shadow:0 26px 60px -18px #17303f8c;user-select:none}
+.sticky-grip{position:absolute;right:0;bottom:0;width:20px;height:20px;cursor:nwse-resize;
+  touch-action:none;z-index:2}
+.sticky-grip::before{content:'';position:absolute;right:3px;bottom:3px;width:9px;height:9px;
+  border-right:2px solid #17303f4d;border-bottom:2px solid #17303f4d;border-bottom-right-radius:3px;
+  transition:border-color .16s ease}
+.sticky:hover .sticky-grip::before{border-right-color:#17303f99;border-bottom-color:#17303f99}
 </style>
 </head>
 <body>
@@ -1250,6 +1322,7 @@ function paintSticky(){
      side panel, which is what keeps the board calm. */
   const open = stickyAll().filter(n => !n.done && n.pin);
   const pos = stickyPos();
+  const sizes = stickySizes();
 
   /* Pass 1 — draw the cards. Un-placed ones are hidden until measured, so a
      note is never briefly shown on top of another. */
@@ -1259,19 +1332,24 @@ function paintSticky(){
     const p = placed ? stickyClamp(raw) : raw;
     const label = stickyDueLabel(n);
     const late = n.due && toISO(n.due) < today();
-    return `<div class="sticky ${n.kind === 'reminder' ? 'rem' : 'tgt'}${late ? ' late' : ''}"
+    const sz = sizes[n.id];
+    return `<div class="sticky ${n.kind === 'reminder' ? 'rem' : 'tgt'} c-${esc(n.col || 'amber')}${late ? ' late' : ''}"
                  data-sid="${esc(n.id)}"
+                 ${n.lock ? 'data-lock="1"' : ''}
                  ${placed ? '' : 'data-unplaced="1"'}
-                 style="${placed ? 'left:' + p.x + 'px;top:' + p.y + 'px' : 'left:0;top:0;visibility:hidden'}">
+                 style="${placed ? 'left:' + p.x + 'px;top:' + p.y + 'px' : 'left:0;top:0;visibility:hidden'}${
+                   sz ? ';width:' + sz.w + 'px;height:' + sz.h + 'px' : ''}">
       <div class="sticky-top" data-drag="${esc(n.id)}">
         <span class="tag">${n.kind === 'reminder' ? 'REMINDER' : 'TARGET'}</span>
         ${label ? `<span class="due">${esc(label)}</span>` : ''}
-        <button class="x" data-sclose="${esc(n.id)}" title="Hide until reload">×</button>
+        ${n.lock ? '<span class="lockpin" title="Kept pinned by the admin">📌 KEPT</span>' : ''}
+        ${n.lock ? '' : `<button class="x" data-sclose="${esc(n.id)}" title="Hide until reload">×</button>`}
       </div>
       <div class="sticky-body">
         <b>${esc(n.title || 'Note')}</b>
         ${n.text ? `<p>${esc(n.text)}</p>` : ''}
       </div>
+      <span class="sticky-grip" title="Drag to resize · double-click to reset"></span>
       ${isAdmin() ? `<div class="sticky-acts">
         <button class="btn btn-sm" data-sdone="${esc(n.id)}">✓ Completed</button>
         <button class="btn btn-sm" data-sedit="${esc(n.id)}">Edit</button>
@@ -1407,7 +1485,61 @@ function layoutSticky(layer){
   }
 }
 
+/* A note's size is the villager's own choice, so it is kept per browser next to
+   its position rather than in the shared sheet — two people can read the same
+   note at the size that suits each of them. */
+const SK_SIZE = 'mal_sticky_size';
+function stickySizes(){ try { return JSON.parse(local.get(SK_SIZE) || '{}') || {}; } catch(e){ return {}; } }
+function stickySizeSet(id, w, hgt){
+  const all = stickySizes();
+  all[id] = { w: Math.round(w), h: Math.round(hgt) };
+  try { local.set(SK_SIZE, JSON.stringify(all)); } catch(e){}
+}
+function stickySizeClear(id){
+  const all = stickySizes();
+  if(id) delete all[id]; else Object.keys(all).forEach(k => delete all[k]);
+  try { local.set(SK_SIZE, JSON.stringify(all)); } catch(e){}
+}
+
 function wireSticky(layer){
+  /* the corner grip: drag to resize, double-click to go back to the natural size */
+  layer.querySelectorAll('.sticky-grip').forEach(grip => {
+    const card = grip.closest('.sticky');
+    const id = card.dataset.sid;
+    grip.addEventListener('dblclick', () => {
+      card.style.width = ''; card.style.height = '';
+      stickySizeClear(id);
+      toast('Note back to its normal size');
+    });
+    grip.addEventListener('pointerdown', ev => {
+      ev.preventDefault(); ev.stopPropagation();
+      const r = card.getBoundingClientRect();
+      const sx = ev.clientX, sy = ev.clientY;
+      card.classList.add('resizing');
+      try { grip.setPointerCapture(ev.pointerId); } catch(e){}
+      const move = e => {
+        const w = Math.max(180, Math.min(window.innerWidth - 16, r.width + (e.clientX - sx)));
+        const hh = Math.max(110, Math.min(window.innerHeight - 16, r.height + (e.clientY - sy)));
+        card.style.width = w + 'px';
+        card.style.height = hh + 'px';
+        card.style.left = Math.max(8, Math.min(r.left, window.innerWidth - w - 8)) + 'px';
+        card.style.top = Math.max(8, Math.min(r.top, window.innerHeight - hh - 8)) + 'px';
+      };
+      const up = () => {
+        card.classList.remove('resizing');
+        grip.removeEventListener('pointermove', move);
+        grip.removeEventListener('pointerup', up);
+        grip.removeEventListener('pointercancel', up);
+        const b = card.getBoundingClientRect();
+        stickySizeSet(id, b.width, b.height);
+        stickyPosSet(id, Math.round(b.left), Math.round(b.top));
+      };
+      grip.addEventListener('pointermove', move);
+      grip.addEventListener('pointerup', up);
+      grip.addEventListener('pointercancel', up);
+    });
+  });
+
   /* The whole note is the handle — a villager should be able to push the paper
      from wherever their thumb lands, not just a thin strip. Buttons, links and
      text selection are left alone. */
@@ -1479,15 +1611,17 @@ async function stickyComplete(id){
 
 function stickyForm(id){
   if(!isAdmin()){ toast('Only the admin can add notes', 'bad'); return; }
-  const n = stickyAll().find(x => x.id === id) || { kind: 'target', title: '', text: '', due: '' };
+  const n = stickyAll().find(x => x.id === id) || { kind: 'target', title: '', text: '', due: '', col: 'amber' };
+  const COLS = [['amber','Amber'],['lime','Green'],['sky','Blue'],['rose','Pink'],['lilac','Lilac'],['stone','Grey']];
+  const cur = n.col || 'amber';
   openModal(`
     <header><div><h3>${id ? 'Edit note' : 'New sticky note'}</h3>
       <div class="sub">Floats above the dashboard for every committee member</div></div>
       <div class="sp"></div><button class="btn btn-sm" onclick="closeModal()">Close</button></header>
     <div class="body">
-      <div class="colrow" style="margin-bottom:14px">
-        <label class="colrow" style="gap:7px"><input type="radio" name="sk" value="target" ${n.kind !== 'reminder' ? 'checked' : ''}> Target</label>
-        <label class="colrow" style="gap:7px"><input type="radio" name="sk" value="reminder" ${n.kind === 'reminder' ? 'checked' : ''}> Reminder</label>
+      <div class="skkind">
+        <label><input type="radio" name="sk" value="target" ${n.kind !== 'reminder' ? 'checked' : ''}> <span>Target</span></label>
+        <label><input type="radio" name="sk" value="reminder" ${n.kind === 'reminder' ? 'checked' : ''}> <span>Reminder</span></label>
       </div>
       <label class="lbl" for="skTitle">Heading</label>
       <input class="input" id="skTitle" value="${esc(n.title || '')}" placeholder="e.g. Collect Raja chanda">
@@ -1495,7 +1629,18 @@ function stickyForm(id){
       <textarea class="input" id="skText" rows="3" placeholder="What has to be done">${esc(n.text || '')}</textarea>
       <label class="lbl" for="skDue" style="margin-top:12px;display:block">By when (optional)</label>
       <input class="input" type="date" id="skDue" value="${esc(toISO(n.due) || '')}">
-      <div class="fieldnote">Overdue notes turn red. Completed ones move to the history list.</div>
+
+      <label class="lbl" style="margin-top:14px;display:block">Paper colour</label>
+      <div class="swatches">${COLS.map(([v, t]) => `
+        <input type="radio" name="skcol" id="skc_${v}" value="${v}" ${cur === v ? 'checked' : ''}>
+        <label for="skc_${v}" class="c-${v}" title="${t}"></label>`).join('')}</div>
+
+      <label class="colrow" style="gap:9px;margin-top:14px;align-items:flex-start">
+        <input type="checkbox" id="skLock" ${n.lock ? 'checked' : ''} style="margin-top:3px">
+        <span><b style="font-weight:600">Always keep this note pinned</b>
+        <span class="muted small" style="display:block">It stays on the dashboard for everyone and cannot be hidden — for a standing target the committee must not lose sight of.</span></span>
+      </label>
+      <div class="fieldnote">Overdue notes turn red whatever their colour. Completed ones move to the history list.</div>
     </div>
     <footer>
       <button class="btn" onclick="closeModal()">Cancel</button>
@@ -1515,10 +1660,13 @@ function stickyForm(id){
       title: title,
       text: document.getElementById('skText').value.trim(),
       due: document.getElementById('skDue').value || '',
+      col: (document.querySelector('input[name="skcol"]:checked') || {}).value || 'amber',
+      lock: !!document.getElementById('skLock').checked,
       done: false,
       by: String(USER && (USER.name || USER.username) || ''),
       at: new Date().toISOString().slice(0, 16).replace('T', ' ')
     };
+    if(rec.lock) rec.pin = true;
     const i = list.findIndex(x => x.id === rec.id);
     if(i >= 0) list[i] = Object.assign({}, list[i], rec); else list.push(rec);
     try {
@@ -1556,10 +1704,11 @@ function stickyDrawer(){
 
   const card = n => {
     const late = n.due && toISO(n.due) < today();
-    return `<div class="skcard ${n.kind === 'reminder' ? 'rem' : 'tgt'}${late ? ' late' : ''}">
+    return `<div class="skcard ${n.kind === 'reminder' ? 'rem' : 'tgt'} c-${esc(n.col || 'amber')}${late ? ' late' : ''}">
       <div class="skcard-top">
         <span class="tag">${n.kind === 'reminder' ? 'REMINDER' : 'TARGET'}</span>
         ${n.due ? `<span class="due">${esc(stickyDueLabel(n))}</span>` : ''}
+        ${n.lock ? '<span class="lockpin">📌 KEPT</span>' : ''}
       </div>
       <b>${esc(n.title || 'Note')}</b>
       ${n.text ? `<p>${esc(n.text)}</p>` : ''}
@@ -1616,6 +1765,7 @@ function stickyDrawer(){
     if(!isAdmin()){ toast('Only the village admin can pin a note', 'bad'); return; }
     const list = stickyAll(); const n = list.find(x => x.id === b.dataset.dpin);
     if(!n) return;
+    if(n.lock && n.pin){ toast('This note is set to always stay pinned — edit it to change that', 'bad'); return; }
     n.pin = !n.pin;
     try { await stickySave(list); refresh(); toast(n.pin ? 'Pinned to the dashboard' : 'Unpinned', 'good'); }
     catch(e){ toast(e.message || String(e), 'bad'); }
@@ -3176,10 +3326,15 @@ function exportCsv(key, rows){
    ========================================================================= */
 function openModal(html){
   $('#modalRoot').innerHTML = '<div class="overlay" id="overlay"><div class="modal" role="dialog" aria-modal="true">' + html + '</div></div>';
+  document.body.classList.add('modalOpen');
   $('#overlay').onclick = e => { if(e.target.id === 'overlay') closeModal(); };
   document.addEventListener('keydown', escClose);
 }
-function closeModal(){ $('#modalRoot').innerHTML = ''; document.removeEventListener('keydown', escClose); }
+function closeModal(){
+  $('#modalRoot').innerHTML = '';
+  document.body.classList.remove('modalOpen');
+  document.removeEventListener('keydown', escClose);
+}
 function escClose(e){ if(e.key === 'Escape') closeModal(); }
 
 /* =========================================================================
