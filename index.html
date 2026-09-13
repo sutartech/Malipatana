@@ -46,9 +46,10 @@ button,input,select,textarea{font:inherit;color:inherit}
   border-radius:var(--r);background:var(--surface);min-height:42px}
 .input:focus{border-color:var(--indigo-2);outline:none;box-shadow:0 0 0 3px var(--indigo-soft)}
 textarea.input{min-height:76px;resize:vertical}
-label.lbl{display:block;font-size:12.5px;font-weight:700;color:var(--muted);margin-bottom:5px}
+label.lbl{display:block;font-size:12.5px;font-weight:700;color:var(--label);margin-bottom:5px}
 .muted{color:var(--muted)}
 .small{font-size:12.5px}
+.small,.muted.small{color:var(--label)}
 
 /* ---------- login ---------- */
 #login{position:relative;min-height:100dvh;display:grid;place-items:center;padding:18px;
@@ -82,7 +83,7 @@ label.lbl{display:block;font-size:12.5px;font-weight:700;color:var(--muted);marg
   display:flex;flex-direction:column;justify-content:center}
 .formside .kicker{font-size:11.5px;letter-spacing:.18em;font-weight:700;color:var(--brick)}
 .formside h3{font-family:var(--display);font-size:clamp(30px,3.2vw,40px);margin:8px 0 6px;font-weight:700;line-height:1.05}
-.formside .lead{color:var(--muted);font-size:14px;margin:0 0 18px;line-height:1.6}
+.formside .lead{color:var(--label);font-size:14px;margin:0 0 18px;line-height:1.6}
 .formbox{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:20px;
   box-shadow:0 10px 28px #1b3a4a12}
 .field{margin-bottom:13px}
@@ -93,7 +94,7 @@ label.lbl{display:block;font-size:12.5px;font-weight:700;color:var(--muted);marg
 .pwtoggle{position:absolute;right:6px;top:6px;bottom:6px;border:0;border-radius:9px;padding:0 13px;
   background:var(--surface-2);color:var(--indigo-2);font-weight:700;font-size:13px;cursor:pointer}
 .pwtoggle:hover{background:var(--indigo-soft)}
-.remember{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--muted);margin:2px 0 14px}
+.remember{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--label);margin:2px 0 14px}
 .remember input{width:17px;height:17px;accent-color:var(--brick)}
 .signin{width:100%;border:0;border-radius:13px;padding:13px;min-height:50px;cursor:pointer;color:#fff;
   font-weight:700;font-size:15.5px;background:linear-gradient(100deg,#9d2f1b,#c1521e 52%,#dd9a2c);
@@ -102,16 +103,16 @@ label.lbl{display:block;font-size:12.5px;font-weight:700;color:var(--muted);marg
 .signin:disabled{opacity:.6;cursor:not-allowed;filter:none}
 .msg{margin-top:12px;font-size:13.5px;font-weight:600;min-height:20px;text-align:center}
 .msg.err{color:var(--brick)}
-.msg.info{color:var(--muted);font-weight:500}
+.msg.info{color:var(--label);font-weight:500}
 .vrow{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:18px}
 .vchip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 13px;
-  font-size:12px;font-weight:700;color:var(--muted)}
+  font-size:12px;font-weight:700;color:var(--label)}
 .vchip.ok{border-color:#bfe0cb;background:var(--green-soft);color:var(--green)}
 .vchip.bad{border-color:#e8c8c0;background:var(--brick-soft);color:var(--brick)}
 .repair{display:block;margin:10px auto 0;border:1px solid var(--line);background:var(--surface);
   border-radius:12px;padding:9px 15px;font-size:12.5px;font-weight:600;color:var(--indigo-2);cursor:pointer}
 .repair:hover{background:var(--indigo-soft)}
-.helpline{margin-top:14px;font-size:12.5px;color:var(--muted);line-height:1.6;text-align:center}
+.helpline{margin-top:14px;font-size:12.5px;color:var(--label);line-height:1.6;text-align:center}
 
 @media(max-width:920px){
   #login{padding:0}
@@ -151,7 +152,7 @@ label.lbl{display:block;font-size:12.5px;font-weight:700;color:var(--muted);marg
 main.main{flex:1;min-width:0;padding:20px 22px 60px;max-width:1240px}
 .pagehead{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:16px}
 .pagehead h2{font-family:var(--display);font-size:26px;margin:0;font-weight:600;line-height:1.15}
-.pagehead .sub{font-size:13px;color:var(--muted);margin-top:2px}
+.pagehead .sub{font-size:13px;color:var(--label);margin-top:2px}
 .pagehead .sp{flex:1}
 .hero{position:relative;border-radius:var(--r-lg);overflow:hidden;min-height:170px;display:flex;align-items:flex-end;
   padding:20px 22px;color:#fff;margin-bottom:16px;background:var(--indigo)}
@@ -176,13 +177,13 @@ main.main{flex:1;min-width:0;padding:20px 22px 60px;max-width:1240px}
 .ledger{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden}
 .ledger-top{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-end;justify-content:space-between;
   padding:20px 22px;background:linear-gradient(180deg,#fbfcfa,#fff);border-bottom:1px solid var(--line-soft)}
-.ledger-top .cap{font-size:12.5px;font-weight:700;color:var(--muted);margin-bottom:4px}
+.ledger-top .cap{font-size:12.5px;font-weight:700;color:var(--label);margin-bottom:4px}
 .ledger-top .big{font-family:var(--display);font-size:clamp(32px,5.2vw,46px);font-weight:700;line-height:1;color:var(--indigo)}
 .ledger-rows{padding:6px 22px 18px}
 .lrow{display:flex;align-items:baseline;gap:12px;padding:9px 0;border-bottom:1px dotted var(--line)}
 .lrow:last-child{border-bottom:0}
 .lrow .nm{flex:1;font-size:14px}
-.lrow .nm em{font-style:normal;color:var(--muted);font-size:12.5px;display:block}
+.lrow .nm em{font-style:normal;color:var(--label);font-size:12.5px;display:block}
 .lrow .amt{font-weight:700;font-size:15px}
 .lrow.in .amt{color:var(--green)}
 .lrow.out .amt{color:var(--brick)}
@@ -197,7 +198,7 @@ main.main{flex:1;min-width:0;padding:20px 22px 60px;max-width:1240px}
   border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;margin-top:16px}
 .strip div{padding:14px 16px;border-right:1px solid var(--line-soft)}
 .strip div:last-child{border-right:0}
-.strip .k{font-size:12px;color:var(--muted);font-weight:600}
+.strip .k{font-size:12px;color:var(--label);font-weight:600}
 .strip .v{font-size:22px;font-weight:700;margin-top:3px;font-family:var(--display)}
 @media(max-width:900px){.strip{grid-template-columns:repeat(3,1fr)}.strip div:nth-child(3n){border-right:0}
   .strip div{border-bottom:1px solid var(--line-soft)}}
@@ -217,7 +218,7 @@ main.main{flex:1;min-width:0;padding:20px 22px 60px;max-width:1240px}
 .alert b{display:block;font-size:13.5px}
 .alert .go{margin-left:auto;font-size:12.5px;color:var(--indigo-2);background:none;border:0;cursor:pointer;font-weight:700;white-space:nowrap}
 .d-red{background:var(--brick)}.d-yellow{background:var(--turmeric)}.d-green{background:var(--green)}.d-blue{background:var(--indigo-2)}
-.legend{display:flex;gap:16px;font-size:12.5px;color:var(--muted);padding:0 18px 14px}
+.legend{display:flex;gap:16px;font-size:12.5px;color:var(--label);padding:0 18px 14px}
 .legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px}
 
 /* ---------- toolbar + table ---------- */
@@ -226,7 +227,7 @@ main.main{flex:1;min-width:0;padding:20px 22px 60px;max-width:1240px}
 .tablewrap{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);overflow:auto;max-height:calc(100dvh - 250px)}
 table.grid{border-collapse:collapse;width:100%;font-size:13px}
 table.grid th{position:sticky;top:0;background:var(--surface-2);text-align:left;font-weight:700;font-size:12px;
-  color:var(--muted);padding:11px 13px;border-bottom:1px solid var(--line);white-space:nowrap;cursor:pointer;z-index:2}
+  color:var(--label);padding:11px 13px;border-bottom:1px solid var(--line);white-space:nowrap;cursor:pointer;z-index:2}
 table.grid th:hover{color:var(--ink)}
 table.grid th .ar{opacity:.5;font-size:10px}
 table.grid td{padding:11px 13px;border-bottom:1px solid var(--line-soft);white-space:nowrap;vertical-align:top}
@@ -234,14 +235,14 @@ table.grid tbody tr:hover{background:var(--surface-2)}
 table.grid tbody tr:last-child td{border-bottom:0}
 td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 td.acts{text-align:right;white-space:nowrap}
-.pill{display:inline-block;padding:2px 9px;border-radius:99px;font-size:11.5px;font-weight:700;background:var(--line-soft);color:var(--muted)}
+.pill{display:inline-block;padding:2px 9px;border-radius:99px;font-size:11.5px;font-weight:700;background:var(--line-soft);color:var(--label)}
 .pill.ok{background:var(--green-soft);color:var(--green)}
 .pill.warn{background:var(--turmeric-soft);color:var(--turmeric)}
 .pill.bad{background:var(--brick-soft);color:var(--brick)}
 .idcell{font-weight:700}
 .empty{padding:46px 20px;text-align:center;color:var(--muted)}
 .empty b{display:block;font-family:var(--display);font-size:19px;color:var(--ink);margin-bottom:6px;font-weight:600}
-.tfoot{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;padding:11px 16px;color:var(--muted);font-size:13px}
+.tfoot{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;padding:11px 16px;color:var(--label);font-size:13px}
 .tfoot b{color:var(--ink)}
 
 @media(max-width:760px){
@@ -251,7 +252,7 @@ td.acts{text-align:right;white-space:nowrap}
   table.grid tr{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);margin-bottom:10px;padding:6px 4px}
   table.grid td{border-bottom:1px solid var(--line-soft);white-space:normal;display:flex;gap:12px;padding:9px 13px}
   table.grid td:last-child{border-bottom:0}
-  table.grid td::before{content:attr(data-label);flex:none;width:42%;color:var(--muted);font-size:12.5px;font-weight:600}
+  table.grid td::before{content:attr(data-label);flex:none;width:42%;color:var(--label);font-size:12.5px;font-weight:600}
   td.num{text-align:left}
   td.acts{justify-content:flex-end}
   td.acts::before{content:''}
@@ -263,13 +264,13 @@ td.acts{text-align:right;white-space:nowrap}
 .modal{background:var(--surface);border-radius:var(--r-lg);width:min(760px,100%);max-height:92dvh;display:flex;flex-direction:column;box-shadow:0 24px 60px #0f1c2340}
 .modal header{display:flex;align-items:center;gap:12px;padding:16px 20px;border-bottom:1px solid var(--line-soft)}
 .modal header h3{font-family:var(--display);font-size:20px;margin:0;font-weight:600}
-.modal header .sub{font-size:12.5px;color:var(--muted)}
+.modal header .sub{font-size:12.5px;color:var(--label)}
 .modal header .sp{flex:1}
 .modal .body{padding:18px 20px;overflow:auto}
 .modal footer{display:flex;gap:10px;justify-content:flex-end;padding:14px 20px;border-top:1px solid var(--line-soft);background:var(--surface-2);border-radius:0 0 var(--r-lg) var(--r-lg)}
 .formgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .formgrid .wide{grid-column:1/-1}
-.fieldnote{font-size:11.5px;color:var(--muted);margin-top:4px}
+.fieldnote{font-size:11.5px;color:var(--label);margin-top:4px}
 .input[readonly]{background:var(--surface-2);color:var(--muted)}
 .reqmark{color:var(--brick)}
 .errline{color:var(--brick);font-size:13px;font-weight:600;margin-bottom:10px}
@@ -301,7 +302,7 @@ td.acts{text-align:right;white-space:nowrap}
    V3 POLISH LAYER — appended overrides. Class names and JS untouched.
    ========================================================================= */
 :root{
-  --paper:#f3f1ec; --line:#e6e8e2; --line-soft:#f2f4ef; --muted:#7b8780;
+  --paper:#f3f1ec; --line:#e6e8e2; --line-soft:#f2f4ef; --muted:#7b8780; --label:#5c6b62;
   --indigo:#122b38; --r:12px; --r-lg:20px;
   --body:'Instrument Sans',system-ui,-apple-system,'Segoe UI','Noto Sans Oriya',sans-serif;
   --shadow-card:0 20px 40px -34px #17303f66;
@@ -434,11 +435,11 @@ table.grid tbody tr:hover{background:#fbfbf8}
 .cellav{width:40px;height:40px;border-radius:12px;overflow:hidden;display:grid;place-items:center;flex:none;
   border:1px solid var(--line);background:var(--surface-2);padding:0;cursor:pointer}
 .cellav img{width:100%;height:100%;object-fit:cover;display:block}
-.cellav.none{color:var(--muted);font-size:12.5px;font-weight:700;cursor:default;letter-spacing:.02em}
+.cellav.none{color:var(--label);font-size:12.5px;font-weight:700;cursor:default;letter-spacing:.02em}
 .cellav:hover{border-color:var(--indigo-2)}
 .photopick{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap}
 .photoav{width:118px;height:118px;flex:none;border-radius:18px;overflow:hidden;border:1px solid var(--line);
-  background:var(--surface-2);display:grid;place-items:center;color:var(--muted);font-size:12.5px}
+  background:var(--surface-2);display:grid;place-items:center;color:var(--label);font-size:12.5px}
 .photoav img{width:100%;height:100%;object-fit:cover;display:block}
 .photopick-side{flex:1;min-width:190px}
 .photopick-btns{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
@@ -470,11 +471,11 @@ table.grid tbody tr:hover{background:#fbfbf8}
   .brandside p{margin-bottom:12px}
 }
 /* ---------- photo fallbacks ---------- */
-.photonote{display:none;color:var(--muted);font-size:13px;line-height:1.6;max-width:46ch;margin:0 auto}
+.photonote{display:none;color:var(--label);font-size:13px;line-height:1.6;max-width:46ch;margin:0 auto}
 .photobox.photofail .photofull{display:none}
 .photobox.photofail .photonote{display:block}
 .photoav.photofail img,.cellav.photofail img{display:none}
-.photoav.photofail::after{content:'Not viewable';color:var(--muted);font-size:11.5px;text-align:center;padding:0 8px}
+.photoav.photofail::after{content:'Not viewable';color:var(--label);font-size:11.5px;text-align:center;padding:0 8px}
 .cellav.photofail::after{content:'⛶';color:var(--muted);font-size:14px}
 /* ---------- member detail ---------- */
 .mprofile{display:flex;gap:22px;flex-wrap:wrap;align-items:flex-start}
@@ -485,7 +486,7 @@ table.grid tbody tr:hover{background:#fbfbf8}
 .mfacts{flex:1;min-width:240px}
 .dlgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:2px 18px;margin:0}
 .dl{padding:8px 0;border-bottom:1px dotted var(--line);min-width:0}
-.dl dt{font-size:11.5px;color:var(--muted);font-weight:700;letter-spacing:.05em;text-transform:uppercase}
+.dl dt{font-size:11.5px;color:var(--label);font-weight:700;letter-spacing:.05em;text-transform:uppercase}
 .dl dd{margin:3px 0 0;font-size:14.5px;font-weight:600;overflow-wrap:anywhere}
 .mremark{margin-top:14px;padding:12px 14px;border-radius:12px;background:var(--surface-2);
   border:1px solid var(--line);font-size:13.5px;line-height:1.6}
@@ -587,6 +588,41 @@ tr.gonerow td{opacity:.62}
 tr.gonerow td:first-child,tr.gonerow td.acts{opacity:1}
 tr.gonerow .cellav{filter:grayscale(1)}
 .modal header h3 .pill{vertical-align:middle;font-size:11.5px;margin-left:6px}
+
+/* ---------- counted household figures ---------- */
+.counted{display:flex;align-items:baseline;gap:10px;padding:11px 14px;border:1px dashed var(--line);
+  border-radius:var(--r);background:var(--surface-2);min-height:46px}
+.counted b{font-family:var(--display);font-size:20px;line-height:1.5}
+.counted span{font-size:12.5px;color:var(--label)}
+
+/* ---------- dashboard emphasis ----------
+   A register is scanned, not read: the eye should land on the figure first,
+   then its label, then the supporting words. */
+.hero .txt .eyebrow,.hero .sub{letter-spacing:.02em}
+.hero h2{letter-spacing:-.01em}
+
+.strip .k{color:var(--label);font-weight:700;text-transform:uppercase;letter-spacing:.07em;font-size:11.5px}
+.strip .v{font-family:var(--display);font-weight:700;color:var(--ink);letter-spacing:-.01em}
+
+.ledger-top .cap{text-transform:uppercase;letter-spacing:.09em;font-weight:700;color:var(--label);font-size:11.5px}
+.ledger-top .big{font-family:var(--display);font-weight:700;letter-spacing:-.015em;color:var(--indigo)}
+
+.lrow{font-size:14px}
+.lrow .amt{font-weight:700;font-variant-numeric:tabular-nums}
+.lrow em{font-style:normal;color:var(--label);font-size:12.5px;display:block;margin-top:1px}
+.lrow.total{border-top:2px solid var(--ink);margin-top:6px;padding-top:14px}
+.lrow.total span{font-weight:700;font-size:15px}
+.lrow.total .amt{font-family:var(--display);font-size:21px}
+
+.panel-head h3{font-weight:600;letter-spacing:-.005em}
+.panel-head .small{color:var(--label)}
+
+.alert b{font-weight:700;display:block;margin-bottom:1px}
+.alert .muted{font-size:12.5px;line-height:1.5;color:var(--label)}
+
+/* money reads at a glance: in is green, out is brick, everywhere */
+.pos,.amt.pos{color:var(--green)}
+.neg,.amt.neg{color:var(--brick)}
 </style>
 </head>
 <body>
@@ -1084,10 +1120,10 @@ const MODULES = {
       { n:'House No', t:'text' },
       { n:'Address/Area', t:'datalist' },
       { n:'Mobile', t:'tel' },
-      { n:'Total Members', t:'number' },
-      { n:'Earning Members', t:'number' },
-      { n:'Children', t:'number' },
-      { n:'Elderly', t:'number' },
+      { n:'Total Members', t:'counted', hint:'Counted from the living members of this family' },
+      { n:'Earning Members', t:'counted' },
+      { n:'Children', t:'counted', hint:'Under 18' },
+      { n:'Elderly', t:'counted', hint:'60 and above' },
       { n:'Vulnerable Status', t:'select', opts:['Normal','Vulnerable','Highly Vulnerable'] },
       { n:'Family Status', t:'select', opts:['Active','Inactive','Shifted'] },
       { n:'Remarks', t:'textarea' },
@@ -1612,6 +1648,14 @@ function cellHtml(key, row, col){
     const nm = memberName(raw);
     return { cls: '', html: esc(raw) + (nm ? ' <span class="muted small">' + esc(nm) + '</span>' : '') };
   }
+  if(f.t === 'counted'){
+    const famId = String(row['Family ID'] || '').trim();
+    const n = familyCount(famId, col);
+    const typed = num(raw);
+    const stale = raw !== '' && raw != null && typed !== n;
+    return { cls: 'num', html: '<span class="tnum">' + n + '</span>' +
+      (stale ? ' <span class="muted small" title="The sheet says ' + typed + '">(' + typed + ')</span>' : '') };
+  }
   if(col === 'Life Status'){
     const v = String(raw || '').trim();
     if(!v || v.toLowerCase() === 'alive') return { cls: '', html: '' };
@@ -1717,7 +1761,7 @@ function renderModule(key){
           const gone = key === 'members' && isDeceased(r);
           return '<tr' + (quick ? ' data-row="' + id + '"' : '') + (gone ? ' class="gonerow"' : '') + '>' + cols.map(c => {
             const f = fieldDef(key, c);
-            if(quick && c !== m.idField && f.t !== 'photo'){
+            if(quick && c !== m.idField && f.t !== 'photo' && f.t !== 'counted'){
               const val = r[c] == null ? '' : String(r[c]);
               const type = f.t === 'money' || f.t === 'number' ? 'number' : f.t === 'date' ? 'date' : 'text';
               return `<td class="${['money','number'].includes(f.t) ? 'num' : ''}" data-label="${esc(c)}">
@@ -1731,7 +1775,6 @@ function renderModule(key){
             ${key === 'recurring' && canEdit() ? `<button class="btn btn-sm" data-pay="${id}">Mark paid</button> ` : ''}
             ${['families','members','events'].includes(key) ? `<button class="btn btn-sm" data-act="profile" data-id="${id}">View</button> ` : ''}
             ${key === 'users' && isAdmin() ? `<button class="btn btn-sm" data-act="access" data-id="${id}">Access</button> ` : ''}
-            ${key === 'members' && canEdit() && !isDeceased(r) ? `<button class="btn btn-sm" data-act="death" data-id="${id}">Died</button> ` : ''}
             ${canEdit() ? `<button class="btn btn-sm" data-act="edit" data-id="${id}">Edit</button>` : ''}
             ${canDelete() ? `<button class="btn btn-sm btn-danger" data-act="del" data-id="${id}">Delete</button>` : ''}
           </td></tr>`;
@@ -1872,7 +1915,7 @@ function openFormInner(key, id, prefill){
   }
   if(prefill) Object.keys(prefill).forEach(k => { rec[k] = prefill[k]; });
 
-  const body = allFields(key).filter(f => !f.hidden && !(f.t === 'photo' && !photosOn())).map(f => fieldHtml(key, f, rec[f.n], !!existing)).join('');
+  const body = allFields(key).filter(f => !f.hidden && !(f.t === 'photo' && !photosOn())).map(f => fieldHtml(key, f, rec[f.n], !!existing, rec)).join('');
   openModal(`
     <header>
       <div>
@@ -1900,7 +1943,7 @@ function openFormInner(key, id, prefill){
   if(first) first.focus();
 }
 
-function fieldHtml(key, f, value, editing){
+function fieldHtml(key, f, value, editing, rec){
   const id = 'f_' + f.n.replace(/[^a-z0-9]/gi, '_');
   if(editing && f.n === MODULES[key].idField && !f.auto){
     const ro = isAdmin() ? '' : 'readonly';
@@ -1924,6 +1967,14 @@ function fieldHtml(key, f, value, editing){
               : 'Suggested automatically — change it if your village uses a different code.'}</div></div>`;
   }
   switch(f.t){
+    case 'counted': {
+      const famId = String((rec || {})['Family ID'] || '').trim();
+      const n = famId ? familyCount(famId, f.n) : 0;
+      return `<div><label class="lbl">${esc(f.n)}</label>
+        <div class="counted"><b class="tnum">${n}</b><span>${famId ? 'counted from the member register' : 'counted once members are added'}</span></div>
+        <input type="hidden" id="${id}" value="${n}">
+        ${f.hint ? `<div class="fieldnote">${esc(f.hint)}</div>` : ''}</div>`;
+    }
     case 'photo': {
       const u = val.trim();
       return `<div class="wide"><label class="lbl">${esc(f.n)}</label>
@@ -2176,6 +2227,10 @@ async function saveRecord(key, rec, editing){
   const m = MODULES[key];
   const originalId = editing ? String(rec[m.idField] ?? '').trim() : '';
   const FIELDS = allFields(key);
+  if(key === 'families'){
+    const famId = String(rec['Family ID'] || '').trim();
+    Object.keys(COUNTED).forEach(c => { if(famId) rec[c] = String(familyCount(famId, c)); });
+  }
   const out = Object.assign({}, rec);
   const problems = [];
   FIELDS.forEach(f => {
@@ -2523,6 +2578,19 @@ function openAccess(username){
    only the living are counted. Nothing is ever deleted.
    ========================================================================= */
 const isDeceased = r => String(r['Life Status'] || '').trim().toLowerCase() === 'deceased';
+
+/* Household figures are counted from the living members, never typed.
+   COUNTED[col] = how to count it. */
+const COUNTED = {
+  'Total Members': list => list.length,
+  'Earning Members': list => list.filter(r => String(r['Earning Member'] || '').trim().toUpperCase() === 'YES').length,
+  'Children': list => list.filter(r => { const a = num(r['Age']); return a > 0 && a < 18; }).length,
+  'Elderly': list => list.filter(r => num(r['Age']) >= 60).length
+};
+function familyCount(famId, col){
+  const fn = COUNTED[col];
+  return fn ? fn(familyMembers(famId)) : 0;
+}
 const livingMembers = () => (DB.members || []).filter(r => !isDeceased(r));
 function familyMembers(famId, includeDeceased){
   const list = (DB.members || []).filter(r => String(r['Family ID'] || '').trim() === String(famId).trim());
