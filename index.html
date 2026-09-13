@@ -631,6 +631,11 @@ tr.gonerow .cellav{filter:grayscale(1)}
 .keyhint{font-size:11.5px;color:var(--label);margin-right:auto;align-self:center}
 .keyhint kbd{font:inherit;font-weight:700;background:var(--surface-2);border:1px solid var(--line);
   border-radius:5px;padding:1px 5px}
+
+/* ---------- bill entry inside a major expense ---------- */
+.evfoot{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:10px;font-size:13px;color:var(--label)}
+.evfoot b{font-family:var(--display);font-size:17px;color:var(--ink)}
+.evfoot .keyhint{margin-right:0;margin-left:auto}
 </style>
 </head>
 <body>
@@ -1032,10 +1037,38 @@ function resetIdle(){
 }
 
 /* ---------- data ---------- */
+/* Sheets the backend may not return yet (the bootstrap line has to be added by
+   hand in Apps Script). Without this, a record saved here would be wiped by the
+   next reload and appear to vanish. */
+const OPTIONAL_SHEETS = ['events', 'recurring'];
+function cacheKey(k){ return 'mal_local_' + k; }
+function stashLocal(k){
+  try { local.set(cacheKey(k), JSON.stringify(DB[k] || [])); } catch(e){}
+}
+function restoreLocal(k){
+  try { return JSON.parse(local.get(cacheKey(k)) || '[]') || []; } catch(e){ return []; }
+}
+
+let MISSING_WARNED = false;
 async function load(){
   const r = await api('bootstrap');
   if(!r || !r.ok) throw new Error((r && r.error) || 'Could not read the village sheet.');
+  const keptLocal = {};
+  OPTIONAL_SHEETS.forEach(k => {
+    if(!Array.isArray(r[k])) keptLocal[k] = (DB && DB[k] && DB[k].length) ? DB[k] : restoreLocal(k);
+  });
   DB = r;
+  const missing = [];
+  Object.keys(keptLocal).forEach(k => {
+    DB[k] = keptLocal[k];
+    missing.push(MODULES[k] ? MODULES[k].sheet : k);
+  });
+  OPTIONAL_SHEETS.forEach(k => { if(Array.isArray(DB[k])) stashLocal(k); });
+  if(missing.length && !MISSING_WARNED){
+    MISSING_WARNED = true;
+    setTimeout(() => toast('The sheet is not sending ' + missing.join(' and ') +
+      ' yet — ask the admin to add the bootstrap line, or those records will not reach other users', 'bad'), 1200);
+  }
   return DB;
 }
 async function refresh(silent){
@@ -2375,6 +2408,7 @@ function reopenBlank(key, prev){
 
 function upsertLocal(key, rec){
   const m = MODULES[key];
+  if(OPTIONAL_SHEETS.includes(key)) setTimeout(() => stashLocal(key), 0);
   if(key === 'settingsList'){ DB.settings = DB.settings || {}; DB.settings[rec['Setting']] = rec['Value']; return; }
   if(key === 'users'){ DB.users = DB.users || []; }
   const arr = key === 'users' ? DB.users : (DB[key] = DB[key] || []);
@@ -2383,6 +2417,7 @@ function upsertLocal(key, rec){
 }
 function removeLocal(key, id){
   const m = MODULES[key];
+  if(OPTIONAL_SHEETS.includes(key)) setTimeout(() => stashLocal(key), 0);
   if(key === 'settingsList'){ delete DB.settings[id]; return; }
   const arr = key === 'users' ? (DB.users || []) : (DB[key] || []);
   const i = arr.findIndex(r => String(r[m.idField]).trim() === String(id).trim());
@@ -3039,7 +3074,7 @@ function openEvent(id){
 
   const rowsTable = (title, list, cols) => !list.length ? '' :
     `<h4 class="msec">${esc(title)}</h4><div class="tablewrap" style="max-height:none"><table class="grid"><thead><tr>${
-      cols.map(c => `<th class="${c === 'Amount' ? 'num' : ''}">${esc(c)}</th>`).join('')}</tr></thead><tbody>${
+      cols.map(c => `<th class="${c === 'Amount' ? 'num' : ''}">${esc(c)}</th>`).join('')}</tr></thead><tbody${title === 'Expenditure' ? ' id="evLines"' : ''}>${
       list.map(r => '<tr>' + cols.map(c => `<td class="${c === 'Amount' ? 'num tnum' : ''}" data-label="${esc(c)}">${
         c === 'Amount' ? money(r[c]) : (c === 'Date' ? esc(fmtDate(r[c])) : esc(String(r[c] == null ? '' : r[c])))
       }</td>`).join('') + '</tr>').join('')}</tbody></table></div>`;
@@ -3066,10 +3101,19 @@ function openEvent(id){
       <h4 class="msec">Add a bill to this expense</h4>
       <div class="evadd">
         <input class="input" type="date" id="evDate" value="${today()}" aria-label="Date">
-        <input class="input" id="evDesc" placeholder="What was bought or paid for" aria-label="Description">
-        <input class="input" id="evTo" placeholder="Paid to" aria-label="Paid to">
+        <input class="input" id="evDesc" list="evItems" placeholder="What was bought or paid for" aria-label="Description">
+        <input class="input" id="evTo" list="evPayees" placeholder="Paid to" aria-label="Paid to">
         <input class="input tnum" id="evAmt" type="number" min="0" step="1" placeholder="Amount" aria-label="Amount">
         <button class="btn btn-primary" id="evSave">Add</button>
+      </div>
+      <datalist id="evItems">${['Electricity / lighting','Band party','Loudspeaker and mic','Pandal and stage',
+        'Decoration and flowers','Prasad and bhog','Priest dakshina','Sweets','Utensils hire','Transport',
+        'Cleaning','Volunteer refreshment','Generator','Printing and invitation']
+        .concat(distinct('expenditure', 'Description')).map(v => `<option value="${esc(v)}"></option>`).join('')}</datalist>
+      <datalist id="evPayees">${distinct('expenditure', 'Paid To').map(v => `<option value="${esc(v)}"></option>`).join('')}</datalist>
+      <div class="evfoot">
+        <span><b class="tnum" id="evRun">${money(t.spent)}</b> entered so far${budget ? ' of ' + money(budget) : ''}</span>
+        <span class="keyhint"><kbd>Enter</kbd> moves along · <kbd>Enter</kbd> on the amount adds the line</span>
       </div>
       <div class="fieldnote">Each line is saved in the Expenditure sheet tagged to ${esc(e['Event Name'] || id)}, so it also appears on the main Expenditure page.</div>` : ''}
       ${rowsTable('Donations and income', raised, ['Income ID','Date','Income Type','Source','Amount'])}
@@ -3086,6 +3130,15 @@ function openEvent(id){
   if(full) full.onclick = () => { closeModal(); openForm('expenditure', null, {
     'Event ID': id, 'Category': 'Festival', 'Subcategory': String(e['Type'] || ''), 'Approved By': String(e['In Charge'] || '')
   }); };
+
+  const strip = ['evDate','evDesc','evTo','evAmt'].map(i => document.getElementById(i)).filter(Boolean);
+  strip.forEach((el, i) => el.addEventListener('keydown', ev => {
+    if(ev.key !== 'Enter') return;
+    ev.preventDefault();
+    const next = strip[i + 1];
+    if(next){ next.focus(); if(next.select) next.select(); }
+    else { const b = document.getElementById('evSave'); if(b) b.click(); }
+  }));
 
   const addBtn = document.getElementById('evSave');
   if(addBtn) addBtn.onclick = async () => {
@@ -3108,8 +3161,24 @@ function openEvent(id){
       const r = await api('save', { sheet: MODULES.expenditure.sheet, record: JSON.stringify(rec) });
       if(!r || !r.ok) throw new Error((r && r.error) || 'the sheet refused the row');
       upsertLocal('expenditure', rec);
-      toast(money(amt) + ' added to ' + (e['Event Name'] || id), 'good');
-      closeModal(); openEvent(id);
+      toast(money(amt) + ' added · ' + desc, 'good');
+      const run = document.getElementById('evRun');
+      if(run) run.textContent = money(eventTotals(id).spent);
+      const list = document.getElementById('evLines');
+      if(list){
+        const tr = document.createElement('tr');
+        tr.className = 'rowsaved';
+        tr.innerHTML = ['Expense ID','Date','Category','Description','Paid To','Amount']
+          .map(c => '<td' + (c === 'Amount' ? ' class="num tnum"' : '') + ' data-label="' + c + '">' +
+            esc(c === 'Amount' ? money(rec[c]) : c === 'Date' ? fmtDate(rec[c]) : (rec[c] || '')) + '</td>').join('');
+        list.appendChild(tr);
+        setTimeout(() => tr.classList.remove('rowsaved'), 1200);
+      }
+      ['evDesc','evTo','evAmt'].forEach(i => { const el2 = document.getElementById(i); if(el2) el2.value = ''; });
+      const d = document.getElementById('evDesc');
+      if(d) d.focus();
+      addBtn.disabled = false; addBtn.textContent = 'Add';
+      return;
     } catch(err){
       toast(err.message || String(err), 'bad');
       addBtn.disabled = false; addBtn.textContent = 'Add';
