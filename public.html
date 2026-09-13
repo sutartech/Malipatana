@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Malipatana village fund — public account</title>
+<link rel="icon" href="favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaina+2:wght@500;600;700&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#f3f1ec; --surface:#fff; --surface-2:#fbfbf8; --line:#e6e8e2; --line-soft:#f2f4ef;
+  --ink:#16211c; --label:#5c6b62; --muted:#7b8780;
+  --brick:#a8341e; --indigo:#122b38; --indigo-2:#22485c; --green:#2c6b41; --turmeric:#b87b05;
+  --display:'Baloo Bhaina 2',system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);
+  font-family:'Instrument Sans',system-ui,-apple-system,'Noto Sans Oriya',sans-serif;line-height:1.6}
+a{color:var(--brick)}
+a:hover{color:#8a2916}
+.wrap{max-width:900px;margin:0 auto;padding:0 18px 70px}
+header.top{background:linear-gradient(158deg,#0c2c40,#17303f 40%,#7d2f1c 88%,#b8701f);color:#fff;
+  padding:34px 18px 30px;margin-bottom:22px}
+header.top .in{max-width:900px;margin:0 auto}
+header.top .eyebrow{font-size:11px;letter-spacing:.22em;font-weight:600;color:#f0c48b}
+header.top h1{font-family:var(--display);font-size:clamp(26px,4vw,38px);margin:10px 0 4px;
+  font-weight:700;line-height:1.5}
+header.top .sub{color:#dbe8ee;font-size:14.5px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:20px;
+  box-shadow:0 20px 40px -34px #17303f66;margin-bottom:16px;overflow:hidden}
+.card h2{font-family:var(--display);font-size:19px;margin:0;font-weight:600;line-height:1.5;
+  padding:16px 22px;border-bottom:1px solid var(--line-soft)}
+.big{padding:24px 22px}
+.big .cap{font-size:11.5px;font-weight:700;color:var(--label);text-transform:uppercase;letter-spacing:.09em}
+.big .v{font-family:var(--display);font-size:clamp(34px,6vw,48px);font-weight:700;line-height:1.5;
+  color:var(--indigo);font-variant-numeric:tabular-nums}
+.rows{padding:4px 22px 18px}
+.row{display:flex;gap:14px;align-items:baseline;padding:11px 0;border-bottom:1px dotted var(--line)}
+.row:last-child{border-bottom:0}
+.row .n{flex:1;font-size:14.5px}
+.row .n em{font-style:normal;display:block;font-size:12.5px;color:var(--label);margin-top:1px}
+.row .a{font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.row.in .a{color:var(--green)}
+.row.out .a{color:var(--brick)}
+.row.total{border-top:2px solid var(--ink);margin-top:6px;padding-top:14px}
+.row.total .n{font-weight:700;font-size:15px}
+.row.total .a{font-family:var(--display);font-size:21px}
+.grid4{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1px;background:var(--line-soft)}
+.grid4 div{background:var(--surface);padding:16px 18px}
+.grid4 .k{font-size:11.5px;font-weight:700;color:var(--label);text-transform:uppercase;letter-spacing:.07em}
+.grid4 .v{font-family:var(--display);font-size:23px;font-weight:700;margin-top:3px;font-variant-numeric:tabular-nums}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--label);
+  padding:10px 22px;background:var(--surface-2);border-bottom:1px solid var(--line)}
+td{padding:10px 22px;border-bottom:1px solid var(--line-soft)}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+tr:last-child td{border-bottom:0}
+.note{font-size:13px;color:var(--label);padding:16px 22px;background:var(--surface-2);
+  border-top:1px solid var(--line-soft);line-height:1.65}
+.foot{text-align:center;color:var(--label);font-size:13px;margin-top:26px;line-height:1.7}
+.state{padding:40px 22px;text-align:center;color:var(--label)}
+.state b{display:block;font-family:var(--display);font-size:19px;color:var(--ink);margin-bottom:6px;
+  font-weight:600;line-height:1.5}
+@media print{
+  body{background:#fff}
+  header.top{background:none;color:#000;border-bottom:2px solid #000;padding:0 0 10px;margin-bottom:16px}
+  header.top .eyebrow,header.top .sub{color:#333}
+  .card{box-shadow:none;break-inside:avoid;border-radius:0}
+  .noprint{display:none}
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="in">
+    <div class="eyebrow" id="place">JAGATSINGHPUR · ODISHA</div>
+    <h1 id="title">ଆମ ଗାଁ ମାଳିପାଟଣା</h1>
+    <div class="sub">Village fund · public account · <span id="asof">loading…</span></div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div id="out"><div class="card"><div class="state"><b>Loading the village account…</b>This page reads the same sheet the committee uses.</div></div></div>
+
+  <div class="foot">
+    Published by the Malipatana village committee. Figures come straight from the fund register.<br>
+    <a href="index.html">Committee sign-in</a> · <a href="#" onclick="window.print();return false" class="noprint">Print this page</a>
+  </div>
+</div>
+
+<script>
+/* The same web app the dashboard uses, read-only. Replace if the URL changes. */
+var API_URL = 'https://script.google.com/macros/s/AKfycbzTy_-uSI9m_vVuv9G2Q8r0t0x2UWcSrkzrnQtDw9odZW_246TxnT7qj39IT1TQwt-O/exec';
+
+var num = function(v){ var n = Number(String(v == null ? 0 : v).replace(/[^0-9.-]/g, '')); return isNaN(n) ? 0 : n; };
+var money = function(v){ var n = Math.round(num(v)); return (n < 0 ? '−₹' : '₹') + Math.abs(n).toLocaleString('en-IN'); };
+var esc = function(x){ return String(x == null ? '' : x).replace(/[&<>"']/g, function(m){
+  return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'})[m]; }); };
+var fmtDate = function(v){
+  if(!v) return '';
+  var m = String(v).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return m ? m[3] + '/' + m[2] + '/' + m[1] : String(v);
+};
+
+function api(action){
+  return new Promise(function(resolve, reject){
+    var cb = 'mpcb' + Date.now();
+    var s = document.createElement('script');
+    var t = setTimeout(function(){ cleanup(); reject(new Error('timeout')); }, 25000);
+    function cleanup(){ clearTimeout(t); try { delete window[cb]; } catch(e){} s.remove(); }
+    window[cb] = function(d){ cleanup(); resolve(d); };
+    s.onerror = function(){ cleanup(); reject(new Error('unreachable')); };
+    s.src = API_URL + '?action=' + encodeURIComponent(action) + '&callback=' + cb;
+    document.body.appendChild(s);
+  });
+}
+
+function setting(db, name, fallback){
+  var v = db && db.settings ? db.settings[name] : undefined;
+  return (v === undefined || v === '') ? fallback : v;
+}
+
+function render(db){
+  var s = db.summary || {};
+  var opening = num(setting(db, 'Opening Fund', 0));
+  var available = num(s.availableFund);
+  var year = new Date().getFullYear();
+
+  document.getElementById('title').textContent = setting(db, 'Village Name', 'Malipatana');
+  document.getElementById('place').textContent = String(setting(db, 'Village Area', 'Jagatsinghpur, Odisha')).toUpperCase();
+  document.getElementById('asof').textContent = 'as on ' + fmtDate(new Date().toISOString().slice(0, 10));
+
+  var rows = [
+    ['in', 'Opening fund', 'Balance carried into the register', opening],
+    ['in', 'Contributions collected', (db.contributions || []).length + ' entries', num(s.contributions)],
+    ['in', 'Other income', 'Donations, grants, interest', num(s.income)],
+    ['out', 'Expenditure', (db.expenditure || []).length + ' entries', -num(s.expenditure)],
+    ['out', 'Emergency help paid', (s.emergencyCases || 0) + ' cases', -num(s.emergencyPaid)],
+    ['out', 'Regular support', 'Standing support per cycle', -num(s.regularSupport)]
+  ].filter(function(r){ return num(r[3]) !== 0; });
+
+  var events = (db.events || []).filter(function(e){
+    return String(e['Status'] || '').toLowerCase() === 'completed';
+  });
+  var spentOn = function(id){
+    return (db.expenditure || []).filter(function(x){
+      return String(x['Event ID'] || '').trim() === String(id).trim();
+    }).reduce(function(a, x){ return a + num(x['Amount']); }, 0);
+  };
+
+  var html = '';
+
+  html += '<div class="card"><div class="big">' +
+    '<div class="cap">Fund available today</div>' +
+    '<div class="v">' + money(available) + '</div>' +
+    '</div>' +
+    (rows.length ? '<div class="rows">' + rows.map(function(r){
+      return '<div class="row ' + r[0] + '"><div class="n">' + esc(r[1]) + '<em>' + esc(r[2]) + '</em></div>' +
+             '<div class="a">' + (r[3] < 0 ? '−' : '+') + ' ' + money(Math.abs(r[3])) + '</div></div>';
+    }).join('') +
+    '<div class="row total"><div class="n">Balance in hand</div><div class="a">' + money(available) + '</div></div></div>'
+    : '<div class="state">No money has been recorded in the register yet.</div>') +
+    '<div class="note">Every rupee shown here is entered by the village committee in the fund register. ' +
+    'If something looks wrong, tell any committee member.</div></div>';
+
+  html += '<div class="card"><h2>The village</h2><div class="grid4">' +
+    '<div><div class="k">Families</div><div class="v">' + (db.families || []).length + '</div></div>' +
+    '<div><div class="k">Members</div><div class="v">' + (db.members || []).filter(function(m){
+        return String(m['Life Status'] || '').toLowerCase() !== 'deceased'; }).length + '</div></div>' +
+    '<div><div class="k">Helped this year</div><div class="v">' + (db.emergency || []).filter(function(e){
+        return String(e['Date'] || '').indexOf(year) === 0; }).length + '</div></div>' +
+    '<div><div class="k">Support running</div><div class="v">' + (db.regularSupport || []).filter(function(r){
+        return String(r['Active'] || 'YES').toUpperCase() !== 'NO'; }).length + '</div></div>' +
+    '</div></div>';
+
+  if(events.length){
+    html += '<div class="card"><h2>Major expenses completed</h2><table>' +
+      '<thead><tr><th>Occasion</th><th>Year</th><th class="num">Budget</th><th class="num">Spent</th></tr></thead><tbody>' +
+      events.map(function(e){
+        return '<tr><td>' + esc(e['Event Name']) + '</td><td>' + esc(e['Year'] || '') + '</td>' +
+               '<td class="num">' + (num(e['Budget']) ? money(e['Budget']) : '—') + '</td>' +
+               '<td class="num">' + money(spentOn(e['Event ID'])) + '</td></tr>';
+      }).join('') + '</tbody></table></div>';
+  }
+
+  var recent = (db.expenditure || []).slice().sort(function(a, b){
+    return String(b['Date'] || '').localeCompare(String(a['Date'] || ''));
+  }).slice(0, 10);
+  if(recent.length){
+    html += '<div class="card"><h2>Recent spending</h2><table>' +
+      '<thead><tr><th>Date</th><th>What for</th><th class="num">Amount</th></tr></thead><tbody>' +
+      recent.map(function(r){
+        return '<tr><td>' + esc(fmtDate(r['Date'])) + '</td><td>' + esc(r['Description'] || r['Category'] || '') + '</td>' +
+               '<td class="num">' + money(r['Amount']) + '</td></tr>';
+      }).join('') + '</tbody></table>' +
+      '<div class="note">Names of people who received help are not shown here, to protect their privacy.</div></div>';
+  }
+
+  document.getElementById('out').innerHTML = html;
+}
+
+api('bootstrap').then(function(r){
+  if(!r || !r.ok) throw new Error('no data');
+  render(r);
+}).catch(function(){
+  document.getElementById('out').innerHTML =
+    '<div class="card"><div class="state"><b>The account could not be loaded</b>' +
+    'Please try again in a few minutes, or ask a committee member.</div></div>';
+});
+</script>
+</body>
+</html>

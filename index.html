@@ -636,6 +636,83 @@ tr.gonerow .cellav{filter:grayscale(1)}
 .evfoot{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:10px;font-size:13px;color:var(--label)}
 .evfoot b{font-family:var(--display);font-size:17px;color:var(--ink)}
 .evfoot .keyhint{margin-right:0;margin-left:auto}
+
+/* ---------- empty register: guided start ---------- */
+.panel.start{margin-bottom:16px;background:linear-gradient(150deg,#fffefb,#f4f6f2 60%,#f8f1ea)}
+.startgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:1px;background:var(--line-soft)}
+.startcard{background:var(--surface);padding:18px 18px 16px;display:flex;flex-direction:column;
+  align-items:flex-start;gap:6px}
+.startcard .num{width:26px;height:26px;border-radius:9px;display:grid;place-items:center;flex:none;
+  background:var(--brick);color:#fff;font-weight:700;font-size:13px;margin-bottom:4px}
+.startcard.done .num{background:var(--green)}
+.startcard b{font-family:var(--display);font-size:16px;font-weight:600;line-height:1.5}
+.startcard .d{font-size:12.5px;color:var(--label);line-height:1.5;flex:1}
+.startcard .btn{margin-top:8px}
+.startcard.done b,.startcard.done .d{opacity:.7}
+
+/* ---------- ledger: zeros collapse to one quiet line ---------- */
+.lrow.zero .nm{color:var(--label);font-size:13px}
+.lrow.zero .amt{color:var(--label);font-weight:600}
+.lrow.zero em{font-size:12px}
+
+/* ---------- hero as a band, so the figures start above the fold ---------- */
+.hero{min-height:0}
+.hero .txt{padding:16px 20px}
+.hero img{aspect-ratio:auto}
+@media(min-width:861px){.hero{height:150px;align-items:flex-end}}
+
+/* ---------- offline queue chip ---------- */
+.queuechip{display:inline-flex;align-items:center;gap:7px;background:#ffffff1f;border:1px solid #ffffff33;
+  color:#fff;border-radius:999px;padding:6px 13px;font:inherit;font-size:12.5px;font-weight:600;
+  cursor:pointer;white-space:nowrap;transition:background .18s ease}
+.queuechip:hover{background:#ffffff33}
+.qdot{width:8px;height:8px;border-radius:50%;background:var(--turmeric);flex:none;
+  animation:qpulse 1.6s ease-in-out infinite}
+@keyframes qpulse{0%,100%{opacity:1}50%{opacity:.35}}
+@media(max-width:600px){.queuechip{padding:6px 10px;font-size:11.5px}}
+
+/* ---------- global search ---------- */
+.searchchip{display:inline-flex;align-items:center;gap:8px;background:#ffffff16;border:1px solid #ffffff2b;
+  color:#dbe8ee;border-radius:999px;padding:7px 14px;font:inherit;font-size:13px;font-weight:600;
+  cursor:pointer;white-space:nowrap;transition:background .18s ease}
+.searchchip:hover{background:#ffffff2e;color:#fff}
+.searchchip span{font-size:15px}
+.searchchip kbd{font:inherit;font-size:11px;font-weight:700;background:#ffffff1f;border-radius:5px;padding:1px 6px}
+.gshit{display:grid;grid-template-columns:110px 1fr;gap:2px 14px;width:100%;text-align:left;background:none;
+  border:0;border-bottom:1px solid var(--line-soft);padding:11px 4px;cursor:pointer;font:inherit;
+  transition:background .14s ease}
+.gshit:hover{background:var(--surface-2)}
+.gshit .w{grid-row:span 2;font-size:11px;font-weight:700;color:var(--label);text-transform:uppercase;
+  letter-spacing:.06em;align-self:center}
+.gshit .t{font-weight:600;font-size:14.5px}
+.gshit .s{font-size:12.5px;color:var(--label)}
+@media(max-width:700px){
+  .searchchip kbd{display:none}
+  .gshit{grid-template-columns:1fr}
+  .gshit .w{grid-row:auto}
+}
+
+/* ---------- whatsapp receipt ---------- */
+.receipt{background:var(--surface-2);border:1px solid var(--line);border-radius:14px;padding:16px 18px;
+  font-size:14px;line-height:1.7;white-space:normal;margin-bottom:10px}
+
+/* ---------- plain-language context ---------- */
+.meaning{font-size:13px;color:var(--label);margin-top:8px;max-width:44ch;line-height:1.55}
+
+/* ---------- reading comfort ---------- */
+html.bigtext{font-size:118%}
+html.bigtext .btn,html.bigtext .input{min-height:52px}
+html.bigtext table.grid{font-size:15px}
+html.bigtext table.grid td{padding:12px 14px}
+html.bigtext .small,html.bigtext .fieldnote,html.bigtext .strip .k{font-size:13.5px}
+html.bigtext .nav{font-size:16px}
+html.odia .nav{font-family:var(--display);font-size:17px}
+.langbtn{background:#ffffff16;border:1px solid #ffffff2b;color:#dbe8ee;border-radius:11px;
+  padding:0 13px;height:40px;font:inherit;font-size:13.5px;font-weight:600;cursor:pointer;
+  font-family:var(--display);transition:background .18s ease;white-space:nowrap}
+.langbtn:hover{background:#ffffff2e;color:#fff}
+.langbtn[aria-pressed="true"],.iconbtn[aria-pressed="true"]{background:var(--turmeric);color:#2b1d00;border-color:transparent}
+@media(max-width:700px){.langbtn{padding:0 10px;font-size:12.5px}}
 </style>
 </head>
 <body>
@@ -710,6 +787,7 @@ tr.gonerow .cellav{filter:grayscale(1)}
       </div>
       <button class="repair" id="repairBtn">↻ Repair cache / session</button>
       <div class="helpline">Trouble signing in? Ask the village admin to check your row in the Users sheet.</div>
+        <div class="helpline"><a href="public.html">See the village account without signing in →</a></div>
     </div>
 
   </div>
@@ -941,6 +1019,233 @@ function openPhoto(url, caption){
   wirePhotoFallbacks(document.getElementById('modal') || document);
 }
 
+/* =========================================================================
+   READING COMFORT — committee members are often 60+, reading in daylight
+   ========================================================================= */
+function applyComfort(){
+  const big = local.get('mal_bigtext') === '1';
+  const odia = local.get('mal_odia') === '1';
+  document.documentElement.classList.toggle('bigtext', big);
+  document.documentElement.classList.toggle('odia', odia);
+  const b = document.getElementById('bigBtn');
+  if(b) b.setAttribute('aria-pressed', big ? 'true' : 'false');
+  const o = document.getElementById('odiaBtn');
+  if(o){ o.setAttribute('aria-pressed', odia ? 'true' : 'false'); o.textContent = odia ? 'English' : 'ଓଡ଼ିଆ'; }
+}
+function toggleBig(){ local.set('mal_bigtext', local.get('mal_bigtext') === '1' ? '0' : '1'); applyComfort(); }
+function toggleOdia(){ local.set('mal_odia', local.get('mal_odia') === '1' ? '0' : '1'); applyComfort(); buildNav(); }
+
+/* A figure nobody can act on is decoration. Say what it means. */
+function fundMeaning(available){
+  const cases = (DB.emergency || []).map(r => num(r['Amount Sanctioned'] || r['Amount'])).filter(n => n > 0);
+  const avg = cases.length ? cases.reduce((a, b) => a + b, 0) / cases.length : 0;
+  const monthlyOut = recurringMonthly();
+  const bits = [];
+  if(avg > 0) bits.push('about ' + Math.floor(available / avg) + ' emergency cases at the usual ' + money(avg));
+  if(monthlyOut > 0) bits.push(Math.floor(available / monthlyOut) + ' months of regular bills');
+  if(!bits.length) return '';
+  return 'Enough for ' + bits.join(', or ');
+}
+
+/* =========================================================================
+   WHATSAPP RECEIPT — how a village actually confirms a payment
+   ========================================================================= */
+function waNumber(raw){
+  const d = String(raw || '').replace(/\D/g, '');
+  if(d.length === 10) return '91' + d;
+  if(d.length === 12 && d.indexOf('91') === 0) return d;
+  return d.length > 10 ? d : '';
+}
+function receiptText(rec){
+  const village = setting('Village Name', 'Malipatana');
+  const who = rec['Contributor'] || familyName(rec['Family ID']) || rec['Family ID'] || '';
+  return [
+    village + ' ଗାଁ ପାଣ୍ଠି · Village Fund',
+    '',
+    'Received ' + money(rec['Amount']),
+    who ? 'From: ' + who : '',
+    rec['Month'] ? 'For: ' + rec['Month'] : '',
+    rec['Date'] ? 'Date: ' + fmtDate(rec['Date']) : '',
+    rec['Contribution ID'] ? 'Receipt no: ' + rec['Contribution ID'] : '',
+    '',
+    'Thank you. ଧନ୍ୟବାଦ।'
+  ].filter(Boolean).join('\n');
+}
+function sendReceipt(rec){
+  const fam = (DB.families || []).find(f => String(f['Family ID']).trim() === String(rec['Family ID'] || '').trim());
+  const phone = waNumber(rec['Mobile'] || (fam && fam['Mobile']) || '');
+  const text = encodeURIComponent(receiptText(rec));
+  window.open(phone ? 'https://wa.me/' + phone + '?text=' + text : 'https://wa.me/?text=' + text, '_blank', 'noopener');
+}
+function offerReceipt(rec){
+  const fam = (DB.families || []).find(f => String(f['Family ID']).trim() === String(rec['Family ID'] || '').trim());
+  const phone = waNumber(rec['Mobile'] || (fam && fam['Mobile']) || '');
+  openModal(`
+    <header><div><h3>Contribution recorded</h3>
+      <div class="sub">${esc(money(rec['Amount']))} · ${esc(rec['Contribution ID'] || '')}</div></div>
+      <div class="sp"></div><button class="btn btn-sm" onclick="closeModal()">Close</button></header>
+    <div class="body">
+      <div class="receipt">${esc(receiptText(rec)).split('\n').map(l => l || '&nbsp;').join('<br>')}</div>
+      <div class="fieldnote">${phone ? 'Sends to ' + esc(phone.slice(2)) + ' on WhatsApp.'
+        : 'No mobile number saved for this family — WhatsApp will ask you to pick the contact.'}</div>
+    </div>
+    <footer>
+      <button class="btn" onclick="closeModal()">Not now</button>
+      <button class="btn btn-primary" id="waGo">Send on WhatsApp</button>
+    </footer>`);
+  const b = document.getElementById('waGo');
+  if(b) b.onclick = () => { sendReceipt(rec); closeModal(); };
+}
+
+/* =========================================================================
+   GLOBAL SEARCH — one box for a name, a mobile number or any record ID
+   ========================================================================= */
+const SEARCH_IN = ['families','members','contributions','income','expenditure','events','recurring',
+                   'emergency','regularSupport','medical','education','insurance'];
+function globalSearch(q){
+  const needle = String(q || '').trim().toLowerCase();
+  if(needle.length < 2) return [];
+  const hits = [];
+  SEARCH_IN.forEach(key => {
+    const m = MODULES[key];
+    if(!m || !canSee(key)) return;
+    (DB[key] || []).forEach(r => {
+      const hay = Object.keys(r).map(k => String(r[k] ?? '')).join(' ').toLowerCase();
+      if(hay.indexOf(needle) < 0) return;
+      const id = String(r[m.idField] || '');
+      const title = String(r['Name'] || r['Family Head'] || r['Event Name'] || r['Expense Name'] ||
+                           r['Description'] || r['Contributor'] || r['Source'] || id);
+      const bits = [id];
+      if(r['Family ID']) bits.push(String(r['Family ID']));
+      if(r['Mobile']) bits.push(String(r['Mobile']));
+      if(r['Amount']) bits.push(money(r['Amount']));
+      if(r['Date']) bits.push(fmtDate(r['Date']));
+      hits.push({ key, id, title, sub: bits.filter(Boolean).join(' · '), where: m.title });
+    });
+  });
+  return hits.slice(0, 40);
+}
+
+function openSearch(){
+  openModal(`
+    <header>
+      <div style="flex:1">
+        <input class="input" id="gsq" placeholder="Search a name, mobile number or record ID…" autocomplete="off"
+               style="font-size:16px;min-height:48px">
+      </div>
+      <button class="btn btn-sm" onclick="closeModal()">Close</button>
+    </header>
+    <div class="body" id="gsout">
+      <div class="muted small">Type at least two letters. Everything in the register is searched at once.</div>
+    </div>`);
+  const box = document.getElementById('gsq');
+  const out = document.getElementById('gsout');
+  const run = () => {
+    const hits = globalSearch(box.value);
+    if(box.value.trim().length < 2){
+      out.innerHTML = '<div class="muted small">Type at least two letters. Everything in the register is searched at once.</div>';
+      return;
+    }
+    if(!hits.length){
+      out.innerHTML = '<div class="empty"><b>Nothing found</b>No record matches “' + esc(box.value.trim()) + '”.</div>';
+      return;
+    }
+    out.innerHTML = hits.map(hit => `
+      <button class="gshit" data-gs="${esc(hit.key)}" data-gsid="${esc(hit.id)}">
+        <span class="w">${esc(hit.where)}</span>
+        <span class="t">${esc(hit.title)}</span>
+        <span class="s">${esc(hit.sub)}</span>
+      </button>`).join('');
+    out.querySelectorAll('[data-gs]').forEach(b => {
+      b.onclick = () => {
+        const k = b.dataset.gs, id = b.dataset.gsid;
+        closeModal();
+        if(k === 'members') return openMember(id);
+        if(k === 'families') return openProfile(id);
+        if(k === 'events') return openEvent(id);
+        go(k);
+        setTimeout(() => { const v = VIEW[k] || (VIEW[k] = {}); v.q = id; renderModule(k); }, 60);
+      };
+    });
+  };
+  box.addEventListener('input', () => { clearTimeout(window.__gsT); window.__gsT = setTimeout(run, 120); });
+  setTimeout(() => box.focus(), 60);
+}
+document.addEventListener('keydown', e => {
+  if((e.ctrlKey || e.metaKey) && e.key === 'k' && USER){ e.preventDefault(); openSearch(); }
+});
+
+/* =========================================================================
+   OFFLINE QUEUE
+   -------------------------------------------------------------------------
+   The village network drops mid-entry. A save that cannot reach the sheet is
+   kept here, shown in the topbar, and sent the moment the signal returns —
+   so nothing a person typed is ever lost.
+   ========================================================================= */
+const QKEY = 'mal_queue';
+function queueRead(){ try { return JSON.parse(local.get(QKEY) || '[]') || []; } catch(e){ return []; } }
+function queueWrite(list){ try { local.set(QKEY, JSON.stringify(list)); } catch(e){} paintQueue(); }
+function queueAdd(action, params, label){
+  const list = queueRead();
+  list.push({ id: 'q' + Date.now() + Math.random().toString(36).slice(2, 6), action, params, label, at: Date.now() });
+  queueWrite(list);
+}
+function paintQueue(){
+  const n = queueRead().length;
+  let b = document.getElementById('queueChip');
+  if(!n){ if(b) b.remove(); return; }
+  if(!b){
+    b = document.createElement('button');
+    b.id = 'queueChip';
+    b.className = 'queuechip';
+    b.onclick = () => flushQueue(true);
+    const host = document.querySelector('.topbar .sp');
+    if(host && host.parentNode) host.parentNode.insertBefore(b, host.nextSibling);
+    else return;
+  }
+  b.innerHTML = '<span class="qdot"></span>' + n + ' waiting' + (navigator.onLine ? '' : ' · offline');
+  b.title = queueRead().map(q => q.label).join('\n');
+}
+let FLUSHING = false;
+async function flushQueue(manual){
+  if(FLUSHING) return;
+  const list = queueRead();
+  if(!list.length){ if(manual) toast('Nothing waiting to send', 'good'); return; }
+  if(!navigator.onLine){ if(manual) toast('Still offline — it will send by itself', 'bad'); return; }
+  FLUSHING = true;
+  let sent = 0, failed = [];
+  for(const item of list){
+    try {
+      const r = await api(item.action, item.params);
+      if(r && r.ok) sent++; else failed.push(item);
+    } catch(e){ failed.push(item); }
+  }
+  FLUSHING = false;
+  queueWrite(failed);
+  if(sent){ toast(sent + ' saved entr' + (sent === 1 ? 'y' : 'ies') + ' sent to the sheet', 'good'); await refresh(true); render(); }
+  else if(manual) toast('Could not reach the sheet yet', 'bad');
+}
+window.addEventListener('online', () => { paintQueue(); flushQueue(); });
+window.addEventListener('offline', paintQueue);
+setInterval(() => { if(queueRead().length) flushQueue(); }, 45000);
+
+/* Every write goes through here: straight to the sheet when online, into the
+   queue when not. Callers get {ok:true, queued:true} so the UI still advances. */
+async function saveThrough(action, params, label){
+  if(!navigator.onLine){ queueAdd(action, params, label); return { ok: true, queued: true }; }
+  try {
+    const r = await api(action, params);
+    if(r && r.ok) return r;
+    throw new Error((r && r.error) || 'The sheet refused the save.');
+  } catch(e){
+    if(/reach|time|network|Failed to fetch/i.test(e.message || '')){
+      queueAdd(action, params, label);
+      return { ok: true, queued: true };
+    }
+    throw e;
+  }
+}
+
 /* ---------- API (JSONP — avoids Apps Script CORS problems) ---------- */
 function api(action, params){
   params = params || {};
@@ -1049,6 +1354,10 @@ function restoreLocal(k){
   try { return JSON.parse(local.get(cacheKey(k)) || '[]') || []; } catch(e){ return []; }
 }
 
+const DBCACHE = 'mal_db_cache';
+function cacheDb(){ try { local.set(DBCACHE, JSON.stringify(DB)); } catch(e){} }
+function cachedDb(){ try { return JSON.parse(local.get(DBCACHE) || 'null'); } catch(e){ return null; } }
+
 let MISSING_WARNED = false;
 async function load(){
   const r = await api('bootstrap');
@@ -1069,6 +1378,7 @@ async function load(){
     setTimeout(() => toast('The sheet is not sending ' + missing.join(' and ') +
       ' yet — ask the admin to add the bootstrap line, or those records will not reach other users', 'bad'), 1200);
   }
+  cacheDb();
   return DB;
 }
 async function refresh(silent){
@@ -1082,6 +1392,32 @@ async function refresh(silent){
 }
 
 function enterApp(){
+  if(!DB){ const c = cachedDb(); if(c){ DB = c; } }
+  setTimeout(() => {
+    if(document.getElementById('gsBtn')) return;
+    const host = document.querySelector('.topbar .sp');
+    if(!host || !host.parentNode) return;
+    const b = document.createElement('button');
+    b.id = 'gsBtn';
+    b.className = 'searchchip';
+    b.innerHTML = '<span>⌕</span> Search <kbd>Ctrl K</kbd>';
+    b.onclick = openSearch;
+    host.parentNode.insertBefore(b, host.nextSibling);
+
+    const big = document.createElement('button');
+    big.id = 'bigBtn'; big.className = 'iconbtn'; big.title = 'Bigger text';
+    big.setAttribute('aria-label', 'Bigger text'); big.textContent = 'A';
+    big.style.fontWeight = '700'; big.onclick = toggleBig;
+    const od = document.createElement('button');
+    od.id = 'odiaBtn'; od.className = 'langbtn'; od.title = 'Odia labels';
+    od.setAttribute('aria-label', 'Switch language'); od.textContent = 'ଓଡ଼ିଆ';
+    od.onclick = toggleOdia;
+    host.parentNode.insertBefore(big, host.nextSibling);
+    host.parentNode.insertBefore(od, host.nextSibling);
+    applyComfort();
+  }, 200);
+  setTimeout(paintQueue, 300);
+  setTimeout(() => { if(queueRead().length) flushQueue(); }, 2500);
   local.set('mal_login_photo', String(setting('Login Photo', CONFIG.DEFAULT_PHOTO)));
   $('#login').classList.add('hide');
   $('#app').classList.remove('hide');
@@ -1113,6 +1449,12 @@ function buildNav(){
                  ['insurance', '⛨', 'Insurance', 'insurance']]]
   ];
   groups.forEach(g => { g[1] = g[1].filter(it => canSee(it[0])); });
+  if(local.get('mal_odia') === '1'){
+    groups.forEach(g => g[1].forEach(it => {
+      const m = MODULES[it[0]];
+      if(m && m.odia) it[2] = m.odia;
+    }));
+  }
   if(isAdmin()) groups.push(['ADMIN', [['users', '☺', 'Users', 'users'], ['photos', '❏', 'Photos', null],
                                        ['settingsList', '⚙', 'Settings', 'settingsList']]]);
   let html = '';
@@ -1443,7 +1785,10 @@ function renderDashboard(){
   ];
 
   const banner = photoOf('Dashboard Photo');
+  const entries = (DB.contributions || []).length + (DB.income || []).length + (DB.expenditure || []).length;
+  const fresh = entries === 0;
   const html = `
+  ${fresh ? startPanel() : ''}
   ${banner ? `<div class="hero">
       <img src="${esc(banner)}" alt="${esc(setting('Village Name','Malipatana'))}" onerror="this.remove()">
       <div class="veil"></div>
@@ -1467,6 +1812,7 @@ function renderDashboard(){
       <div>
         <div class="cap">Fund available today</div>
         <div class="big tnum">${money(available)}</div>
+        ${fundMeaning(available) ? `<div class="meaning">${esc(fundMeaning(available))}</div>` : ''}
       </div>
       <div style="min-width:230px;flex:1;max-width:360px">
         <div class="small muted">Emergency fund target ${money(target)}</div>
@@ -1475,11 +1821,18 @@ function renderDashboard(){
       </div>
     </div>
     <div class="ledger-rows">
-      ${ledger.map(([kind, name, note, amt]) => `
-        <div class="lrow ${kind}">
-          <div class="nm">${esc(name)}<em>${esc(note)}</em></div>
-          <div class="amt tnum">${amt < 0 ? '−' : '+'} ${money(Math.abs(amt))}</div>
-        </div>`).join('')}
+      ${(() => {
+        const live = ledger.filter(l => num(l[3]) !== 0);
+        const zeros = ledger.filter(l => num(l[3]) === 0);
+        return live.map(([kind, name, note, amt]) => `
+          <div class="lrow ${kind}">
+            <div class="nm">${esc(name)}<em>${esc(note)}</em></div>
+            <div class="amt tnum">${amt < 0 ? '−' : '+'} ${money(Math.abs(amt))}</div>
+          </div>`).join('') +
+          (zeros.length ? `<div class="lrow zero"><div class="nm">${
+            zeros.map(z => esc(z[1])).join(' · ')}<em>nothing recorded yet</em></div>
+            <div class="amt tnum">${money(0)}</div></div>` : '');
+      })()}
       <div class="lrow total">
         <div class="nm">Balance in hand</div>
         <div class="amt tnum">${money(available)}</div>
@@ -1532,6 +1885,40 @@ function renderDashboard(){
   $('#main').innerHTML = html;
   wireActions($('#main'));
   wirePhotoFallbacks($('#main'));
+}
+
+/* An empty register should read as "here is what to do first", not as a page
+   full of zeros. Shown only until the first entry exists. */
+function startPanel(){
+  const fams = (DB.families || []).length;
+  const mems = (DB.members || []).length;
+  const opening = num(setting('Opening Fund', 0));
+  const steps = [
+    { done: fams > 0, n: 'Add the families', d: fams ? fams + ' families in the register' : 'Every household in the village',
+      act: "openForm('families')", go: 'families', cta: fams ? 'Add another' : 'Add the first family' },
+    { done: mems > fams, n: 'Add the members', d: mems ? mems + ' people recorded' : 'Each person in those households',
+      act: "openForm('members')", go: 'members', cta: 'Add a member' },
+    { done: opening > 0, n: 'Set the opening fund', d: opening ? money(opening) + ' carried in' : 'What the fund already holds',
+      act: "go('settings')", go: 'settings', cta: 'Open settings' },
+    { done: (DB.contributions || []).length > 0, n: "Record this month's ଚାନ୍ଦା", d: 'Contributions from each family',
+      act: "openForm('contributions')", go: 'contributions', cta: 'Add a contribution' }
+  ];
+  const left = steps.filter(s => !s.done).length;
+  return `<div class="panel start">
+    <div class="panel-head">
+      <h3>Start the register</h3>
+      <span class="small">${left ? left + ' of ' + steps.length + ' steps left' : 'all set — add an entry to see the fund'}</span>
+    </div>
+    <div class="startgrid">
+      ${steps.map((s, i) => `
+        <div class="startcard${s.done ? ' done' : ''}">
+          <span class="num">${s.done ? '✓' : i + 1}</span>
+          <b>${s.n}</b>
+          <span class="d">${esc(s.d)}</span>
+          <button class="btn btn-sm ${s.done ? '' : 'btn-primary'}" onclick="${s.act}">${esc(s.cta)}</button>
+        </div>`).join('')}
+    </div>
+  </div>`;
 }
 
 function lastMonths(n){
@@ -1816,6 +2203,7 @@ function renderModule(key){
             ${key === 'recurring' && canEdit() ? `<button class="btn btn-sm" data-pay="${id}">Mark paid</button> ` : ''}
             ${['families','members','events'].includes(key) ? `<button class="btn btn-sm" data-act="profile" data-id="${id}">View</button> ` : ''}
             ${key === 'users' && isAdmin() ? `<button class="btn btn-sm" data-act="access" data-id="${id}">Access</button> ` : ''}
+            ${key === 'contributions' ? `<button class="btn btn-sm" data-act="receipt" data-id="${id}">Receipt</button> ` : ''}
             ${canEdit() ? `<button class="btn btn-sm" data-act="edit" data-id="${id}">Edit</button>` : ''}
             ${canDelete() ? `<button class="btn btn-sm btn-danger" data-act="del" data-id="${id}">Delete</button>` : ''}
           </td></tr>`;
@@ -1866,6 +2254,10 @@ function wireActions(root){
         case 'cols': return openColumns(k);
         case 'access': return openAccess(id);
         case 'death': return markDeceased(id);
+        case 'receipt': {
+          const rec = (DB.contributions || []).find(r => String(r['Contribution ID']).trim() === String(id).trim());
+          return rec ? offerReceipt(rec) : null;
+        }
         case 'rowsave': return saveRow(k, id, b);
         case 'quick': { const vq = VIEW[k] || (VIEW[k] = {}); vq.quick = !vq.quick; return renderModule(k); }
         case 'print': return isAdmin() ? openPrint(k, currentRows(k)) : window.print();
@@ -2366,6 +2758,8 @@ async function saveRecord(key, rec, editing, opts){
     return;
   }
   if(m.fields.some(f => f.n === 'Last Updated')) out['Last Updated'] = today();
+  out['Entered By'] = String(USER && (USER.name || USER.username) || '');
+  out['Entered At'] = new Date().toISOString().slice(0, 16).replace('T', ' ');
   if(m.fields.some(f => f.n === 'Created Date') && !out['Created Date']) out['Created Date'] = today();
 
   const again = !!(opts && opts.again);
@@ -2374,14 +2768,18 @@ async function saveRecord(key, rec, editing, opts){
   btn.disabled = true; btn.textContent = 'Saving…';
   try {
     if(idChanged) await renameId(key, originalId, newId);
-    const r = await api('save', { sheet: m.sheet, record: JSON.stringify(out) });
+    const r = await saveThrough('save', { sheet: m.sheet, record: JSON.stringify(out) },
+      m.title + ' · ' + (out[m.idField] || ''));
     if(!r || !r.ok) throw new Error((r && r.error) || 'The sheet refused the save.');
     upsertLocal(key, out);
     const pending = PENDING_PHOTO, removing = REMOVE_PHOTO;
     if(again) reopenBlank(key, out); else closeModal();
-    toast(idChanged ? ('ID changed to ' + newId) : (editing ? 'Changes saved' : 'Record added'), 'good');
+    toast(r.queued ? 'Saved on this phone — it will reach the sheet when the signal returns'
+      : (idChanged ? ('ID changed to ' + newId) : (editing ? 'Changes saved' : 'Record added')), r.queued ? '' : 'good');
     if(pending || removing) sendPhoto(key, out, pending, removing);
     if(key === 'families') await addHeadAsMember(out);
+    if(key === 'contributions' && !editing && !again && yes(setting('WhatsApp Receipts', 'Yes')))
+      setTimeout(() => offerReceipt(out), 400);
     render();
     await refresh(true);
     if(key === 'families'){
@@ -2902,13 +3300,16 @@ async function saveRow(key, id, btn){
   const out = Object.assign({}, row);
   tr.querySelectorAll('input[data-col]').forEach(inp => { out[inp.dataset.col] = inp.value.trim(); });
   if(m.fields.some(f => f.n === 'Last Updated')) out['Last Updated'] = today();
+  out['Entered By'] = String(USER && (USER.name || USER.username) || '');
+  out['Entered At'] = new Date().toISOString().slice(0, 16).replace('T', ' ');
 
   btn.disabled = true; btn.textContent = 'Saving…';
   try {
-    const r = await api('save', { sheet: m.sheet, record: JSON.stringify(out) });
+    const r = await saveThrough('save', { sheet: m.sheet, record: JSON.stringify(out) },
+      m.title + ' · ' + id);
     if(!r || !r.ok) throw new Error((r && r.error) || 'the sheet refused the change');
     upsertLocal(key, out);
-    btn.textContent = 'Saved';
+    btn.textContent = r.queued ? 'Queued' : 'Saved';
     tr.classList.add('rowsaved');
     setTimeout(() => { btn.disabled = false; btn.textContent = 'Save'; tr.classList.remove('rowsaved'); }, 1600);
   } catch(e){
@@ -3158,7 +3559,8 @@ function openEvent(id){
     };
     addBtn.disabled = true; addBtn.textContent = 'Saving…';
     try {
-      const r = await api('save', { sheet: MODULES.expenditure.sheet, record: JSON.stringify(rec) });
+      const r = await saveThrough('save', { sheet: MODULES.expenditure.sheet, record: JSON.stringify(rec) },
+        'Bill · ' + desc);
       if(!r || !r.ok) throw new Error((r && r.error) || 'the sheet refused the row');
       upsertLocal('expenditure', rec);
       toast(money(amt) + ' added · ' + desc, 'good');
