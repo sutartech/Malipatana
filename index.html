@@ -5,9 +5,10 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#17303f">
 <title>Malipatana Village Welfare</title>
-<link rel="icon" href="favicon.svg" type="image/svg+xml">
-<link rel="alternate icon" href="favicon-32.png" sizes="32x32">
-<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="theme-color" content="#122b38">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaina+2:wght@500;600;700&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -737,6 +738,61 @@ html.odia .nav{font-family:var(--display);font-size:17px}
 .switchrow em{font-style:normal;display:block;font-size:12.5px;color:var(--label);margin-top:2px;line-height:1.5}
 .switchrow.dim{opacity:.5}
 .detailcell{max-width:460px;font-size:12.5px;color:var(--label);white-space:normal;overflow-wrap:anywhere}
+
+/* ---------- links ---------- */
+a{color:var(--brick);text-decoration-color:#a8341e40;text-underline-offset:3px}
+a:hover{color:#8a2916;text-decoration-color:currentColor}
+a.btn{color:var(--ink);text-decoration:none;white-space:nowrap;display:inline-flex;
+  align-items:center;justify-content:center}
+a.btn:hover{color:var(--ink);text-decoration:none}
+a.btn.btn-primary,a.btn.btn-primary:hover{color:#fff}
+a.btn.btn-danger,a.btn.btn-danger:hover{color:#fff}
+.helpline a{font-weight:600}
+
+/* ---------- sticky notes ---------- */
+#stickyLayer{position:fixed;inset:0;pointer-events:none;z-index:60}
+.sticky{position:fixed;width:290px;max-width:calc(100vw - 24px);pointer-events:auto;
+  border-radius:14px;box-shadow:0 18px 44px -18px #17303f6b,0 2px 6px #17303f1f;
+  border:1px solid #e4dcc2;background:linear-gradient(170deg,#fffbe9,#fff6d8);
+  font-size:13.5px;overflow:hidden}
+.sticky.rem{border-color:#cfe0e7;background:linear-gradient(170deg,#f4fbff,#e9f3f8)}
+.sticky.late{border-color:#e8c8c0;background:linear-gradient(170deg,#fff5f2,#fbe9e4)}
+.sticky.dragging{box-shadow:0 26px 60px -18px #17303f8c;transform:scale(1.015)}
+.sticky-top{display:flex;align-items:center;gap:8px;padding:8px 10px 8px 12px;cursor:grab;
+  border-bottom:1px solid #00000010;touch-action:none}
+.sticky-top:active{cursor:grabbing}
+.sticky-top .tag{font-size:10px;font-weight:700;letter-spacing:.1em;color:#8a5c04;
+  background:#00000010;border-radius:6px;padding:2px 7px}
+.sticky.rem .sticky-top .tag{color:var(--indigo-2)}
+.sticky.late .sticky-top .tag{color:var(--brick)}
+.sticky-top .due{font-size:11.5px;font-weight:600;color:var(--label);margin-left:auto}
+.sticky.late .sticky-top .due{color:var(--brick)}
+.sticky-top .x{background:none;border:0;font-size:17px;line-height:1;color:var(--label);
+  cursor:pointer;padding:0 2px;margin-left:4px}
+.sticky-body{padding:11px 13px 12px}
+.sticky-body b{display:block;font-family:var(--display);font-size:16px;font-weight:600;line-height:1.5}
+.sticky-body p{margin:4px 0 0;font-size:13px;line-height:1.6;color:#4a4531;white-space:pre-wrap}
+.sticky-acts{display:flex;gap:6px;padding:0 11px 11px;flex-wrap:wrap}
+.sticky-acts .btn{padding:5px 10px;min-height:30px;font-size:12.5px;border-radius:8px}
+.searchchip.hasLate{background:var(--brick);border-color:transparent;color:#fff}
+.searchchip kbd{min-width:18px;text-align:center}
+.skrow{display:flex;gap:12px;align-items:flex-start;padding:11px 2px;border-bottom:1px solid var(--line-soft)}
+.skrow:last-child{border-bottom:0}
+.skrow>span:nth-child(2){flex:1;min-width:0}
+.skrow b{display:block;font-weight:600;font-size:14px}
+.skrow em{font-style:normal;display:block;font-size:12.5px;color:var(--label);margin-top:2px;line-height:1.5}
+.skrow.done b{opacity:.7}
+@media print{#stickyLayer{display:none}}
+
+/* ---------- surplus notes chip ---------- */
+.stickymore{position:fixed;right:24px;bottom:18px;pointer-events:auto;z-index:61;
+  background:var(--indigo);color:#fff;border:0;border-radius:999px;padding:10px 18px;
+  font:inherit;font-size:13px;font-weight:600;cursor:pointer;
+  box-shadow:0 14px 30px -12px #17303f8c;transition:transform .18s ease,filter .18s ease}
+.stickymore:hover{transform:translateY(-2px);filter:brightness(1.1)}
+@media(max-width:700px){.stickymore{right:12px;bottom:12px}}
+
+.stickymore{position:fixed;right:auto;bottom:auto;left:0;top:0}
 </style>
 </head>
 <body>
@@ -1041,6 +1097,447 @@ function openPhoto(url, caption){
     '<footer><a class="btn" href="' + esc(fullUrl(url)) + '" target="_blank" rel="noreferrer">Open in Drive</a>' +
     '<button class="btn btn-primary" onclick="closeModal()">Done</button></footer>');
   wirePhotoFallbacks(document.getElementById('modal') || document);
+}
+
+
+/* =========================================================================
+   STICKY NOTES — targets and reminders that float above the dashboard
+   -------------------------------------------------------------------------
+   Admin only. Notes live in the Settings sheet as one JSON row, so every
+   committee device sees the same ones. Position is remembered per device,
+   because a good spot on a phone is a bad spot on a desktop.
+   ========================================================================= */
+const STICKY_KEY = 'Sticky Notes';
+const STICKY_POS = 'mal_sticky_pos';
+
+function stickyAll(){
+  try { const l = JSON.parse(setting(STICKY_KEY, '[]')); return Array.isArray(l) ? l : []; }
+  catch(e){ return []; }
+}
+async function stickySave(list){
+  const rec = { Setting: STICKY_KEY, Value: JSON.stringify(list) };
+  const r = await saveThrough('save', { sheet: 'Settings', record: JSON.stringify(rec) }, 'Sticky notes');
+  if(!r || !r.ok) throw new Error((r && r.error) || 'could not save the note');
+  DB.settings = DB.settings || {};
+  DB.settings[STICKY_KEY] = rec.Value;
+}
+function stickyPos(){
+  try { return JSON.parse(local.get(STICKY_POS) || '{}') || {}; } catch(e){ return {}; }
+}
+/* A position saved on a wide window must still be on screen on a narrow one —
+   phones rotate, laptops get resized, and the same localStorage is reused. */
+function stickyClamp(p, w, hgt){
+  const cw = w || 290, ch = hgt || 150;
+  return {
+    x: Math.min(Math.max(8, Math.round(p.x)), Math.max(8, window.innerWidth - cw - 8)),
+    y: Math.min(Math.max(8, Math.round(p.y)), Math.max(8, window.innerHeight - ch - 8))
+  };
+}
+function stickyPosSet(id, x, y){
+  const p = stickyPos(); p[id] = {x: x, y: y};
+  try { local.set(STICKY_POS, JSON.stringify(p)); } catch(e){}
+}
+
+function stickyDueLabel(n){
+  if(!n.due) return '';
+  const d = toISO(n.due), t = today();
+  if(d < t) return 'Overdue · ' + fmtDate(d);
+  if(d === t) return 'Due today';
+  const days = Math.round((new Date(d) - new Date(t)) / 864e5);
+  return days <= 7 ? 'Due in ' + days + ' day' + (days === 1 ? '' : 's') : 'Due ' + fmtDate(d);
+}
+
+function stickyBadge(){
+  const b = document.getElementById('skBtn');
+  if(!b) return;
+  const open = stickyAll().filter(n => !n.done);
+  const late = open.filter(n => n.due && toISO(n.due) < today()).length;
+  b.innerHTML = '<span>✎</span> Notes' + (open.length ? ' <kbd>' + open.length + '</kbd>' : '');
+  b.classList.toggle('hasLate', late > 0);
+}
+
+function paintSticky(){
+  let layer = document.getElementById('stickyLayer');
+  if(!layer){
+    layer = document.createElement('div');
+    layer.id = 'stickyLayer';
+    document.body.appendChild(layer);
+  }
+  const open = stickyAll().filter(n => !n.done);
+  const pos = stickyPos();
+
+  /* Pass 1 — draw the cards. Un-placed ones are hidden until measured, so a
+     note is never briefly shown on top of another. */
+  layer.innerHTML = open.map(n => {
+    const raw = pos[n.id] || {};
+    const placed = raw.x != null && raw.y != null;
+    const p = placed ? stickyClamp(raw) : raw;
+    const label = stickyDueLabel(n);
+    const late = n.due && toISO(n.due) < today();
+    return `<div class="sticky ${n.kind === 'reminder' ? 'rem' : 'tgt'}${late ? ' late' : ''}"
+                 data-sid="${esc(n.id)}"
+                 ${placed ? '' : 'data-unplaced="1"'}
+                 style="${placed ? 'left:' + p.x + 'px;top:' + p.y + 'px' : 'left:0;top:0;visibility:hidden'}">
+      <div class="sticky-top" data-drag="${esc(n.id)}">
+        <span class="tag">${n.kind === 'reminder' ? 'REMINDER' : 'TARGET'}</span>
+        ${label ? `<span class="due">${esc(label)}</span>` : ''}
+        <button class="x" data-sclose="${esc(n.id)}" title="Hide until reload">×</button>
+      </div>
+      <div class="sticky-body">
+        <b>${esc(n.title || 'Note')}</b>
+        ${n.text ? `<p>${esc(n.text)}</p>` : ''}
+      </div>
+      <div class="sticky-acts">
+        <button class="btn btn-sm" data-sdone="${esc(n.id)}">✓ Completed</button>
+        <button class="btn btn-sm" data-sedit="${esc(n.id)}">Edit</button>
+        <button class="btn btn-sm btn-danger" data-sdel="${esc(n.id)}">Delete</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  layoutSticky(layer);
+  wireSticky(layer);
+}
+
+/* Pass 2 — measure what was actually rendered, then place notes only where
+   there is genuinely room.
+   The board has a fixed capacity: columns that fit between the sidebar and the
+   right edge, times the notes that fit down each column. Anything beyond that
+   is NOT free-floated — it is left to the Notes panel behind a "+N more" chip,
+   because clamping surplus notes to the same strip is what made them bury
+   each other. */
+function layoutSticky(layer){
+  /* A saved spot is kept while it still fits this window. If the window has
+     changed so much that the card no longer fits, the saved spot is dropped and
+     the note rejoins the flow column — squeezing it against the edge only made
+     it land on top of another note. */
+  const pos0 = stickyPos();
+  layer.querySelectorAll('.sticky:not([data-unplaced])').forEach(card => {
+    const r = card.getBoundingClientRect();
+    const saved = pos0[card.dataset.sid] || {x: r.left, y: r.top};
+    const fits = saved.x >= 0 && saved.y >= 0 &&
+                 saved.x + r.width <= window.innerWidth &&
+                 saved.y + r.height <= window.innerHeight;
+    if(!fits){
+      const p = stickyPos();
+      delete p[card.dataset.sid];
+      try { local.set(STICKY_POS, JSON.stringify(p)); } catch(e){}
+      card.setAttribute('data-unplaced', '1');
+      card.style.visibility = 'hidden';
+    }
+  });
+
+  const cards = [...layer.querySelectorAll('.sticky[data-unplaced]')];
+  const chip = document.getElementById('stickyMore');
+  if(chip) chip.remove();
+  if(!cards.length) return;
+
+  const gap = 14;
+  const w = Math.round(cards[0].getBoundingClientRect().width) || 290;
+  const narrow = window.innerWidth < 700;
+  const side = document.querySelector('.sidebar');
+  const leftBound = narrow || !side || getComputedStyle(side).display === 'none'
+    ? 8
+    : Math.round(side.getBoundingClientRect().right) + 12;
+
+  const topStart = 118;
+  const bottomLimit = window.innerHeight - 16;
+  /* room kept free at the foot of a column for the "+N more" chip */
+  const chipRoom = 52;
+  const maxCols = Math.max(1, Math.floor((window.innerWidth - leftBound - 24 + gap) / (w + gap)));
+
+  /* The flow must also avoid the notes the user has dragged somewhere — they
+     occupy real space on the board, so a flow slot that intersects one is not
+     a free slot. */
+  const blockers = [...layer.querySelectorAll('.sticky:not([data-unplaced])')]
+    .map(c => c.getBoundingClientRect());
+  const colX = c => Math.max(leftBound, window.innerWidth - w - 24 - c * (w + gap));
+  const hits = (x, y, hgt) => blockers.find(b =>
+    x < b.right && x + w > b.left && y < b.bottom && y + hgt > b.top);
+
+  let col = 0, y = topStart;
+  const hidden = [];
+
+  cards.forEach(card => {
+    const hgt = Math.ceil(card.getBoundingClientRect().height) || 150;
+    let placedHere = false;
+
+    while(col < maxCols){
+      const limit = bottomLimit - (cards.length > 1 ? chipRoom : 0);
+      if(y + hgt > limit){
+        if(y === topStart) break;          // taller than the column: try the next one
+        col++; y = topStart; continue;
+      }
+      const x = colX(col);
+      const clash = hits(x, y, hgt);
+      if(clash){ y = Math.ceil(clash.bottom) + gap; continue; }
+      card.style.left = x + 'px';
+      card.style.top = y + 'px';
+      card.style.visibility = 'visible';
+      y += hgt + gap;
+      placedHere = true;
+      break;
+    }
+
+    if(!placedHere){
+      if(col < maxCols){ col++; y = topStart; }
+      hidden.push(card);
+      card.remove();
+    }
+  });
+
+  if(hidden.length){
+    const b = document.createElement('button');
+    b.id = 'stickyMore';
+    b.className = 'stickymore';
+    b.textContent = '+' + hidden.length + ' more note' + (hidden.length === 1 ? '' : 's');
+    b.onclick = stickyPanel;
+    layer.appendChild(b);
+
+    /* Give the chip a real slot instead of floating it over the board: below
+       the last card if there is room, otherwise above the column, never on top
+       of anything. */
+    const cr = b.getBoundingClientRect();
+    const cw = Math.round(cr.width), chp = Math.ceil(cr.height);
+
+    /* test against every card actually on the board now — dragged and flowed */
+    const taken = [...layer.querySelectorAll('.sticky')].map(c => c.getBoundingClientRect());
+    const free = (x, yy) => !taken.some(t =>
+      x < t.right && x + cw > t.left && yy < t.bottom && yy + chp > t.top);
+
+    const right = window.innerWidth - 24 - cw;
+    const spots = [];
+    for(let c = 0; c < maxCols; c++){
+      const colRight = colX(c) + w - cw;
+      spots.push([colRight, window.innerHeight - chp - 12]);   // foot of each column
+      spots.push([colRight, topStart - chp - 12]);             // just above it
+    }
+    spots.push([right, window.innerHeight - chp - 12]);
+    spots.push([leftBound, window.innerHeight - chp - 12]);
+
+    const spot = spots.find(s => s[1] >= 8 && free(s[0], s[1])) ||
+                 [leftBound, window.innerHeight - chp - 12];
+    b.style.left = Math.max(8, Math.min(spot[0], window.innerWidth - cw - 8)) + 'px';
+    b.style.top = Math.max(8, spot[1]) + 'px';
+  }
+}
+
+function wireSticky(layer){
+  layer.querySelectorAll('[data-drag]').forEach(handle => {
+    handle.addEventListener('pointerdown', ev => {
+      const card = handle.closest('.sticky');
+      const id = handle.dataset.drag;
+      const r = card.getBoundingClientRect();
+      const dx = ev.clientX - r.left, dy = ev.clientY - r.top;
+      card.classList.add('dragging');
+      handle.setPointerCapture(ev.pointerId);
+      const move = e => {
+        const x = Math.max(4, Math.min(window.innerWidth - r.width - 4, e.clientX - dx));
+        const y = Math.max(4, Math.min(window.innerHeight - r.height - 4, e.clientY - dy));
+        card.style.left = x + 'px'; card.style.top = y + 'px';
+      };
+      const up = e => {
+        card.classList.remove('dragging');
+        handle.removeEventListener('pointermove', move);
+        handle.removeEventListener('pointerup', up);
+        stickyPosSet(id, parseInt(card.style.left, 10), parseInt(card.style.top, 10));
+      };
+      handle.addEventListener('pointermove', move);
+      handle.addEventListener('pointerup', up);
+    });
+  });
+
+  layer.querySelectorAll('[data-sclose]').forEach(b => {
+    b.onclick = () => b.closest('.sticky').remove();
+  });
+  layer.querySelectorAll('[data-sdone]').forEach(b => {
+    b.onclick = () => stickyComplete(b.dataset.sdone);
+  });
+  layer.querySelectorAll('[data-sedit]').forEach(b => {
+    b.onclick = () => stickyForm(b.dataset.sedit);
+  });
+  layer.querySelectorAll('[data-sdel]').forEach(b => {
+    b.onclick = async () => {
+      if(!confirm('Delete this note?')) return;
+      try { await stickySave(stickyAll().filter(n => n.id !== b.dataset.sdel)); paintSticky(); toast('Note deleted', 'good'); }
+      catch(e){ toast(e.message || String(e), 'bad'); }
+    };
+  });
+}
+
+async function stickyComplete(id){
+  const list = stickyAll();
+  const n = list.find(x => x.id === id);
+  if(!n) return;
+  n.done = true;
+  n.doneAt = new Date().toISOString().slice(0, 16).replace('T', ' ');
+  n.doneBy = String(USER && (USER.name || USER.username) || '');
+  try { await stickySave(list); paintSticky(); toast('“' + (n.title || 'Note') + '” marked completed', 'good'); }
+  catch(e){ toast(e.message || String(e), 'bad'); }
+}
+
+function stickyForm(id){
+  if(!isAdmin()){ toast('Only the admin can add notes', 'bad'); return; }
+  const n = stickyAll().find(x => x.id === id) || { kind: 'target', title: '', text: '', due: '' };
+  openModal(`
+    <header><div><h3>${id ? 'Edit note' : 'New sticky note'}</h3>
+      <div class="sub">Floats above the dashboard for every committee member</div></div>
+      <div class="sp"></div><button class="btn btn-sm" onclick="closeModal()">Close</button></header>
+    <div class="body">
+      <div class="colrow" style="margin-bottom:14px">
+        <label class="colrow" style="gap:7px"><input type="radio" name="sk" value="target" ${n.kind !== 'reminder' ? 'checked' : ''}> Target</label>
+        <label class="colrow" style="gap:7px"><input type="radio" name="sk" value="reminder" ${n.kind === 'reminder' ? 'checked' : ''}> Reminder</label>
+      </div>
+      <label class="lbl" for="skTitle">Heading</label>
+      <input class="input" id="skTitle" value="${esc(n.title || '')}" placeholder="e.g. Collect Raja chanda">
+      <label class="lbl" for="skText" style="margin-top:12px;display:block">Details</label>
+      <textarea class="input" id="skText" rows="3" placeholder="What has to be done">${esc(n.text || '')}</textarea>
+      <label class="lbl" for="skDue" style="margin-top:12px;display:block">By when (optional)</label>
+      <input class="input" type="date" id="skDue" value="${esc(toISO(n.due) || '')}">
+      <div class="fieldnote">Overdue notes turn red. Completed ones move to the history list.</div>
+    </div>
+    <footer>
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" id="skSave">${id ? 'Save' : 'Add note'}</button>
+    </footer>`);
+
+  setTimeout(() => { const t = document.getElementById('skTitle'); if(t){ t.focus(); t.select(); } }, 50);
+  document.getElementById('skSave').onclick = async () => {
+    const btn = document.getElementById('skSave');
+    const title = document.getElementById('skTitle').value.trim();
+    if(!title){ toast('Write a heading', 'bad'); return; }
+    btn.disabled = true; btn.textContent = 'Saving…';
+    const list = stickyAll();
+    const rec = {
+      id: id || 's' + Date.now().toString(36),
+      kind: (document.querySelector('input[name="sk"]:checked') || {}).value || 'target',
+      title: title,
+      text: document.getElementById('skText').value.trim(),
+      due: document.getElementById('skDue').value || '',
+      done: false,
+      by: String(USER && (USER.name || USER.username) || ''),
+      at: new Date().toISOString().slice(0, 16).replace('T', ' ')
+    };
+    const i = list.findIndex(x => x.id === rec.id);
+    if(i >= 0) list[i] = Object.assign({}, list[i], rec); else list.push(rec);
+    try { await stickySave(list); closeModal(); paintSticky(); toast('Note saved', 'good'); }
+    catch(e){ toast(e.message || String(e), 'bad'); btn.disabled = false; btn.textContent = id ? 'Save' : 'Add note'; }
+  };
+}
+
+function stickyPanel(){
+  const all = stickyAll();
+  const open = all.filter(n => !n.done), done = all.filter(n => n.done);
+  openModal(`
+    <header><div><h3>Notes, targets and reminders</h3>
+      <div class="sub">${open.length} on the board · ${done.length} completed</div></div>
+      <div class="sp"></div>
+      <button class="btn btn-sm" id="skReset" title="Move every note back to the right edge">Tidy the board</button>
+      ${isAdmin() ? '<button class="btn btn-sm btn-primary" id="skNew">+ Add note</button>' : ''}
+      <button class="btn btn-sm" onclick="closeModal()">Close</button></header>
+    <div class="body">
+      <h4 class="msec">On the board</h4>
+      ${open.length ? open.map(n => `<div class="skrow">
+        <span class="pill ${n.kind === 'reminder' ? '' : 'warn'}">${n.kind === 'reminder' ? 'Reminder' : 'Target'}</span>
+        <span><b>${esc(n.title)}</b>${n.text ? '<em>' + esc(n.text) + '</em>' : ''}</span>
+        <span class="muted small">${esc(stickyDueLabel(n))}</span>
+        ${isAdmin() ? `<button class="btn btn-sm" data-pdone="${esc(n.id)}">✓ Done</button>` : ''}
+      </div>`).join('') : '<div class="muted small">Nothing on the board.</div>'}
+
+      <h4 class="msec">Completed history</h4>
+      ${done.length ? done.slice().reverse().map(n => `<div class="skrow done">
+        <span class="pill ok">✓</span>
+        <span><b>${esc(n.title)}</b><em>${esc(n.doneAt || '')}${n.doneBy ? ' · ' + esc(n.doneBy) : ''}</em></span>
+        ${isAdmin() ? `<button class="btn btn-sm" data-pback="${esc(n.id)}">Put back</button>` : ''}
+      </div>`).join('') : '<div class="muted small">Nothing completed yet.</div>'}
+    </div>`);
+
+  const root = document.getElementById('modalRoot');
+  const nb = root.querySelector('#skNew');
+  if(nb) nb.onclick = () => { closeModal(); stickyForm(); };
+  const rb = root.querySelector('#skReset');
+  if(rb) rb.onclick = () => {
+    try { local.set(STICKY_POS, '{}'); } catch(e){}
+    paintSticky();
+    closeModal();
+    toast('Notes moved back to the right edge', 'good');
+  };
+  root.querySelectorAll('[data-pdone]').forEach(b => {
+    b.onclick = async () => { await stickyComplete(b.dataset.pdone); closeModal(); stickyPanel(); };
+  });
+  root.querySelectorAll('[data-pback]').forEach(b => {
+    b.onclick = async () => {
+      const list = stickyAll();
+      const n = list.find(x => x.id === b.dataset.pback);
+      if(n){ n.done = false; try { await stickySave(list); paintSticky(); closeModal(); stickyPanel(); } catch(e){ toast(e.message, 'bad'); } }
+    };
+  });
+}
+
+/* =========================================================================
+   GUIDANCE — a family needing advice, and the villager assigned to give it
+   -------------------------------------------------------------------------
+   Money is never decided here. The committee decides that later; this page
+   only records who needs help, who is helping, and how far it has got.
+   ========================================================================= */
+const GUIDE_STAGES = ['Open','Advising','Sent to committee','Helped','Closed'];
+
+function guidanceRows(){
+  return (DB.families || []).filter(f => {
+    const need = String(f['Needs Guidance'] || '').trim();
+    return need && need.toLowerCase() !== 'no';
+  });
+}
+
+function renderGuidance(){
+  if(!canSee('families')){ $('#main').innerHTML = '<div class="empty"><b>Not available to your account</b></div>'; return; }
+  const rows = guidanceRows();
+  const byStage = s => rows.filter(r => String(r['Guidance Status'] || 'Open').trim() === s).length;
+  const unassigned = rows.filter(r => !String(r['Guide Member ID'] || '').trim());
+
+  $('#main').innerHTML = `
+    <div class="pagehead">
+      <div><h2>Guidance <span class="muted" style="font-size:16px">ପରାମର୍ଶ</span></h2>
+      <div class="sub">Families needing advice on education, work or health — and the villager helping them</div></div>
+      <div class="sp"></div>
+      ${canEdit() ? '<button class="btn btn-sm" data-act="needhelp">Mark a family as needing help</button>' : ''}
+    </div>
+
+    ${rows.length ? `<div class="strip">
+      <div><div class="k">Needing help</div><div class="v tnum">${rows.length}</div></div>
+      ${GUIDE_STAGES.map(s => `<div><div class="k">${esc(s)}</div><div class="v tnum">${byStage(s)}</div></div>`).join('')}
+    </div>` : ''}
+
+    ${unassigned.length ? `<div class="notice" style="margin-top:16px">
+      <b>${unassigned.length} famil${unassigned.length === 1 ? 'y has' : 'ies have'} nobody assigned</b>
+      Open the family and choose a villager in <b>Guide Member ID</b> — someone with the right
+      knowledge, such as a teacher for school matters.</div>` : ''}
+
+    ${rows.length ? `<div class="tablewrap" style="margin-top:16px"><table class="grid">
+      <thead><tr><th>Family</th><th>Needs help with</th><th>Assigned to</th><th>Stage</th><th>What is needed</th><th></th></tr></thead>
+      <tbody>${rows.map(f => {
+        const id = String(f['Family ID'] || '');
+        const guide = String(f['Guide Member ID'] || '').trim();
+        const stage = String(f['Guidance Status'] || 'Open').trim();
+        const tone = /helped|closed/i.test(stage) ? 'ok' : /committee/i.test(stage) ? 'warn' : '';
+        return `<tr>
+          <td data-label="Family"><button class="linkish" data-act="profile" data-id="${esc(id)}">${
+            esc(f['Family Head'] || id)}</button><span class="muted small"> ${esc(id)}</span></td>
+          <td data-label="Needs help with"><span class="pill warn">${esc(f['Needs Guidance'])}</span></td>
+          <td data-label="Assigned to">${guide
+            ? '<button class="linkish" data-act="profile2" data-id="' + esc(guide) + '">' + esc(memberName(guide) || guide) + '</button>'
+            : '<span class="muted small">nobody yet</span>'}</td>
+          <td data-label="Stage"><span class="pill ${tone}">${esc(stage)}</span></td>
+          <td data-label="What is needed" class="detailcell">${esc(f['Guidance Note'] || '')}</td>
+          <td class="acts">${canEdit() ? `<button class="btn btn-sm" data-act="edit2" data-id="${esc(id)}">Edit</button>` : ''}</td>
+        </tr>`;
+      }).join('')}</tbody></table></div>`
+    : `<div class="empty"><b>No family is marked as needing help</b>
+       Open a family, set <b>Needs Guidance</b> to what they need — child education, higher studies,
+       a job, health — and assign a villager to advise them.
+       ${canEdit() ? '<div style="margin-top:14px"><button class="btn btn-sm btn-primary" data-act="needhelp">Mark a family</button></div>' : ''}</div>`}`;
+
+  wireActions($('#main'));
 }
 
 /* =========================================================================
@@ -1348,6 +1845,11 @@ async function flushQueue(manual){
   if(sent){ toast(sent + ' saved entr' + (sent === 1 ? 'y' : 'ies') + ' sent to the sheet', 'good'); await refresh(true); render(); }
   else if(manual) toast('Could not reach the sheet yet', 'bad');
 }
+let stickyRT;
+window.addEventListener('resize', () => {
+  clearTimeout(stickyRT);
+  stickyRT = setTimeout(() => { try { paintSticky(); } catch(e){} }, 200);
+});
 window.addEventListener('online', () => { paintQueue(); flushQueue(); });
 window.addEventListener('offline', paintQueue);
 setInterval(() => { if(queueRead().length) flushQueue(); }, 45000);
@@ -1538,7 +2040,14 @@ function enterApp(){
     od.onclick = toggleOdia;
     host.parentNode.insertBefore(big, host.nextSibling);
     host.parentNode.insertBefore(od, host.nextSibling);
+
+    const nb = document.createElement('button');
+    nb.id = 'skBtn'; nb.className = 'searchchip'; nb.title = 'Notes, targets and reminders';
+    nb.onclick = stickyPanel;
+    host.parentNode.insertBefore(nb, host.nextSibling);
     applyComfort();
+    paintSticky();
+    stickyBadge();
   }, 200);
   setTimeout(paintQueue, 300);
   setTimeout(() => { if(queueRead().length) flushQueue(); }, 2500);
@@ -1564,7 +2073,7 @@ function enterApp(){
 function buildNav(){
   const groups = [
     ['', [['dashboard', '▦', 'Dashboard', null]]],
-    ['PEOPLE', [['families', '⌂', 'Families', 'families'], ['members', '☗', 'Members', 'members']]],
+    ['PEOPLE', [['families', '⌂', 'Families', 'families'], ['members', '☗', 'Members', 'members'], ['guidance', '✥', 'Guidance', null]]],
     ['MONEY', [['contributions', '◈', 'Contributions', 'contributions'], ['income', '↑', 'Income', 'income'],
                ['expenditure', '↓', 'Expenditure', 'expenditure'], ['events', '❋', 'Major expenses', 'events'],
                ['recurring', '↻', 'Recurring expenses', 'recurring']]],
@@ -1605,7 +2114,9 @@ function go(page){
 }
 function render(){
   buildNav();
+  setTimeout(() => { try { stickyBadge(); paintSticky(); } catch(e){} }, 0);
   document.querySelectorAll('.nav').forEach(b => b.classList.toggle('active', b.dataset.page === PAGE));
+  if(PAGE === 'guidance') return renderGuidance();
   if(PAGE === 'publicPage') return renderPublicPage();
   if(PAGE === 'auditLog') return renderAudit();
   if(PAGE === 'dashboard') renderDashboard();
@@ -1637,12 +2148,18 @@ const MODULES = {
       { n:'Children', t:'counted', hint:'Under 18' },
       { n:'Elderly', t:'counted', hint:'60 and above' },
       { n:'Vulnerable Status', t:'select', opts:['Normal','Vulnerable','Highly Vulnerable'] },
+      { n:'Needs Guidance', t:'select',
+        opts:['No','Child education','Higher studies','Job or skill','Health','Money matters','Legal or papers','Other'],
+        hint:'What this family needs advice or help with' },
+      { n:'Guide Member ID', t:'guide', hint:'The villager assigned to advise them' },
+      { n:'Guidance Note', t:'textarea', hint:'What is needed, in plain words. The committee decides money later.' },
+      { n:'Guidance Status', t:'select', opts:['','Open','Advising','Sent to committee','Helped','Closed'] },
       { n:'Family Status', t:'select', opts:['Active','Inactive','Shifted'] },
       { n:'Remarks', t:'textarea' },
       { n:'Created Date', t:'date', hidden:true },
       { n:'Last Updated', t:'date', hidden:true }
     ],
-    list: ['Family ID','Family Head','House No','Address/Area','Mobile','Total Members','Earning Members','Vulnerable Status','Family Status']
+    list: ['Family ID','Family Head','House No','Address/Area','Mobile','Total Members','Earning Members','Vulnerable Status','Needs Guidance','Guide Member ID','Guidance Status','Family Status']
   },
   members: {
     sheet: 'Members', title: 'Members', odia: 'ସଦସ୍ୟ', idField: 'Member ID', prefix: 'MEM',
@@ -2145,6 +2662,10 @@ function attentionList(){
   const noMembers = (DB.families || []).filter(f => !(DB.members || []).some(m => String(m['Family ID']).trim() === String(f['Family ID']).trim()));
   if(noMembers.length) items.push(['d-yellow', noMembers.length + ' families have no members listed', noMembers.slice(0,3).map(f => f['Family Head']).join(', '), 'members']);
 
+  const needG = guidanceRows().filter(f => !String(f['Guide Member ID'] || '').trim());
+  if(needG.length) items.push(['d-yellow', needG.length + ' families need a guide assigned',
+    needG.slice(0, 3).map(f => f['Family Head']).join(', '), 'guidance']);
+
   const vuln = (DB.families || []).filter(f => String(f['Vulnerable Status'] || '').toLowerCase().includes('vulnerable'));
   if(vuln.length) items.push(['d-red', vuln.length + ' families marked vulnerable', 'Review support arrangements', 'families']);
 
@@ -2231,6 +2752,12 @@ function cellHtml(key, row, col){
       ? '<button class="cellav" data-photo="' + esc(u) + '" title="View photo"><img data-srcs="' + esc(photoSrcs(u, 160).join('|')) + '" alt="' + esc(nm) + '" loading="lazy"></button>'
       : '<span class="cellav none">' + esc(initials(nm)) + '</span>' };
   }
+  if(f.t === 'guide'){
+    const v = String(raw == null ? '' : raw).trim();
+    if(!v) return { cls: '', html: '<span class="muted small">—</span>' };
+    return { cls: '', html: '<button class="linkish" data-act="profile2" data-id="' + esc(v) + '">' +
+      esc(memberName(v) || v) + '</button>' };
+  }
   if(f.t === 'event'){
     const v = String(raw == null ? '' : raw).trim();
     return { cls: '', html: v ? '<button class="linkish" data-event="' + esc(v) + '">' + esc(eventName(v) || v) + '</button>' : '' };
@@ -2259,6 +2786,17 @@ function cellHtml(key, row, col){
     if(!v || v.toLowerCase() === 'alive') return { cls: '', html: '' };
     const d = toISO(row['Date of Death']);
     return { cls: '', html: '<span class="pill gone">Deceased</span>' + (d ? ' <span class="muted small">' + esc(fmtDate(d)) + '</span>' : '') };
+  }
+  if(col === 'Needs Guidance'){
+    const v = String(raw || '').trim();
+    if(!v || v.toLowerCase() === 'no') return { cls: '', html: '' };
+    return { cls: '', html: '<span class="pill warn">' + esc(v) + '</span>' };
+  }
+  if(col === 'Guidance Status'){
+    const v = String(raw || '').trim();
+    if(!v) return { cls: '', html: '' };
+    const t = /helped|closed/i.test(v) ? 'ok' : /committee/i.test(v) ? 'warn' : '';
+    return { cls: '', html: '<span class="pill ' + t + '">' + esc(v) + '</span>' };
   }
   if(col === 'Status' || col === 'Active' || col === 'Family Status' || col === 'Vulnerable Status' || col === 'Earning Member' || col === 'Scholarship'){
     const v = String(raw || '').trim();
@@ -2429,6 +2967,9 @@ function wireActions(root){
         case 'cols': return openColumns(k);
         case 'access': return openAccess(id);
         case 'death': return markDeceased(id);
+        case 'profile2': return openMember(id);
+        case 'edit2': return openForm('families', id);
+        case 'needhelp': return go('families');
         case 'receipt': {
           const rec = (DB.contributions || []).find(r => String(r['Contribution ID']).trim() === String(id).trim());
           return rec ? offerReceipt(rec) : null;
@@ -2617,6 +3158,15 @@ function fieldHtml(key, f, value, editing, rec){
         (DB.families || []).map(x => `<option value="${esc(x['Family ID'])}" ${String(val) === String(x['Family ID']) ? 'selected' : ''}>${esc(x['Family ID'])} · ${esc(x['Family Head'])}</option>`).join('') + `</select>`; break;
     case 'member':
       input = `<select class="input" id="${id}" data-role="member"></select>`; break;
+    case 'guide': {
+      const list = (DB.members || []).filter(x => String(x['Life Status'] || '').toLowerCase() !== 'deceased');
+      input = `<select class="input" id="${id}"><option value="">— nobody assigned yet —</option>` +
+        list.map(x => `<option value="${esc(x['Member ID'])}" ${String(val) === String(x['Member ID']) ? 'selected' : ''}>${
+          esc(x['Name'])}${x['Occupation'] ? ' · ' + esc(x['Occupation']) : ''} (${esc(x['Family ID'] || '')})</option>`).join('') +
+        '</select>';
+      return `<div class="${wide}"><label class="lbl" for="${id}">${esc(f.n)}</label>${input}
+        ${f.hint ? `<div class="fieldnote">${esc(f.hint)}</div>` : ''}</div>`;
+    }
     case 'event':
       input = `<select class="input" id="${id}" data-role="event"><option value="">— not part of a major expense —</option>` +
         (DB.events || []).map(x => `<option value="${esc(x['Event ID'])}" ${String(val) === String(x['Event ID']) ? 'selected' : ''}>${esc(x['Event Name'])} ${x['Year'] ? '· ' + esc(x['Year']) : ''}</option>`).join('') +
