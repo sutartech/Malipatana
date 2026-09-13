@@ -728,6 +728,15 @@ html.odia .nav{font-family:var(--display);font-size:17px}
 .notice b{display:block;font-weight:700;margin-bottom:2px}
 .notice code{background:#00000010;border-radius:5px;padding:1px 6px;font-size:12.5px;
   font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+
+/* ---------- public page control + change history ---------- */
+.switchrow{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--line-soft)}
+.switchrow:last-child{border-bottom:0}
+.switchrow input{width:20px;height:20px;accent-color:var(--brick);margin-top:2px;flex:none}
+.switchrow b{display:block;font-weight:600;font-size:14.5px}
+.switchrow em{font-style:normal;display:block;font-size:12.5px;color:var(--label);margin-top:2px;line-height:1.5}
+.switchrow.dim{opacity:.5}
+.detailcell{max-width:460px;font-size:12.5px;color:var(--label);white-space:normal;overflow-wrap:anywhere}
 </style>
 </head>
 <body>
@@ -1032,6 +1041,105 @@ function openPhoto(url, caption){
     '<footer><a class="btn" href="' + esc(fullUrl(url)) + '" target="_blank" rel="noreferrer">Open in Drive</a>' +
     '<button class="btn btn-primary" onclick="closeModal()">Done</button></footer>');
   wirePhotoFallbacks(document.getElementById('modal') || document);
+}
+
+/* =========================================================================
+   PUBLIC PAGE CONTROL (admin) — what villagers may see without signing in
+   ========================================================================= */
+const PUBLIC_SWITCHES = [
+  ['Public Page', 'Publish the page at all', 'When off, visitors see only a short note.'],
+  ['Public Show Fund', 'The balance in hand', 'The single big figure at the top.'],
+  ['Public Show Breakdown', 'Income and spending lines', 'Opening fund, contributions, expenditure, help paid.'],
+  ['Public Show Counts', 'Village counts', 'Families, members, people helped this year.'],
+  ['Public Show Major Expenses', 'Completed major expenses', 'Raja Parba and the like, with budget and spend.'],
+  ['Public Show Recent Spending', 'Recent spending list', 'Last ten entries. Never shows who received help.']
+];
+
+function renderPublicPage(){
+  if(!isAdmin()){ $('#main').innerHTML = '<div class="empty"><b>Admins only</b></div>'; return; }
+  const on = k => String(setting(k, 'Yes')).trim().toLowerCase() !== 'no';
+  const live = on('Public Page');
+  $('#main').innerHTML = `
+    <div class="pagehead">
+      <div><h2>Public page</h2>
+      <div class="sub">What any villager can see at <b>public.html</b> without signing in</div></div>
+      <div class="sp"></div>
+      <a class="btn btn-sm" href="public.html" target="_blank" rel="noreferrer">Open the page</a>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h3>${live ? 'The account is public' : 'The account is private'}</h3>
+        <span class="small">${live ? 'Anyone with the link can read it' : 'Visitors see only a short note'}</span></div>
+      <div class="panel-body">
+        <div class="colgrid">
+          ${PUBLIC_SWITCHES.map(([k, name, note]) => `
+            <label class="switchrow${k !== 'Public Page' && !live ? ' dim' : ''}">
+              <input type="checkbox" data-pub="${esc(k)}" ${on(k) ? 'checked' : ''}>
+              <span><b>${esc(name)}</b><em>${esc(note)}</em></span>
+            </label>`).join('')}
+        </div>
+        <div class="fieldnote" style="margin-top:14px">Names of people who received help, mobile numbers,
+        incomes and member details are never sent to the public page, whatever is ticked here.</div>
+      </div>
+      <div class="panel-body" style="border-top:1px solid var(--line-soft)">
+        <button class="btn btn-primary" id="pubSave">Save what is public</button>
+      </div>
+    </div>`;
+
+  $('#pubSave').onclick = async () => {
+    const btn = $('#pubSave');
+    btn.disabled = true; btn.textContent = 'Saving…';
+    try {
+      for(const box of $('#main').querySelectorAll('[data-pub]')){
+        const rec = { Setting: box.dataset.pub, Value: box.checked ? 'Yes' : 'No' };
+        const r = await api('save', { sheet: 'Settings', record: JSON.stringify(rec) });
+        if(!r || !r.ok) throw new Error((r && r.error) || 'could not save ' + rec.Setting);
+        DB.settings[rec.Setting] = rec.Value;
+      }
+      toast('Public page updated', 'good');
+      renderPublicPage();
+    } catch(e){
+      toast(e.message || String(e), 'bad');
+      btn.disabled = false; btn.textContent = 'Save what is public';
+    }
+  };
+}
+
+/* =========================================================================
+   CHANGE HISTORY (admin) — read-only view of the audit log
+   ========================================================================= */
+async function renderAudit(){
+  if(!isAdmin()){ $('#main').innerHTML = '<div class="empty"><b>Admins only</b></div>'; return; }
+  $('#main').innerHTML = `
+    <div class="pagehead">
+      <div><h2>Change history</h2>
+      <div class="sub">Every add, edit and delete, with who did it. This record cannot be changed from here.</div></div>
+    </div>
+    <div class="panel"><div class="panel-body"><div class="muted small">Reading the log…</div></div></div>`;
+  let rows = [];
+  try {
+    const r = await api('auditLog', { limit: 300 });
+    rows = (r && r.rows) || [];
+  } catch(e){
+    $('#main').innerHTML += '<div class="empty"><b>Could not read the log</b>' + esc(e.message || e) + '</div>';
+    return;
+  }
+  const tone = w => /DELETE/.test(w) ? 'bad' : /ADD|SIGN IN|BACKUP/.test(w) ? 'ok' : /FAILED/.test(w) ? 'warn' : '';
+  $('#main').innerHTML = `
+    <div class="pagehead">
+      <div><h2>Change history</h2>
+      <div class="sub">${rows.length} recent entries · newest first · this record cannot be changed from here</div></div>
+    </div>
+    ${rows.length ? `<div class="tablewrap"><table class="grid">
+      <thead><tr><th>When</th><th>Who</th><th>What</th><th>Where</th><th>Record</th><th>Detail</th></tr></thead>
+      <tbody>${rows.map(r => `<tr>
+        <td data-label="When" style="white-space:nowrap">${esc(r.when)}</td>
+        <td data-label="Who">${esc(r.who)}</td>
+        <td data-label="What"><span class="pill ${tone(r.what)}">${esc(r.what)}</span></td>
+        <td data-label="Where">${esc(r.sheet)}</td>
+        <td data-label="Record" style="font-weight:600">${esc(r.record)}</td>
+        <td data-label="Detail" class="detailcell">${esc(r.detail)}</td>
+      </tr>`).join('')}</tbody></table></div>`
+    : '<div class="empty"><b>Nothing logged yet</b>Changes made from now on will appear here.</div>'}`;
 }
 
 /* =========================================================================
@@ -1471,7 +1579,10 @@ function buildNav(){
       if(m && m.odia) it[2] = m.odia;
     }));
   }
-  if(isAdmin()) groups.push(['ADMIN', [['users', '☺', 'Users', 'users'], ['photos', '❏', 'Photos', null],
+  if(isAdmin()) groups.push(['ADMIN', [['users', '☺', 'Users', 'users'],
+                                       ['publicPage', '◉', 'Public page', null],
+                                       ['auditLog', '☶', 'Change history', null],
+                                       ['photos', '❏', 'Photos', null],
                                        ['settingsList', '⚙', 'Settings', 'settingsList']]]);
   let html = '';
   groups.forEach(([title, items]) => {
@@ -1495,6 +1606,8 @@ function go(page){
 function render(){
   buildNav();
   document.querySelectorAll('.nav').forEach(b => b.classList.toggle('active', b.dataset.page === PAGE));
+  if(PAGE === 'publicPage') return renderPublicPage();
+  if(PAGE === 'auditLog') return renderAudit();
   if(PAGE === 'dashboard') renderDashboard();
   else if(PAGE === 'photos') renderPhotos();
   else renderModule(PAGE);

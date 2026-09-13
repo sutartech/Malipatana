@@ -122,14 +122,15 @@ function api(action){
 }
 
 function render(d){
-  var f = d.fund || {}, c = d.counts || {}, v = d.village || {};
-  var available = num(f.available);
+  var f = d.fund || null, c = d.counts || null, v = d.village || {};
+  var show = d.shows || {};
+  var available = f ? num(f.available) : 0;
 
   document.getElementById('title').textContent = v.name || 'Malipatana';
   document.getElementById('place').textContent = String(v.area || '').toUpperCase();
   document.getElementById('asof').textContent = 'as on ' + fmtDate(d.asOf);
 
-  var rows = [
+  var rows = !f || show.breakdown === false ? [] : [
     ['in', 'Opening fund', 'Balance carried into the register', num(f.opening)],
     ['in', 'Contributions collected', (f.contributionCount || 0) + ' entries', num(f.contributions)],
     ['in', 'Other income', 'Donations, grants, interest', num(f.income)],
@@ -139,7 +140,7 @@ function render(d){
   ].filter(function(r){ return num(r[3]) !== 0; });
 
   var html = '';
-  html += '<div class="card"><div class="big' + (rows.length ? '' : ' tight') + '">' +
+  if(f) html += '<div class="card"><div class="big' + (rows.length ? '' : ' tight') + '">' +
     '<div class="cap">Fund available today</div>' +
     '<div class="v">' + money(available) + '</div></div>' +
     (rows.length ? '<div class="rows">' + rows.map(function(r){
@@ -151,7 +152,7 @@ function render(d){
     '<div class="note">Every rupee shown here is entered by the village committee in the fund register. ' +
     'If something looks wrong, tell any committee member.</div></div>';
 
-  html += '<div class="card"><h2>The village</h2><div class="grid4">' +
+  if(c) html += '<div class="card"><h2>The village</h2><div class="grid4">' +
     '<div><div class="k">Families</div><div class="v">' + (c.families || 0) + '</div></div>' +
     '<div><div class="k">Members</div><div class="v">' + (c.members || 0) + '</div></div>' +
     '<div><div class="k">Helped this year</div><div class="v">' + (c.helpedThisYear || 0) + '</div></div>' +
@@ -178,11 +179,21 @@ function render(d){
       '<div class="note">Only what the money was spent on is published. Who received help is never sent to this page.</div></div>';
   }
 
+  if(!html) html = '<div class="card"><div class="state"><b>Nothing is published at the moment</b>' +
+    'The village committee has not chosen anything to show here yet.</div></div>';
   document.getElementById('out').innerHTML = html;
 }
 
 api('publicSummary').then(function(r){
-  if(!r || !r.ok || !r.fund) throw new Error('no public data');
+  if(!r || !r.ok) throw new Error('no public data');
+  if(r.off){
+    document.getElementById('asof').textContent = 'not public at the moment';
+    document.getElementById('out').innerHTML =
+      '<div class="card"><div class="state"><b>This page is switched off</b>' +
+      'The village committee has chosen not to publish the account right now. ' +
+      'Ask any committee member to see the register.</div></div>';
+    return;
+  }
   render(r);
 }).catch(function(){
   document.getElementById('asof').textContent = 'not published yet';
