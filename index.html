@@ -1343,6 +1343,7 @@ function paintSticky(){
         <span class="tag">${n.kind === 'reminder' ? 'REMINDER' : 'TARGET'}</span>
         ${label ? `<span class="due">${esc(label)}</span>` : ''}
         ${n.lock ? '<span class="lockpin" title="Kept pinned by the admin">📌 KEPT</span>' : ''}
+        ${n.pub ? '<span class="lockpin" title="Shown on the public page">🌐 PUBLIC</span>' : ''}
         ${n.lock ? '' : `<button class="x" data-sclose="${esc(n.id)}" title="Hide until reload">×</button>`}
       </div>
       <div class="sticky-body">
@@ -1640,6 +1641,11 @@ function stickyForm(id){
         <span><b style="font-weight:600">Always keep this note pinned</b>
         <span class="muted small" style="display:block">It stays on the dashboard for everyone and cannot be hidden — for a standing target the committee must not lose sight of.</span></span>
       </label>
+      <label class="colrow" style="gap:9px;margin-top:10px;align-items:flex-start">
+        <input type="checkbox" id="skPub" ${n.pub ? 'checked' : ''} style="margin-top:3px">
+        <span><b style="font-weight:600">🌐 Show this note on the public page</b>
+        <span class="muted small" style="display:block">Only ticked notes go out to villagers without a login. Needs "Show pinned sticky notes on the public account page" turned on in Photos settings too.</span></span>
+      </label>
       <div class="fieldnote">Overdue notes turn red whatever their colour. Completed ones move to the history list.</div>
     </div>
     <footer>
@@ -1662,6 +1668,7 @@ function stickyForm(id){
       due: document.getElementById('skDue').value || '',
       col: (document.querySelector('input[name="skcol"]:checked') || {}).value || 'amber',
       lock: !!document.getElementById('skLock').checked,
+      pub: !!document.getElementById('skPub').checked,
       done: false,
       by: String(USER && (USER.name || USER.username) || ''),
       at: new Date().toISOString().slice(0, 16).replace('T', ' ')
@@ -1709,6 +1716,7 @@ function stickyDrawer(){
         <span class="tag">${n.kind === 'reminder' ? 'REMINDER' : 'TARGET'}</span>
         ${n.due ? `<span class="due">${esc(stickyDueLabel(n))}</span>` : ''}
         ${n.lock ? '<span class="lockpin">📌 KEPT</span>' : ''}
+        ${n.pub ? '<span class="lockpin">🌐 PUBLIC</span>' : ''}
       </div>
       <b>${esc(n.title || 'Note')}</b>
       ${n.text ? `<p>${esc(n.text)}</p>` : ''}
@@ -4788,6 +4796,17 @@ function renderPhotos(){
     <span class="muted small" style="margin-left:auto">Leave a box empty to fall back to ${esc(CONFIG.DEFAULT_PHOTO)}</span>
   </div>
   <div class="panel" style="margin-top:16px">
+    <div class="panel-head"><h3>Pinned notes on the public page</h3></div>
+    <div class="panel-body">
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+        <input type="checkbox" id="stickyPublic" style="width:18px;height:18px">
+        <span>Show pinned sticky notes on the public account page</span>
+      </label>
+      <div class="fieldnote" style="margin-top:8px">This is the master switch. Which pinned notes actually appear is chosen per note — tick "Show this note on the public page" when adding or editing a sticky. Keep public notes free of private details.</div>
+      <div style="margin-top:12px"><button class="btn btn-primary" id="stickyWhereSave">Save</button></div>
+    </div>
+  </div>
+  <div class="panel" style="margin-top:16px">
     <div class="panel-head"><h3>Where to get a link</h3></div>
     <div class="panel-body small" style="line-height:1.7">
       <p style="margin:0 0 10px"><b>Photo kept with the website.</b> Upload the picture into the same GitHub folder as
@@ -4814,6 +4833,17 @@ function renderPhotos(){
   both();
 
   $('#photoReset').onclick = () => { li.value = CONFIG.DEFAULT_PHOTO; di.value = CONFIG.DEFAULT_PHOTO; both(); };
+  $('#stickyPublic').checked = String(setting('Sticky Notes Public', 'No')).toLowerCase() === 'yes';
+  $('#stickyWhereSave').onclick = async () => {
+    const b = $('#stickyWhereSave'); b.disabled = true; b.textContent = 'Saving\u2026';
+    try {
+      const v = $('#stickyPublic').checked ? 'Yes' : 'No';
+      await api('save', { sheet: 'Settings', record: JSON.stringify({ Setting: 'Sticky Notes Public', Value: v }) });
+      DB.settings['Sticky Notes Public'] = v;
+      toast('Saved', 'good');
+    } catch(e){ toast(e.message, 'bad'); }
+    finally { b.disabled = false; b.textContent = 'Save'; }
+  };
   $('#photoSave').onclick = async () => {
     const b = $('#photoSave'); b.disabled = true; b.textContent = 'Saving…';
     try {
@@ -4828,9 +4858,20 @@ function renderPhotos(){
   };
 }
 
-/* =========================================================================
-   LOGIN SCREEN EXTRAS
-   ========================================================================= */
+/* ---------- public sticky notes (sign-in screen): reuses the dashboard's
+   own drawer/drag code by seeding DB.settings before calling it. isAdmin()
+   is false pre-login, so edit/delete/pin buttons hide themselves already. */
+function paintPublicSticky(){
+  api('publicSticky').then(r => {
+    if(!r || !r.ok || !(r.notes || []).length) return;
+    DB = DB || {}; DB.settings = DB.settings || {};
+    DB.settings['Sticky Notes'] = JSON.stringify(r.notes.map(n => Object.assign({ pin: true, done: false }, n)));
+    buildStickyTab();
+    stickyBadge();
+    paintSticky();
+  }).catch(() => {});
+}
+
 function initLoginScreen(){
   $('#feChip').textContent = CONFIG.VERSION.replace('FE ', 'FE ');
 
@@ -4846,6 +4887,7 @@ function initLoginScreen(){
 
   $('#repairBtn').onclick = repairCache;
   bePing();
+  paintPublicSticky();
 }
 
 /* Confirms the sheet is reachable and shows which backend version answered. */
