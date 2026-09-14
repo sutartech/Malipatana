@@ -3184,8 +3184,8 @@ function renderModule(key){
       ${(DB.families || []).map(f => `<option value="${esc(f['Family ID'])}" ${v.fam === String(f['Family ID']) ? 'selected' : ''}>${esc(f['Family ID'])} · ${esc(f['Family Head'])}</option>`).join('')}
     </select>` : ''}
     ${key === 'members' && canEdit() ? '<button class="btn btn-sm" data-act="heads">Add missing family heads</button>' : ''}
-    ${isAdmin() && ['families','members'].includes(key) ? `<button class="btn btn-sm" data-act="cols">Columns</button>
-      <button class="btn btn-sm ${VIEW[key] && VIEW[key].quick ? 'btn-primary' : ''}" data-act="quick">${VIEW[key] && VIEW[key].quick ? 'Done editing' : 'Quick edit'}</button>` : ''}
+    ${isAdmin() ? `<button class="btn btn-sm" data-act="cols">Columns</button>` : ''}
+    ${isAdmin() && ['families','members'].includes(key) ? `<button class="btn btn-sm ${VIEW[key] && VIEW[key].quick ? 'btn-primary' : ''}" data-act="quick">${VIEW[key] && VIEW[key].quick ? 'Done editing' : 'Quick edit'}</button>` : ''}
     <button class="btn btn-sm" data-act="csv">Export CSV</button>
     <button class="btn btn-sm" data-act="print">Print</button>
     <span class="muted small" style="margin-left:auto">${rows.length} of ${all.length} records</span>
