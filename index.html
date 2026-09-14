@@ -739,6 +739,26 @@ html.odia .nav{font-family:var(--display);font-size:17px}
 .switchrow.dim{opacity:.5}
 .detailcell{max-width:460px;font-size:12.5px;color:var(--label);white-space:normal;overflow-wrap:anywhere}
 
+/* ---------- remembrance band ---------- */
+.remem{background:linear-gradient(165deg,#1b2833,#243642);border-radius:16px;padding:16px 18px;
+  margin-bottom:16px;border:1px solid #33485a;box-shadow:0 18px 40px -26px #0b141b}
+.remem .rhead{display:flex;align-items:center;gap:9px;margin-bottom:13px}
+.remem .rhead b{font-family:var(--display);font-size:15.5px;font-weight:600;color:#f0e2c4;letter-spacing:.01em}
+.remem .rhead span{font-size:11.5px;color:#9db2c2;letter-spacing:.06em;font-weight:600}
+.remem .rrule{flex:1;height:1px;background:linear-gradient(90deg,#c9a23f66,#c9a23f00)}
+.remem .rlist{display:flex;flex-wrap:wrap;gap:12px}
+.rperson{display:flex;align-items:center;gap:12px;background:#ffffff0f;border:1px solid #ffffff1a;
+  border-radius:13px;padding:11px 15px 11px 11px;flex:1 1 250px;max-width:340px}
+.rperson .rimg{width:52px;height:52px;border-radius:50%;flex:none;object-fit:cover;object-position:center top;
+  border:2px solid #c9a23f80;background:#33485a;filter:saturate(.72)}
+.rperson .rno{width:52px;height:52px;border-radius:50%;flex:none;display:flex;align-items:center;
+  justify-content:center;border:2px solid #c9a23f80;background:#33485a;color:#c9b98f;font-size:17px}
+.rperson .rtx{min-width:0}
+.rperson .rtx b{display:block;font-size:14.5px;color:#f4f1ea;font-weight:600;line-height:1.3}
+.rperson .rtx .ryr{font-size:12.5px;color:#a9bdcb;font-variant-numeric:tabular-nums;margin-top:2px}
+.rperson .rtx .rday{font-size:11.5px;color:#e8c87a;font-weight:700;margin-top:4px;letter-spacing:.03em}
+.rperson.today{background:#c9a23f1f;border-color:#c9a23f6b}
+
 /* ---------- links ---------- */
 a{color:var(--brick);text-decoration-color:#a8341e40;text-underline-offset:3px}
 a:hover{color:#8a2916;text-decoration-color:currentColor}
@@ -2755,6 +2775,67 @@ function memberName(id){
 /* =========================================================================
    DASHBOARD
    ========================================================================= */
+/* =========================================================================
+   REMEMBRANCE — a deceased member's death anniversary, shown for the week
+   before it and on the day itself, every year.
+   ========================================================================= */
+function remembranceLocal(){
+  const now = new Date();
+  const mid = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const DAY = 86400000;
+  const out = [];
+  (DB.members || []).forEach(m => {
+    if(!isDeceased(m)) return;
+    const iso = toISO(m['Date of Death']);
+    if(!iso) return;
+    const dod = new Date(iso + 'T00:00:00');
+    if(isNaN(dod.getTime())) return;
+    [0, 1].forEach(off => {
+      const anniv = new Date(mid.getFullYear() + off, dod.getMonth(), dod.getDate());
+      const away = Math.round((anniv - mid) / DAY);
+      if(away < 0 || away > 7) return;
+      out.push({
+        name: m['Name'] || '', photo: m['Photo'] || '',
+        dob: toISO(m['Date of Birth']) || '', dod: iso,
+        anniv: anniv.toISOString().slice(0, 10), daysAway: away,
+        years: anniv.getFullYear() - dod.getFullYear()
+      });
+    });
+  });
+  return out.sort((a, b) => a.daysAway - b.daysAway);
+}
+
+function remembranceHtml(people){
+  if(!people || !people.length) return '';
+  const card = p => {
+    const when = p.daysAway === 0 ? 'Remembrance day is today'
+      : p.daysAway === 1 ? 'Tomorrow · ' + fmtDate(p.anniv)
+      : 'In ' + p.daysAway + ' days · ' + fmtDate(p.anniv);
+    const yrs = (p.dob ? new Date(p.dob).getFullYear() + ' – ' : '') + new Date(p.dod).getFullYear();
+    const img = p.photo
+      ? '<img class="rimg" src="' + esc(thumbUrl(p.photo, 160)) + '" alt="" loading="lazy">'
+      : '<span class="rno">◦</span>';
+    return '<div class="rperson' + (p.daysAway === 0 ? ' today' : '') + '">' + img +
+      '<div class="rtx"><b>' + esc(p.name) + '</b>' +
+      '<div class="ryr">' + esc(yrs) + (p.years ? ' · ' + p.years + (p.years === 1 ? ' year' : ' years') : '') + '</div>' +
+      '<div class="rday">' + esc(when) + '</div></div></div>';
+  };
+  return '<div class="remem"><div class="rhead"><b>ସ୍ମୃତି · In remembrance</b>' +
+    '<span>' + people.length + '</span><i class="rrule"></i></div>' +
+    '<div class="rlist">' + people.map(card).join('') + '</div></div>';
+}
+
+function paintLoginRemembrance(){
+  api('publicRemembrance').then(r => {
+    if(!r || !r.ok || !(r.people || []).length) return;
+    const host = document.querySelector('#login .formside') || document.querySelector('#login');
+    if(!host) return;
+    const box = document.createElement('div');
+    box.innerHTML = remembranceHtml(r.people);
+    host.appendChild(box.firstChild);
+  }).catch(() => {});
+}
+
 function renderDashboard(){
   const s = DB.summary || {};
   const opening = num(setting('Opening Fund', 0));
@@ -2776,6 +2857,7 @@ function renderDashboard(){
   const fresh = entries === 0;
   const html = `
   ${fresh ? startPanel() : ''}
+  ${remembranceHtml(remembranceLocal())}
   ${banner ? `<div class="hero">
       <img src="${esc(banner)}" alt="${esc(setting('Village Name','Malipatana'))}" onerror="this.remove()">
       <div class="veil"></div>
@@ -4803,6 +4885,19 @@ function renderPhotos(){
         <span>Show pinned sticky notes on the public account page</span>
       </label>
       <div class="fieldnote" style="margin-top:8px">This is the master switch. Which pinned notes actually appear is chosen per note — tick "Show this note on the public page" when adding or editing a sticky. Keep public notes free of private details.</div>
+    </div>
+  </div>
+  <div class="panel" style="margin-top:16px">
+    <div class="panel-head"><h3>Remembrance day</h3></div>
+    <div class="panel-body">
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+        <input type="checkbox" id="rememPublic" style="width:18px;height:18px">
+        <span>Show remembrance days on the public account page</span>
+      </label>
+      <div class="fieldnote" style="margin-top:8px">A deceased member's death anniversary appears from one week before until the day itself, every year, with their photo and the two dates. It always shows on the dashboard and sign-in screen; this decides the public page. Only the name, photo, date of birth and date of death go out.</div>
+      <div style="margin-top:12px"><button class="btn btn-primary" id="rememSave">Save</button></div>
+    </div>
+  </div>
       <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
         <button class="btn btn-primary" id="stickyWhereSave">Save</button>
         <button class="btn" id="stickyExport">Download notes file for GitHub</button>
@@ -4838,6 +4933,18 @@ function renderPhotos(){
 
   $('#photoReset').onclick = () => { li.value = CONFIG.DEFAULT_PHOTO; di.value = CONFIG.DEFAULT_PHOTO; both(); };
   $('#stickyPublic').checked = String(setting('Sticky Notes Public', 'No')).toLowerCase() === 'yes';
+  $('#rememPublic').checked = String(setting('Remembrance Public', 'Yes')).toLowerCase() !== 'no';
+  $('#rememSave').onclick = async () => {
+    const b = $('#rememSave'); b.disabled = true; b.textContent = 'Saving\u2026';
+    try {
+      const v = $('#rememPublic').checked ? 'Yes' : 'No';
+      await api('save', { sheet: 'Settings', record: JSON.stringify({ Setting: 'Remembrance Public', Value: v }) });
+      DB.settings['Remembrance Public'] = v;
+      toast('Saved', 'good');
+    } catch(e){ toast(e.message, 'bad'); }
+    finally { b.disabled = false; b.textContent = 'Save'; }
+  };
+
   $('#stickyExport').onclick = () => {
     const notes = stickyAll().filter(n => n && n.pin && !n.done && n.pub)
       .map(n => ({ id:n.id, kind:n.kind, title:n.title, text:n.text, due:n.due, col:n.col }));
@@ -4910,6 +5017,7 @@ function initLoginScreen(){
   $('#repairBtn').onclick = repairCache;
   bePing();
   paintPublicSticky();
+  paintLoginRemembrance();
 }
 
 /* Confirms the sheet is reachable and shows which backend version answered. */
