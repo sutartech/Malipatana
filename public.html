@@ -68,6 +68,39 @@ tr:last-child td{border-bottom:0}
 .state.tight{padding-top:6px;padding-bottom:26px}
 .state b{display:block;font-family:var(--display);font-size:19px;color:var(--ink);margin-bottom:6px;
   font-weight:600;line-height:1.5}
+.gform{padding:20px 22px 24px}
+.gform label{display:block;font-size:12.5px;font-weight:700;color:var(--label);letter-spacing:.03em;margin:14px 0 6px}
+.gform label:first-child{margin-top:0}
+.gform input,.gform select,.gform textarea{width:100%;padding:12px 13px;border:1px solid var(--line);
+  border-radius:11px;background:var(--surface-2);font:inherit;font-size:14.5px;color:var(--ink)}
+.gform input:focus,.gform select:focus,.gform textarea:focus{outline:none;border-color:var(--indigo-2);
+  box-shadow:0 0 0 3px #22485c22;background:var(--surface)}
+.gform textarea{min-height:90px;resize:vertical}
+.gform .btnrow{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap}
+.gbtn{border:0;border-radius:11px;padding:12px 20px;font:inherit;font-weight:700;font-size:14.5px;
+  cursor:pointer;background:var(--brick);color:#fff;transition:filter .15s ease}
+.gbtn:hover{filter:brightness(1.08)}
+.gbtn.ghost{background:var(--surface-2);color:var(--ink);border:1px solid var(--line)}
+.gmsg{font-size:13.5px;margin-top:14px;padding:11px 14px;border-radius:10px;display:none}
+.gmsg.show{display:block}
+.gmsg.good{background:#e9f3ec;color:#215c33;border:1px solid #bfe0cb}
+.gmsg.bad{background:#fbeee9;color:#8a2916;border:1px solid #eecfc2}
+.gtabs{display:flex;gap:0;border-bottom:1px solid var(--line-soft)}
+.gtabs button{flex:1;background:none;border:0;padding:14px 10px;font:inherit;font-weight:700;font-size:13.5px;
+  color:var(--label);cursor:pointer;border-bottom:2px solid transparent}
+.gtabs button.on{color:var(--indigo-2);border-bottom-color:var(--brick)}
+.gsteps{padding:16px 22px 20px;display:flex;flex-direction:column;gap:0}
+.gstep{display:flex;gap:13px;padding:12px 0;border-bottom:1px dotted var(--line)}
+.gstep:last-child{border-bottom:0}
+.gstep .no{width:26px;height:26px;border-radius:50%;background:var(--indigo);color:#fff;flex:none;
+  display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12.5px}
+.gstep .tx b{display:block;font-size:14px}
+.gstep .tx span{font-size:13px;color:var(--label)}
+.gpill{display:inline-block;padding:3px 11px;border-radius:999px;font-size:11.5px;font-weight:700}
+.gpill.recv{background:#eef2ee;color:#3a4640}
+.gpill.warn{background:#fdf3dd;color:#8a5c04}
+.gpill.good{background:#e9f3ec;color:#215c33}
+.gpill.bad{background:#fbeee9;color:#8a2916}
 @media print{
   body{background:#fff}
   header.top{background:none;color:#000;border-bottom:2px solid #000;padding:0 0 10px;margin-bottom:16px}
@@ -89,6 +122,46 @@ tr:last-child td{border-bottom:0}
 
 <div class="wrap">
   <div id="out"><div class="card"><div class="state"><b>Loading the village account…</b>This page reads the same sheet the committee uses.</div></div></div>
+
+  <div class="card noprint">
+    <div class="gtabs">
+      <button class="on" id="tabNew">Raise a grievance</button>
+      <button id="tabTrack">Track a grievance</button>
+      <button id="tabSteps">How it is resolved</button>
+    </div>
+
+    <form class="gform" id="gformNew">
+      <label for="gName">Your name</label>
+      <input id="gName" required placeholder="Full name">
+      <label for="gMobile">Mobile number</label>
+      <input id="gMobile" required placeholder="10-digit mobile" inputmode="numeric">
+      <label for="gCat">What is this about</label>
+      <select id="gCat">
+        <option>Water</option><option>Road</option><option>Electricity</option><option>Sanitation</option>
+        <option>Fund misuse</option><option>Welfare benefit</option><option>Family record error</option><option>Other</option>
+      </select>
+      <label for="gDesc">Describe the problem</label>
+      <textarea id="gDesc" required placeholder="What happened, where, and since when"></textarea>
+      <div class="btnrow">
+        <button type="submit" class="gbtn" id="gSubmitBtn">Submit grievance</button>
+      </div>
+      <div class="gmsg" id="gMsg"></div>
+    </form>
+
+    <div class="gform" id="gformTrack" style="display:none">
+      <label for="gLookup">Grievance number</label>
+      <input id="gLookup" placeholder="e.g. GRV-014">
+      <div class="btnrow"><button class="gbtn ghost" id="gTrackBtn">Check status</button></div>
+      <div class="gmsg" id="gTrackMsg"></div>
+    </div>
+
+    <div class="gsteps" id="gformSteps" style="display:none">
+      <div class="gstep"><div class="no">1</div><div class="tx"><b>Received</b><span>Your grievance reaches the committee the moment you submit it, with a grievance number to track it.</span></div></div>
+      <div class="gstep"><div class="no">2</div><div class="tx"><b>Under review</b><span>A committee member looks into it and may contact you on the mobile number given.</span></div></div>
+      <div class="gstep"><div class="no">3</div><div class="tx"><b>Action taken</b><span>The committee acts — repair, correction, or a decision — and notes what was done.</span></div></div>
+      <div class="gstep"><div class="no">4</div><div class="tx"><b>Resolved</b><span>Marked resolved with a remark you can read back using your grievance number.</span></div></div>
+    </div>
+  </div>
 
   <div class="foot">
     Published by the Malipatana village committee. Figures come straight from the fund register.<br>
@@ -185,6 +258,77 @@ function render(d){
   if(!html) html = '<div class="card"><div class="state"><b>Nothing is published at the moment</b>' +
     'The village committee has not chosen anything to show here yet.</div></div>';
   document.getElementById('out').innerHTML = html;
+}
+
+/* ---------- grievances: raise / track / steps ---------- */
+var tabs = { tabNew: 'gformNew', tabTrack: 'gformTrack', tabSteps: 'gformSteps' };
+Object.keys(tabs).forEach(function(tid){
+  document.getElementById(tid).onclick = function(){
+    Object.keys(tabs).forEach(function(o){
+      document.getElementById(o).classList.toggle('on', o === tid);
+      document.getElementById(tabs[o]).style.display = o === tid ? '' : 'none';
+    });
+  };
+});
+
+document.getElementById('gformNew').addEventListener('submit', function(ev){
+  ev.preventDefault();
+  var btn = document.getElementById('gSubmitBtn');
+  var msg = document.getElementById('gMsg');
+  var name = document.getElementById('gName').value.trim();
+  var mobile = document.getElementById('gMobile').value.trim();
+  var desc = document.getElementById('gDesc').value.trim();
+  if(!name || !mobile || !desc){
+    msg.className = 'gmsg show bad'; msg.textContent = 'Please fill your name, mobile number and the problem.'; return;
+  }
+  btn.disabled = true; btn.textContent = 'Submitting…';
+  msg.className = 'gmsg';
+  var payload = { Name: name, Mobile: mobile, Category: document.getElementById('gCat').value,
+    Description: desc, Status: 'Received' };
+  apiPost('publicGrievance', { record: JSON.stringify(payload) }).then(function(r){
+    btn.disabled = false; btn.textContent = 'Submit grievance';
+    if(!r || !r.ok) throw new Error((r && r.error) || 'failed');
+    msg.className = 'gmsg show good';
+    msg.innerHTML = 'Submitted. Your grievance number is <b>' + esc(r.id) +
+      '</b> — write it down to check the status later.';
+    document.getElementById('gformNew').reset();
+  }).catch(function(){
+    btn.disabled = false; btn.textContent = 'Submit grievance';
+    msg.className = 'gmsg show bad';
+    msg.textContent = 'Could not submit right now. Please try again in a moment, or tell a committee member directly.';
+  });
+});
+
+document.getElementById('gTrackBtn').onclick = function(){
+  var id = document.getElementById('gLookup').value.trim();
+  var msg = document.getElementById('gTrackMsg');
+  if(!id){ msg.className = 'gmsg show bad'; msg.textContent = 'Enter your grievance number.'; return; }
+  msg.className = 'gmsg show'; msg.textContent = 'Checking…';
+  api('grievanceStatus&id=' + encodeURIComponent(id)).then(function(r){
+    if(!r || !r.ok || !r.found){
+      msg.className = 'gmsg show bad';
+      msg.textContent = 'No grievance found with that number. Check it and try again.';
+      return;
+    }
+    var tone = { Received:'recv', 'Under Review':'warn', 'Action Taken':'warn', Resolved:'good', Rejected:'bad' }[r.status] || 'recv';
+    msg.className = 'gmsg show good';
+    msg.innerHTML = '<span class="gpill ' + tone + '">' + esc(r.status) + '</span>' +
+      '<div style="margin-top:8px">Raised ' + esc(fmtDate(r.date)) + ' · ' + esc(r.category) + '</div>' +
+      (r.remark ? '<div style="margin-top:6px"><b>Committee remark:</b> ' + esc(r.remark) + '</div>' : '');
+  }).catch(function(){
+    msg.className = 'gmsg show bad'; msg.textContent = 'Could not check right now. Please try again shortly.';
+  });
+};
+
+function apiPost(action, params){
+  return new Promise(function(resolve, reject){
+    var t = setTimeout(function(){ reject(new Error('timeout')); }, 25000);
+    var body = new URLSearchParams(Object.assign({ action: action }, params || {}));
+    fetch(API_URL, { method: 'POST', body: body })
+      .then(function(res){ return res.json(); })
+      .then(function(d){ clearTimeout(t); resolve(d); })
+      .catch(function(e){ clearTimeout(t); reject(e); });
+  });
 }
 
 api('publicSummary').then(function(r){

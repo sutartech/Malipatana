@@ -2247,7 +2247,7 @@ const ALL_PAGES = [
   ['dashboard', 'Dashboard'], ['families', 'Families'], ['members', 'Members'],
   ['contributions', 'Contributions'], ['income', 'Income'], ['expenditure', 'Expenditure'],
   ['events', 'Major expenses'], ['recurring', 'Recurring expenses'],
-  ['emergency', 'Emergency cases'], ['regularSupport', 'Regular support']
+  ['emergency', 'Emergency cases'], ['regularSupport', 'Regular support'], ['grievances', 'Grievances']
 ];
 function accessKey(username){ return 'Access ' + String(username || '').trim(); }
 function accessOf(username){
@@ -2393,7 +2393,8 @@ function buildNav(){
     ['MONEY', [['contributions', '◈', 'Contributions', 'contributions'], ['income', '↑', 'Income', 'income'],
                ['expenditure', '↓', 'Expenditure', 'expenditure'], ['events', '❋', 'Major expenses', 'events'],
                ['recurring', '↻', 'Recurring expenses', 'recurring']]],
-    ['WELFARE', [['emergency', '✚', 'Emergency cases', 'emergency'], ['regularSupport', '❤', 'Regular support', 'regularSupport']]]
+    ['WELFARE', [['emergency', '✚', 'Emergency cases', 'emergency'], ['regularSupport', '❤', 'Regular support', 'regularSupport']]],
+    ['VILLAGERS', [['grievances', '⚑', 'Grievances', 'grievances']]]
   ];
   groups.forEach(g => { g[1] = g[1].filter(it => canSee(it[0])); });
   if(local.get('mal_odia') === '1'){
@@ -2448,6 +2449,24 @@ const YESNO = ['Yes', 'No'];
 const PAYMODES = ['Cash', 'UPI', 'Bank Transfer', 'Cheque'];
 
 const MODULES = {
+  grievances: {
+    sheet: 'Grievances', title: 'Grievances', odia: 'ଅଭିଯୋଗ', idField: 'Grievance ID', prefix: 'GRV',
+    blurb: 'Complaints and requests raised by villagers through the public page',
+    fields: [
+      { n:'Grievance ID', t:'text', auto:true },
+      { n:'Date', t:'date', def:'today' },
+      { n:'Name', t:'text', req:true },
+      { n:'Mobile', t:'text' },
+      { n:'Family ID', t:'family' },
+      { n:'Category', t:'datalist', opts:['Water','Road','Electricity','Sanitation','Fund misuse','Welfare benefit','Family record error','Other'] },
+      { n:'Description', t:'textarea', req:true },
+      { n:'Status', t:'select', opts:['Received','Under Review','Action Taken','Resolved','Rejected'] },
+      { n:'Assigned To', t:'datalist' },
+      { n:'Committee Remark', t:'textarea' },
+      { n:'Resolved Date', t:'date' }
+    ],
+    list: ['Grievance ID','Date','Name','Category','Description','Status','Assigned To']
+  },
   families: {
     sheet: 'Families', title: 'Families', odia: 'ପରିବାର', idField: 'Family ID', prefix: 'FAM',
     blurb: 'Every household in the village register',
@@ -3057,9 +3076,14 @@ async function sheetColumn(action, key, col, to){
 
 function fieldDef(key, col){ return allFields(key).find(f => f.n === col) || { n: col, t: 'text' }; }
 
+const GRV_TONE = { Received:'', 'Under Review':'warn', 'Action Taken':'warn', Resolved:'good', Rejected:'bad' };
 function cellHtml(key, row, col){
   const f = fieldDef(key, col);
   const raw = row[col];
+  if(key === 'grievances' && col === 'Status'){
+    const v = String(raw || 'Received');
+    return { cls: '', html: '<span class="pill ' + (GRV_TONE[v] || '') + '">' + esc(v) + '</span>' };
+  }
   if(f.t === 'photo'){
     const u = String(raw == null ? '' : raw).trim();
     const nm = String(row['Name'] || row[MODULES[key].idField] || '?').trim();
