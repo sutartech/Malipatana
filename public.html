@@ -392,8 +392,17 @@ function renderSticky(s){
 
 api('publicSticky').then(function(r){
   if(r && r.ok) renderSticky(r);
-  else console.warn('publicSticky unavailable — backend needs redeploying:', r && r.error);
-}).catch(function(){});
+  else stickyFromFile();
+}).catch(stickyFromFile);
+
+/* Fallback for a backend that has not been redeployed: a small JSON file the
+   admin exports from the dashboard and uploads beside this page. */
+function stickyFromFile(){
+  fetch('public-notes.json', { cache: 'no-store' })
+    .then(function(res){ return res.ok ? res.json() : null; })
+    .then(function(d){ if(d) renderSticky(d); })
+    .catch(function(){});
+}
 
 api('publicSummary').then(function(r){
   if(!r || !r.ok) throw new Error('no public data');

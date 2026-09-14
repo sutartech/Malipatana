@@ -4803,7 +4803,11 @@ function renderPhotos(){
         <span>Show pinned sticky notes on the public account page</span>
       </label>
       <div class="fieldnote" style="margin-top:8px">This is the master switch. Which pinned notes actually appear is chosen per note — tick "Show this note on the public page" when adding or editing a sticky. Keep public notes free of private details.</div>
-      <div style="margin-top:12px"><button class="btn btn-primary" id="stickyWhereSave">Save</button></div>
+      <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn btn-primary" id="stickyWhereSave">Save</button>
+        <button class="btn" id="stickyExport">Download notes file for GitHub</button>
+      </div>
+      <div class="fieldnote" style="margin-top:8px">If the sheet backend has not been redeployed, download this file and upload it beside <b>public.html</b> in GitHub. The public page reads it when the backend does not answer.</div>
     </div>
   </div>
   <div class="panel" style="margin-top:16px">
@@ -4834,6 +4838,24 @@ function renderPhotos(){
 
   $('#photoReset').onclick = () => { li.value = CONFIG.DEFAULT_PHOTO; di.value = CONFIG.DEFAULT_PHOTO; both(); };
   $('#stickyPublic').checked = String(setting('Sticky Notes Public', 'No')).toLowerCase() === 'yes';
+  $('#stickyExport').onclick = () => {
+    const notes = stickyAll().filter(n => n && n.pin && !n.done && n.pub)
+      .map(n => ({ id:n.id, kind:n.kind, title:n.title, text:n.text, due:n.due, col:n.col }));
+    const payload = {
+      ok: true,
+      showOnPublic: $('#stickyPublic').checked,
+      notes: notes,
+      madeAt: new Date().toISOString().slice(0, 16).replace('T', ' ')
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'public-notes.json';
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    toast(notes.length ? notes.length + ' note(s) exported — upload public-notes.json to GitHub' : 'No notes are ticked for the public page', notes.length ? 'good' : 'bad');
+  };
+
   $('#stickyWhereSave').onclick = async () => {
     const b = $('#stickyWhereSave'); b.disabled = true; b.textContent = 'Saving\u2026';
     try {
