@@ -3018,7 +3018,8 @@ const photoRoot = () => String(setting('Photo Folder', 'Malipatana Photos')).tri
 const photoColumns = () => yes(setting('Show Photo In Tables', 'Yes'));
 function listCols(key){
   const hidden = (() => { try { return JSON.parse(setting('Hidden ' + MODULES[key].sheet, '[]')) || []; } catch(e){ return []; } })();
-  const l = (MODULES[key].list || []).concat(customCols(key).map(c => c.n)).filter(c => !hidden.includes(c));
+  const customHidden = customCols(key).filter(c => c.hidden).map(c => c.n);
+  const l = (MODULES[key].list || []).concat(customCols(key).filter(c => !c.hidden).map(c => c.n)).filter(c => !hidden.includes(c) && !customHidden.includes(c));
   if(photosOn() && photoColumns()) return l;
   return l.filter(c => fieldDef(key, c).t !== 'photo');
 }
@@ -4387,10 +4388,12 @@ function openColumns(key){
       <h4 class="msec">Your own columns</h4>
       ${custom.length ? `<div class="colgrid">${custom.map((c, i) => `
         <div class="colrow">
+          <label style="display:flex;align-items:center;gap:6px"><input type="checkbox" data-cshow="${i}" ${c.hidden ? '' : 'checked'}></label>
           <input class="input" data-cname="${i}" value="${esc(c.n)}">
           <select class="input" data-ctype="${i}" style="max-width:130px">${COL_TYPES.map(t => `<option ${c.t === t ? 'selected' : ''}>${t}</option>`).join('')}</select>
           <button class="btn btn-sm btn-danger" data-cdel="${esc(c.n)}">Delete</button>
         </div>`).join('')}</div>` : '<div class="muted small">None yet.</div>'}
+      <div class="fieldnote">Untick a custom column's box to hide it from the table too.</div>
 
       <h4 class="msec">Add a column</h4>
       <div class="colrow">
@@ -4431,11 +4434,12 @@ function openColumns(key){
     const renamed = custom.map((c, i) => ({
       n: (modal.querySelector('[data-cname="' + i + '"]') || {}).value ? modal.querySelector('[data-cname="' + i + '"]').value.trim() : c.n,
       t: (modal.querySelector('[data-ctype="' + i + '"]') || {}).value || c.t,
+      hidden: !(modal.querySelector('[data-cshow="' + i + '"]') || { checked: true }).checked,
       was: c.n
     }));
     try {
       for(const c of renamed){ if(c.was !== c.n) await sheetColumn('renameColumn', key, c.was, c.n); }
-      await saveCols(key, renamed.map(c => ({ n: c.n, t: c.t })));
+      await saveCols(key, renamed.map(c => ({ n: c.n, t: c.t, hidden: c.hidden })));
       const rec = { Setting: 'Hidden ' + m.sheet, Value: JSON.stringify(hide) };
       const r = await api('save', { sheet: MODULES.settingsList.sheet, record: JSON.stringify(rec) });
       if(!r || !r.ok) throw new Error((r && r.error) || 'could not save');
