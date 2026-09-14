@@ -373,10 +373,12 @@ function apiPost(action, params){
   });
 }
 
-api('publicSticky').then(function(r){
-  if(!r || !r.ok) return;
-  if(!r.showOnPublic) return;
-  var notes = (r.notes || []).slice(0, 3);
+/* Notes arrive either from their own action or, on an older backend that
+   lacks it, riding along inside publicSummary. Whichever answers first wins. */
+function renderSticky(s){
+  if(!s || !s.showOnPublic) return;
+  if(document.getElementById('pubSticky')) return;
+  var notes = (s.notes || []).slice(0, 3);
   if(!notes.length) return;
   var layer = document.createElement('div');
   layer.id = 'pubSticky';
@@ -386,6 +388,11 @@ api('publicSticky').then(function(r){
       '<b>' + esc(n.title || '') + '</b>' + (n.text ? '<p>' + esc(n.text) + '</p>' : '') + '</div>';
   }).join('');
   document.body.appendChild(layer);
+}
+
+api('publicSticky').then(function(r){
+  if(r && r.ok) renderSticky(r);
+  else console.warn('publicSticky unavailable — backend needs redeploying:', r && r.error);
 }).catch(function(){});
 
 api('publicSummary').then(function(r){
@@ -399,6 +406,7 @@ api('publicSummary').then(function(r){
     return;
   }
   render(r);
+  renderSticky(r.sticky);
 }).catch(function(){
   document.getElementById('asof').textContent = 'not published yet';
   document.getElementById('out').innerHTML =
