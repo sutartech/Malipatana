@@ -2531,7 +2531,7 @@ const MODULES = {
     list: ['Grievance ID','Date','Name','Category','Description','Status','Assigned To']
   },
   families: {
-    sheet: 'Families', title: 'Families', odia: 'ପରିବାର', idField: 'Family ID', prefix: 'FAM',
+    sheet: 'Families', title: 'Families', singular: 'family', odia: 'ପରିବାର', idField: 'Family ID', prefix: 'FAM',
     blurb: 'Every household in the village register',
     fields: [
       { n:'Family ID', t:'text', auto:true },
@@ -2849,7 +2849,7 @@ function remembranceHtml(people){
       : 'In ' + p.daysAway + ' days · ' + fmtDate(p.anniv);
     const yrs = (p.dob ? new Date(p.dob).getFullYear() + ' – ' : '') + new Date(p.dod).getFullYear();
     const img = p.photo
-      ? '<img class="rimg" src="' + esc(thumbUrl(p.photo, 160)) + '" alt="" loading="lazy">'
+      ? '<img class="rimg" data-srcs="' + esc(photoSrcs(p.photo, 160).join('|')) + '" alt="' + esc(p.name) + '" loading="lazy">'
       : '<span class="rno">◦</span>';
     return '<div class="rperson' + (p.daysAway === 0 ? ' today' : '') + '">' + img +
       '<div class="rtx"><b>' + esc(p.name) + '</b>' +
@@ -2868,7 +2868,7 @@ function paintLoginRemembrance(){
     if(!host) return;
     const box = document.createElement('div');
     box.innerHTML = remembranceHtml(r.people);
-    host.appendChild(box.firstChild);
+    if(box.firstChild){ host.appendChild(box.firstChild); wirePhotoFallbacks(host); }
   }).catch(() => {});
 }
 
@@ -3255,6 +3255,11 @@ async function sheetColumn(action, key, col, to){
   await fetch(CONFIG.API_URL, { method: 'POST', mode: 'no-cors', body: body });
 }
 
+/* "Families" must not become "familie" — a module may name its own singular. */
+function singularOf(m){
+  return String(m.singular || m.title.replace(/s$/, '')).toLowerCase();
+}
+
 function fieldDef(key, col){ return allFields(key).find(f => f.n === col) || { n: col, t: 'text' }; }
 
 const GRV_TONE = { Received:'', 'Under Review':'warn', 'Action Taken':'warn', Resolved:'good', Rejected:'bad' };
@@ -3390,7 +3395,7 @@ function renderModule(key){
       <div class="sub">${esc(m.blurb || '')}</div>
     </div>
     <div class="sp"></div>
-    ${canEdit() ? `<button class="btn btn-primary" data-act="add">+ Add ${esc(m.title.replace(/s$/, '').toLowerCase())}</button>` : ''}
+    ${canEdit() ? `<button class="btn btn-primary" data-act="add">+ Add ${esc(singularOf(m))}</button>` : ''}
   </div>
 
   <div class="toolbar">
@@ -3603,7 +3608,7 @@ function openFormInner(key, id, prefill){
   openModal(`
     <header>
       <div>
-        <h3>${existing ? 'Edit' : 'Add'} ${esc(m.title.replace(/s$/, '').toLowerCase())}</h3>
+        <h3>${existing ? 'Edit' : 'Add'} ${esc(singularOf(m))}</h3>
         <div class="sub">${existing ? esc(m.idField) + ' ' + esc(id) : 'Saves straight into the ' + esc(m.sheet) + ' sheet'}</div>
       </div>
       <div class="sp"></div>
@@ -4047,6 +4052,10 @@ async function saveRecord(key, rec, editing, opts){
       const fid2 = String(out['Family ID'] || '').trim();
       if(head && fid2 && !headMemberOf(fid2, head))
         toast('Head is not in Members yet — open Members and use "Add missing family heads"', 'bad');
+      /* A big household is entered as several subfamilies in one sitting, so
+         come straight back to the parent instead of dropping to the list. */
+      const par = String(out['Parent Family ID'] || '').trim();
+      if(par && !editing && !again) setTimeout(() => openProfile(par), 260);
     }
   } catch(e){
     const box = $('#formErr'); box.classList.remove('hide'); box.textContent = e.message;
@@ -4099,7 +4108,7 @@ function askDelete(key, id){
       '. Those rows stay in the sheet and will show an unknown family.</p>';
   }
   openModal(`
-    <header><h3>Delete ${esc(m.title.replace(/s$/, '').toLowerCase())}?</h3></header>
+    <header><h3>Delete ${esc(singularOf(m))}?</h3></header>
     <div class="body confirm">
       <p><b>${esc(id)}</b>${label ? ' — ' + esc(label) : ''} will be removed from the ${esc(m.sheet)} sheet.</p>
       ${linked}
@@ -4169,7 +4178,11 @@ function openProfile(id){
             <td data-label="House">${esc(s['House No'] || '')}</td><td class="num" data-label="Members">${n}</td>
             <td data-label="Status">${esc(s['Family Status'] || 'Active')}</td>
             <td class="acts"><button class="btn btn-sm" data-fam="${esc(sid)}">View</button></td></tr>`;
-        }).join('')}</tbody></table></div>` : ''}
+        }).join('')}</tbody></table></div>
+      ${canEdit() ? `<div style="margin-top:10px"><button class="btn btn-sm" data-addsub="${esc(id)}">+ Add another subfamily</button></div>` : ''}`
+      : (canEdit() && !parent ? `<div class="subnote" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+          <span style="flex:1;min-width:200px">Is this a big household with married sons or brothers keeping separate kitchens? Record each as a subfamily.</span>
+          <button class="btn btn-sm" data-addsub="${esc(id)}">+ Add subfamily</button></div>` : '')}
       <h4 style="font-family:var(--display);margin:20px 0 8px;font-size:16px">Members</h4>
       ${mem.length ? `<div class="tablewrap" style="max-height:none"><table class="grid">
         <thead><tr><th></th><th>ID</th><th>Name</th><th>Relation</th><th class="num">Age</th><th>Occupation</th><th class="num">Income</th><th></th></tr></thead>
@@ -4196,6 +4209,9 @@ function openProfile(id){
   });
   document.querySelectorAll('[data-fam]').forEach(b => {
     b.onclick = () => { closeModal(); openProfile(b.dataset.fam); };
+  });
+  document.querySelectorAll('[data-addsub]').forEach(b => {
+    b.onclick = () => { closeModal(); openSubfamily(b.dataset.addsub); };
   });
 }
 

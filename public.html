@@ -436,10 +436,28 @@ function renderSticky(s){
   }
 }
 
-function driveThumb(u, w){
+/* Drive serves the same file from three different hosts and which one works
+   varies by file and by viewer, so try them in turn rather than trusting one. */
+function driveId(u){
   var s = String(u || '').trim();
-  var m = s.match(/drive\.google\.com\/file\/d\/([^/]+)/) || s.match(/[?&]id=([^&]+)/);
-  return m ? 'https://drive.google.com/thumbnail?id=' + m[1] + '&sz=w' + (w || 160) : s;
+  var m = s.match(/drive\.google\.com\/file\/d\/([^/]+)/) || s.match(/[?&]id=([^&]+)/) ||
+          s.match(/googleusercontent\.com\/d\/([^=?&]+)/);
+  return m && m[1] && m[1].length >= 25 ? m[1] : '';
+}
+function photoSrcList(u, w){
+  var id = driveId(u);
+  if(!id) return [String(u || '').trim()];
+  return ['https://lh3.googleusercontent.com/d/' + id + '=w' + w,
+          'https://drive.google.com/thumbnail?id=' + id + '&sz=w' + w,
+          'https://drive.usercontent.google.com/download?id=' + id + '&export=view'];
+}
+function wirePubPhotos(root){
+  (root || document).querySelectorAll('img[data-srcs]').forEach(function(img){
+    var list = String(img.getAttribute('data-srcs') || '').split('|').filter(Boolean);
+    var i = 0;
+    img.onerror = function(){ i++; if(i < list.length) img.src = list[i]; else img.onerror = null; };
+    if(list.length) img.src = list[0];
+  });
 }
 
 function renderDays(d){
@@ -476,7 +494,7 @@ function renderRemembrance(r){
       : 'In ' + p.daysAway + ' days · ' + fmtDate(p.anniv);
     var yrs = (p.dob ? new Date(p.dob).getFullYear() + ' – ' : '') + new Date(p.dod).getFullYear();
     var img = p.photo
-      ? '<img class="rimg" src="' + esc(driveThumb(p.photo, 160)) + '" alt="" loading="lazy">'
+      ? '<img class="rimg" data-srcs="' + esc(photoSrcList(p.photo, 160).join('|')) + '" alt="' + esc(p.name) + '" loading="lazy">'
       : '<span class="rno">◦</span>';
     return '<div class="rperson' + (p.daysAway === 0 ? ' today' : '') + '">' + img +
       '<div class="rtx"><b>' + esc(p.name) + '</b><div class="ryr">' + esc(yrs) +
@@ -491,6 +509,7 @@ function renderRemembrance(r){
   var foot = document.querySelector('.foot');
   if(foot && foot.parentNode) foot.parentNode.insertBefore(box, foot);
   else document.body.appendChild(box);
+  wirePubPhotos(box);
 }
 
 api('publicRemembrance').then(function(r){ if(r && r.ok) renderRemembrance(r); }).catch(function(){});
