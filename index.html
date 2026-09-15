@@ -454,7 +454,15 @@ table.grid tbody tr:hover{background:#fbfbf8}
    content and the photo gives up height first. */
 .brandside{justify-content:flex-start;min-height:0;overflow:hidden}
 .photoframe{margin-top:0;margin-bottom:0;flex:0 1 auto;min-height:0}
-.photoframe img{aspect-ratio:16/10;max-height:34dvh;height:auto}
+/* The photo is 1080×607. Capping its HEIGHT squashed the box while the width
+   stayed put, so `cover` threw away the spire and the plinth. Bound the width
+   instead — the aspect ratio then sets the height and nothing is cropped. */
+.photoframe{margin-top:0;margin-bottom:0;flex:0 1 auto;min-height:0;
+  max-width:calc(44dvh * 1080 / 607);width:100%}
+.photoframe img{aspect-ratio:1080/607;object-fit:cover;width:100%;height:auto;display:block}
+/* Centring a card taller than the window puts its top and bottom outside the
+   scroll range — centre only while it fits. */
+#login{align-content:safe center;justify-items:center}
 .photocap{margin-bottom:18px}
 .brandtext{margin-top:18px;flex:none}
 .brandtext .eyebrow{margin-bottom:6px}
@@ -462,12 +470,12 @@ table.grid tbody tr:hover{background:#fbfbf8}
 .brandside p{display:block;margin-bottom:16px}
 .pills{margin-bottom:0}
 @media(max-width:860px){
-  .photoframe img{aspect-ratio:16/9;max-height:26dvh}
+  .photoframe{max-width:calc(30dvh * 1080 / 607)}
   .photocap{margin-bottom:12px}
   .brandtext{margin-top:12px}
 }
 @media(max-height:760px){
-  .photoframe img{max-height:24dvh}
+  .photoframe{max-width:calc(30dvh * 1080 / 607)}
   .brandtext{margin-top:12px}
   .brandside p{margin-bottom:12px}
 }
@@ -778,6 +786,77 @@ html.odia .nav{font-family:var(--display);font-size:17px}
 .rperson .rtx .ryr{font-size:12.5px;color:#a9bdcb;font-variant-numeric:tabular-nums;margin-top:2px}
 .rperson .rtx .rday{font-size:11.5px;color:#e8c87a;font-weight:700;margin-top:4px;letter-spacing:.03em}
 .rperson.today{background:#c9a23f1f;border-color:#c9a23f6b}
+
+/* ---------- household roster ---------- */
+/* Every column was losing 46px to chrome before a character rendered — .grid's
+   14px cell padding, the input's own 9px, and borders. Row gap now comes from
+   border-spacing, so a column's width is very nearly its usable width. */
+.roster{table-layout:fixed;width:100%;border-collapse:separate;border-spacing:4px 2px}
+.roster th,.roster td{padding:2px 0;border:0}
+.roster th{font-size:11px;letter-spacing:.04em;color:var(--label);text-align:left;
+  font-weight:700;text-transform:uppercase}
+.roster th.rno,.roster td.rno{width:44px;text-align:center;color:var(--label);font-size:12px;
+  line-height:1.25;vertical-align:middle}
+.roster col.cname{width:auto}
+.roster .rin[data-f="Name"],.roster .headlock{min-width:110px}
+.roster col.crel{width:148px}
+.roster col.csex{width:96px}
+.roster col.cage{width:58px}
+.roster col.ctel{width:112px}
+.roster td.rno .midtag{display:block;font-size:9.5px;font-weight:700;letter-spacing:.02em;
+  color:var(--indigo-2);opacity:.75;margin-top:1px}
+.roster .rin{width:100%;min-width:0;padding:8px 7px;border:1px solid var(--line);border-radius:9px;
+  background:var(--surface);font:inherit;font-size:13.5px;color:var(--ink);box-sizing:border-box}
+.roster select.rin{padding-right:4px}
+.roster .rin:focus{outline:none;border-color:var(--indigo-2);box-shadow:0 0 0 3px #22485c1f;position:relative;z-index:1}
+/* The spinner steals a strip inside the box and hid two-digit ages. */
+.roster .rage{text-align:right;font-variant-numeric:tabular-nums;-moz-appearance:textfield;appearance:textfield}
+.roster .rage::-webkit-outer-spin-button,.roster .rage::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.roster .rtel{font-variant-numeric:tabular-nums}
+.midtag{font-size:11px;font-weight:700;color:var(--indigo-2);font-variant-numeric:tabular-nums}
+.headlock{display:block;padding:8px 7px;font-size:13.5px;font-weight:600;color:var(--ink);
+  border:1px dashed var(--line);border-radius:9px;background:var(--surface-2);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* A phone cannot show six columns, so each person becomes a labelled card.
+   The roster deliberately does NOT use class="grid" — that card transform is
+   built for read-only tables and would leave these inputs unlabelled. */
+@media (max-width:760px){
+  .roster,.roster tbody,.roster tr,.roster td{display:block;width:100%}
+  .roster thead,.roster colgroup{display:none}
+  .roster{border-spacing:0}
+  .roster tr{border:1px solid var(--line);border-radius:14px;padding:10px 12px 12px;
+    margin-bottom:12px;background:var(--surface)}
+  .roster td{display:flex;align-items:center;gap:10px;padding:4px 0}
+  .roster td::before{content:attr(data-label);flex:0 0 78px;font-size:11.5px;font-weight:700;
+    letter-spacing:.04em;text-transform:uppercase;color:var(--label)}
+  .roster td.rno{display:flex;justify-content:space-between;align-items:baseline;
+    border-bottom:1px solid var(--line-soft);padding:0 0 8px;margin-bottom:6px;
+    font-family:var(--display);font-size:16px;color:var(--ink);text-align:left;width:100%}
+  .roster td.rno::before{content:'PERSON';flex:none}
+  .roster td.rno .midtag{display:inline;margin:0;font-size:11px}
+  .roster .rin,.roster .headlock{flex:1;min-width:0;padding:10px 10px;font-size:15px}
+  .roster .rage{text-align:left}
+}
+
+/* ---------- who-sees-what matrix ---------- */
+.vismatrix td em{display:block;font-style:normal;font-size:12.5px;color:var(--label);margin-top:3px;
+  max-width:52ch;line-height:1.5}
+.vismatrix th.visc,.vismatrix td.visc{text-align:center;width:130px}
+.vismatrix th.visc span{display:block;font-weight:500;font-size:10.5px;color:var(--label);
+  letter-spacing:.04em;margin-top:2px}
+.vismatrix td.visc input{width:19px;height:19px;accent-color:var(--brick);cursor:pointer}
+.vismatrix td.visc.dim{opacity:.4}
+.vismatrix td.visc .na{color:var(--line);font-size:15px}
+
+/* ---------- pick one of a family's members ---------- */
+.pickgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;margin-top:14px}
+.pickone{display:flex;flex-direction:column;gap:3px;align-items:flex-start;text-align:left;
+  background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;
+  font:inherit;cursor:pointer;transition:border-color .15s ease,transform .15s ease,box-shadow .15s ease}
+.pickone:hover{border-color:var(--indigo-2);transform:translateY(-2px);box-shadow:0 12px 24px -16px #17303f66}
+.pickone b{font-size:14.5px;font-weight:600;color:var(--ink)}
+.pickone span{font-size:12px;color:var(--label);font-variant-numeric:tabular-nums}
 
 /* ---------- links ---------- */
 a{color:var(--brick);text-decoration-color:#a8341e40;text-underline-offset:3px}
@@ -1911,8 +1990,10 @@ function renderGuidance(){
 /* =========================================================================
    PUBLIC PAGE CONTROL (admin) — what villagers may see without signing in
    ========================================================================= */
+/* Two audiences, one table. Scattering these across three pages meant the
+   admin could never answer "what does a villager actually see?" without
+   hunting. Rows are things; columns are who sees them. */
 const PUBLIC_SWITCHES = [
-  ['Public Page', 'Publish the page at all', 'When off, visitors see only a short note.'],
   ['Public Show Fund', 'The balance in hand', 'The single big figure at the top.'],
   ['Public Show Breakdown', 'Income and spending lines', 'Opening fund, contributions, expenditure, help paid.'],
   ['Public Show Counts', 'Village counts', 'Families, members, people helped this year.'],
@@ -1920,33 +2001,77 @@ const PUBLIC_SWITCHES = [
   ['Public Show Recent Spending', 'Recent spending list', 'Last ten entries. Never shows who received help.']
 ];
 
+/* [label, note, sign-in setting or null, public setting or null, default] */
+const SHARED_SWITCHES = [
+  ['Sticky notes', 'Pinned notes the committee wants seen. Each note also has its own \u201cshow on the public page\u201d tick.',
+   'Sticky Notes Login', 'Sticky Notes Public', 'No'],
+  ['Remembrance days', 'A deceased member\u2019s anniversary, from a week before until the day itself.',
+   'Remembrance Login', 'Remembrance Public', 'Yes'],
+  ['Important days', 'Festivals, meetings and other dates on the committee\u2019s list.',
+   'Important Days Login', 'Important Days Public', 'Yes']
+];
+
 function renderPublicPage(){
   if(!isAdmin()){ $('#main').innerHTML = '<div class="empty"><b>Admins only</b></div>'; return; }
-  const on = k => String(setting(k, 'Yes')).trim().toLowerCase() !== 'no';
+  const on = (k, d) => String(setting(k, d || 'Yes')).trim().toLowerCase() !== 'no';
   const live = on('Public Page');
+  const spot = String(setting('Sticky Notes Spot', 'bottom-right') || 'bottom-right');
+  const box = (k, checked, dim) =>
+    `<input type="checkbox" data-pub="${esc(k)}" ${checked ? 'checked' : ''} ${dim ? 'disabled' : ''}>`;
+
   $('#main').innerHTML = `
     <div class="pagehead">
-      <div><h2>Public page</h2>
-      <div class="sub">What any villager can see at <b>public.html</b> without signing in</div></div>
+      <div><h2>What people see</h2>
+      <div class="sub">Everything a villager can read without signing in, and what greets them on the sign-in screen</div></div>
       <div class="sp"></div>
-      <a class="btn btn-sm" href="public.html" target="_blank" rel="noreferrer">Open the page</a>
+      <a class="btn btn-sm" href="public.html" target="_blank" rel="noreferrer">Open the public page</a>
     </div>
+
     <div class="panel">
       <div class="panel-head"><h3>${live ? 'The account is public' : 'The account is private'}</h3>
         <span class="small">${live ? 'Anyone with the link can read it' : 'Visitors see only a short note'}</span></div>
       <div class="panel-body">
-        <div class="colgrid">
-          ${PUBLIC_SWITCHES.map(([k, name, note]) => `
-            <label class="switchrow${k !== 'Public Page' && !live ? ' dim' : ''}">
-              <input type="checkbox" data-pub="${esc(k)}" ${on(k) ? 'checked' : ''}>
-              <span><b>${esc(name)}</b><em>${esc(note)}</em></span>
-            </label>`).join('')}
-        </div>
-        <div class="fieldnote" style="margin-top:14px">Names of people who received help, mobile numbers,
-        incomes and member details are never sent to the public page, whatever is ticked here.</div>
+        <label class="switchrow" style="max-width:520px">
+          ${box('Public Page', live, false)}
+          <span><b>Publish the public page at all</b><em>When off, the two Public ticks below have no effect.</em></span>
+        </label>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-top:16px">
+      <div class="panel-head"><h3>Who sees what</h3></div>
+      <div class="tablewrap" style="max-height:none">
+        <table class="grid vismatrix">
+          <thead><tr>
+            <th>Shown</th>
+            <th class="visc">Sign-in<br><span>before login</span></th>
+            <th class="visc">Public page<br><span>no login at all</span></th>
+          </tr></thead>
+          <tbody>
+            ${PUBLIC_SWITCHES.map(([k, name, note]) => `<tr>
+              <td data-label="Shown"><b>${esc(name)}</b><em>${esc(note)}</em></td>
+              <td class="visc" data-label="Sign-in"><span class="na">—</span></td>
+              <td class="visc${live ? '' : ' dim'}" data-label="Public">${box(k, on(k), !live)}</td>
+            </tr>`).join('')}
+            ${SHARED_SWITCHES.map(([name, note, lk, pk, def]) => `<tr>
+              <td data-label="Shown"><b>${esc(name)}</b><em>${esc(note)}</em></td>
+              <td class="visc" data-label="Sign-in">${box(lk, on(lk, def === 'No' ? 'Yes' : def), false)}</td>
+              <td class="visc${live ? '' : ' dim'}" data-label="Public">${box(pk, on(pk, def), !live)}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
       </div>
       <div class="panel-body" style="border-top:1px solid var(--line-soft)">
-        <button class="btn btn-primary" id="pubSave">Save what is public</button>
+        <label class="lbl" for="stickySpot">Where sticky notes sit on the public page</label>
+        <select class="input" id="stickySpot" style="max-width:260px">
+          ${['top-left','top-centre','top-right','bottom-left','bottom-centre','bottom-right']
+            .map(v => `<option value="${v}" ${spot === v ? 'selected' : ''}>${v.replace('-', ' ')}</option>`).join('')}
+        </select>
+        <div class="fieldnote" style="margin-top:12px">Names of people who received help, mobile numbers,
+        incomes and member details are never sent outside the dashboard, whatever is ticked here.</div>
+      </div>
+      <div class="panel-body" style="border-top:1px solid var(--line-soft)">
+        <button class="btn btn-primary" id="pubSave">Save</button>
       </div>
     </div>`;
 
@@ -1954,17 +2079,22 @@ function renderPublicPage(){
     const btn = $('#pubSave');
     btn.disabled = true; btn.textContent = 'Saving…';
     try {
-      for(const box of $('#main').querySelectorAll('[data-pub]')){
-        const rec = { Setting: box.dataset.pub, Value: box.checked ? 'Yes' : 'No' };
+      for(const b of $('#main').querySelectorAll('[data-pub]')){
+        if(b.disabled) continue;
+        const rec = { Setting: b.dataset.pub, Value: b.checked ? 'Yes' : 'No' };
         const r = await api('save', { sheet: 'Settings', record: JSON.stringify(rec) });
         if(!r || !r.ok) throw new Error((r && r.error) || 'could not save ' + rec.Setting);
         DB.settings[rec.Setting] = rec.Value;
       }
-      toast('Public page updated', 'good');
+      const sp = $('#stickySpot').value;
+      const r2 = await api('save', { sheet: 'Settings', record: JSON.stringify({ Setting: 'Sticky Notes Spot', Value: sp }) });
+      if(!r2 || !r2.ok) throw new Error((r2 && r2.error) || 'could not save the note position');
+      DB.settings['Sticky Notes Spot'] = sp;
+      toast('Saved', 'good');
       renderPublicPage();
     } catch(e){
       toast(e.message || String(e), 'bad');
-      btn.disabled = false; btn.textContent = 'Save what is public';
+      btn.disabled = false; btn.textContent = 'Save';
     }
   };
 }
@@ -2453,7 +2583,7 @@ function buildNav(){
     }));
   }
   if(isAdmin()) groups.push(['ADMIN', [['users', '☺', 'Users', 'users'],
-                                       ['publicPage', '◉', 'Public page', null],
+                                       ['publicPage', '◉', 'What people see', null],
                                        ['auditLog', '☶', 'Change history', null],
                                        ['photos', '❏', 'Photos', null],
                                        ['settingsList', '⚙', 'Settings', 'settingsList']]]);
@@ -2863,7 +2993,7 @@ function remembranceHtml(people){
 
 function paintLoginRemembrance(){
   api('publicRemembrance').then(r => {
-    if(!r || !r.ok || !(r.people || []).length) return;
+    if(!r || !r.ok || r.showOnLogin === false || !(r.people || []).length) return;
     const host = document.querySelector('#login .formside') || document.querySelector('#login');
     if(!host) return;
     const box = document.createElement('div');
@@ -2916,7 +3046,9 @@ function daysHtml(days){
 }
 
 function paintLoginDays(){
-  api('publicDays').then(r => {
+  /* loginDays, not publicDays — each day carries its own “Show On” choice, and
+     asking the public endpoint showed the wrong set on the sign-in screen. */
+  api('loginDays').then(r => {
     if(!r || !r.ok || !(r.days || []).length) return;
     const host = document.querySelector('#login .formside') || document.querySelector('#login');
     if(!host) return;
@@ -3404,8 +3536,7 @@ function renderModule(key){
       <option value="">All families</option>
       ${(DB.families || []).map(f => `<option value="${esc(f['Family ID'])}" ${v.fam === String(f['Family ID']) ? 'selected' : ''}>${esc(f['Family ID'])} · ${esc(f['Family Head'])}</option>`).join('')}
     </select>` : ''}
-    ${key === 'members' && canEdit() ? '<button class="btn btn-sm" data-act="heads">Add missing family heads</button>' : ''}
-    ${isAdmin() ? `<button class="btn btn-sm" data-act="cols">Columns</button>` : ''}
+    ${key === 'members' && canEdit() ? '<button class="btn btn-sm" data-act="heads">Add missing family heads</button>' : ''}    ${isAdmin() ? `<button class="btn btn-sm" data-act="cols">Columns</button>` : ''}
     ${isAdmin() && ['families','members'].includes(key) ? `<button class="btn btn-sm ${VIEW[key] && VIEW[key].quick ? 'btn-primary' : ''}" data-act="quick">${VIEW[key] && VIEW[key].quick ? 'Done editing' : 'Quick edit'}</button>` : ''}
     <button class="btn btn-sm" data-act="csv">Export CSV</button>
     <button class="btn btn-sm" data-act="print">Print</button>
@@ -3898,6 +4029,49 @@ async function addHeadAsMember(fam, quiet){
   if(!head || !famId) return;
   if(headMemberOf(famId, head)) return;
 
+  /* The admin picked this person from the parent's member list, so there is
+     nothing to guess: move that exact record. */
+  if(PENDING_HEAD && PENDING_HEAD.memberId){
+    const picked = (DB.members || []).find(x =>
+      String(x['Member ID'] || '').trim() === PENDING_HEAD.memberId);
+    const fromId = PENDING_HEAD.from;
+    PENDING_HEAD = null;
+    if(picked){
+      /* Belt and braces: if this person heads the family being split from,
+         moving them would leave that family's head field pointing at a
+         non-member. Refuse rather than corrupt two families at once. */
+      const src = (DB.families || []).find(x => String(x['Family ID']).trim() === String(fromId).trim());
+      const srcHead = String(src ? (src['Family Head'] || '') : '').trim().toLowerCase();
+      if(srcHead && String(picked['Name'] || '').trim().toLowerCase() === srcHead){
+        toast('That is the head of ' + fromId + ' — pick someone else, or change that family\u2019s head first', 'bad');
+        return;
+      }
+      return movePerson(picked, famId);
+    }
+  }
+
+  /* A subfamily head is nearly always someone already on the register — a
+     married son inside his father's household. Creating a second row for him
+     would duplicate the person, so move the existing record instead. */
+  const existing = findPersonElsewhere(head, famId);
+  if(existing){
+    if(quiet){
+      /* No one to ask in a bulk run, and a bare name match is not proof of
+         identity — villages are full of repeated names. Move only in the
+         case this was built for: the family declares a parent, and the
+         person is sitting in exactly that parent family today. */
+      const parent = String(fam['Parent Family ID'] || '').trim();
+      if(parent && String(existing['Family ID'] || '').trim() === parent)
+        return movePerson(existing, famId);
+      const e = new Error('SAME_NAME');
+      e.sameName = { name: head, family: famId, other: String(existing['Family ID'] || '').trim() };
+      throw e;
+    }
+    const moved = await confirmMove(head, existing, String(existing['Family ID'] || '').trim(), famId);
+    if(moved) return moved;
+    if(moved === null) return;   // cancelled — leave both records alone
+  }
+
   /* Only fill the columns that exist, and never send blanks — some sheets
      reject a full-width blank row, which is why this used to fail silently. */
   const rec = {
@@ -3923,6 +4097,66 @@ async function addHeadAsMember(fam, quiet){
     if(quiet) throw e;
     toast('Head not added as member: ' + (e.message || e), 'bad');
   }
+}
+
+/* The same living person, recorded under a different family. */
+function findPersonElsewhere(name, exceptFamId){
+  const n = String(name).trim().toLowerCase();
+  if(!n) return null;
+  return (DB.members || []).find(x =>
+    !isDeceased(x) &&
+    String(x['Name'] || '').trim().toLowerCase() === n &&
+    String(x['Family ID'] || '').trim() !== String(exceptFamId).trim()) || null;
+}
+
+/* One person, one row: re-file the existing record under the new family. */
+async function movePerson(person, toId){
+  const out = Object.assign({}, person, {
+    'Family ID': String(toId).trim(), 'Relation to Family Head': 'Self'
+  });
+  const r = await api('save', { sheet: MODULES.members.sheet, record: JSON.stringify(out) });
+  if(!r || !r.ok) throw new Error((r && r.error) || 'save failed');
+  upsertLocal('members', out);
+  return out;
+}
+
+/* Returns the moved record, false to fall through and create a new one,
+   or null if the user backed out entirely. */
+function confirmMove(name, person, fromId, toId){
+  return new Promise(resolve => {
+    const fromFam = (DB.families || []).find(f => String(f['Family ID']).trim() === fromId);
+    const fromName = fromFam ? (fromFam['Family Head'] || fromId) : fromId;
+    openModal(`
+      <header><h3>${esc(name)} is already on the register</h3></header>
+      <div class="body confirm">
+        <p><b>${esc(person['Member ID'] || '')}</b> — ${esc(name)} is currently a member of
+        <b>${esc(fromName)}</b> (${esc(fromId)}).</p>
+        <p class="muted">Moving keeps one record for the person, with their photo, age and history intact.
+        Adding a second record would mean the same villager counted twice.</p>
+      </div>
+      <footer>
+        <button class="btn" id="mvCancel">Cancel</button>
+        <button class="btn" id="mvNew">Add as a new person</button>
+        <button class="btn btn-primary" id="mvMove">Move to this subfamily</button>
+      </footer>`);
+
+    const done = v => { closeModal(); resolve(v); };
+    document.getElementById('mvCancel').onclick = () => done(null);
+    document.getElementById('mvNew').onclick = () => done(false);
+    document.getElementById('mvMove').onclick = async () => {
+      const b = document.getElementById('mvMove');
+      b.disabled = true; b.textContent = 'Moving…';
+      try {
+        const out = await movePerson(person, toId);
+        toast(esc(name) + ' moved to ' + toId + ' — no duplicate created', 'good');
+        render();
+        done(out);
+      } catch(e){
+        toast(e.message || String(e), 'bad');
+        b.disabled = false; b.textContent = 'Move to this subfamily';
+      }
+    };
+  });
 }
 
 function headMemberOf(famId, head){
@@ -3956,17 +4190,68 @@ async function addMissingHeads(){
     return head && id && !headMemberOf(id, head);
   });
   if(!missing.length){ toast('Every family head is already a member', 'good'); return; }
-  busy(true, 'Adding ' + missing.length + ' family heads as members…');
-  let done = 0, err = '';
+
+  /* Three outcomes, and they must be counted separately: a fresh row, a move
+     of someone the register already holds, and a name clash only a human can
+     settle. Never guess on the last one — a wrong move quietly empties one
+     family and corrupts another. */
+  const plural = n => n === 1 ? '' : 's';
+  const willMove = missing.filter(f => {
+    const other = findPersonElsewhere(f['Family Head'], f['Family ID']);
+    const parent = String(f['Parent Family ID'] || '').trim();
+    return other && parent && String(other['Family ID'] || '').trim() === parent;
+  }).length;
+  const clashes = missing.filter(f => {
+    const other = findPersonElsewhere(f['Family Head'], f['Family ID']);
+    const parent = String(f['Parent Family ID'] || '').trim();
+    return other && !(parent && String(other['Family ID'] || '').trim() === parent);
+  }).length;
+  const fresh = missing.length - willMove - clashes;
+
+  busy(true, 'Adding ' + fresh + ' head' + plural(fresh) + ' as new member' + plural(fresh) +
+    (willMove ? ', moving ' + willMove + ' already on the register' : '') + '…');
+  let done = 0, skipped = [], err = '';
   for(const f of missing){
     try { await addHeadAsMember(f, true); done++; }
-    catch(e){ if(!err) err = e.message || String(e); }
+    catch(e){
+      if(e && e.sameName) skipped.push(e.sameName);
+      else if(!err) err = e.message || String(e);
+    }
   }
   busy(false);
   await refresh(true);
   render();
-  if(done) toast(done + ' family head' + (done === 1 ? '' : 's') + ' added as members', 'good');
-  if(err) toast((missing.length - done) + ' failed: ' + err, 'bad');
+  if(done) toast(done + ' family head' + plural(done) + ' sorted out' +
+    (willMove ? ' (' + willMove + ' moved, not duplicated)' : ''), 'good');
+  if(skipped.length) reportNameClashes(skipped);
+  if(err) toast((missing.length - done - skipped.length) + ' failed: ' + err, 'bad');
+}
+
+/* Someone must look at these by eye — two villagers can share a name. */
+function reportNameClashes(list){
+  openModal(`
+    <header>
+      <div><h3>${list.length} head${list.length === 1 ? '' : 's'} need${list.length === 1 ? 's' : ''} a look</h3>
+      <div class="sub">Someone with the same name is already on the register</div></div>
+      <div class="sp"></div><button class="btn btn-sm" onclick="closeModal()">Close</button>
+    </header>
+    <div class="body">
+      <p class="muted small">These were left untouched. Two villagers can share a name, so the app will not
+      guess which record belongs where. Open each family, and either move the existing member across
+      or add the head as a new person.</p>
+      <div class="tablewrap" style="max-height:none;margin-top:14px"><table class="grid">
+        <thead><tr><th>Name</th><th>This family</th><th>Already in</th><th></th></tr></thead>
+        <tbody>${list.map(s => `<tr>
+          <td data-label="Name">${esc(s.name)}</td>
+          <td data-label="This family">${esc(s.family)}</td>
+          <td data-label="Already in">${esc(s.other)}</td>
+          <td class="acts"><button class="btn btn-sm" data-fam="${esc(s.family)}">Open</button></td>
+        </tr>`).join('')}</tbody></table></div>
+    </div>
+    <footer><button class="btn btn-primary" onclick="closeModal()">Close</button></footer>`);
+  document.querySelectorAll('[data-fam]').forEach(b => {
+    b.onclick = () => { closeModal(); openProfile(b.dataset.fam); };
+  });
 }
 
 /* The backend finds rows by their ID, so a changed ID cannot be an update —
@@ -4050,12 +4335,22 @@ async function saveRecord(key, rec, editing, opts){
     if(key === 'families'){
       const head = String(out['Family Head'] || '').trim();
       const fid2 = String(out['Family ID'] || '').trim();
-      if(head && fid2 && !headMemberOf(fid2, head))
-        toast('Head is not in Members yet — open Members and use "Add missing family heads"', 'bad');
+      /* Only send them to the bulk button when the head is genuinely absent.
+         If the person exists under another family, that button would copy
+         rather than move them, so say what is actually true instead. */
+      if(head && fid2 && !headMemberOf(fid2, head)){
+        if(findPersonElsewhere(head, fid2))
+          toast(head + ' is already on the register under another family — open that member and change their Family ID to ' + fid2, '');
+        else
+          toast('Head is not in Members yet — open Members and use "Add missing family heads"', 'bad');
+      }
       /* A big household is entered as several subfamilies in one sitting, so
-         come straight back to the parent instead of dropping to the list. */
+         come straight back to the parent instead of dropping to the list.
+         A brand-new main family instead wants its people next \u2014 open the
+         roster rather than making someone hunt for it. */
       const par = String(out['Parent Family ID'] || '').trim();
       if(par && !editing && !again) setTimeout(() => openProfile(par), 260);
+      else if(!editing && !again && fid2) setTimeout(() => openRoster(fid2), 260);
     }
   } catch(e){
     const box = $('#formErr'); box.classList.remove('hide'); box.textContent = e.message;
@@ -4183,7 +4478,8 @@ function openProfile(id){
       : (canEdit() && !parent ? `<div class="subnote" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
           <span style="flex:1;min-width:200px">Is this a big household with married sons or brothers keeping separate kitchens? Record each as a subfamily.</span>
           <button class="btn btn-sm" data-addsub="${esc(id)}">+ Add subfamily</button></div>` : '')}
-      <h4 style="font-family:var(--display);margin:20px 0 8px;font-size:16px">Members</h4>
+      <h4 style="font-family:var(--display);margin:20px 0 8px;font-size:16px;display:flex;align-items:center;gap:10px">Members
+        ${canEdit() ? `<button class="btn btn-sm" data-roster="${esc(id)}" style="font-weight:600">${mem.length ? 'Edit the list' : '+ Add the household'}</button>` : ''}</h4>
       ${mem.length ? `<div class="tablewrap" style="max-height:none"><table class="grid">
         <thead><tr><th></th><th>ID</th><th>Name</th><th>Relation</th><th class="num">Age</th><th>Occupation</th><th class="num">Income</th><th></th></tr></thead>
         <tbody>${mem.map(x => `<tr><td data-label="" class="photocell">${
@@ -4194,11 +4490,11 @@ function openProfile(id){
           <td data-label="Relation">${esc(x['Relation to Family Head'])}</td><td class="num" data-label="Age">${esc(x['Age'])}</td>
           <td data-label="Occupation">${esc(x['Occupation'])}</td><td class="num" data-label="Income">${x['Monthly Income'] ? money(x['Monthly Income']) : ''}</td>
           <td class="acts"><button class="btn btn-sm" data-member="${esc(x['Member ID'])}">View</button></td></tr>`).join('')}</tbody>
-      </table></div>` : '<div class="muted small">No members recorded yet.</div>'}
+      </table></div>` : `<div class="subnote">No members recorded yet.${canEdit() ? ' Use <b>+ Add the household</b> above to put the whole family in at once — one line per person.' : ''}</div>`}
       ${f['Remarks'] ? `<h4 style="font-family:var(--display);margin:20px 0 6px;font-size:16px">Remarks</h4><div class="small">${esc(f['Remarks'])}</div>` : ''}
     </div>
     <footer>
-      ${canEdit() ? `<button class="btn" onclick="closeModal();openForm('members')">Add member</button>
+      ${canEdit() ? `<button class="btn" onclick="closeModal();openRoster('${esc(id)}')">Add / edit members</button>
       <button class="btn" onclick="closeModal();openSubfamily('${esc(id)}')">Add subfamily</button>
       <button class="btn btn-primary" onclick="closeModal();openForm('families','${esc(id)}')">Edit family</button>` : ''}
     </footer>`);
@@ -4213,18 +4509,279 @@ function openProfile(id){
   document.querySelectorAll('[data-addsub]').forEach(b => {
     b.onclick = () => { closeModal(); openSubfamily(b.dataset.addsub); };
   });
+  document.querySelectorAll('[data-roster]').forEach(b => {
+    b.onclick = () => { closeModal(); openRoster(b.dataset.roster); };
+  });
 }
 
 /* A subfamily is an ordinary family row that names its parent, so it keeps
    its own members, contributions and help history while the parent page
-   still shows the whole household together. */
+   still shows the whole household together.
+
+   The head is PICKED from the parent's existing members rather than typed.
+   Typing a name meant the app had to guess afterwards whether "Sanjay Sahu"
+   was the Sanjay already on the register or a different one — and a wrong
+   guess either duplicates a person or empties the wrong family. Picking
+   carries the Member ID, so the move is certain. */
+let PENDING_HEAD = null;
+
+/* =========================================================================
+   HOUSEHOLD ROSTER — enter a whole family in one sitting.
+   Opening the member form once per person meant re-picking the family,
+   re-typing the surname and re-choosing the village for every child in the
+   house. This is the sheet a committee member actually fills sitting on a
+   veranda: one line per person, Enter to move along, save once.
+   ========================================================================= */
+const REL_OPTS = ['Self','Wife','Husband','Son','Daughter','Father','Mother','Brother','Sister',
+                  'Daughter-in-law','Son-in-law','Grandson','Granddaughter','Other'];
+
+function openRoster(famId){
+  if(!canEdit()){ toast('Your account cannot add members', 'bad'); return; }
+  const fid = String(famId).trim();
+  const fam = (DB.families || []).find(x => String(x['Family ID']).trim() === fid);
+  if(!fam){ toast('Family not found', 'bad'); return; }
+  const head = String(fam['Family Head'] || '').trim();
+  /* Most households share a surname, so offer it rather than making someone
+     type "Jena" eleven times. */
+  const surname = head.split(/\s+/).slice(-1)[0] || '';
+  const existing = (DB.members || [])
+    .filter(m => String(m['Family ID'] || '').trim() === fid && !isDeceased(m))
+    .sort((a, b) => String(a['Member ID']).localeCompare(String(b['Member ID'])));
+
+  const row = (m, i) => {
+    const rel = String(m ? (m['Relation to Family Head'] || '') : '').trim();
+    const g = String(m ? (m['Gender'] || '') : '').trim();
+    /* The head's name lives on the Families sheet as well. Editing it here
+       would update the member row and leave the family still calling him by
+       the old name, so send that one rename to the place that owns it. */
+    const isHead = !!m && (rel.toLowerCase() === 'self' ||
+      (head && String(m['Name'] || '').trim().toLowerCase() === head.toLowerCase()));
+    return `<tr data-r="${i}" ${m ? `data-mid="${esc(String(m['Member ID'] || '').trim())}"` : ''}>
+      <td class="rno">${i + 1}${m ? `<span class="midtag">${esc(String(m['Member ID'] || '').trim())}</span>` : ''}</td>
+      <td data-label="Name">${isHead
+        ? `<span class="headlock" title="The head’s name is changed on the family record">${esc(m['Name'] || '')}</span>`
+        : `<input class="rin" data-f="Name" value="${esc(m ? (m['Name'] || '') : '')}" placeholder="Full name">`}</td>
+      <td data-label="Relation"><select class="rin" data-f="Relation to Family Head">
+        <option value=""></option>
+        ${REL_OPTS.map(o => `<option ${rel === o ? 'selected' : ''}>${o}</option>`).join('')}
+      </select></td>
+      <td data-label="Gender"><select class="rin rsx" data-f="Gender">
+        <option value=""></option>
+        <option ${g === 'Male' ? 'selected' : ''}>Male</option>
+        <option ${g === 'Female' ? 'selected' : ''}>Female</option>
+        <option ${g === 'Other' ? 'selected' : ''}>Other</option>
+      </select></td>
+      <td data-label="Age"><input class="rin rage" data-f="Age" type="number" min="0" max="120"
+           value="${esc(m ? (m['Age'] || '') : '')}" placeholder="—"></td>
+      <td data-label="Mobile"><input class="rin rtel" data-f="Mobile" value="${esc(m ? (m['Mobile'] || '') : '')}" placeholder="—"></td>
+    </tr>`;
+  };
+
+  openModal(`
+    <header>
+      <div><h3>${esc(head || fid)}</h3>
+      <div class="sub">Everyone in the household · ${esc(fid)}</div></div>
+      <div class="sp"></div><button class="btn btn-sm" onclick="closeModal()">Cancel</button>
+    </header>
+    <div class="body">
+      <div class="fieldnote">One line per person. <kbd>Enter</kbd> moves along and opens a fresh line at the end.
+      Leave a line blank to skip it. The head’s name is set on the family record, so it is shown here but not editable.
+      Dates of birth, photos and occupations can be filled in later from each member’s page.</div>
+      <div class="tablewrap" style="max-height:none;margin-top:14px">
+        <table class="roster">
+          <colgroup><col class="cno"><col class="cname"><col class="crel"><col class="csex">
+            <col class="cage"><col class="ctel"></colgroup>
+          <thead><tr><th class="rno">#</th><th>Name</th><th>Relation</th><th>Gender</th>
+            <th>Age</th><th>Mobile</th></tr></thead>
+          <tbody id="rBody">
+            ${existing.map(row).join('')}
+            ${[0, 1, 2].map((_, k) => row(null, existing.length + k)).join('')}
+          </tbody>
+        </table>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <button class="btn btn-sm" id="rAdd">+ Another line</button>
+        ${surname ? `<button class="btn btn-sm" id="rSur">Add “${esc(surname)}” to bare first names</button>` : ''}
+        <span class="muted small" id="rCount"></span>
+      </div>
+    </div>
+    <footer>
+      <button class="btn" onclick="closeModal()">Close</button>
+      <button class="btn btn-primary" id="rSave">Save the household</button>
+    </footer>`);
+
+  const body = document.getElementById('rBody');
+  /* The head's row shows a locked span rather than an input, so every reader
+     of a row's name must go through here — a bare querySelector returns null
+     on that row and takes the whole modal down with it. */
+  const nameOf = tr => {
+    const i = tr.querySelector('[data-f="Name"]');
+    if(i) return i.value.trim();
+    const l = tr.querySelector('.headlock');
+    return l ? l.textContent.trim() : '';
+  };
+  const count = () => {
+    const filled = [...body.querySelectorAll('tr')].filter(tr => nameOf(tr)).length;
+    const el = document.getElementById('rCount');
+    if(el) el.textContent = filled + ' name' + (filled === 1 ? '' : 's') + ' on the list';
+  };
+
+  const addRow = () => {
+    const i = body.querySelectorAll('tr').length;
+    body.insertAdjacentHTML('beforeend', row(null, i));
+    wire();
+    return body.lastElementChild;
+  };
+
+  function wire(){
+    body.querySelectorAll('.rin').forEach(el => {
+      if(el.dataset.wired) return;
+      el.dataset.wired = '1';
+      el.addEventListener('input', count);
+      el.addEventListener('keydown', ev => {
+        if(ev.key !== 'Enter') return;
+        ev.preventDefault();
+        const all = [...body.querySelectorAll('.rin')];
+        const next = all[all.indexOf(el) + 1];
+        if(next){ next.focus(); if(next.select) next.select(); return; }
+        const tr = addRow();
+        tr.querySelector('[data-f="Name"]').focus();
+      });
+    });
+  }
+  wire();
+
+  document.getElementById('rAdd').onclick = () => {
+    addRow().querySelector('[data-f="Name"]').focus();
+  };
+
+  const sur = document.getElementById('rSur');
+  if(sur) sur.onclick = () => {
+    let n = 0;
+    body.querySelectorAll('[data-f="Name"]').forEach(inp => {
+      const v = inp.value.trim();
+      if(v && !/\s/.test(v)){ inp.value = v + ' ' + surname; n++; }
+    });
+    toast(n ? surname + ' added to ' + n + ' name' + (n === 1 ? '' : 's') : 'Every name already has a surname', n ? 'good' : '');
+  };
+
+  document.getElementById('rSave').onclick = async () => {
+    const btn = document.getElementById('rSave');
+    const rows = [...body.querySelectorAll('tr')].map(tr => {
+      const get = f => {
+        const el = tr.querySelector(`[data-f="${f}"]`);
+        return el ? el.value.trim() : '';
+      };
+      const locked = tr.querySelector('.headlock');
+      return { mid: tr.dataset.mid || '', name: nameOf(tr),
+               rel: get('Relation to Family Head'),
+               gender: get('Gender'), age: get('Age'), mobile: get('Mobile') };
+    }).filter(r => r.name);
+
+    if(!rows.length){ toast('Nothing to save — add at least one name', 'bad'); return; }
+
+    /* Two people in one household with the same name is a typo, not a fact. */
+    const seen = new Set(), dupe = rows.find(r => {
+      const k = r.name.toLowerCase();
+      if(seen.has(k)) return true;
+      seen.add(k); return false;
+    });
+    if(dupe){ toast('“' + dupe.name + '” appears twice on the list', 'bad'); return; }
+
+    btn.disabled = true;
+    let saved = 0, err = '';
+    for(const r of rows){
+      const was = r.mid ? (DB.members || []).find(m => String(m['Member ID']).trim() === r.mid) : null;
+      const rec = Object.assign({}, was || {}, {
+        'Member ID': r.mid || freeMemberId(),
+        'Family ID': fid,
+        'Name': r.name
+      });
+      if(r.rel) rec['Relation to Family Head'] = r.rel;
+      if(r.gender) rec['Gender'] = r.gender;
+      if(r.age) rec['Age'] = r.age;
+      if(r.mobile) rec['Mobile'] = r.mobile;
+      /* Unchanged rows cost a round trip each; skip them. */
+      if(was && ['Name','Relation to Family Head','Gender','Age','Mobile']
+          .every(k => String(was[k] || '') === String(rec[k] || ''))) continue;
+      btn.textContent = 'Saving ' + (saved + 1) + ' of ' + rows.length + '…';
+      try {
+        const res = await api('save', { sheet: MODULES.members.sheet, record: JSON.stringify(rec) });
+        if(!res || !res.ok) throw new Error((res && res.error) || 'the sheet refused the row');
+        upsertLocal('members', rec);
+        saved++;
+      } catch(e){ if(!err) err = e.message || String(e); }
+    }
+    closeModal();
+    if(saved) toast(saved + ' member' + (saved === 1 ? '' : 's') + ' saved to ' + (head || fid), 'good');
+    else if(!err) toast('Nothing had changed', '');
+    if(err) toast('Some rows failed: ' + err, 'bad');
+    render();
+  };
+
+  /* Last, so a throw in here can never leave Save unwired. */
+  count();
+}
+
 function openSubfamily(parentId){
-  const p = (DB.families || []).find(x => String(x['Family ID']).trim() === String(parentId).trim());
-  openForm('families', null, p ? {
-    'Parent Family ID': String(parentId).trim(),
-    'House No': p['House No'] || '',
-    'Address/Area': p['Address/Area'] || ''
-  } : { 'Parent Family ID': String(parentId).trim() });
+  const pid = String(parentId).trim();
+  const p = (DB.families || []).find(x => String(x['Family ID']).trim() === pid);
+  /* Never offer the household's own head. Moving him would empty the parent
+     of the very person its "Family Head" field names, and the next run of
+     "Add missing family heads" would then recreate him — the duplication
+     loop this picker exists to prevent. A subfamily head is by definition
+     someone other than the head of the household it splits from. */
+  const pHead = String(p ? (p['Family Head'] || '') : '').trim().toLowerCase();
+  const pool = (DB.members || []).filter(m =>
+    String(m['Family ID'] || '').trim() === pid && !isDeceased(m) &&
+    String(m['Name'] || '').trim().toLowerCase() !== pHead &&
+    String(m['Relation to Family Head'] || '').trim().toLowerCase() !== 'self');
+
+  const start = (memberId) => {
+    PENDING_HEAD = memberId ? { memberId: memberId, from: pid } : null;
+    const m = memberId ? pool.find(x => String(x['Member ID']).trim() === memberId) : null;
+    closeModal();
+    openForm('families', null, Object.assign({
+      'Parent Family ID': pid,
+      'House No': p ? (p['House No'] || '') : '',
+      'Address/Area': p ? (p['Address/Area'] || '') : ''
+    }, m ? {
+      'Family Head': m['Name'] || '',
+      'Head Gender': m['Gender'] || '',
+      'Mobile': m['Mobile'] || (p ? p['Mobile'] || '' : '')
+    } : {}));
+  };
+
+  if(!pool.length){ start(null); return; }
+  openModal(`
+    <header>
+      <div><h3>Who heads this subfamily?</h3>
+      <div class="sub">${esc(p ? (p['Family Head'] || pid) : pid)} · ${pool.length} member${pool.length === 1 ? '' : 's'}</div></div>
+      <div class="sp"></div><button class="btn btn-sm" onclick="closeModal()">Cancel</button>
+    </header>
+    <div class="body">
+      <p class="muted small">Pick the married son, brother or daughter-in-law who now keeps a separate
+      kitchen. Their record moves across whole — photo, age and history intact — so nobody is counted twice.</p>
+      <div class="pickgrid">
+        ${pool.map(m => {
+          const mid = esc(String(m['Member ID'] || '').trim());
+          const rel = String(m['Relation to Family Head'] || '').trim();
+          const age = m['Age'] ? m['Age'] + ' yrs' : '';
+          return `<button class="pickone" data-head="${mid}">
+            <b>${esc(m['Name'] || '')}</b>
+            <span>${esc([mid, rel, age].filter(Boolean).join(' · '))}</span>
+          </button>`;
+        }).join('')}
+      </div>
+      <div style="margin-top:16px">
+        <button class="btn" id="headNew">The head is not on this list</button>
+        <div class="fieldnote" style="margin-top:6px">Use this only for someone genuinely new to the register — a
+        wife who has just come to the village, for instance.</div>
+      </div>
+    </div>`);
+
+  document.querySelectorAll('[data-head]').forEach(b => { b.onclick = () => start(b.dataset.head); });
+  document.getElementById('headNew').onclick = () => start(null);
 }
 
 
@@ -5028,40 +5585,12 @@ function renderPhotos(){
     <span class="muted small" style="margin-left:auto">Leave a box empty to fall back to ${esc(CONFIG.DEFAULT_PHOTO)}</span>
   </div>
   <div class="panel" style="margin-top:16px">
-    <div class="panel-head"><h3>Pinned notes on the public page</h3></div>
+    <div class="panel-head"><h3>Public page fallback file</h3></div>
     <div class="panel-body">
-      <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
-        <input type="checkbox" id="stickyPublic" style="width:18px;height:18px">
-        <span>Show pinned sticky notes on the public account page</span>
-      </label>
-      <label class="lbl" for="stickySpot" style="margin-top:14px;display:block">Where on the page</label>
-      <select class="input" id="stickySpot" style="max-width:260px">
-        <option value="top-left">Top · left</option>
-        <option value="top-center">Top · middle</option>
-        <option value="top-right">Top · right</option>
-        <option value="bottom-left">Below · left</option>
-        <option value="bottom-center">Below · middle</option>
-        <option value="bottom-right">Below · right</option>
-      </select>
-      <div class="fieldnote" style="margin-top:8px">This is the master switch. Which pinned notes actually appear is chosen per note — tick "Show this note on the public page" when adding or editing a sticky. Keep public notes free of private details.</div>
-    </div>
-  </div>
-  <div class="panel" style="margin-top:16px">
-    <div class="panel-head"><h3>Remembrance day</h3></div>
-    <div class="panel-body">
-      <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
-        <input type="checkbox" id="rememPublic" style="width:18px;height:18px">
-        <span>Show remembrance days on the public account page</span>
-      </label>
-      <div class="fieldnote" style="margin-top:8px">A deceased member's death anniversary appears from one week before until the day itself, every year, with their photo and the two dates. It always shows on the dashboard and sign-in screen; this decides the public page. Only the name, photo, date of birth and date of death go out.</div>
-      <div style="margin-top:12px"><button class="btn btn-primary" id="rememSave">Save</button></div>
-    </div>
-  </div>
-      <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
-        <button class="btn btn-primary" id="stickyWhereSave">Save</button>
-        <button class="btn" id="stickyExport">Download notes file for GitHub</button>
-      </div>
-      <div class="fieldnote" style="margin-top:8px">If the sheet backend has not been redeployed, download this file and upload it beside <b>public.html</b> in GitHub. The public page reads it when the backend does not answer.</div>
+      <div class="fieldnote">What the sign-in screen and public page show is set on the <b>What people see</b> page.
+      This button is only needed if the sheet backend has not been redeployed \u2014 download the file and upload it
+      beside <b>public.html</b> in GitHub, and the public page will read it when the backend does not answer.</div>
+      <div style="margin-top:12px"><button class="btn" id="stickyExport">Download notes file for GitHub</button></div>
     </div>
   </div>
   <div class="panel" style="margin-top:16px">
@@ -5091,26 +5620,13 @@ function renderPhotos(){
   both();
 
   $('#photoReset').onclick = () => { li.value = CONFIG.DEFAULT_PHOTO; di.value = CONFIG.DEFAULT_PHOTO; both(); };
-  $('#stickyPublic').checked = String(setting('Sticky Notes Public', 'No')).toLowerCase() === 'yes';
-  $('#stickySpot').value = String(setting('Sticky Notes Spot', 'bottom-right') || 'bottom-right');
-  $('#rememPublic').checked = String(setting('Remembrance Public', 'Yes')).toLowerCase() !== 'no';
-  $('#rememSave').onclick = async () => {
-    const b = $('#rememSave'); b.disabled = true; b.textContent = 'Saving\u2026';
-    try {
-      const v = $('#rememPublic').checked ? 'Yes' : 'No';
-      await api('save', { sheet: 'Settings', record: JSON.stringify({ Setting: 'Remembrance Public', Value: v }) });
-      DB.settings['Remembrance Public'] = v;
-      toast('Saved', 'good');
-    } catch(e){ toast(e.message, 'bad'); }
-    finally { b.disabled = false; b.textContent = 'Save'; }
-  };
 
   $('#stickyExport').onclick = () => {
     const notes = stickyAll().filter(n => n && n.pin && !n.done && n.pub)
       .map(n => ({ id:n.id, kind:n.kind, title:n.title, text:n.text, due:n.due, col:n.col }));
     const payload = {
       ok: true,
-      showOnPublic: $('#stickyPublic').checked,
+      showOnPublic: String(setting('Sticky Notes Public', 'No')).toLowerCase() === 'yes',
       notes: notes,
       madeAt: new Date().toISOString().slice(0, 16).replace('T', ' ')
     };
@@ -5123,19 +5639,6 @@ function renderPhotos(){
     toast(notes.length ? notes.length + ' note(s) exported — upload public-notes.json to GitHub' : 'No notes are ticked for the public page', notes.length ? 'good' : 'bad');
   };
 
-  $('#stickyWhereSave').onclick = async () => {
-    const b = $('#stickyWhereSave'); b.disabled = true; b.textContent = 'Saving\u2026';
-    try {
-      const v = $('#stickyPublic').checked ? 'Yes' : 'No';
-      await api('save', { sheet: 'Settings', record: JSON.stringify({ Setting: 'Sticky Notes Public', Value: v }) });
-      DB.settings['Sticky Notes Public'] = v;
-      const sp = $('#stickySpot').value;
-      await api('save', { sheet: 'Settings', record: JSON.stringify({ Setting: 'Sticky Notes Spot', Value: sp }) });
-      DB.settings['Sticky Notes Spot'] = sp;
-      toast('Saved', 'good');
-    } catch(e){ toast(e.message, 'bad'); }
-    finally { b.disabled = false; b.textContent = 'Save'; }
-  };
   $('#photoSave').onclick = async () => {
     const b = $('#photoSave'); b.disabled = true; b.textContent = 'Saving…';
     try {
@@ -5155,7 +5658,7 @@ function renderPhotos(){
    is false pre-login, so edit/delete/pin buttons hide themselves already. */
 function paintPublicSticky(){
   api('publicSticky').then(r => {
-    if(!r || !r.ok || !(r.notes || []).length) return;
+    if(!r || !r.ok || r.showOnLogin === false || !(r.notes || []).length) return;
     DB = DB || {}; DB.settings = DB.settings || {};
     DB.settings['Sticky Notes'] = JSON.stringify(r.notes.map(n => Object.assign({ pin: true, done: false }, n)));
     buildStickyTab();
