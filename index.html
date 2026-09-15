@@ -858,6 +858,82 @@ html.odia .nav{font-family:var(--display);font-size:17px}
 .pickone b{font-size:14.5px;font-weight:600;color:var(--ink)}
 .pickone span{font-size:12px;color:var(--label);font-variant-numeric:tabular-nums}
 
+.remem.slim{padding:12px 18px}
+.remem.slim .rhead{margin-bottom:0}
+.remem .rcal{background:#ffffff1a;border:1px solid #ffffff2e;color:#f0e2c4;font-weight:600;
+  padding:5px 13px;border-radius:9px;cursor:pointer;flex:none;transition:background .16s ease}
+.remem .rcal:hover{background:#ffffff2e;color:#fff6e4}
+.remcal tr.soon td{background:#fdf6e8}
+.remcal td{padding:9px 12px}
+/* Column widths as classes, not inline styles: an inline width outranks the
+   phone card transform's width:100% and would leave a 54px day cell trying
+   to hold a label and a value. */
+.remcal .cday{width:54px}
+.remcal .cyrs{width:120px}
+.remcal .csince{width:80px}
+.remcal .cwhen{width:104px;color:var(--label)}
+.remcal .soonwhen{color:var(--brick);font-weight:700}
+@media(max-width:760px){
+  .remcal .cday,.remcal .cyrs,.remcal .csince,.remcal .cwhen{width:100%}
+  .remcal .cday,.remcal .csince,.remcal .cwhen{text-align:left}
+}
+
+/* ---------- household page ---------- */
+.branches{display:flex;flex-direction:column;gap:16px;margin-top:14px}
+.branch{background:var(--surface);border:1px solid var(--line);border-radius:18px;
+  padding:16px 14px;box-shadow:0 18px 38px -34px #17303f5c}
+.branch.rootbranch{border-color:#d8c49a;background:linear-gradient(176deg,#fffdf7,var(--surface) 60%)}
+/* The identity block takes the slack; the buttons never break a name in half.
+   A long head name wraps to a second line rather than being cut with an
+   ellipsis — on this page the name is the thing you came to read. */
+.bhead{display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap}
+.bwho{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;flex:1 1 240px;min-width:0}
+.bwho b{font-family:var(--display);font-size:18px;font-weight:600;line-height:1.3;
+  overflow-wrap:anywhere;min-width:0}
+.bacts{display:flex;gap:8px;flex:none;flex-wrap:wrap}
+.bacts .btn,.pagehead .btn,.hhacts .btn{white-space:nowrap}
+.hhacts{display:flex;gap:8px;flex:none;flex-wrap:wrap;align-items:center}
+.btag{font-size:10px;font-weight:800;letter-spacing:.1em;color:var(--indigo-2);
+  background:#e8eff2;border-radius:999px;padding:3px 9px;flex:none}
+.rootbranch .btag{background:#f6ead0;color:#8a5c04}
+.bmeta{display:flex;gap:14px;flex-wrap:wrap;margin-top:8px;font-size:13px;color:var(--label)}
+.bmeta b{color:var(--ink);font-weight:600}
+/* Same trap as the roster: table.grid's 14px cell padding plus the input's own
+   leaves 46px of chrome per column, which starves an editable table until the
+   values are literally invisible. Fixed layout, explicit widths, no .grid. */
+/* A person is edited as a card, not a table row. The main column is ~400px
+   once the sidebar is open, and six columns simply cannot live there; every
+   attempt to make them starved whichever field was left with the remainder.
+   The card reflows from one field per line to three across without ever
+   squeezing a value out of sight. */
+.pcards{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+.pcard{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:8px 10px;
+  padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--surface-2)}
+.pcard.edited{background:#fdf6e8;border-color:#e8cf9a}
+.pcard.rowsaved{background:#eaf5ed;border-color:#bfe0cb}
+.pcard.gone{opacity:.66}
+.pf{display:flex;flex-direction:column;gap:4px;min-width:0}
+/* Only the field's own label — the caption span — gets label styling. The
+   locked head name is also a direct span child and was shouting in caps. */
+.pf>span:first-child{font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--label)}
+.pf.pname{grid-column:1/-1}
+.pcard .rin{width:100%;min-width:0;padding:9px 9px;border:1px solid var(--line);border-radius:9px;
+  background:var(--surface);font:inherit;font-size:14px;color:var(--ink);box-sizing:border-box}
+.pcard .rin:focus{outline:none;border-color:var(--indigo-2);box-shadow:0 0 0 3px #22485c1f}
+.pcard .headlock{display:block;padding:9px;font-size:14px;font-weight:600;color:var(--ink);
+  text-transform:none;letter-spacing:normal;
+  border:1px dashed var(--line);border-radius:9px;background:var(--surface);
+  overflow-wrap:anywhere}
+.pcard .ro{font-size:14px;font-weight:600;padding:4px 0}
+.pcard .rage{font-variant-numeric:tabular-nums;-moz-appearance:textfield;appearance:textfield}
+.pcard .rage::-webkit-outer-spin-button,.pcard .rage::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.pcard .rtel{font-variant-numeric:tabular-nums}
+.pfoot{grid-column:1/-1;display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  border-top:1px solid var(--line-soft);padding-top:8px;margin-top:2px}
+.pfoot .btn{margin-left:auto;white-space:nowrap}
+.whoid{font-size:10.5px;font-weight:700;letter-spacing:.04em;color:var(--label)}
+.whoid b{color:var(--brick)}
+
 /* ---------- links ---------- */
 a{color:var(--brick);text-decoration-color:#a8341e40;text-underline-offset:3px}
 a:hover{color:#8a2916;text-decoration-color:currentColor}
@@ -1177,7 +1253,19 @@ const $ = s => document.querySelector(s);
 const esc = x => String(x ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 const num = v => { const n = Number(String(v ?? '').replace(/[₹,\s]/g, '')); return isNaN(n) ? 0 : n; };
 const money = v => { const n = Math.round(num(v)); return (n < 0 ? '−₹' : '₹') + Math.abs(n).toLocaleString('en-IN'); };
-const today = () => new Date().toISOString().slice(0, 10);
+/* toISOString() reports UTC. East of Greenwich that is a different calendar
+   day for the first 5.5 hours of every morning, and a local-midnight Date
+   always rolls back a day. Every date in this register is a calendar date,
+   never an instant, so they are all formatted from local parts. */
+function localISO(d){
+  const p = n => String(n).padStart(2, '0');
+  return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+}
+function localStamp(d){
+  const p = n => String(n).padStart(2, '0');
+  return localISO(d) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+}
+const today = () => localISO(new Date());
 const store = {
   get(k){ try { return sessionStorage.getItem(k); } catch(e){ return mem[k] ?? null; } },
   set(k,v){ try { sessionStorage.setItem(k,v); } catch(e){ mem[k]=v; } },
@@ -1223,7 +1311,7 @@ function toISO(v){
   const s = String(v).trim();
   if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
   const d = new Date(s);
-  return isNaN(d) ? '' : d.toISOString().slice(0,10);
+  return isNaN(d) ? '' : localISO(d);
 }
 function monthKey(v){ const i = toISO(v); return i ? i.slice(0,7) : ''; }
 function toast(text, kind){
@@ -1723,7 +1811,7 @@ async function stickyComplete(id){
   const n = list.find(x => x.id === id);
   if(!n) return;
   n.done = true;
-  n.doneAt = new Date().toISOString().slice(0, 16).replace('T', ' ');
+  n.doneAt = localStamp(new Date());
   n.doneBy = String(USER && (USER.name || USER.username) || '');
   try { await stickySave(list); paintSticky(); toast('“' + (n.title || 'Note') + '” marked completed', 'good'); }
   catch(e){ toast(e.message || String(e), 'bad'); }
@@ -1790,7 +1878,7 @@ function stickyForm(id){
       pub: !!document.getElementById('skPub').checked,
       done: false,
       by: String(USER && (USER.name || USER.username) || ''),
-      at: new Date().toISOString().slice(0, 16).replace('T', ' ')
+      at: localStamp(new Date())
     };
     if(rec.lock) rec.pin = true;
     const i = list.findIndex(x => x.id === rec.id);
@@ -2611,6 +2699,7 @@ function render(){
   setTimeout(() => { try { stickyBadge(); paintSticky(); } catch(e){} }, 0);
   document.querySelectorAll('.nav').forEach(b => b.classList.toggle('active', b.dataset.page === PAGE));
   if(PAGE === 'guidance') return renderGuidance();
+  if(PAGE === 'household') return renderHousehold();
   if(PAGE === 'publicPage') return renderPublicPage();
   if(PAGE === 'auditLog') return renderAudit();
   if(PAGE === 'dashboard') renderDashboard();
@@ -2945,7 +3034,8 @@ function memberName(id){
    REMEMBRANCE — a deceased member's death anniversary, shown for the week
    before it and on the day itself, every year.
    ========================================================================= */
-function remembranceLocal(){
+function remembranceLocal(windowDays){
+  const win = windowDays === undefined ? 7 : windowDays;
   const now = new Date();
   const mid = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const DAY = 86400000;
@@ -2959,20 +3049,87 @@ function remembranceLocal(){
     [0, 1].forEach(off => {
       const anniv = new Date(mid.getFullYear() + off, dod.getMonth(), dod.getDate());
       const away = Math.round((anniv - mid) / DAY);
-      if(away < 0 || away > 7) return;
+      if(away < 0 || away > win) return;
       out.push({
+        id: String(m['Member ID'] || '').trim(),
+        family: String(m['Family ID'] || '').trim(),
         name: m['Name'] || '', photo: m['Photo'] || '',
         dob: toISO(m['Date of Birth']) || '', dod: iso,
-        anniv: anniv.toISOString().slice(0, 10), daysAway: away,
+        anniv: localISO(anniv), daysAway: away,
         years: anniv.getFullYear() - dod.getFullYear()
       });
     });
   });
-  return out.sort((a, b) => a.daysAway - b.daysAway);
+  /* A person whose anniversary falls inside both this year's and next year's
+     window would otherwise be listed twice on a full-year view. */
+  const seen = new Set();
+  return out.sort((a, b) => a.daysAway - b.daysAway)
+            .filter(p => { const k = p.id + p.anniv.slice(5); if(seen.has(k)) return false; seen.add(k); return true; });
 }
 
-function remembranceHtml(people){
-  if(!people || !people.length) return '';
+/* The band only appears in the seven days before an anniversary. A committee
+   that wants to arrange a puja needs to look further ahead than that, so the
+   whole year is one click away. */
+function openRemembranceCalendar(){
+  const people = remembranceLocal(366);
+  const MON = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const byMonth = {};
+  people.forEach(p => {
+    const k = p.anniv.slice(0, 7);
+    (byMonth[k] = byMonth[k] || []).push(p);
+  });
+  const keys = Object.keys(byMonth).sort();
+
+  const line = p => {
+    const when = p.daysAway === 0 ? 'today' : p.daysAway === 1 ? 'tomorrow' : 'in ' + p.daysAway + ' days';
+    const d = new Date(p.anniv + 'T00:00:00');
+    return `<tr${p.daysAway <= 7 ? ' class="soon"' : ''}>
+      <td class="num tnum cday" data-label="Day">${d.getDate()}</td>
+      <td data-label="Name"><b>${esc(p.name)}</b>${p.family ? `<span class="muted small"> · ${esc(p.family)}</span>` : ''}</td>
+      <td class="tnum cyrs" data-label="Years">${p.dob ? new Date(p.dob).getFullYear() + ' \u2013 ' : ''}${new Date(p.dod).getFullYear()}</td>
+      <td class="num tnum csince" data-label="Since">${p.years ? p.years + (p.years === 1 ? ' yr' : ' yrs') : ''}</td>
+      <td class="num cwhen${p.daysAway <= 7 ? ' soonwhen' : ''}" data-label="When">${when}</td>
+    </tr>`;
+  };
+
+  const months = keys.map(k => {
+    const [y, m] = k.split('-');
+    return `<h4 class="msec">${MON[+m - 1]} ${y}</h4>
+      <div class="tablewrap" style="max-height:none"><table class="grid remcal"><tbody>
+        ${byMonth[k].map(line).join('')}
+      </tbody></table></div>`;
+  }).join('');
+
+  const total = (DB.members || []).filter(m => isDeceased(m) && toISO(m['Date of Death'])).length;
+  const missing = (DB.members || []).filter(m => isDeceased(m) && !toISO(m['Date of Death'])).length;
+
+  openModal(`
+    <header>
+      <div><h3>\u0B38\u0B4D\u0B2E\u0B43\u0B24\u0B3F \u00b7 Remembrance calendar</h3>
+      <div class="sub">The year ahead \u00b7 ${people.length} ${people.length === 1 ? 'anniversary' : 'anniversaries'}</div></div>
+      <div class="sp"></div><button class="btn btn-sm" onclick="closeModal()">Close</button>
+    </header>
+    <div class="body">
+      ${people.length ? months : `<div class="empty"><b>No anniversaries recorded</b>
+        <div class="muted small" style="margin-top:6px">A date appears here once a member is marked deceased with a date of death.</div></div>`}
+      ${missing ? `<div class="fieldnote" style="margin-top:16px">${missing} deceased ${missing === 1 ? 'member has' : 'members have'} no date of death recorded, so ${missing === 1 ? 'that anniversary' : 'those anniversaries'} cannot be shown. Open the member and fill in the date.</div>` : ''}
+    </div>
+    <footer>
+      <span class="muted small">${total} deceased ${total === 1 ? 'member' : 'members'} on the register</span>
+      <div class="sp"></div>
+      <button class="btn" onclick="closeModal();window.print()">Print</button>
+    </footer>`);
+}
+
+function remembranceHtml(people, withBtn){
+  if(!people || !people.length){
+    /* Still give the committee its way in, or the calendar would be reachable
+       only in the very week it is least useful for preparing. */
+    return withBtn ? `<div class="remem slim"><div class="rhead">
+      <b>\u0B38\u0B4D\u0B2E\u0B43\u0B24\u0B3F \u00b7 In remembrance</b>
+      <span>no anniversary this week</span><i class="rrule"></i>
+      <button class="btn btn-sm rcal" data-remcal="1">Calendar</button></div></div>` : '';
+  }
   const card = p => {
     const when = p.daysAway === 0 ? 'Remembrance day is today'
       : p.daysAway === 1 ? 'Tomorrow · ' + fmtDate(p.anniv)
@@ -2986,8 +3143,10 @@ function remembranceHtml(people){
       '<div class="ryr">' + esc(yrs) + (p.years ? ' · ' + p.years + (p.years === 1 ? ' year' : ' years') : '') + '</div>' +
       '<div class="rday">' + esc(when) + '</div></div></div>';
   };
-  return '<div class="remem"><div class="rhead"><b>ସ୍ମୃତି · In remembrance</b>' +
-    '<span>' + people.length + '</span><i class="rrule"></i></div>' +
+  return '<div class="remem"><div class="rhead"><b>\u0B38\u0B4D\u0B2E\u0B43\u0B24\u0B3F \u00b7 In remembrance</b>' +
+    '<span>' + people.length + '</span><i class="rrule"></i>' +
+    (withBtn ? '<button class="btn btn-sm rcal" data-remcal="1">Calendar</button>' : '') +
+    '</div>' +
     '<div class="rlist">' + people.map(card).join('') + '</div></div>';
 }
 
@@ -3024,7 +3183,7 @@ function daysLocal(){
       const away = Math.round((when - mid) / DAY);
       if(away < 0 || away > lead) return;
       out.push({ title: r['Title'] || '', note: r['Note'] || '',
-        date: when.toISOString().slice(0, 10), daysAway: away });
+        date: localISO(when), daysAway: away });
     });
   });
   return out.sort((a, b) => a.daysAway - b.daysAway);
@@ -3080,7 +3239,7 @@ function renderDashboard(){
   const html = `
   ${fresh ? startPanel() : ''}
   ${daysHtml(daysLocal())}
-  ${remembranceHtml(remembranceLocal())}
+  ${remembranceHtml(remembranceLocal(), true)}
   ${banner ? `<div class="hero">
       <img src="${esc(banner)}" alt="${esc(setting('Village Name','Malipatana'))}" onerror="this.remove()">
       <div class="veil"></div>
@@ -3179,6 +3338,7 @@ function renderDashboard(){
   $('#main').innerHTML = html;
   wireActions($('#main'));
   wirePhotoFallbacks($('#main'));
+  $('#main').querySelectorAll('[data-remcal]').forEach(b => { b.onclick = openRemembranceCalendar; });
 }
 
 /* An empty register should read as "here is what to do first", not as a page
@@ -3259,7 +3419,7 @@ function lastMonths(n){
   d.setDate(1);
   for(let i = n - 1; i >= 0; i--){
     const x = new Date(d.getFullYear(), d.getMonth() - i, 1);
-    out.push(x.toISOString().slice(0, 7));
+    out.push(localISO(x).slice(0, 7));
   }
   return out;
 }
@@ -3299,7 +3459,7 @@ function attentionList(){
   const open = (DB.emergency || []).filter(r => String(r['Status'] || '').toLowerCase() !== 'closed');
   if(open.length) items.push(['d-red', open.length + ' emergency case' + (open.length > 1 ? 's' : '') + ' still open', 'Pending balance ' + money(open.reduce((a, r) => a + num(r['Balance']), 0)), 'emergency']);
 
-  const thisMonth = new Date().toISOString().slice(0, 7);
+  const thisMonth = today().slice(0, 7);
   const paid = new Set((DB.contributions || []).filter(r => monthKey(r['Month'] || r['Date']) === thisMonth).map(r => String(r['Family ID']).trim()));
   const activeFams = (DB.families || []).filter(f => String(f['Family Status'] || 'Active').toLowerCase() !== 'inactive');
   const pending = activeFams.filter(f => !paid.has(String(f['Family ID']).trim()));
@@ -3581,6 +3741,7 @@ function renderModule(key){
             ${quick ? `<button class="btn btn-sm btn-primary" data-act="rowsave" data-id="${id}">Save</button> ` : ''}
             ${key === 'recurring' && canEdit() ? `<button class="btn btn-sm" data-pay="${id}">Mark paid</button> ` : ''}
             ${['families','members','events'].includes(key) ? `<button class="btn btn-sm" data-act="profile" data-id="${id}">View</button> ` : ''}
+            ${key === 'families' && isHousehold(r) ? `<button class="btn btn-sm" data-act="household" data-id="${id}">Household</button> ` : ''}
             ${key === 'users' && isAdmin() ? `<button class="btn btn-sm" data-act="access" data-id="${id}">Access</button> ` : ''}
             ${key === 'contributions' ? `<button class="btn btn-sm" data-act="receipt" data-id="${id}">Receipt</button> ` : ''}
             ${canEdit() ? `<button class="btn btn-sm" data-act="edit" data-id="${id}">Edit</button>` : ''}
@@ -3645,6 +3806,7 @@ function wireActions(root){
         case 'print': return isAdmin() ? openPrint(k, currentRows(k)) : window.print();
         case 'csv': return exportCsv(k, currentRows(k));
         case 'profile': return k === 'members' ? openMember(id) : k === 'events' ? openEvent(id) : openProfile(id);
+        case 'household': return openHousehold(id);
       }
     } catch(e){ console.error('action failed', b.dataset, e); toast('That did not work: ' + (e.message || e), 'bad'); }
   });
@@ -3714,7 +3876,7 @@ function distinct(key, col){
 }
 function defaultFor(f){
   if(f.def === 'today') return today();
-  if(f.def === 'thisMonth') return new Date().toISOString().slice(0, 7);
+  if(f.def === 'thisMonth') return today().slice(0, 7);
   if(f.def === 'thisYear') return new Date().getFullYear();
   if(f.def === 'monthlyContribution') return num(setting('Monthly Contribution', 0)) || '';
   return '';
@@ -4309,7 +4471,7 @@ async function saveRecord(key, rec, editing, opts){
   }
   if(m.fields.some(f => f.n === 'Last Updated')) out['Last Updated'] = today();
   out['Entered By'] = String(USER && (USER.name || USER.username) || '');
-  out['Entered At'] = new Date().toISOString().slice(0, 16).replace('T', ' ');
+  out['Entered At'] = localStamp(new Date());
   if(m.fields.some(f => f.n === 'Created Date') && !out['Created Date']) out['Created Date'] = today();
 
   const again = !!(opts && opts.again);
@@ -4494,6 +4656,7 @@ function openProfile(id){
       ${f['Remarks'] ? `<h4 style="font-family:var(--display);margin:20px 0 6px;font-size:16px">Remarks</h4><div class="small">${esc(f['Remarks'])}</div>` : ''}
     </div>
     <footer>
+      <button class="btn" onclick="openHousehold('${esc(id)}')">Whole household</button>
       ${canEdit() ? `<button class="btn" onclick="closeModal();openRoster('${esc(id)}')">Add / edit members</button>
       <button class="btn" onclick="closeModal();openSubfamily('${esc(id)}')">Add subfamily</button>
       <button class="btn btn-primary" onclick="closeModal();openForm('families','${esc(id)}')">Edit family</button>` : ''}
@@ -4721,6 +4884,200 @@ function openRoster(famId){
 
   /* Last, so a throw in here can never leave Save unwired. */
   count();
+}
+
+/* =========================================================================
+   HOUSEHOLD — one page holding a main family, every subfamily under it and
+   every person in all of them, each field editable in place.
+   The profile modal answers "tell me about this family"; this answers
+   "sit down with the household and get the register right", which is what a
+   committee member is actually doing on a veranda.
+   ========================================================================= */
+let HOUSEHOLD_ID = null;
+
+/* Subfamilies point at a parent; follow that up to the top of the house. */
+function householdRoot(id){
+  let cur = String(id || '').trim(), guard = 0;
+  while(guard++ < 12){
+    const f = (DB.families || []).find(x => String(x['Family ID']).trim() === cur);
+    const par = f ? String(f['Parent Family ID'] || '').trim() : '';
+    if(!par || par === cur) return cur;
+    cur = par;
+  }
+  return cur;
+}
+function householdBranches(rootId){
+  const root = (DB.families || []).find(x => String(x['Family ID']).trim() === rootId);
+  const subs = (DB.families || [])
+    .filter(x => String(x['Parent Family ID'] || '').trim() === rootId)
+    .sort((a, b) => String(a['Family ID']).localeCompare(String(b['Family ID'])));
+  return root ? [root].concat(subs) : subs;
+}
+function openHousehold(id){
+  HOUSEHOLD_ID = householdRoot(id);
+  closeModal();
+  go('household');
+}
+
+function renderHousehold(){
+  if(!canSee('families')){ $('#main').innerHTML = '<div class="empty"><b>Not available to your account</b></div>'; return; }
+  const rootId = HOUSEHOLD_ID;
+  const branches = householdBranches(rootId);
+  if(!branches.length){ $('#main').innerHTML = '<div class="empty"><b>Household not found</b></div>'; return; }
+  const root = branches[0];
+  const edit = canEdit();
+  const peopleOf = fid => (DB.members || [])
+    .filter(m => String(m['Family ID'] || '').trim() === String(fid).trim())
+    .sort((a, b) => String(a['Member ID']).localeCompare(String(b['Member ID'])));
+
+  const totalPeople = branches.reduce((a, b) => a + peopleOf(b['Family ID']).length, 0);
+  const living = branches.reduce((a, b) => a + peopleOf(b['Family ID']).filter(m => !isDeceased(m)).length, 0);
+
+  const branchCard = (b, i) => {
+    const fid = String(b['Family ID']).trim();
+    const head = String(b['Family Head'] || '').trim();
+    const people = peopleOf(fid);
+    const isRoot = i === 0;
+    const row = m => {
+      const mid = String(m['Member ID'] || '').trim();
+      const rel = String(m['Relation to Family Head'] || '').trim();
+      const g = String(m['Gender'] || '').trim();
+      const dead = isDeceased(m);
+      const isHead = rel.toLowerCase() === 'self' ||
+        (head && String(m['Name'] || '').trim().toLowerCase() === head.toLowerCase());
+      const fld = (label, inner) => `<label class="pf"><span>${label}</span>${inner}</label>`;
+      return `<div class="pcard${dead ? ' gone' : ''}" data-mid="${esc(mid)}" data-fid="${esc(fid)}">
+        <div class="pf pname"><span>Name${isHead ? ' · head' : ''}</span>${isHead || !edit
+          ? `<span class="headlock">${esc(m['Name'] || '')}</span>`
+          : `<input class="rin" data-f="Name" value="${esc(m['Name'] || '')}">`}</div>
+        ${fld('Relation', edit ? `<select class="rin" data-f="Relation to Family Head">
+          <option value=""></option>
+          ${REL_OPTS.map(o => `<option ${rel === o ? 'selected' : ''}>${o}</option>`).join('')}
+        </select>` : `<span class="ro">${esc(rel) || '—'}</span>`)}
+        ${fld('Gender', edit ? `<select class="rin" data-f="Gender"><option value=""></option>
+          <option ${g === 'Male' ? 'selected' : ''}>Male</option>
+          <option ${g === 'Female' ? 'selected' : ''}>Female</option>
+          <option ${g === 'Other' ? 'selected' : ''}>Other</option></select>` : `<span class="ro">${esc(g) || '—'}</span>`)}
+        ${fld('Age', edit ? `<input class="rin rage" data-f="Age" type="number" min="0" max="120" value="${esc(m['Age'] || '')}">` : `<span class="ro">${esc(m['Age'] || '—')}</span>`)}
+        ${fld('Mobile', edit ? `<input class="rin rtel" data-f="Mobile" value="${esc(m['Mobile'] || '')}">` : `<span class="ro">${esc(m['Mobile'] || '—')}</span>`)}
+        <div class="pfoot"><span class="whoid">${esc(mid)}${dead ? ' · <b>DECEASED</b>' : ''}</span>
+          <button class="btn btn-sm" data-openmem="${esc(mid)}">Open record</button></div>
+      </div>`;
+    };
+
+    return `<section class="branch${isRoot ? ' rootbranch' : ''}" data-branch="${esc(fid)}">
+      <div class="bhead">
+        <div class="bwho">
+          <span class="btag">${isRoot ? 'MAIN FAMILY' : 'SUBFAMILY ' + i}</span>
+          <b>${esc(head || fid)}</b>
+          <span class="muted small">${esc(fid)} · ${people.length} ${people.length === 1 ? 'person' : 'people'}</span>
+        </div>
+        <div class="sp"></div>
+        <div class="bacts">
+        ${edit ? `<button class="btn btn-sm" data-editfam="${esc(fid)}">Edit family</button>
+        <button class="btn btn-sm" data-roster="${esc(fid)}">Add people</button>` : ''}
+        <button class="btn btn-sm" data-openfam="${esc(fid)}">Full record</button>
+        </div>
+      </div>
+      ${b['House No'] || b['Address/Area'] || b['Mobile'] ? `<div class="bmeta">
+        ${b['House No'] ? `<span>House <b>${esc(b['House No'])}</b></span>` : ''}
+        ${b['Address/Area'] ? `<span>${esc(b['Address/Area'])}</span>` : ''}
+        ${b['Mobile'] ? `<span class="tnum">${esc(b['Mobile'])}</span>` : ''}
+      </div>` : ''}
+      ${people.length ? `<div class="pcards">${people.map(row).join('')}</div>`
+        : `<div class="subnote">Nobody recorded in this branch yet.${edit ? ' Use <b>Add people</b> above.' : ''}</div>`}
+    </section>`;
+  };
+
+  $('#main').innerHTML = `
+    <div class="pagehead">
+      <div>
+        <h2>${esc(root['Family Head'] || rootId)} <span class="muted" style="font-size:16px">\u0B18\u0B30</span></h2>
+        <div class="sub">The whole household \u00b7 ${branches.length} ${branches.length === 1 ? 'branch' : 'branches'} \u00b7 ${living} living of ${totalPeople} recorded</div>
+      </div>
+      <div class="sp"></div>
+      <div class="hhacts">
+        <button class="btn btn-sm" onclick="go('families')">\u2190 All families</button>
+        ${edit ? `<button class="btn btn-sm" data-addsub="${esc(rootId)}">+ Add a subfamily</button>
+        <button class="btn btn-primary" id="hhSave" disabled>Save changes</button>` : ''}
+      </div>
+    </div>
+    ${edit ? '<div class="fieldnote">Change any box and the Save button wakes up. The head\u2019s name is set on the family record, so it is shown but not editable here.</div>' : ''}
+    <div class="branches">${branches.map(branchCard).join('')}</div>`;
+
+  /* One save for the whole house: collect only the rows that actually
+     differ, so a stray click does not rewrite forty rows in the sheet. */
+  const dirty = new Map();
+  const saveBtn = document.getElementById('hhSave');
+  const markDirty = tr => {
+    const mid = tr.dataset.mid;
+    const was = (DB.members || []).find(m => String(m['Member ID']).trim() === mid);
+    if(!was) return;
+    const vals = {};
+    tr.querySelectorAll('[data-f]').forEach(el => { vals[el.dataset.f] = el.value.trim(); });
+    const changed = Object.keys(vals).some(k => String(was[k] ?? '') !== vals[k]);
+    if(changed){ dirty.set(mid, { tr, vals }); tr.classList.add('edited'); }
+    else { dirty.delete(mid); tr.classList.remove('edited'); }
+    if(saveBtn){
+      saveBtn.disabled = dirty.size === 0;
+      saveBtn.textContent = dirty.size ? 'Save ' + dirty.size + ' change' + (dirty.size === 1 ? '' : 's') : 'Save changes';
+    }
+  };
+
+  $('#main').querySelectorAll('.pcard [data-f]').forEach(el => {
+    const tr = el.closest('.pcard');
+    el.addEventListener('input', () => markDirty(tr));
+    el.addEventListener('change', () => markDirty(tr));
+    el.addEventListener('keydown', ev => {
+      if(ev.key !== 'Enter') return;
+      ev.preventDefault();
+      const all = [...$('#main').querySelectorAll('.pcard [data-f]')];
+      const next = all[all.indexOf(el) + 1];
+      if(next){ next.focus(); if(next.select) next.select(); }
+      else if(saveBtn && !saveBtn.disabled) saveBtn.click();
+    });
+  });
+
+  $('#main').querySelectorAll('[data-openmem]').forEach(b => { b.onclick = () => openMember(b.dataset.openmem); });
+  $('#main').querySelectorAll('[data-openfam]').forEach(b => { b.onclick = () => openProfile(b.dataset.openfam); });
+  $('#main').querySelectorAll('[data-editfam]').forEach(b => { b.onclick = () => openForm('families', b.dataset.editfam); });
+  $('#main').querySelectorAll('[data-roster]').forEach(b => { b.onclick = () => openRoster(b.dataset.roster); });
+  $('#main').querySelectorAll('[data-addsub]').forEach(b => { b.onclick = () => openSubfamily(b.dataset.addsub); });
+
+  if(saveBtn) saveBtn.onclick = async () => {
+    if(!dirty.size) return;
+    saveBtn.disabled = true;
+    const list = [...dirty.entries()];
+    let ok = 0, err = '';
+    for(const [mid, { tr, vals }] of list){
+      const was = (DB.members || []).find(m => String(m['Member ID']).trim() === mid);
+      const rec = Object.assign({}, was, vals);
+      saveBtn.textContent = 'Saving ' + (ok + 1) + ' of ' + list.length + '\u2026';
+      try {
+        const r = await api('save', { sheet: MODULES.members.sheet, record: JSON.stringify(rec) });
+        if(!r || !r.ok) throw new Error((r && r.error) || 'the sheet refused the row');
+        upsertLocal('members', rec);
+        tr.classList.remove('edited');
+        tr.classList.add('rowsaved');
+        dirty.delete(mid);
+        ok++;
+      } catch(e){ if(!err) err = e.message || String(e); }
+    }
+    if(ok) toast(ok + ' ' + (ok === 1 ? 'person' : 'people') + ' updated', 'good');
+    if(err) toast('Some rows failed: ' + err, 'bad');
+    saveBtn.textContent = 'Save changes';
+    saveBtn.disabled = dirty.size === 0;
+    if(!dirty.size) setTimeout(() => render(), 900);
+  };
+
+  wirePhotoFallbacks($('#main'));
+}
+
+/* Only worth its own button when there is more than one branch to gather. */
+function isHousehold(f){
+  const id = String(f['Family ID'] || '').trim();
+  if(String(f['Parent Family ID'] || '').trim()) return true;
+  return (DB.families || []).some(x => String(x['Parent Family ID'] || '').trim() === id);
 }
 
 function openSubfamily(parentId){
@@ -5074,7 +5431,7 @@ function addMonths(iso, n){
   const day = d.getDate();
   d.setMonth(d.getMonth() + n);
   if(d.getDate() < day) d.setDate(0);
-  return d.toISOString().slice(0, 10);
+  return localISO(d);
 }
 function recurringDue(daysAhead){
   const limit = addDays(today(), daysAhead === undefined ? 7 : daysAhead);
@@ -5086,7 +5443,7 @@ function recurringDue(daysAhead){
 function addDays(iso, n){
   const d = new Date(iso);
   d.setDate(d.getDate() + n);
-  return d.toISOString().slice(0, 10);
+  return localISO(d);
 }
 function recurringMonthly(){
   return (DB.recurring || []).reduce((a, r) =>
@@ -5167,7 +5524,7 @@ async function saveRow(key, id, btn){
   tr.querySelectorAll('input[data-col]').forEach(inp => { out[inp.dataset.col] = inp.value.trim(); });
   if(m.fields.some(f => f.n === 'Last Updated')) out['Last Updated'] = today();
   out['Entered By'] = String(USER && (USER.name || USER.username) || '');
-  out['Entered At'] = new Date().toISOString().slice(0, 16).replace('T', ' ');
+  out['Entered At'] = localStamp(new Date());
 
   btn.disabled = true; btn.textContent = 'Saving…';
   try {
@@ -5628,7 +5985,7 @@ function renderPhotos(){
       ok: true,
       showOnPublic: String(setting('Sticky Notes Public', 'No')).toLowerCase() === 'yes',
       notes: notes,
-      madeAt: new Date().toISOString().slice(0, 16).replace('T', ' ')
+      madeAt: localStamp(new Date())
     };
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
     const a = document.createElement('a');
