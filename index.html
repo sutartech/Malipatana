@@ -739,6 +739,26 @@ html.odia .nav{font-family:var(--display);font-size:17px}
 .switchrow.dim{opacity:.5}
 .detailcell{max-width:460px;font-size:12.5px;color:var(--label);white-space:normal;overflow-wrap:anywhere}
 
+.subnote{background:#eef4f7;border:1px solid #cfdfe7;border-radius:11px;padding:10px 14px;
+  font-size:13.5px;color:#2a4a5c;margin-top:16px}
+.subtag{display:inline-block;margin-left:7px;padding:1px 8px;border-radius:999px;font-size:10.5px;
+  font-weight:800;letter-spacing:.05em;background:#e4eef3;color:#3a6b84;vertical-align:middle}
+
+/* ---------- coming-up days band ---------- */
+.daysband{background:linear-gradient(165deg,#fffdf7,#fdf6e6);border:1px solid #ecdcb4;border-radius:16px;
+  padding:16px 18px;margin-bottom:16px;box-shadow:0 16px 36px -28px #8a5c0466}
+.daysband .dhead{display:flex;align-items:center;gap:9px;margin-bottom:12px}
+.daysband .dhead b{font-family:var(--display);font-size:15.5px;font-weight:600;color:#7a5405}
+.daysband .dhead span{font-size:11.5px;color:#a08a55;letter-spacing:.06em;font-weight:700}
+.daysband .drule{flex:1;height:1px;background:linear-gradient(90deg,#d9bd6c80,#d9bd6c00)}
+.daysband .dlist{display:flex;flex-wrap:wrap;gap:11px}
+.dcard{background:#fff;border:1px solid #eee2c4;border-radius:12px;padding:12px 15px;flex:1 1 220px;max-width:320px}
+.dcard .dwhen{font-size:11px;font-weight:800;letter-spacing:.07em;color:#a8341e;text-transform:uppercase}
+.dcard b{display:block;font-size:14.5px;margin-top:5px;color:var(--ink);font-weight:600;line-height:1.3}
+.dcard .ddate{font-size:12.5px;color:var(--label);margin-top:3px;font-variant-numeric:tabular-nums}
+.dcard p{margin:7px 0 0;font-size:13px;color:#4a564f;line-height:1.5}
+.dcard.today{border-color:#e0a02f;background:linear-gradient(170deg,#fffaf0,#fff4dd)}
+
 /* ---------- remembrance band ---------- */
 .remem{background:linear-gradient(165deg,#1b2833,#243642);border-radius:16px;padding:16px 18px;
   margin-bottom:16px;border:1px solid #33485a;box-shadow:0 18px 40px -26px #0b141b}
@@ -2275,7 +2295,8 @@ const ALL_PAGES = [
   ['dashboard', 'Dashboard'], ['families', 'Families'], ['members', 'Members'],
   ['contributions', 'Contributions'], ['income', 'Income'], ['expenditure', 'Expenditure'],
   ['events', 'Major expenses'], ['recurring', 'Recurring expenses'],
-  ['emergency', 'Emergency cases'], ['regularSupport', 'Regular support'], ['grievances', 'Grievances']
+  ['emergency', 'Emergency cases'], ['regularSupport', 'Regular support'], ['grievances', 'Grievances'],
+  ['importantDays', 'Important days']
 ];
 function accessKey(username){ return 'Access ' + String(username || '').trim(); }
 function accessOf(username){
@@ -2422,7 +2443,7 @@ function buildNav(){
                ['expenditure', '↓', 'Expenditure', 'expenditure'], ['events', '❋', 'Major expenses', 'events'],
                ['recurring', '↻', 'Recurring expenses', 'recurring']]],
     ['WELFARE', [['emergency', '✚', 'Emergency cases', 'emergency'], ['regularSupport', '❤', 'Regular support', 'regularSupport']]],
-    ['VILLAGERS', [['grievances', '⚑', 'Grievances', 'grievances']]]
+    ['VILLAGERS', [['grievances', '⚑', 'Grievances', 'grievances'], ['importantDays', '❀', 'Important days', 'importantDays']]]
   ];
   groups.forEach(g => { g[1] = g[1].filter(it => canSee(it[0])); });
   if(local.get('mal_odia') === '1'){
@@ -2477,6 +2498,20 @@ const YESNO = ['Yes', 'No'];
 const PAYMODES = ['Cash', 'UPI', 'Bank Transfer', 'Cheque'];
 
 const MODULES = {
+  importantDays: {
+    sheet: 'Important Days', title: 'Important days', odia: 'ଗୁରୁତ୍ଵପୂର୍ଣ୍ଣ ଦିନ', idField: 'Day ID', prefix: 'DAY',
+    blurb: 'Festivals, meetings and anniversaries announced on the sign-in and public pages',
+    fields: [
+      { n:'Day ID', t:'text', auto:true },
+      { n:'Title', t:'text', req:true, hint:'Raja Parba, Annual meeting, Ratha Jatra…' },
+      { n:'Date', t:'date', req:true },
+      { n:'Note', t:'textarea', hint:'One line villagers should know — time, place, what to bring' },
+      { n:'Repeats Yearly', t:'select', opts:['Yes','No'], def:'Yes' },
+      { n:'Show Days Before', t:'number', def:7, hint:'How many days ahead it starts appearing' },
+      { n:'Show On', t:'select', opts:['Both pages','Sign-in only','Public only','Nowhere'], def:'Both pages' }
+    ],
+    list: ['Day ID','Title','Date','Repeats Yearly','Show Days Before','Show On','Note']
+  },
   grievances: {
     sheet: 'Grievances', title: 'Grievances', odia: 'ଅଭିଯୋଗ', idField: 'Grievance ID', prefix: 'GRV',
     blurb: 'Complaints and requests raised by villagers through the public page',
@@ -2501,6 +2536,7 @@ const MODULES = {
     fields: [
       { n:'Family ID', t:'text', auto:true },
       { n:'Family Head', t:'text', req:true },
+      { n:'Parent Family ID', t:'family', hint:'Leave empty for a main family. Set it to make this a subfamily of a bigger household.' },
       { n:'House No', t:'text' },
       { n:'Address/Area', t:'datalist' },
       { n:'Mobile', t:'tel' },
@@ -2520,7 +2556,7 @@ const MODULES = {
       { n:'Created Date', t:'date', hidden:true },
       { n:'Last Updated', t:'date', hidden:true }
     ],
-    list: ['Family ID','Family Head','House No','Address/Area','Mobile','Total Members','Earning Members','Vulnerable Status','Needs Guidance','Guide Member ID','Guidance Status','Family Status']
+    list: ['Family ID','Family Head','Parent Family ID','House No','Address/Area','Mobile','Total Members','Earning Members','Vulnerable Status','Needs Guidance','Guide Member ID','Guidance Status','Family Status']
   },
   members: {
     sheet: 'Members', title: 'Members', odia: 'ସଦସ୍ୟ', idField: 'Member ID', prefix: 'MEM',
@@ -2836,6 +2872,60 @@ function paintLoginRemembrance(){
   }).catch(() => {});
 }
 
+/* Computed locally on the dashboard from the register, so the band paints
+   with the rest of the page instead of waiting on another round trip. */
+function daysLocal(){
+  const now = new Date();
+  const mid = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const DAY = 86400000;
+  const out = [];
+  (DB.importantDays || []).forEach(r => {
+    if(String(r['Show On'] || 'Both pages').trim() === 'Nowhere') return;
+    const iso = toISO(r['Date']);
+    if(!iso) return;
+    const d = new Date(iso + 'T00:00:00');
+    if(isNaN(d.getTime())) return;
+    const lead = Math.max(0, parseInt(r['Show Days Before'], 10) || 7);
+    const yearly = String(r['Repeats Yearly'] || 'Yes').trim().toLowerCase() !== 'no';
+    const cands = yearly
+      ? [0, 1].map(o => new Date(mid.getFullYear() + o, d.getMonth(), d.getDate()))
+      : [d];
+    cands.forEach(when => {
+      const away = Math.round((when - mid) / DAY);
+      if(away < 0 || away > lead) return;
+      out.push({ title: r['Title'] || '', note: r['Note'] || '',
+        date: when.toISOString().slice(0, 10), daysAway: away });
+    });
+  });
+  return out.sort((a, b) => a.daysAway - b.daysAway);
+}
+
+function daysHtml(days){
+  if(!days || !days.length) return '';
+  const card = d => {
+    const when = d.daysAway === 0 ? 'Today' : d.daysAway === 1 ? 'Tomorrow' : 'In ' + d.daysAway + ' days';
+    return '<div class="dcard' + (d.daysAway === 0 ? ' today' : '') + '">' +
+      '<div class="dwhen">' + esc(when) + '</div>' +
+      '<b>' + esc(d.title) + '</b>' +
+      '<div class="ddate">' + esc(fmtDate(d.date)) + '</div>' +
+      (d.note ? '<p>' + esc(d.note) + '</p>' : '') + '</div>';
+  };
+  return '<div class="daysband"><div class="dhead"><b>ଆସୁଥିବା ଦିନ · Coming up</b>' +
+    '<span>' + days.length + '</span><i class="drule"></i></div>' +
+    '<div class="dlist">' + days.map(card).join('') + '</div></div>';
+}
+
+function paintLoginDays(){
+  api('publicDays').then(r => {
+    if(!r || !r.ok || !(r.days || []).length) return;
+    const host = document.querySelector('#login .formside') || document.querySelector('#login');
+    if(!host) return;
+    const box = document.createElement('div');
+    box.innerHTML = daysHtml(r.days);
+    if(box.firstChild) host.appendChild(box.firstChild);
+  }).catch(() => {});
+}
+
 function renderDashboard(){
   const s = DB.summary || {};
   const opening = num(setting('Opening Fund', 0));
@@ -2857,6 +2947,7 @@ function renderDashboard(){
   const fresh = entries === 0;
   const html = `
   ${fresh ? startPanel() : ''}
+  ${daysHtml(daysLocal())}
   ${remembranceHtml(remembranceLocal())}
   ${banner ? `<div class="hero">
       <img src="${esc(banner)}" alt="${esc(setting('Village Name','Malipatana'))}" onerror="this.remove()">
@@ -3173,6 +3264,16 @@ function cellHtml(key, row, col){
   if(key === 'grievances' && col === 'Status'){
     const v = String(raw || 'Received');
     return { cls: '', html: '<span class="pill ' + (GRV_TONE[v] || '') + '">' + esc(v) + '</span>' };
+  }
+  /* A family's head reads better with its own subfamily count beside it than
+     as a bare parent id the reader has to look up. */
+  if(key === 'families' && col === 'Family Head'){
+    const fid = String(row['Family ID'] || '').trim();
+    const subs = (DB.families || []).filter(x => String(x['Parent Family ID'] || '').trim() === fid).length;
+    const isSub = String(row['Parent Family ID'] || '').trim() !== '';
+    return { cls: '', html: esc(String(raw == null ? '' : raw)) +
+      (subs ? '<span class="subtag">' + subs + (subs === 1 ? ' SUBFAMILY' : ' SUBFAMILIES') + '</span>' : '') +
+      (isSub ? '<span class="subtag">SUBFAMILY</span>' : '') };
   }
   if(f.t === 'photo'){
     const u = String(raw == null ? '' : raw).trim();
@@ -4036,6 +4137,11 @@ function openProfile(id){
                  (DB.medical || []).filter(x => String(x['Family ID']).trim() === String(id).trim()).reduce((a, r) => a + num(r['Assistance']), 0) +
                  (DB.education || []).filter(x => String(x['Family ID']).trim() === String(id).trim()).reduce((a, r) => a + num(r['Village Assistance']), 0);
   const given = give.reduce((a, r) => a + num(r['Amount']), 0);
+  const parentId = String(f['Parent Family ID'] || '').trim();
+  const parent = parentId ? (DB.families || []).find(x => String(x['Family ID']).trim() === parentId) : null;
+  const subs = (DB.families || []).filter(x => String(x['Parent Family ID'] || '').trim() === String(id).trim());
+  const subMembers = subs.reduce((a, s) =>
+    a + (DB.members || []).filter(m2 => String(m2['Family ID']).trim() === String(s['Family ID']).trim()).length, 0);
 
   openModal(`
     <header>
@@ -4052,6 +4158,18 @@ function openProfile(id){
         <div><div class="k">Support</div><div class="v tnum">${sup.filter(x => String(x['Active']).toLowerCase() !== 'no').length}</div></div>
         <div><div class="k">Status</div><div class="v" style="font-size:15px">${esc(f['Family Status'] || 'Active')}</div></div>
       </div>
+      ${parent ? `<div class="subnote">Subfamily of <button class="linkish" data-fam="${esc(parentId)}">${esc(parent['Family Head'] || parentId)}</button> · ${esc(parentId)}</div>` : ''}
+      ${subs.length ? `<h4 style="font-family:var(--display);margin:20px 0 8px;font-size:16px">Subfamilies <span class="muted" style="font-size:13px">${subs.length} · ${subMembers} members in all</span></h4>
+      <div class="tablewrap" style="max-height:none"><table class="grid">
+        <thead><tr><th>ID</th><th>Head</th><th>House</th><th class="num">Members</th><th>Status</th><th></th></tr></thead>
+        <tbody>${subs.map(s => {
+          const sid = String(s['Family ID']).trim();
+          const n = (DB.members || []).filter(m2 => String(m2['Family ID']).trim() === sid).length;
+          return `<tr><td data-label="ID">${esc(sid)}</td><td data-label="Head">${esc(s['Family Head'] || '')}</td>
+            <td data-label="House">${esc(s['House No'] || '')}</td><td class="num" data-label="Members">${n}</td>
+            <td data-label="Status">${esc(s['Family Status'] || 'Active')}</td>
+            <td class="acts"><button class="btn btn-sm" data-fam="${esc(sid)}">View</button></td></tr>`;
+        }).join('')}</tbody></table></div>` : ''}
       <h4 style="font-family:var(--display);margin:20px 0 8px;font-size:16px">Members</h4>
       ${mem.length ? `<div class="tablewrap" style="max-height:none"><table class="grid">
         <thead><tr><th></th><th>ID</th><th>Name</th><th>Relation</th><th class="num">Age</th><th>Occupation</th><th class="num">Income</th><th></th></tr></thead>
@@ -4068,6 +4186,7 @@ function openProfile(id){
     </div>
     <footer>
       ${canEdit() ? `<button class="btn" onclick="closeModal();openForm('members')">Add member</button>
+      <button class="btn" onclick="closeModal();openSubfamily('${esc(id)}')">Add subfamily</button>
       <button class="btn btn-primary" onclick="closeModal();openForm('families','${esc(id)}')">Edit family</button>` : ''}
     </footer>`);
 
@@ -4075,6 +4194,21 @@ function openProfile(id){
   document.querySelectorAll('[data-member]').forEach(b => {
     b.onclick = () => { closeModal(); openMember(b.dataset.member); };
   });
+  document.querySelectorAll('[data-fam]').forEach(b => {
+    b.onclick = () => { closeModal(); openProfile(b.dataset.fam); };
+  });
+}
+
+/* A subfamily is an ordinary family row that names its parent, so it keeps
+   its own members, contributions and help history while the parent page
+   still shows the whole household together. */
+function openSubfamily(parentId){
+  const p = (DB.families || []).find(x => String(x['Family ID']).trim() === String(parentId).trim());
+  openForm('families', null, p ? {
+    'Parent Family ID': String(parentId).trim(),
+    'House No': p['House No'] || '',
+    'Address/Area': p['Address/Area'] || ''
+  } : { 'Parent Family ID': String(parentId).trim() });
 }
 
 
@@ -4884,6 +5018,15 @@ function renderPhotos(){
         <input type="checkbox" id="stickyPublic" style="width:18px;height:18px">
         <span>Show pinned sticky notes on the public account page</span>
       </label>
+      <label class="lbl" for="stickySpot" style="margin-top:14px;display:block">Where on the page</label>
+      <select class="input" id="stickySpot" style="max-width:260px">
+        <option value="top-left">Top · left</option>
+        <option value="top-center">Top · middle</option>
+        <option value="top-right">Top · right</option>
+        <option value="bottom-left">Below · left</option>
+        <option value="bottom-center">Below · middle</option>
+        <option value="bottom-right">Below · right</option>
+      </select>
       <div class="fieldnote" style="margin-top:8px">This is the master switch. Which pinned notes actually appear is chosen per note — tick "Show this note on the public page" when adding or editing a sticky. Keep public notes free of private details.</div>
     </div>
   </div>
@@ -4933,6 +5076,7 @@ function renderPhotos(){
 
   $('#photoReset').onclick = () => { li.value = CONFIG.DEFAULT_PHOTO; di.value = CONFIG.DEFAULT_PHOTO; both(); };
   $('#stickyPublic').checked = String(setting('Sticky Notes Public', 'No')).toLowerCase() === 'yes';
+  $('#stickySpot').value = String(setting('Sticky Notes Spot', 'bottom-right') || 'bottom-right');
   $('#rememPublic').checked = String(setting('Remembrance Public', 'Yes')).toLowerCase() !== 'no';
   $('#rememSave').onclick = async () => {
     const b = $('#rememSave'); b.disabled = true; b.textContent = 'Saving\u2026';
@@ -4969,6 +5113,9 @@ function renderPhotos(){
       const v = $('#stickyPublic').checked ? 'Yes' : 'No';
       await api('save', { sheet: 'Settings', record: JSON.stringify({ Setting: 'Sticky Notes Public', Value: v }) });
       DB.settings['Sticky Notes Public'] = v;
+      const sp = $('#stickySpot').value;
+      await api('save', { sheet: 'Settings', record: JSON.stringify({ Setting: 'Sticky Notes Spot', Value: sp }) });
+      DB.settings['Sticky Notes Spot'] = sp;
       toast('Saved', 'good');
     } catch(e){ toast(e.message, 'bad'); }
     finally { b.disabled = false; b.textContent = 'Save'; }
@@ -5018,6 +5165,7 @@ function initLoginScreen(){
   bePing();
   paintPublicSticky();
   paintLoginRemembrance();
+  paintLoginDays();
 }
 
 /* Confirms the sheet is reachable and shows which backend version answered. */
