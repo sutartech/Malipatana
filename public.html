@@ -101,6 +101,30 @@ tr:last-child td{border-bottom:0}
 .gpill.warn{background:#fdf3dd;color:#8a5c04}
 .gpill.good{background:#e9f3ec;color:#215c33}
 .gpill.bad{background:#fbeee9;color:#8a2916}
+
+/* ---------- notice board ---------- */
+.noticeboard{margin:22px 0 0}
+.nbhead{display:flex;align-items:baseline;gap:9px;margin-bottom:12px}
+.nbhead b{font-family:var(--display);font-size:17px;font-weight:600;color:var(--ink)}
+.ntcs{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.ntc{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--surface);
+  display:flex;flex-direction:column;box-shadow:0 14px 30px -26px #17303f5c}
+.ntc .nimg{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;background:#e6e8e2}
+.ntc .nbody{padding:12px 14px 14px;display:flex;flex-direction:column;gap:6px}
+.ntc h4{font-family:var(--display);font-size:16px;margin:0;font-weight:600;line-height:1.35;
+  overflow-wrap:anywhere}
+.ntc p{margin:0;font-size:13.5px;line-height:1.6;color:var(--ink);text-wrap:pretty;
+  overflow-wrap:anywhere}
+.ntc .nmeta{font-size:11.5px;font-weight:700;letter-spacing:.04em;color:var(--label);
+  text-transform:uppercase}
+
+/* ---------- the way in ---------- */
+.signin{position:fixed;top:14px;right:16px;z-index:55;display:inline-flex;align-items:center;gap:7px;
+  background:#ffffff1f;color:#fff;border:1px solid #ffffff3d;border-radius:999px;padding:9px 16px;
+  font-size:13px;font-weight:700;text-decoration:none;backdrop-filter:blur(8px);
+  transition:background .15s ease,transform .15s ease}
+.signin:hover{background:#ffffff33;color:#fff;text-decoration:none;transform:translateY(-1px)}
+@media print{ .signin{display:none} }
 #pubSticky{display:flex;flex-wrap:wrap;gap:12px;margin:22px 0 0}
 #pubSticky.at-top-left{justify-content:flex-start}
 #pubSticky.at-top-center,#pubSticky.at-bottom-center{justify-content:center}
@@ -186,6 +210,8 @@ tr:last-child td{border-bottom:0}
     <div class="sub">Village fund · public account · <span id="asof">loading…</span></div>
   </div>
 </header>
+
+<a class="signin" href="index.html">Committee sign-in &rarr;</a>
 
 <div class="wrap">
   <div id="out"><div class="card"><div class="state"><b>Loading the village account…</b>This page reads the same sheet the committee uses.</div></div></div>
@@ -411,8 +437,9 @@ function apiPost(action, params){
 /* Notes arrive either from their own action or, on an older backend that
    lacks it, riding along inside publicSummary. Whichever answers first wins. */
 function renderSticky(s){
+  var old = document.getElementById('pubSticky');
+  if(old) old.remove();
   if(!s || !s.showOnPublic) return;
-  if(document.getElementById('pubSticky')) return;
   var notes = (s.notes || []).slice(0, 3);
   if(!notes.length) return;
   var spot = String(s.spot || 'bottom-right');
@@ -461,8 +488,9 @@ function wirePubPhotos(root){
 }
 
 function renderDays(d){
+  var old = document.getElementById('pubDays');
+  if(old) old.remove();
   if(!d || !(d.days || []).length) return;
-  if(document.getElementById('pubDays')) return;
   var cards = d.days.map(function(x){
     var when = x.daysAway === 0 ? 'Today' : x.daysAway === 1 ? 'Tomorrow' : 'In ' + x.daysAway + ' days';
     return '<div class="dcard' + (x.daysAway === 0 ? ' today' : '') + '">' +
@@ -481,11 +509,10 @@ function renderDays(d){
   else wrap.insertBefore(box, wrap.firstChild);
 }
 
-api('publicDays').then(function(r){ if(r && r.ok) renderDays(r); }).catch(function(){});
-
 function renderRemembrance(r){
+  var old = document.getElementById('pubRemem');
+  if(old) old.remove();
   if(!r || !r.showOnPublic) return;
-  if(document.getElementById('pubRemem')) return;
   var people = r.people || [];
   if(!people.length) return;
   var cards = people.map(function(p){
@@ -512,42 +539,73 @@ function renderRemembrance(r){
   wirePubPhotos(box);
 }
 
-api('publicRemembrance').then(function(r){ if(r && r.ok) renderRemembrance(r); }).catch(function(){});
-
-api('publicSticky').then(function(r){
-  if(r && r.ok) renderSticky(r);
-  else stickyFromFile();
-}).catch(stickyFromFile);
-
-/* Fallback for a backend that has not been redeployed: a small JSON file the
-   admin exports from the dashboard and uploads beside this page. */
-function stickyFromFile(){
-  fetch('public-notes.json', { cache: 'no-store' })
-    .then(function(res){ return res.ok ? res.json() : null; })
-    .then(function(d){ if(d) renderSticky(d); })
-    .catch(function(){});
+/* One request carries the whole page — fund, notes, remembrance and days —
+   so the reader never sees a half-loaded mixture of fresh and stale sections.
+   A cold Apps Script container can take a few seconds and occasionally times
+   out, so one silent retry sits between that and the apology message. */
+function renderNotices(n){
+  var old = document.getElementById('pubNotices');
+  if(old) old.remove();
+  if(!n || !(n.notices || []).length) return;
+  var list = n.notices;
+  var cards = list.map(function(p){
+    return '<article class="ntc">' +
+      (p.photo ? '<img class="nimg" data-srcs="' + esc(photoSrcList(p.photo, 640).join('|')) +
+        '" alt="' + esc(p.title) + '" loading="lazy">' : '') +
+      '<div class="nbody"><h4>' + esc(p.title) + '</h4>' +
+      (p.text ? '<p>' + esc(p.text) + '</p>' : '') +
+      (p.by || p.date ? '<div class="nmeta">' + esc(p.by) + (p.by && p.date ? ' \u00b7 ' : '') +
+        (p.date ? esc(fmtDate(p.date)) : '') + '</div>' : '') +
+      '</div></article>';
+  }).join('');
+  var box = document.createElement('div');
+  box.className = 'noticeboard';
+  box.id = 'pubNotices';
+  box.innerHTML = '<div class="nbhead"><b>\u0B38\u0B42\u0B1A\u0B28\u0B3E \u00b7 Notice board</b>' +
+    '<span class="muted small">' + list.length + (list.length === 1 ? ' post' : ' posts') + '</span></div>' +
+    '<div class="ntcs">' + cards + '</div>';
+  var foot = document.querySelector('.foot');
+  if(foot && foot.parentNode) foot.parentNode.insertBefore(box, foot);
+  else document.body.appendChild(box);
+  wirePubPhotos(box);
 }
 
-api('publicSummary').then(function(r){
-  if(!r || !r.ok) throw new Error('no public data');
-  if(r.off){
-    document.getElementById('asof').textContent = 'not public at the moment';
+function loadPublic(attempt){
+  return api('publicSummary').then(function(r){
+    if(!r || !r.ok) throw new Error('no public data');
+    if(r.off){
+      document.getElementById('asof').textContent = 'not public at the moment';
+      document.getElementById('out').innerHTML =
+        '<div class="card"><div class="state"><b>This page is switched off</b>' +
+        'The village committee has chosen not to publish the account right now. ' +
+        'Ask any committee member to see the register.</div></div>';
+      renderSticky(null);
+      renderRemembrance(null);
+      renderDays(null);
+      renderNotices(null);
+      return;
+    }
+    render(r);
+    renderSticky(r.sticky);
+    renderRemembrance(r.remembrance);
+    renderDays(r.days);
+    renderNotices(r.notices);
+  }).catch(function(){
+    if((attempt || 0) < 1){
+      document.getElementById('asof').textContent = 'loading\u2026';
+      return new Promise(function(res){ setTimeout(res, 1800); }).then(function(){
+        return loadPublic((attempt || 0) + 1);
+      });
+    }
+    document.getElementById('asof').textContent = 'could not load';
     document.getElementById('out').innerHTML =
-      '<div class="card"><div class="state"><b>This page is switched off</b>' +
-      'The village committee has chosen not to publish the account right now. ' +
-      'Ask any committee member to see the register.</div></div>';
-    return;
-  }
-  render(r);
-  renderSticky(r.sticky);
-  renderRemembrance(r.remembrance);
-  renderDays(r.days);
-}).catch(function(){
-  document.getElementById('asof').textContent = 'not published yet';
-  document.getElementById('out').innerHTML =
-    '<div class="card"><div class="state"><b>The account is not published yet</b>' +
-    'The village committee still has to switch on the public summary. Please ask a committee member.</div></div>';
-});
+      '<div class="card"><div class="state"><b>Could not load the account just now</b>' +
+      'The connection to the village register did not answer. ' +
+      '<button class="gbtn ghost" onclick="loadPublic(0)" style="margin-top:12px">Try again</button></div></div>';
+  });
+}
+
+loadPublic(0);
 </script>
 </body>
 </html>

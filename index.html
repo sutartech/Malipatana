@@ -934,6 +934,31 @@ html.odia .nav{font-family:var(--display);font-size:17px}
 .whoid{font-size:10.5px;font-weight:700;letter-spacing:.04em;color:var(--label)}
 .whoid b{color:var(--brick)}
 
+/* ---------- the two ways in ---------- */
+.pubway{display:block;margin-top:14px;text-align:center;background:var(--surface-2);
+  border:1px solid var(--line);border-radius:12px;padding:12px 16px;font-size:13.5px;
+  font-weight:700;color:var(--indigo-2);text-decoration:none;
+  transition:background .15s ease,transform .15s ease}
+.pubway:hover{background:#eef2ee;color:var(--indigo);text-decoration:none;transform:translateY(-1px)}
+a.iconbtn.pubjump{display:flex;align-items:center;justify-content:center;text-decoration:none;
+  font-size:15px;line-height:1}
+a.iconbtn.pubjump:hover{text-decoration:none}
+
+/* ---------- notice board ---------- */
+.noticeboard{margin-bottom:16px}
+.ntcs{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;padding:16px 18px 18px}
+.ntc{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--surface-2);
+  display:flex;flex-direction:column}
+.ntc .nimg{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;background:#e6e8e2}
+.ntc .nbody{padding:12px 14px 14px;display:flex;flex-direction:column;gap:6px}
+.ntc h4{font-family:var(--display);font-size:16px;margin:0;font-weight:600;line-height:1.35;
+  overflow-wrap:anywhere}
+.ntc p{margin:0;font-size:13.5px;line-height:1.6;color:var(--ink);text-wrap:pretty;
+  overflow-wrap:anywhere}
+.ntc .nmeta{font-size:11.5px;font-weight:700;letter-spacing:.04em;color:var(--label);
+  text-transform:uppercase;margin-top:2px}
+#login .noticeboard{margin-top:16px}
+
 /* ---------- links ---------- */
 a{color:var(--brick);text-decoration-color:#a8341e40;text-underline-offset:3px}
 a:hover{color:#8a2916;text-decoration-color:currentColor}
@@ -1129,6 +1154,32 @@ body.modalOpen #stickyLayer{opacity:.12;pointer-events:none;filter:saturate(.4)}
   border-right:2px solid #17303f4d;border-bottom:2px solid #17303f4d;border-bottom-right-radius:3px;
   transition:border-color .16s ease}
 .sticky:hover .sticky-grip::before{border-right-color:#17303f99;border-bottom-color:#17303f99}
+
+/* ---------- in memory ---------- */
+.memofind{display:flex;gap:9px;flex-wrap:wrap}
+.memofind .input{flex:1;min-width:190px}
+.memopick{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.memopick .btn{justify-content:flex-start;text-align:left;display:flex;gap:9px;align-items:baseline;flex-wrap:wrap}
+.memos{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.memo{display:flex;gap:13px;padding:14px;border:1px solid var(--line);border-radius:16px;
+  background:linear-gradient(172deg,#fbfbf8,var(--surface));box-shadow:0 14px 30px -26px #17303f5c}
+.memo .mimg{width:64px;height:64px;border-radius:50%;flex:none;object-fit:cover;object-position:center top;
+  border:2px solid #c9a23f66;background:#eef0ea;filter:saturate(.7)}
+.memo .mno{display:flex;align-items:center;justify-content:center;color:#a99a72;font-size:22px}
+.memo .mtx{min-width:0;display:flex;flex-direction:column;gap:3px}
+.memo .mtx>b{font-family:var(--display);font-size:16.5px;font-weight:600;line-height:1.3;overflow-wrap:anywhere}
+.memo .mline{font-size:13px;color:var(--label);font-variant-numeric:tabular-nums}
+.memo .mcause{font-size:12.5px;color:var(--ink);background:#f6ead0;border:1px solid #e8d5a8;
+  border-radius:8px;padding:3px 9px;align-self:flex-start;margin-top:3px}
+.memo .mfoot{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:7px;
+  border-top:1px solid var(--line-soft);padding-top:8px}
+.memo .mfoot .btn{white-space:nowrap}
+.memo .whoid{flex:1 1 100%}
+
+/* ---------- this month's work ---------- */
+.work{margin-bottom:16px;border-color:#dcd2bb}
+.work .panel-head{background:linear-gradient(170deg,#fffdf6,#fbf6e9);border-bottom-color:#eee3c9}
+.work .alert b{display:block}
 </style>
 </head>
 <body>
@@ -1203,7 +1254,7 @@ body.modalOpen #stickyLayer{opacity:.12;pointer-events:none;filter:saturate(.4)}
       </div>
       <button class="repair" id="repairBtn">↻ Repair cache / session</button>
       <div class="helpline">Trouble signing in? Ask the village admin to check your row in the Users sheet.</div>
-        <div class="helpline"><a href="public.html">See the village account without signing in →</a></div>
+        <a class="pubway" href="public.html">See the village account without signing in →</a>
     </div>
 
   </div>
@@ -1215,6 +1266,7 @@ body.modalOpen #stickyLayer{opacity:.12;pointer-events:none;filter:saturate(.4)}
     <button class="iconbtn" id="menuBtn" title="Menu" aria-label="Menu">&#9776;</button>
     <div class="brand">ମାଳିପାଟଣା<small id="brandSub">MALIPATANA VILLAGE</small></div>
     <div class="sp"></div>
+    <a class="iconbtn pubjump" href="public.html" target="_blank" rel="noreferrer" title="Open the public page" aria-label="Open the public page">&#127760;</a>
     <button class="iconbtn" id="refreshBtn" title="Reload data from the sheet" aria-label="Reload">&#8635;</button>
     <div class="whochip"><span class="avatar" id="avatar">–</span><span><b id="whoName"></b><span class="role" id="whoRole"></span></span></div>
     <button class="iconbtn" id="logoutBtn" title="Sign out" aria-label="Sign out">&#9099;</button>
@@ -2096,7 +2148,9 @@ const SHARED_SWITCHES = [
   ['Remembrance days', 'A deceased member\u2019s anniversary, from a week before until the day itself.',
    'Remembrance Login', 'Remembrance Public', 'Yes'],
   ['Important days', 'Festivals, meetings and other dates on the committee\u2019s list.',
-   'Important Days Login', 'Important Days Public', 'Yes']
+   'Important Days Login', 'Important Days Public', 'Yes'],
+  ['Notice board', 'Photographs and writing from the Notice board page. Each post also has its own \u201cShow On\u201d choice.',
+   'Notices Login', 'Notices Public', 'Yes']
 ];
 
 function renderPublicPage(){
@@ -2514,7 +2568,7 @@ const ALL_PAGES = [
   ['contributions', 'Contributions'], ['income', 'Income'], ['expenditure', 'Expenditure'],
   ['events', 'Major expenses'], ['recurring', 'Recurring expenses'],
   ['emergency', 'Emergency cases'], ['regularSupport', 'Regular support'], ['grievances', 'Grievances'],
-  ['importantDays', 'Important days']
+  ['importantDays', 'Important days'], ['notices', 'Notice board']
 ];
 function accessKey(username){ return 'Access ' + String(username || '').trim(); }
 function accessOf(username){
@@ -2656,12 +2710,13 @@ function enterApp(){
 function buildNav(){
   const groups = [
     ['', [['dashboard', '▦', 'Dashboard', null]]],
-    ['PEOPLE', [['families', '⌂', 'Families', 'families'], ['members', '☗', 'Members', 'members'], ['guidance', '✥', 'Guidance', null]]],
+    ['PEOPLE', [['families', '⌂', 'Families', 'families'], ['members', '☗', 'Members', 'members'], ['memorial', '✝', 'In memory', 'deceased'], ['guidance', '✥', 'Guidance', null]]],
     ['MONEY', [['contributions', '◈', 'Contributions', 'contributions'], ['income', '↑', 'Income', 'income'],
                ['expenditure', '↓', 'Expenditure', 'expenditure'], ['events', '❋', 'Major expenses', 'events'],
                ['recurring', '↻', 'Recurring expenses', 'recurring']]],
     ['WELFARE', [['emergency', '✚', 'Emergency cases', 'emergency'], ['regularSupport', '❤', 'Regular support', 'regularSupport']]],
-    ['VILLAGERS', [['grievances', '⚑', 'Grievances', 'grievances'], ['importantDays', '❀', 'Important days', 'importantDays']]]
+    ['VILLAGERS', [['grievances', '⚑', 'Grievances', 'grievances'], ['importantDays', '❀', 'Important days', 'importantDays'],
+                   ['notices', '▦', 'Notice board', 'notices']]]
   ];
   groups.forEach(g => { g[1] = g[1].filter(it => canSee(it[0])); });
   if(local.get('mal_odia') === '1'){
@@ -2677,9 +2732,13 @@ function buildNav(){
                                        ['settingsList', '⚙', 'Settings', 'settingsList']]]);
   let html = '';
   groups.forEach(([title, items]) => {
+    if(!items.length) return;   // a heading with nothing under it is just noise
     if(title) html += '<div class="navgroup">' + title + '</div>';
     html += items.map(([key, ic, label, dataKey]) => {
-      const n = dataKey ? (rowsOf(dataKey) || []).length : '';
+      /* 'deceased' is a view of Members, not a sheet of its own — without this
+         the badge repeated the Members count and read as 4 deaths. */
+      const n = dataKey === 'deceased' ? (DB.members || []).filter(isDeceased).length
+        : dataKey ? (rowsOf(dataKey) || []).length : '';
       return '<button class="nav" data-page="' + key + '"><span class="ic">' + ic + '</span>' + esc(label) +
              (n !== '' ? '<span class="count">' + n + '</span>' : '') + '</button>';
     }).join('');
@@ -2700,6 +2759,7 @@ function render(){
   document.querySelectorAll('.nav').forEach(b => b.classList.toggle('active', b.dataset.page === PAGE));
   if(PAGE === 'guidance') return renderGuidance();
   if(PAGE === 'household') return renderHousehold();
+  if(PAGE === 'memorial') return renderMemorial();
   if(PAGE === 'publicPage') return renderPublicPage();
   if(PAGE === 'auditLog') return renderAudit();
   if(PAGE === 'dashboard') renderDashboard();
@@ -2717,6 +2777,22 @@ const YESNO = ['Yes', 'No'];
 const PAYMODES = ['Cash', 'UPI', 'Bank Transfer', 'Cheque'];
 
 const MODULES = {
+  notices: {
+    sheet: 'Notices', title: 'Notice board', odia: 'ସୂଚନା ପଟ୍ଟ', idField: 'Notice ID', prefix: 'NTC',
+    blurb: 'Photographs and writing shown on the sign-in and public pages',
+    fields: [
+      { n:'Notice ID', t:'text', auto:true },
+      { n:'Title', t:'text', req:true, hint:'A short heading — Raja Parba 2026, New tube well…' },
+      { n:'Text', t:'textarea', hint:'The writing villagers should read. A few lines is plenty.' },
+      { n:'Photo', t:'photo', hint:'Saved in the village Google Drive folder' },
+      { n:'Credit', t:'text', hint:'Whose photo or writing this is, if it should be named' },
+      { n:'Date', t:'date', def:'today' },
+      { n:'Until', t:'date', hint:'Leave empty to keep it up. After this date it retires itself.' },
+      { n:'Order', t:'number', def:0, hint:'Higher numbers sit at the top' },
+      { n:'Show On', t:'select', opts:['Both pages','Sign-in only','Public only','Nowhere'], def:'Both pages' }
+    ],
+    list: ['Notice ID','Photo','Title','Text','Credit','Date','Until','Order','Show On']
+  },
   importantDays: {
     sheet: 'Important Days', title: 'Important days', odia: 'ଗୁରୁତ୍ଵପୂର୍ଣ୍ଣ ଦିନ', idField: 'Day ID', prefix: 'DAY',
     blurb: 'Festivals, meetings and anniversaries announced on the sign-in and public pages',
@@ -2797,8 +2873,9 @@ const MODULES = {
       { n:'Insurance', t:'select', opts:YESNO },
       { n:'Remarks', t:'textarea' },
       { n:'Photo', t:'photo', hint:'Saved in the village Google Drive folder' },
-      { n:'Life Status', t:'select', opts:['Alive','Deceased'] },
-      { n:'Date of Death', t:'date', hint:'Only for a deceased member' }
+      { n:'Life Status', t:'select', opts:['Alive','Deceased'], hidden:true },
+      { n:'Date of Death', t:'date', hidden:true },
+      { n:'Cause of Death', t:'text', hidden:true }
     ],
     list: ['Photo','Member ID','Name','Family ID','Relation to Family Head','Gender','Age','Education','Occupation','Earning Member','Monthly Income','Mobile','Life Status']
   },
@@ -3217,6 +3294,181 @@ function paintLoginDays(){
   }).catch(() => {});
 }
 
+/* =========================================================================
+   NOTICE BOARD — the committee's photographs and writing. Rendered the same
+   way on the dashboard, the sign-in screen and the public page, so a post
+   the admin approves looks the same wherever a villager meets it.
+   ========================================================================= */
+function noticesLocal(){
+  const t = today();
+  return (DB.notices || [])
+    .filter(n => {
+      const where = String(n['Show On'] || 'Both pages').trim();
+      if(where === 'Nowhere') return false;
+      const until = toISO(n['Until']);
+      if(until && until < t) return false;
+      return String(n['Title'] || '').trim() || String(n['Text'] || '').trim() || String(n['Photo'] || '').trim();
+    })
+    .map(n => ({
+      id: n['Notice ID'] || '', title: n['Title'] || '', text: n['Text'] || '',
+      photo: n['Photo'] || '', by: n['Credit'] || '', date: toISO(n['Date']) || '',
+      order: num(n['Order'])
+    }))
+    .sort((a, b) => (b.order - a.order) || String(b.date).localeCompare(String(a.date)));
+}
+
+function noticesHtml(list){
+  if(!list || !list.length) return '';
+  const card = n => `<article class="ntc">
+    ${n.photo ? `<img class="nimg" src="${esc(thumbUrl(n.photo, 640))}" alt="${esc(n.title)}" loading="lazy">` : ''}
+    <div class="nbody">
+      <h4>${esc(n.title)}</h4>
+      ${n.text ? `<p>${esc(n.text)}</p>` : ''}
+      ${n.by || n.date ? `<div class="nmeta">${esc(n.by)}${n.by && n.date ? ' \u00b7 ' : ''}${n.date ? esc(fmtDate(n.date)) : ''}</div>` : ''}
+    </div>
+  </article>`;
+  return `<div class="panel noticeboard">
+    <div class="panel-head"><h3>\u0B38\u0B42\u0B1A\u0B28\u0B3E \u00b7 Notice board</h3>
+      <span class="muted small">${list.length} ${list.length === 1 ? 'post' : 'posts'}</span></div>
+    <div class="ntcs">${list.map(card).join('')}</div>
+  </div>`;
+}
+
+function paintLoginNotices(){
+  api('loginNotices').then(r => {
+    if(!r || !r.ok || !(r.notices || []).length) return;
+    const host = document.querySelector('#login .formside') || document.querySelector('#login');
+    if(!host) return;
+    const box = document.createElement('div');
+    box.innerHTML = noticesHtml(r.notices);
+    if(box.firstChild){ host.appendChild(box.firstChild); wirePhotoFallbacks(host); }
+  }).catch(() => {});
+}
+
+/* =========================================================================
+   THIS MONTH'S WORK — the standing jobs, counted from the register itself.
+   A dashboard that only reports is a filing cabinet; this one asks.
+   ========================================================================= */
+function monthWork(){
+  const t = today();
+  const mk = t.slice(0, 7);
+  const jobs = [];
+
+  /* 1. Families who have not paid this month. Keyed on Month when present,
+        Date otherwise — the same rule the twelve-month chart uses. */
+  const paid = new Set();
+  (DB.contributions || []).forEach(r => {
+    if(monthKey(r['Month'] || r['Date']) !== mk) return;
+    const f = String(r['Family ID'] || '').trim();
+    if(f) paid.add(f);
+  });
+  const owing = (DB.families || []).filter(f => !paid.has(String(f['Family ID'] || '').trim()));
+  if((DB.families || []).length && owing.length) jobs.push({
+    tone: owing.length > (DB.families || []).length / 2 ? 'late' : 'warn',
+    what: owing.length + ' ' + (owing.length === 1 ? 'family has' : 'families have') + ' not paid this month',
+    who: owing.slice(0, 3).map(f => f['Family Head'] || f['Family ID']).join(', ') +
+         (owing.length > 3 ? ' and ' + (owing.length - 3) + ' more' : ''),
+    go: 'contributions', label: 'Collect'
+  });
+
+  /* 2. Grievances a villager is waiting on. */
+  const openGrv = (DB.grievances || []).filter(r => {
+    const s = String(r['Status'] || 'Received').trim().toLowerCase();
+    return s !== 'resolved' && s !== 'rejected';
+  });
+  if(openGrv.length) jobs.push({
+    tone: openGrv.some(r => String(r['Status'] || 'Received').toLowerCase() === 'received') ? 'late' : 'warn',
+    what: openGrv.length + ' ' + (openGrv.length === 1 ? 'grievance is' : 'grievances are') + ' still open',
+    who: openGrv.slice(0, 2).map(r => String(r['Name'] || '') + (r['Category'] ? ' \u00b7 ' + r['Category'] : '')).join('; '),
+    go: 'grievances', label: 'Open'
+  });
+
+  /* 3. Emergency cases awaiting a decision. */
+  const openCase = (DB.emergency || []).filter(r => {
+    const s = String(r['Status'] || r['Stage'] || '').trim().toLowerCase();
+    return s && !/helped|closed|paid|done|reject/.test(s);
+  });
+  if(openCase.length) jobs.push({
+    tone: 'late',
+    what: openCase.length + ' emergency ' + (openCase.length === 1 ? 'case is' : 'cases are') + ' waiting on the committee',
+    who: openCase.slice(0, 2).map(r => familyName(r['Family ID']) || r['Family ID'] || '').filter(Boolean).join(', '),
+    go: 'emergency', label: 'Decide'
+  });
+
+  /* 4. Major expenses that ran but were never closed — the commonest way a
+        village register drifts out of step with what actually happened. */
+  const openEvent = (DB.events || []).filter(e => {
+    if(String(e['Status'] || 'Planned').trim().toLowerCase() === 'completed') return false;
+    const end = toISO(e['End Date']) || toISO(e['Start Date']);
+    return end && end < t;
+  });
+  if(openEvent.length) jobs.push({
+    tone: 'warn',
+    what: openEvent.length + ' major ' + (openEvent.length === 1 ? 'expense has' : 'expenses have') + ' finished but not been closed',
+    who: openEvent.slice(0, 2).map(e => e['Event Name'] || e['Event ID']).join(', '),
+    go: 'events', label: 'Close'
+  });
+
+  /* 5. Recurring bills already overdue. */
+  const lateBills = (DB.recurring || []).filter(r => {
+    if(String(r['Active'] || 'YES').toUpperCase() === 'NO') return false;
+    const d = toISO(r['Next Due']);
+    return d && d < t;
+  });
+  if(lateBills.length) jobs.push({
+    tone: 'late',
+    what: lateBills.length + ' recurring ' + (lateBills.length === 1 ? 'bill is' : 'bills are') + ' overdue',
+    who: lateBills.slice(0, 2).map(r => r['Expense Name']).join(', '),
+    go: 'recurring', label: 'Pay'
+  });
+
+  /* 6. A death with no date is a gap that quietly breaks the remembrance
+        calendar, so it is worth naming rather than leaving to be noticed. */
+  const noDate = (DB.members || []).filter(m => isDeceased(m) && !toISO(m['Date of Death']));
+  if(noDate.length) jobs.push({
+    tone: 'note',
+    what: noDate.length + ' ' + (noDate.length === 1 ? 'death has' : 'deaths have') + ' no date recorded',
+    who: noDate.slice(0, 3).map(m => m['Name']).join(', '),
+    go: 'memorial', label: 'Fix'
+  });
+
+  return jobs;
+}
+
+function monthWorkHtml(){
+  /* The empty state is decided on the UNFILTERED list. Claiming everything is
+     up to date because a restricted account cannot see the open cases would be
+     a lie a committee member might act on. */
+  const all = monthWork();
+  const jobs = all.filter(j => canSee(j.go) !== false);
+  const monthName = new Date().toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
+  const urgent = jobs.filter(j => j.tone === 'late').length;
+
+  if(!jobs.length){
+    if(all.length) return '';   // work exists, just not this account's — say nothing
+    return `<div class="panel work">
+      <div class="panel-head"><h3>This month's work</h3>
+        <span class="muted small">${esc(monthName)}</span></div>
+      <div class="alert"><span class="dot" style="background:var(--green)"></span>
+        <span><b>Nothing is waiting on the committee</b>
+        <span class="muted">Contributions, cases, grievances and bills are all up to date.</span></span></div>
+    </div>`;
+  }
+
+  const dot = { late: 'var(--brick)', warn: 'var(--turmeric)', note: 'var(--indigo-2)' };
+  return `<div class="panel work">
+    <div class="panel-head"><h3>This month's work</h3>
+      <span class="muted small">${esc(monthName)} · ${jobs.length} ${jobs.length === 1 ? 'job' : 'jobs'}${urgent ? ', ' + urgent + ' pressing' : ''}</span>
+    </div>
+    ${jobs.map(j => `<div class="alert">
+      <span class="dot" style="background:${dot[j.tone]}"></span>
+      <span><b>${esc(j.what)}</b>${j.who ? `<span class="muted">${esc(j.who)}</span>` : ''}</span>
+      <button class="btn btn-sm${j.tone === 'late' ? ' btn-primary' : ''}" data-work="${esc(j.go)}"
+        style="margin-left:auto;white-space:nowrap">${esc(j.label)}</button>
+    </div>`).join('')}
+  </div>`;
+}
+
 function renderDashboard(){
   const s = DB.summary || {};
   const opening = num(setting('Opening Fund', 0));
@@ -3238,7 +3490,9 @@ function renderDashboard(){
   const fresh = entries === 0;
   const html = `
   ${fresh ? startPanel() : ''}
+  ${fresh ? '' : monthWorkHtml()}
   ${daysHtml(daysLocal())}
+  ${noticesHtml(noticesLocal())}
   ${remembranceHtml(remembranceLocal(), true)}
   ${banner ? `<div class="hero">
       <img src="${esc(banner)}" alt="${esc(setting('Village Name','Malipatana'))}" onerror="this.remove()">
@@ -3775,14 +4029,15 @@ function renderModule(key){
    #main survives innerHTML replacement, so wiring individual buttons would
    either go stale or (worse) double up with this. Delegation only. */
 function wireActions(root){
-  root.querySelectorAll('[data-act],[data-pay],[data-event],[data-photo]').forEach(b => { b.type = 'button'; });
+  root.querySelectorAll('[data-act],[data-pay],[data-event],[data-photo],[data-work]').forEach(b => { b.type = 'button'; });
   if(root.dataset.delegated) return root;
   root.dataset.delegated = '1';
   root.addEventListener('click', ev => {
-    const b = ev.target.closest('[data-act],[data-pay],[data-event],[data-photo]');
+    const b = ev.target.closest('[data-act],[data-pay],[data-event],[data-photo],[data-work]');
     if(!b || !root.contains(b)) return;
     const k = PAGE, id = b.dataset.id;
     try {
+      if(b.dataset.work) return go(b.dataset.work);
       if(b.dataset.photo) return openPhoto(b.dataset.photo, b.querySelector('img') ? b.querySelector('img').alt : '');
       if(b.dataset.event) return openEvent(b.dataset.event);
       if(b.dataset.pay) return payRecurring(b.dataset.pay, b);
@@ -5342,6 +5597,132 @@ function deathsThisYear(){
   return (DB.members || []).filter(r => isDeceased(r) && String(toISO(r['Date of Death']) || '').slice(0, 4) === y).length;
 }
 
+/* =========================================================================
+   IN MEMORY — the village's deceased, and the one place a death is recorded.
+   Search is by name, so a committee member types who died rather than
+   hunting for a member ID first.
+   ========================================================================= */
+let MEMO_Q = '';
+
+function renderMemorial(){
+  if(!canSee('members')){ $('#main').innerHTML = '<div class="empty"><b>Not available to your account</b></div>'; return; }
+  const edit = canEdit();
+  const gone = (DB.members || []).filter(isDeceased);
+  const q = MEMO_Q.trim().toLowerCase();
+  const hit = m => !q || [m['Name'], m['Member ID'], m['Family ID'], m['Cause of Death']]
+    .some(v => String(v || '').toLowerCase().includes(q));
+
+  const withDate = gone.filter(m => toISO(m['Date of Death']));
+  const noDate = gone.filter(m => !toISO(m['Date of Death']));
+  const shown = gone.filter(hit).sort((a, b) =>
+    String(toISO(b['Date of Death']) || '').localeCompare(String(toISO(a['Date of Death']) || '')));
+  const thisYear = withDate.filter(m => String(toISO(m['Date of Death'])).slice(0, 4) === String(new Date().getFullYear()));
+
+  const famHead = m => {
+    const f = (DB.families || []).find(x => String(x['Family ID']).trim() === String(m['Family ID'] || '').trim());
+    return f ? String(f['Family Head'] || '').trim() : '';
+  };
+
+  const card = m => {
+    const mid = String(m['Member ID'] || '').trim();
+    const d = toISO(m['Date of Death']);
+    const dob = toISO(m['Date of Birth']);
+    const age = d && dob ? Math.floor((new Date(d) - new Date(dob)) / 31557600000) : (m['Age'] || '');
+    return `<article class="memo">
+      ${m['Photo'] ? `<img class="mimg" src="${esc(thumbUrl(m['Photo'], 200))}" alt="" loading="lazy">`
+        : '<span class="mimg mno">\u25E6</span>'}
+      <div class="mtx">
+        <b>${esc(m['Name'] || mid)}</b>
+        <div class="mline">${dob ? esc(String(new Date(dob).getFullYear())) + ' \u2013 ' : ''}${d ? esc(String(new Date(d).getFullYear())) : 'year not recorded'}${age ? ' \u00b7 aged ' + esc(age) : ''}</div>
+        <div class="mline">${d ? 'Died ' + esc(fmtDate(d)) : '<i>date of death not recorded</i>'}</div>
+        ${m['Cause of Death'] ? `<div class="mcause">${esc(m['Cause of Death'])}</div>` : ''}
+        <div class="mfoot">
+          <span class="whoid">${esc(mid)}${m['Family ID'] ? ' \u00b7 ' + esc(m['Family ID']) : ''}${famHead(m) ? ' \u00b7 ' + esc(famHead(m)) : ''}</span>
+          <button class="btn btn-sm" data-openmem="${esc(mid)}">Open record</button>
+          ${edit && !d ? `<button class="btn btn-sm" data-fixdeath="${esc(mid)}">Add the date</button>` : ''}
+        </div>
+      </div>
+    </article>`;
+  };
+
+  $('#main').innerHTML = `
+    <div class="pagehead">
+      <div><h2>In memory <span class="muted" style="font-size:16px">\u0B38\u0B4D\u0B2E\u0B43\u0B24\u0B3F</span></h2>
+      <div class="sub">${gone.length} ${gone.length === 1 ? 'person' : 'people'} remembered${thisYear.length ? ' \u00b7 ' + thisYear.length + ' this year' : ''}${noDate.length ? ' \u00b7 ' + noDate.length + ' without a date' : ''}</div></div>
+      <div class="sp"></div>
+      <div class="hhacts">
+        <button class="btn btn-sm" data-remcal="1">Remembrance calendar</button>
+        ${edit ? '<button class="btn btn-primary" id="memoAdd">+ Record a death</button>' : ''}
+      </div>
+    </div>
+
+    ${edit ? `<div class="panel" style="margin-bottom:16px">
+      <div class="panel-head"><h3>Record a death</h3></div>
+      <div class="panel-body">
+        <div class="fieldnote" style="margin-bottom:10px">Type the name of the person who has died. Date and cause are asked for next, and if they headed a family you will be asked who takes over.</div>
+        <div class="memofind">
+          <input class="input" id="memoWho" list="memoLiving" placeholder="Name of the person who died" autocomplete="off">
+          <button class="btn btn-primary" id="memoGo">Continue</button>
+        </div>
+        <datalist id="memoLiving">${(DB.members || []).filter(m => !isDeceased(m))
+          .map(m => `<option value="${esc(m['Name'])}">${esc(m['Member ID'])}${m['Family ID'] ? ' \u00b7 ' + esc(m['Family ID']) : ''}${m['Age'] ? ' \u00b7 ' + esc(m['Age']) : ''}</option>`).join('')}</datalist>
+        <div id="memoMatches"></div>
+      </div>
+    </div>` : ''}
+
+    <div class="toolbar" style="margin-bottom:12px">
+      <input class="input" id="memoSearch" placeholder="Search the deceased\u2026" value="${esc(MEMO_Q)}" style="flex:1;min-width:180px">
+      ${MEMO_Q ? '<button class="btn btn-sm" id="memoClear">Clear</button>' : ''}
+    </div>
+
+    ${shown.length ? `<div class="memos">${shown.map(card).join('')}</div>`
+      : `<div class="empty"><b>${gone.length ? 'Nobody matches that search' : 'Nobody recorded yet'}</b>
+        <div class="muted small" style="margin-top:6px">${gone.length ? 'Try part of a name.'
+          : 'When a villager dies, use Record a death above. The person stays in the register \u2014 they simply stop being counted as living.'}</div></div>`}`;
+
+  const findWho = () => {
+    const raw = ($('#memoWho') || {}).value || '';
+    const s = raw.trim().toLowerCase();
+    if(!s) return null;
+    const living = (DB.members || []).filter(m => !isDeceased(m));
+    const exact = living.filter(m => String(m['Name'] || '').trim().toLowerCase() === s ||
+      String(m['Member ID'] || '').trim().toLowerCase() === s);
+    const part = living.filter(m => String(m['Name'] || '').toLowerCase().includes(s) &&
+      String(m['Name'] || '').trim().toLowerCase() !== s);
+    return exact.concat(part);
+  };
+
+  const go = () => {
+    const found = findWho();
+    const box = $('#memoMatches');
+    if(!found || !found.length){
+      box.innerHTML = '<div class="fieldnote" style="color:var(--brick)">No living member found by that name. Check the spelling, or add the person to Members first.</div>';
+      return;
+    }
+    if(found.length === 1){ box.innerHTML = ''; markDeceased(String(found[0]['Member ID']).trim()); return; }
+    /* Two people can share a name in a village; make the committee pick. */
+    box.innerHTML = '<div class="fieldnote">More than one person by that name \u2014 choose which:</div>' +
+      '<div class="memopick">' + found.slice(0, 8).map(m => `<button class="btn" data-pick="${esc(m['Member ID'])}">${esc(m['Name'])}
+        <span class="muted small">${esc(m['Member ID'])}${m['Family ID'] ? ' \u00b7 ' + esc(m['Family ID']) : ''}${m['Age'] ? ' \u00b7 ' + esc(m['Age']) : ''}</span></button>`).join('') + '</div>';
+    box.querySelectorAll('[data-pick]').forEach(b => { b.onclick = () => { box.innerHTML = ''; markDeceased(b.dataset.pick); }; });
+  };
+
+  if($('#memoGo')) $('#memoGo').onclick = go;
+  if($('#memoWho')) $('#memoWho').addEventListener('keydown', ev => {
+    if(ev.key === 'Enter'){ ev.preventDefault(); go(); }
+  });
+  if($('#memoAdd')) $('#memoAdd').onclick = () => { const i = $('#memoWho'); if(i){ i.focus(); i.select(); } };
+
+  const s = $('#memoSearch');
+  if(s) s.addEventListener('input', debounce(() => { MEMO_Q = s.value; renderMemorial(); }, 220));
+  if($('#memoClear')) $('#memoClear').onclick = () => { MEMO_Q = ''; renderMemorial(); };
+
+  $('#main').querySelectorAll('[data-openmem]').forEach(b => { b.onclick = () => openMember(b.dataset.openmem); });
+  $('#main').querySelectorAll('[data-fixdeath]').forEach(b => { b.onclick = () => markDeceased(b.dataset.fixdeath); });
+  $('#main').querySelectorAll('[data-remcal]').forEach(b => { b.onclick = () => openRemembranceCalendar(); });
+  wirePhotoFallbacks($('#main'));
+}
+
 /* Recording a death: mark the person, then settle the family head if needed. */
 async function markDeceased(memberId){
   if(!canEdit()) { toast('Your account cannot change records', 'bad'); return; }
@@ -5371,6 +5752,11 @@ async function markDeceased(memberId){
           </select>
           <div class="fieldnote">The family record is updated and that member's relation becomes Self.</div>`
           : '<div class="fieldnote">No other living member is recorded in this family, so the family head is left blank.</div>'}` : ''}
+      <label class="lbl" for="dcCause" style="margin-top:14px;display:block">Cause of death</label>
+      <input class="input" id="dcCause" list="dcCauses" placeholder="e.g. old age, heart attack, accident">
+      <datalist id="dcCauses">${['Old age','Heart attack','Stroke','Cancer','Kidney failure','Tuberculosis',
+        'Diabetes','Accident','Snake bite','Drowning','Childbirth','Illness — not known']
+        .concat(distinct('members', 'Cause of Death')).map(v => `<option value="${esc(v)}"></option>`).join('')}</datalist>
       <label class="lbl" for="dcNote" style="margin-top:14px;display:block">Remark (optional)</label>
       <input class="input" id="dcNote" placeholder="e.g. funeral help given from the village fund">
     </div>
@@ -5384,12 +5770,14 @@ async function markDeceased(memberId){
     const btn = modal.querySelector('#dcGo');
     const when = modal.querySelector('#dcDate').value || today();
     const note = modal.querySelector('#dcNote').value.trim();
+    const cause = modal.querySelector('#dcCause').value.trim();
     const heir = (modal.querySelector('#dcHead') || {}).value || '';
     btn.disabled = true; btn.textContent = 'Saving…';
     try {
       const out = Object.assign({}, x, {
         'Life Status': 'Deceased',
         'Date of Death': when,
+        'Cause of Death': cause,
         'Earning Member': 'NO',
         'Remarks': [x['Remarks'], note].filter(Boolean).join(' · ')
       });
@@ -5858,7 +6246,8 @@ function openMember(id){
     <header>
       <div><h3>${esc(x['Name'] || id)}${isDeceased(x) ? ' <span class="pill gone">Deceased</span>' : ''}</h3>
       <div class="sub">${esc(id)}${isHead ? ' · Family head' : ''}${famId ? ' · ' + esc(famId) : ''}${
-        isDeceased(x) && toISO(x['Date of Death']) ? ' · died ' + esc(fmtDate(x['Date of Death'])) : ''}</div></div>
+        isDeceased(x) && toISO(x['Date of Death']) ? ' · died ' + esc(fmtDate(x['Date of Death'])) : ''}${
+        isDeceased(x) && x['Cause of Death'] ? ' · ' + esc(x['Cause of Death']) : ''}</div></div>
       <div class="sp"></div><button class="btn btn-sm" onclick="closeModal()">Close</button>
     </header>
     <div class="body">
@@ -5942,15 +6331,6 @@ function renderPhotos(){
     <span class="muted small" style="margin-left:auto">Leave a box empty to fall back to ${esc(CONFIG.DEFAULT_PHOTO)}</span>
   </div>
   <div class="panel" style="margin-top:16px">
-    <div class="panel-head"><h3>Public page fallback file</h3></div>
-    <div class="panel-body">
-      <div class="fieldnote">What the sign-in screen and public page show is set on the <b>What people see</b> page.
-      This button is only needed if the sheet backend has not been redeployed \u2014 download the file and upload it
-      beside <b>public.html</b> in GitHub, and the public page will read it when the backend does not answer.</div>
-      <div style="margin-top:12px"><button class="btn" id="stickyExport">Download notes file for GitHub</button></div>
-    </div>
-  </div>
-  <div class="panel" style="margin-top:16px">
     <div class="panel-head"><h3>Where to get a link</h3></div>
     <div class="panel-body small" style="line-height:1.7">
       <p style="margin:0 0 10px"><b>Photo kept with the website.</b> Upload the picture into the same GitHub folder as
@@ -5978,23 +6358,6 @@ function renderPhotos(){
 
   $('#photoReset').onclick = () => { li.value = CONFIG.DEFAULT_PHOTO; di.value = CONFIG.DEFAULT_PHOTO; both(); };
 
-  $('#stickyExport').onclick = () => {
-    const notes = stickyAll().filter(n => n && n.pin && !n.done && n.pub)
-      .map(n => ({ id:n.id, kind:n.kind, title:n.title, text:n.text, due:n.due, col:n.col }));
-    const payload = {
-      ok: true,
-      showOnPublic: String(setting('Sticky Notes Public', 'No')).toLowerCase() === 'yes',
-      notes: notes,
-      madeAt: localStamp(new Date())
-    };
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'public-notes.json';
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
-    toast(notes.length ? notes.length + ' note(s) exported — upload public-notes.json to GitHub' : 'No notes are ticked for the public page', notes.length ? 'good' : 'bad');
-  };
 
   $('#photoSave').onclick = async () => {
     const b = $('#photoSave'); b.disabled = true; b.textContent = 'Saving…';
@@ -6042,6 +6405,7 @@ function initLoginScreen(){
   paintPublicSticky();
   paintLoginRemembrance();
   paintLoginDays();
+  paintLoginNotices();
 }
 
 /* Confirms the sheet is reachable and shows which backend version answered. */
