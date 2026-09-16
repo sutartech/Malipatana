@@ -23,18 +23,67 @@ body{margin:0;background:var(--paper);color:var(--ink);
   font-family:'Instrument Sans',system-ui,-apple-system,'Noto Sans Oriya',sans-serif;line-height:1.6}
 a{color:var(--brick)}
 a:hover{color:#8a2916}
-.wrap{max-width:900px;margin:0 auto;padding:0 18px 70px}
-header.top{background:linear-gradient(158deg,#0c2c40,#17303f 40%,#7d2f1c 88%,#b8701f);color:#fff;
-  padding:34px 18px 30px;margin-bottom:22px}
-header.top .in{max-width:900px;margin:0 auto}
-header.top .eyebrow{font-size:11px;letter-spacing:.22em;font-weight:600;color:#f0c48b}
-header.top h1{font-family:var(--display);font-size:clamp(26px,4vw,38px);margin:10px 0 4px;
-  font-weight:700;line-height:1.5}
-header.top .sub{color:#dbe8ee;font-size:14.5px}
+.wrap{max-width:1080px;margin:0 auto;padding:0 18px 70px}
+/* Secondary cards sit side by side once there is room. One narrow column of
+   full-width cards wastes most of a laptop screen and buries the lower ones. */
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px;align-items:start}
+.cols>.card{margin-bottom:0}
+.span2{grid-column:1/-1}
+/* The village's own temple carries the header. A flat gradient band said
+   nothing about the place; the photograph does the work, with the gradient
+   kept underneath so the type stays legible before the image loads and on
+   any part of the picture that happens to be pale. */
+header.top{position:relative;color:#fff;overflow:hidden;margin-bottom:26px;
+  background:linear-gradient(158deg,#0c2c40,#17303f 40%,#7d2f1c 88%,#b8701f)}
+header.top .bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+  object-position:center 38%;opacity:.42}
+header.top .veil{position:absolute;inset:0;
+  background:linear-gradient(176deg,#0b1d27b3 0%,#0e232e8c 42%,#0e232ef2 100%)}
+header.top .in{position:relative;max-width:1080px;margin:0 auto;padding:52px 18px 40px;
+  display:flex;align-items:flex-end;gap:20px;flex-wrap:wrap}
+header.top .crest{width:64px;height:64px;border-radius:20px;flex:none;object-fit:cover;
+  border:2px solid #e0a02f80;box-shadow:0 14px 30px #00000059;background:#17303f}
+header.top .who{min-width:0;flex:1 1 300px}
+header.top .eyebrow{font-size:11px;letter-spacing:.22em;font-weight:700;color:#f0c48b}
+header.top h1{font-family:var(--display);font-size:clamp(30px,5.2vw,50px);margin:9px 0 0;
+  font-weight:700;line-height:1.12;text-shadow:0 2px 20px #0b1d2773;overflow-wrap:anywhere}
+header.top .rule{width:56px;height:3px;border-radius:99px;background:#e0a02f;margin:15px 0 0}
+header.top .sub{color:#dbe8ee;font-size:14.5px;margin-top:13px}
+header.top .sub b{color:#fff;font-weight:600}
+@media(max-width:560px){ header.top .in{padding:38px 18px 30px} }
 .card{background:var(--surface);border:1px solid var(--line);border-radius:20px;
   box-shadow:0 20px 40px -34px #17303f66;margin-bottom:16px;overflow:hidden}
 .card h2{font-family:var(--display);font-size:19px;margin:0;font-weight:600;line-height:1.5;
-  padding:16px 22px;border-bottom:1px solid var(--line-soft)}
+  padding:16px 22px 14px;border-bottom:1px solid var(--line-soft);position:relative}
+.card h2::after{content:'';position:absolute;left:22px;bottom:-1px;width:38px;height:2px;
+  border-radius:99px;background:#e0a02f}
+/* The balance is the reason most people open this page, so it is the one
+   element allowed to be loud: dark ground, gold rule, figure at display size.
+   Everything else stays quiet white. */
+.fund{border:0;background:linear-gradient(158deg,#0c2c40,#17303f 44%,#7d2f1c 92%,#a8561a);
+  color:#fff;box-shadow:0 26px 54px -30px #0e232e99;position:relative;overflow:hidden}
+.fund::after{content:'';position:absolute;width:320px;height:320px;border-radius:50%;
+  right:-120px;top:-140px;background:#ffffff0f;pointer-events:none}
+.fundgrid{display:grid;grid-template-columns:minmax(0,1fr);gap:0;position:relative}
+@media(min-width:720px){ .fundgrid.split{grid-template-columns:minmax(240px,.85fr) minmax(0,1.15fr)} }
+.fundmain{padding:26px 24px}
+.fundmain .cap{font-size:11px;font-weight:700;color:#f0c48b;text-transform:uppercase;letter-spacing:.14em}
+.fundmain .v{font-family:var(--display);font-size:clamp(38px,6.6vw,58px);font-weight:700;
+  line-height:1.15;margin-top:8px;font-variant-numeric:tabular-nums;color:#fff}
+.fundmain .rule{width:54px;height:3px;border-radius:99px;background:#e0a02f;margin:16px 0 0}
+.fundmain .say{font-size:13.5px;color:#cfe1e8;line-height:1.65;margin-top:14px;max-width:34ch}
+.fundledger{padding:20px 24px 22px;background:#ffffff14;border-left:1px solid #ffffff26}
+@media(max-width:719px){ .fundledger{border-left:0;border-top:1px solid #ffffff26} }
+.fundledger .lhead{font-size:10.5px;font-weight:700;color:#f0c48b;text-transform:uppercase;
+  letter-spacing:.12em;margin-bottom:6px}
+.fund .row{border-bottom-color:#ffffff24}
+.fund .row .n{color:#eaf1f4}
+.fund .row .n em{color:#b6cbd6}
+.fund .row.in .a{color:#9fe3b4}
+.fund .row.out .a{color:#ffb9a3}
+.fund .row.total{border-top:2px solid #ffffff59}
+.fund .row.total .n,.fund .row.total .a{color:#fff}
+.fund .note{background:#00000029;border-top-color:#ffffff1f;color:#c6d7e0;position:relative}
 .big{padding:24px 22px}
 .big .cap{font-size:11.5px;font-weight:700;color:var(--label);text-transform:uppercase;letter-spacing:.09em}
 .big .v{font-family:var(--display);font-size:clamp(34px,6vw,48px);font-weight:700;line-height:1.5;
@@ -53,7 +102,21 @@ header.top .sub{color:#dbe8ee;font-size:14.5px}
 .grid4{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1px;background:var(--line-soft)}
 .grid4 div{background:var(--surface);padding:16px 18px}
 .grid4 .k{font-size:11.5px;font-weight:700;color:var(--label);text-transform:uppercase;letter-spacing:.07em}
-.grid4 .v{font-family:var(--display);font-size:23px;font-weight:700;margin-top:3px;font-variant-numeric:tabular-nums}
+.grid4 .v{font-family:var(--display);font-size:29px;font-weight:700;margin-top:4px;
+  font-variant-numeric:tabular-nums;color:var(--indigo);line-height:1.15}
+.grid4 .v.warm{color:var(--brick)}
+.fundhow{display:flex;flex-direction:column;gap:12px;margin-top:10px}
+.fundhow>div{display:flex;flex-direction:column;gap:2px;padding-left:12px;
+  border-left:2px solid #e0a02f66}
+.fundhow b{font-size:13.5px;font-weight:600;color:#fff}
+.fundhow span{font-size:12.5px;line-height:1.55;color:#cfe1e8;text-wrap:pretty}
+
+/* ---------- a word from the committee ---------- */
+.intro{background:linear-gradient(170deg,#fffdf6,#fbf4e6);border:1px solid #e9dcba;
+  border-radius:18px;padding:18px 22px;margin-bottom:16px;box-shadow:0 16px 34px -30px #8a5c0466}
+.intro b{display:block;font-family:var(--display);font-size:16px;font-weight:600;
+  color:#7a5206;margin-bottom:5px}
+.intro p{margin:0;font-size:14.5px;line-height:1.7;color:#4a3a1b;text-wrap:pretty;overflow-wrap:anywhere}
 table{width:100%;border-collapse:collapse;font-size:13.5px}
 th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--label);
   padding:10px 22px;background:var(--surface-2);border-bottom:1px solid var(--line)}
@@ -120,8 +183,8 @@ tr:last-child td{border-bottom:0}
 
 /* ---------- the way in ---------- */
 .signin{position:fixed;top:14px;right:16px;z-index:55;display:inline-flex;align-items:center;gap:7px;
-  background:#ffffff1f;color:#fff;border:1px solid #ffffff3d;border-radius:999px;padding:9px 16px;
-  font-size:13px;font-weight:700;text-decoration:none;backdrop-filter:blur(8px);
+  background:#ffffff1f;color:#fff;border:1px solid #ffffff3d;border-radius:999px;padding:9px 18px;
+  font-size:13px;font-weight:700;text-decoration:none;white-space:nowrap;backdrop-filter:blur(8px);
   transition:background .15s ease,transform .15s ease}
 .signin:hover{background:#ffffff33;color:#fff;text-decoration:none;transform:translateY(-1px)}
 @media print{ .signin{display:none} }
@@ -137,7 +200,11 @@ tr:last-child td{border-bottom:0}
 .daysband .dhead span{font-size:11.5px;color:#a08a55;letter-spacing:.06em;font-weight:700}
 .daysband .drule{flex:1;height:1px;background:linear-gradient(90deg,#d9bd6c80,#d9bd6c00)}
 .daysband .dlist{display:flex;flex-wrap:wrap;gap:11px}
-.dcard{background:#fff;border:1px solid #eee2c4;border-radius:12px;padding:12px 15px;flex:1 1 220px;max-width:320px}
+.dcard{background:#fff;border:1px solid #eee2c4;border-radius:12px;flex:1 1 220px;max-width:320px;
+  overflow:hidden;display:flex;flex-direction:column}
+.dcard .dbody{padding:12px 15px}
+.dcard.haspic{flex:1 1 240px}
+.dcard .dimg{display:block;width:100%;aspect-ratio:16/9;object-fit:cover;background:#f2ead6}
 .dcard .dwhen{font-size:11px;font-weight:800;letter-spacing:.07em;color:#a8341e;text-transform:uppercase}
 .dcard b{display:block;font-size:14.5px;margin-top:5px;color:var(--ink);font-weight:600;line-height:1.3}
 .dcard .ddate{font-size:12.5px;color:var(--label);margin-top:3px;font-variant-numeric:tabular-nums}
@@ -150,8 +217,12 @@ tr:last-child td{border-bottom:0}
 .remem .rhead span{font-size:11.5px;color:#9db2c2;letter-spacing:.06em;font-weight:600}
 .remem .rrule{flex:1;height:1px;background:linear-gradient(90deg,#c9a23f66,#c9a23f00)}
 .remem .rlist{display:flex;flex-wrap:wrap;gap:12px}
-.rperson{display:flex;align-items:center;gap:12px;background:#ffffff0f;border:1px solid #ffffff1a;
+.rperson{display:flex;flex-direction:column;background:#ffffff0f;border:1px solid #ffffff1a;
   border-radius:13px;padding:11px 15px 11px 11px;flex:1 1 250px;max-width:340px}
+.rtop{display:flex;align-items:center;gap:12px;min-width:0}
+.rperson.hasmsg{flex:1 1 300px;max-width:400px}
+.rmsg{margin:10px 0 0;padding-top:9px;border-top:1px solid #ffffff1f;font-size:13px;
+  line-height:1.6;color:#e2ebf0;text-wrap:pretty;overflow-wrap:anywhere;font-style:italic}
 .rperson .rimg{width:52px;height:52px;border-radius:50%;flex:none;object-fit:cover;object-position:center top;
   border:2px solid #c9a23f80;background:#33485a;filter:saturate(.72)}
 .rperson .rno{width:52px;height:52px;border-radius:50%;flex:none;display:flex;align-items:center;
@@ -195,7 +266,12 @@ tr:last-child td{border-bottom:0}
 @media print{
   body{background:#fff}
   header.top{background:none;color:#000;border-bottom:2px solid #000;padding:0 0 10px;margin-bottom:16px}
+  header.top .bg,header.top .veil,header.top .crest,header.top .rule{display:none}
+  header.top .in{padding:0;display:block}
+  header.top h1{text-shadow:none}
   header.top .eyebrow,header.top .sub{color:#333}
+  header.top .sub b{color:#000}
+  .card h2::after{display:none}
   .card{box-shadow:none;break-inside:avoid;border-radius:0}
   .noprint{display:none}
 }
@@ -204,10 +280,16 @@ tr:last-child td{border-bottom:0}
 <body>
 
 <header class="top">
+  <img class="bg" src="village.jpg" alt="" aria-hidden="true">
+  <div class="veil"></div>
   <div class="in">
-    <div class="eyebrow" id="place">JAGATSINGHPUR · ODISHA</div>
-    <h1 id="title">ଆମ ଗାଁ ମାଳିପାଟଣା</h1>
-    <div class="sub">Village fund · public account · <span id="asof">loading…</span></div>
+    <img class="crest" src="icon-180.png" alt="" aria-hidden="true">
+    <div class="who">
+      <div class="eyebrow" id="place">JAGATSINGHPUR · ODISHA</div>
+      <h1 id="title">ଆମ ଗାଁ ମାଳିପାଟଣା</h1>
+      <div class="rule"></div>
+      <div class="sub">Village fund &middot; public account &middot; <span id="asof">loading&hellip;</span></div>
+    </div>
   </div>
 </header>
 
@@ -313,45 +395,87 @@ function render(d){
     ['out', 'Regular support', 'Standing support per cycle', -num(f.regularSupport)]
   ].filter(function(r){ return num(r[3]) !== 0; });
 
-  var html = '';
-  if(f) html += '<div class="card"><div class="big' + (rows.length ? '' : ' tight') + '">' +
-    '<div class="cap">Fund available today</div>' +
-    '<div class="v">' + money(available) + '</div></div>' +
-    (rows.length ? '<div class="rows">' + rows.map(function(r){
-      return '<div class="row ' + r[0] + '"><div class="n">' + esc(r[1]) + '<em>' + esc(r[2]) + '</em></div>' +
-             '<div class="a">' + (r[3] < 0 ? '−' : '+') + ' ' + money(Math.abs(r[3])) + '</div></div>';
-    }).join('') +
-    '<div class="row total"><div class="n">Balance in hand</div><div class="a">' + money(available) + '</div></div></div>'
-    : '<div class="state tight">Nothing has been recorded in the fund register yet.</div>') +
-    '<div class="note">Every rupee shown here is entered by the village committee in the fund register. ' +
-    'If something looks wrong, tell any committee member.</div></div>';
+  /* The fund leads on its own; everything after it is a quiet card in a grid
+     that reflows, so a laptop does not show one narrow column with three
+     cards stranded below the fold. */
+  var lead = '';
+  if(f){
+    var empty = !rows.length;
+    var say = empty
+      ? 'Nothing has been recorded in the fund register yet. This figure will move as soon as the committee enters the first contribution.'
+      : 'Money the committee holds today, after everything recorded in the register.';
+    /* The card is always two columns. With an empty register the right half
+       explains how the fund works instead of sitting blank — a full-bleed dark
+       card with one narrow column of text was the "mostly empty" complaint. */
+    var side = empty
+      ? '<div class="fundledger"><div class="lhead">How the village fund works</div>' +
+        '<div class="fundhow">' +
+        '<div><b>Chanda from families</b><span>Each household pays a monthly share to the committee.</span></div>' +
+        '<div><b>Donations and interest</b><span>Gifts from villagers and those living outside.</span></div>' +
+        '<div><b>Spent on the village</b><span>Emergency help, medical and school support, repairs and festivals.</span></div>' +
+        '</div></div>'
+      : '<div class="fundledger">' +
+        '<div class="lhead">How it adds up</div>' +
+        '<div class="rows" style="padding:0">' + rows.map(function(r){
+          return '<div class="row ' + r[0] + '"><div class="n">' + esc(r[1]) + '<em>' + esc(r[2]) + '</em></div>' +
+                 '<div class="a">' + (r[3] < 0 ? '\u2212' : '+') + ' ' + money(Math.abs(r[3])) + '</div></div>';
+        }).join('') +
+        '<div class="row total"><div class="n">Balance in hand</div><div class="a">' + money(available) + '</div></div>' +
+        '</div></div>';
+    lead += '<div class="card fund"><div class="fundgrid split">' +
+      '<div class="fundmain">' +
+        '<div class="cap">Fund available today</div>' +
+        '<div class="v">' + money(available) + '</div>' +
+        '<div class="rule"></div>' +
+        '<div class="say">' + say + '</div>' +
+      '</div>' + side +
+      '</div>' +
+      '<div class="note">Every rupee shown here is entered by the village committee in the fund register. ' +
+      'If something looks wrong, tell any committee member.</div></div>';
+  }
 
-  if(c) html += '<div class="card"><h2>The village</h2><div class="grid4">' +
-    '<div><div class="k">Families</div><div class="v">' + (c.families || 0) + '</div></div>' +
-    '<div><div class="k">Members</div><div class="v">' + (c.members || 0) + '</div></div>' +
-    '<div><div class="k">Helped this year</div><div class="v">' + (c.helpedThisYear || 0) + '</div></div>' +
-    '<div><div class="k">Support running</div><div class="v">' + (c.supportRunning || 0) + '</div></div>' +
-    '</div></div>';
+  /* The committee's own words, if they wrote any. */
+  if(v.intro) lead = '<div class="intro"><b>From the village committee</b><p>' + esc(v.intro) + '</p></div>' + lead;
+
+  var cards = [];
+
+  /* Brick red on a count means "this many people needed help". On a zero it
+     reads as an error, so a zero stays in neutral ink. */
+  function tile(label, n, warmWhenSet){
+    var v = Number(n) || 0;
+    return '<div><div class="k">' + esc(label) + '</div>' +
+      '<div class="v' + (warmWhenSet && v > 0 ? ' warm' : '') + '">' + v + '</div></div>';
+  }
+
+  if(c) cards.push('<div class="card"><h2>The village</h2><div class="grid4">' +
+    tile('Families', c.families) + tile('Members', c.members) +
+    tile('Helped this year', c.helpedThisYear, true) + tile('Support running', c.supportRunning, true) +
+    '</div></div>');
 
   if((d.events || []).length){
-    html += '<div class="card"><h2>Major expenses completed</h2><table>' +
+    cards.push('<div class="card"><h2>Major expenses completed</h2><table>' +
       '<thead><tr><th>Occasion</th><th>Year</th><th class="num">Budget</th><th class="num">Spent</th></tr></thead><tbody>' +
       d.events.map(function(e){
         return '<tr><td>' + esc(e.name) + '</td><td>' + esc(e.year) + '</td>' +
-               '<td class="num">' + (num(e.budget) ? money(e.budget) : '—') + '</td>' +
+               '<td class="num">' + (num(e.budget) ? money(e.budget) : '\u2014') + '</td>' +
                '<td class="num">' + money(e.spent) + '</td></tr>';
-      }).join('') + '</tbody></table></div>';
+      }).join('') + '</tbody></table></div>');
   }
 
   if((d.recent || []).length){
-    html += '<div class="card"><h2>Recent spending</h2><table>' +
+    cards.push('<div class="card"><h2>Recent spending</h2><table>' +
       '<thead><tr><th>Date</th><th>What for</th><th class="num">Amount</th></tr></thead><tbody>' +
       d.recent.map(function(r){
         return '<tr><td>' + esc(fmtDate(r.date)) + '</td><td>' + esc(r.what) + '</td>' +
                '<td class="num">' + money(r.amount) + '</td></tr>';
       }).join('') + '</tbody></table>' +
-      '<div class="note">Only what the money was spent on is published. Who received help is never sent to this page.</div></div>';
+      '<div class="note">Only what the money was spent on is published. Who received help is never sent to this page.</div></div>');
   }
+
+  /* A lone card stretched across the grid looks stranded, so it spans. */
+  if(cards.length === 1) cards[0] = cards[0].replace('class="card"', 'class="card span2"');
+
+  var html = lead + (cards.length ? '<div class="cols">' + cards.join('') + '</div>' : '');
 
   if(!html) html = '<div class="card"><div class="state"><b>Nothing is published at the moment</b>' +
     'The village committee has not chosen anything to show here yet.</div></div>';
@@ -493,10 +617,12 @@ function renderDays(d){
   if(!d || !(d.days || []).length) return;
   var cards = d.days.map(function(x){
     var when = x.daysAway === 0 ? 'Today' : x.daysAway === 1 ? 'Tomorrow' : 'In ' + x.daysAway + ' days';
-    return '<div class="dcard' + (x.daysAway === 0 ? ' today' : '') + '">' +
+    return '<div class="dcard' + (x.daysAway === 0 ? ' today' : '') + (x.photo ? ' haspic' : '') + '">' +
+      (x.photo ? '<img class="dimg" data-srcs="' + esc(photoSrcList(x.photo, 480).join('|')) + '" alt="" loading="lazy">' : '') +
+      '<div class="dbody">' +
       '<div class="dwhen">' + esc(when) + '</div><b>' + esc(x.title) + '</b>' +
       '<div class="ddate">' + esc(fmtDate(x.date)) + '</div>' +
-      (x.note ? '<p>' + esc(x.note) + '</p>' : '') + '</div>';
+      (x.note ? '<p>' + esc(x.note) + '</p>' : '') + '</div></div>';
   }).join('');
   var box = document.createElement('div');
   box.className = 'daysband';
@@ -507,6 +633,7 @@ function renderDays(d){
   var head = wrap.querySelector('.head');
   if(head && head.nextSibling) wrap.insertBefore(box, head.nextSibling);
   else wrap.insertBefore(box, wrap.firstChild);
+  wirePubPhotos(box);
 }
 
 function renderRemembrance(r){
@@ -520,13 +647,17 @@ function renderRemembrance(r){
       : p.daysAway === 1 ? 'Tomorrow · ' + fmtDate(p.anniv)
       : 'In ' + p.daysAway + ' days · ' + fmtDate(p.anniv);
     var yrs = (p.dob ? new Date(p.dob).getFullYear() + ' – ' : '') + new Date(p.dod).getFullYear();
-    var img = p.photo
-      ? '<img class="rimg" data-srcs="' + esc(photoSrcList(p.photo, 160).join('|')) + '" alt="' + esc(p.name) + '" loading="lazy">'
+    var src = p.memPhoto || p.photo;
+    var img = src
+      ? '<img class="rimg" data-srcs="' + esc(photoSrcList(src, 200).join('|')) + '" alt="' + esc(p.name) + '" loading="lazy">'
       : '<span class="rno">◦</span>';
-    return '<div class="rperson' + (p.daysAway === 0 ? ' today' : '') + '">' + img +
+    return '<div class="rperson' + (p.daysAway === 0 ? ' today' : '') + (p.message ? ' hasmsg' : '') + '">' +
+      '<div class="rtop">' + img +
       '<div class="rtx"><b>' + esc(p.name) + '</b><div class="ryr">' + esc(yrs) +
       (p.years ? ' · ' + p.years + (p.years === 1 ? ' year' : ' years') : '') + '</div>' +
-      '<div class="rday">' + esc(when) + '</div></div></div>';
+      '<div class="rday">' + esc(when) + '</div></div></div>' +
+      (p.message ? '<p class="rmsg">' + esc(p.message) + '</p>' : '') +
+      '</div>';
   }).join('');
   var box = document.createElement('div');
   box.className = 'remem';

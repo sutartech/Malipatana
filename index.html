@@ -760,7 +760,11 @@ html.odia .nav{font-family:var(--display);font-size:17px}
 .daysband .dhead span{font-size:11.5px;color:#a08a55;letter-spacing:.06em;font-weight:700}
 .daysband .drule{flex:1;height:1px;background:linear-gradient(90deg,#d9bd6c80,#d9bd6c00)}
 .daysband .dlist{display:flex;flex-wrap:wrap;gap:11px}
-.dcard{background:#fff;border:1px solid #eee2c4;border-radius:12px;padding:12px 15px;flex:1 1 220px;max-width:320px}
+.dcard{background:#fff;border:1px solid #eee2c4;border-radius:12px;flex:1 1 220px;max-width:320px;
+  overflow:hidden;display:flex;flex-direction:column}
+.dcard .dbody{padding:12px 15px}
+.dcard.haspic{flex:1 1 240px}
+.dcard .dimg{display:block;width:100%;aspect-ratio:16/9;object-fit:cover;background:#f2ead6}
 .dcard .dwhen{font-size:11px;font-weight:800;letter-spacing:.07em;color:#a8341e;text-transform:uppercase}
 .dcard b{display:block;font-size:14.5px;margin-top:5px;color:var(--ink);font-weight:600;line-height:1.3}
 .dcard .ddate{font-size:12.5px;color:var(--label);margin-top:3px;font-variant-numeric:tabular-nums}
@@ -775,8 +779,12 @@ html.odia .nav{font-family:var(--display);font-size:17px}
 .remem .rhead span{font-size:11.5px;color:#9db2c2;letter-spacing:.06em;font-weight:600}
 .remem .rrule{flex:1;height:1px;background:linear-gradient(90deg,#c9a23f66,#c9a23f00)}
 .remem .rlist{display:flex;flex-wrap:wrap;gap:12px}
-.rperson{display:flex;align-items:center;gap:12px;background:#ffffff0f;border:1px solid #ffffff1a;
+.rperson{display:flex;flex-direction:column;gap:0;background:#ffffff0f;border:1px solid #ffffff1a;
   border-radius:13px;padding:11px 15px 11px 11px;flex:1 1 250px;max-width:340px}
+.rtop{display:flex;align-items:center;gap:12px;min-width:0}
+.rperson.hasmsg{flex:1 1 300px;max-width:400px}
+.rmsg{margin:10px 0 0;padding-top:9px;border-top:1px solid #ffffff1f;font-size:13px;
+  line-height:1.6;color:#e2ebf0;text-wrap:pretty;overflow-wrap:anywhere;font-style:italic}
 .rperson .rimg{width:52px;height:52px;border-radius:50%;flex:none;object-fit:cover;object-position:center top;
   border:2px solid #c9a23f80;background:#33485a;filter:saturate(.72)}
 .rperson .rno{width:52px;height:52px;border-radius:50%;flex:none;display:flex;align-items:center;
@@ -2213,7 +2221,10 @@ function renderPublicPage(){
         incomes and member details are never sent outside the dashboard, whatever is ticked here.</div>
       </div>
       <div class="panel-body" style="border-top:1px solid var(--line-soft)">
-        <button class="btn btn-primary" id="pubSave">Save</button>
+        <label class="lbl" for="pubIntro" style="display:block;margin-bottom:6px">A word from the committee</label>
+        <textarea class="input" id="pubIntro" rows="3" placeholder="e.g. Chanda for Raja Parba is being collected this month. Please pay to any committee member.">${esc(setting('Public Intro', ''))}</textarea>
+        <div class="fieldnote">Shown at the top of the public page, above the fund figure. Leave it empty and no message appears.</div>
+        <div style="margin-top:14px"><button class="btn btn-primary" id="pubSave">Save</button></div>
       </div>
     </div>`;
 
@@ -2232,6 +2243,10 @@ function renderPublicPage(){
       const r2 = await api('save', { sheet: 'Settings', record: JSON.stringify({ Setting: 'Sticky Notes Spot', Value: sp }) });
       if(!r2 || !r2.ok) throw new Error((r2 && r2.error) || 'could not save the note position');
       DB.settings['Sticky Notes Spot'] = sp;
+      const intro = $('#pubIntro').value.trim();
+      const r3 = await api('save', { sheet: 'Settings', record: JSON.stringify({ Setting: 'Public Intro', Value: intro }) });
+      if(!r3 || !r3.ok) throw new Error((r3 && r3.error) || 'could not save the message');
+      DB.settings['Public Intro'] = intro;
       toast('Saved', 'good');
       renderPublicPage();
     } catch(e){
@@ -2801,11 +2816,12 @@ const MODULES = {
       { n:'Title', t:'text', req:true, hint:'Raja Parba, Annual meeting, Ratha Jatra…' },
       { n:'Date', t:'date', req:true },
       { n:'Note', t:'textarea', hint:'One line villagers should know — time, place, what to bring' },
+      { n:'Photo', t:'photo', hint:'Optional — a poster or picture shown with the announcement' },
       { n:'Repeats Yearly', t:'select', opts:['Yes','No'], def:'Yes' },
       { n:'Show Days Before', t:'number', def:7, hint:'How many days ahead it starts appearing' },
       { n:'Show On', t:'select', opts:['Both pages','Sign-in only','Public only','Nowhere'], def:'Both pages' }
     ],
-    list: ['Day ID','Title','Date','Repeats Yearly','Show Days Before','Show On','Note']
+    list: ['Day ID','Photo','Title','Date','Repeats Yearly','Show Days Before','Show On','Note']
   },
   grievances: {
     sheet: 'Grievances', title: 'Grievances', odia: 'ଅଭିଯୋଗ', idField: 'Grievance ID', prefix: 'GRV',
@@ -2875,7 +2891,9 @@ const MODULES = {
       { n:'Photo', t:'photo', hint:'Saved in the village Google Drive folder' },
       { n:'Life Status', t:'select', opts:['Alive','Deceased'], hidden:true },
       { n:'Date of Death', t:'date', hidden:true },
-      { n:'Cause of Death', t:'text', hidden:true }
+      { n:'Cause of Death', t:'text', hidden:true },
+      { n:'Memorial Message', t:'textarea', hidden:true },
+      { n:'Memorial Photo', t:'photo', hidden:true }
     ],
     list: ['Photo','Member ID','Name','Family ID','Relation to Family Head','Gender','Age','Education','Occupation','Earning Member','Monthly Income','Mobile','Life Status']
   },
@@ -3131,6 +3149,7 @@ function remembranceLocal(windowDays){
         id: String(m['Member ID'] || '').trim(),
         family: String(m['Family ID'] || '').trim(),
         name: m['Name'] || '', photo: m['Photo'] || '',
+        memPhoto: m['Memorial Photo'] || '', message: m['Memorial Message'] || '',
         dob: toISO(m['Date of Birth']) || '', dod: iso,
         anniv: localISO(anniv), daysAway: away,
         years: anniv.getFullYear() - dod.getFullYear()
@@ -3212,13 +3231,18 @@ function remembranceHtml(people, withBtn){
       : p.daysAway === 1 ? 'Tomorrow · ' + fmtDate(p.anniv)
       : 'In ' + p.daysAway + ' days · ' + fmtDate(p.anniv);
     const yrs = (p.dob ? new Date(p.dob).getFullYear() + ' – ' : '') + new Date(p.dod).getFullYear();
-    const img = p.photo
-      ? '<img class="rimg" data-srcs="' + esc(photoSrcs(p.photo, 160).join('|')) + '" alt="' + esc(p.name) + '" loading="lazy">'
+    /* A portrait chosen for the memorial beats the register mugshot. */
+    const src = p.memPhoto || p.photo;
+    const img = src
+      ? '<img class="rimg" data-srcs="' + esc(photoSrcs(src, 200).join('|')) + '" alt="' + esc(p.name) + '" loading="lazy">'
       : '<span class="rno">◦</span>';
-    return '<div class="rperson' + (p.daysAway === 0 ? ' today' : '') + '">' + img +
+    return '<div class="rperson' + (p.daysAway === 0 ? ' today' : '') + (p.message ? ' hasmsg' : '') + '">' +
+      '<div class="rtop">' + img +
       '<div class="rtx"><b>' + esc(p.name) + '</b>' +
       '<div class="ryr">' + esc(yrs) + (p.years ? ' · ' + p.years + (p.years === 1 ? ' year' : ' years') : '') + '</div>' +
-      '<div class="rday">' + esc(when) + '</div></div></div>';
+      '<div class="rday">' + esc(when) + '</div></div></div>' +
+      (p.message ? '<p class="rmsg">' + esc(p.message) + '</p>' : '') +
+      '</div>';
   };
   return '<div class="remem"><div class="rhead"><b>\u0B38\u0B4D\u0B2E\u0B43\u0B24\u0B3F \u00b7 In remembrance</b>' +
     '<span>' + people.length + '</span><i class="rrule"></i>' +
@@ -3259,7 +3283,7 @@ function daysLocal(){
     cands.forEach(when => {
       const away = Math.round((when - mid) / DAY);
       if(away < 0 || away > lead) return;
-      out.push({ title: r['Title'] || '', note: r['Note'] || '',
+      out.push({ title: r['Title'] || '', note: r['Note'] || '', photo: r['Photo'] || '',
         date: localISO(when), daysAway: away });
     });
   });
@@ -3270,11 +3294,13 @@ function daysHtml(days){
   if(!days || !days.length) return '';
   const card = d => {
     const when = d.daysAway === 0 ? 'Today' : d.daysAway === 1 ? 'Tomorrow' : 'In ' + d.daysAway + ' days';
-    return '<div class="dcard' + (d.daysAway === 0 ? ' today' : '') + '">' +
+    return '<div class="dcard' + (d.daysAway === 0 ? ' today' : '') + (d.photo ? ' haspic' : '') + '">' +
+      (d.photo ? '<img class="dimg" data-srcs="' + esc(photoSrcs(d.photo, 480).join('|')) + '" alt="" loading="lazy">' : '') +
+      '<div class="dbody">' +
       '<div class="dwhen">' + esc(when) + '</div>' +
       '<b>' + esc(d.title) + '</b>' +
       '<div class="ddate">' + esc(fmtDate(d.date)) + '</div>' +
-      (d.note ? '<p>' + esc(d.note) + '</p>' : '') + '</div>';
+      (d.note ? '<p>' + esc(d.note) + '</p>' : '') + '</div></div>';
   };
   return '<div class="daysband"><div class="dhead"><b>ଆସୁଥିବା ଦିନ · Coming up</b>' +
     '<span>' + days.length + '</span><i class="drule"></i></div>' +
@@ -5639,6 +5665,7 @@ function renderMemorial(){
         <div class="mfoot">
           <span class="whoid">${esc(mid)}${m['Family ID'] ? ' \u00b7 ' + esc(m['Family ID']) : ''}${famHead(m) ? ' \u00b7 ' + esc(famHead(m)) : ''}</span>
           <button class="btn btn-sm" data-openmem="${esc(mid)}">Open record</button>
+          ${edit ? `<button class="btn btn-sm${m['Memorial Message'] || m['Memorial Photo'] ? ' btn-primary' : ''}" data-tribute="${esc(mid)}">${m['Memorial Message'] || m['Memorial Photo'] ? 'Tribute \u2713' : 'Add tribute'}</button>` : ''}
           ${edit && !d ? `<button class="btn btn-sm" data-fixdeath="${esc(mid)}">Add the date</button>` : ''}
         </div>
       </div>
@@ -5719,8 +5746,71 @@ function renderMemorial(){
 
   $('#main').querySelectorAll('[data-openmem]').forEach(b => { b.onclick = () => openMember(b.dataset.openmem); });
   $('#main').querySelectorAll('[data-fixdeath]').forEach(b => { b.onclick = () => markDeceased(b.dataset.fixdeath); });
+  $('#main').querySelectorAll('[data-tribute]').forEach(b => { b.onclick = () => openTribute(b.dataset.tribute); });
   $('#main').querySelectorAll('[data-remcal]').forEach(b => { b.onclick = () => openRemembranceCalendar(); });
   wirePhotoFallbacks($('#main'));
+}
+
+/* A tribute is the committee's own words, not a register field, so it gets
+   its own small form rather than another hidden box on the member record. */
+function openTribute(memberId){
+  if(!canEdit()){ toast('Your account cannot change records', 'bad'); return; }
+  const x = (DB.members || []).find(r => String(r['Member ID']).trim() === String(memberId).trim());
+  if(!x){ toast('Member not found', 'bad'); return; }
+  const msg = String(x['Memorial Message'] || '');
+  const pho = String(x['Memorial Photo'] || '');
+  const d = toISO(x['Date of Death']);
+
+  openModal(`
+    <header>
+      <div><h3>Tribute for ${esc(x['Name'] || memberId)}</h3>
+      <div class="sub">${esc(memberId)}${d ? ' · died ' + esc(fmtDate(d)) : ''}</div></div>
+      <div class="sp"></div><button class="btn btn-sm" onclick="closeModal()">Close</button>
+    </header>
+    <div class="body">
+      <div class="fieldnote">Shown on the remembrance band in the week before this person's anniversary, on whichever pages the admin has turned on. Keep it short — a line or two reads best.</div>
+      <label class="lbl" for="tbMsg" style="margin-top:14px;display:block">A few words</label>
+      <textarea class="input" id="tbMsg" rows="3" placeholder="e.g. A kind man who gave land for the village pond.">${esc(msg)}</textarea>
+      <label class="lbl" for="tbPho" style="margin-top:14px;display:block">A photograph for the memorial (optional)</label>
+      <input class="input" id="tbPho" value="${esc(pho)}" placeholder="https://drive.google.com/file/d/…/view">
+      <div class="fieldnote">A Drive link shared as <b>Anyone with the link · Viewer</b>, or a normal image URL. Leave empty to use the photo already on the member record${x['Photo'] ? '' : ', which is also empty for this person'}.</div>
+      ${pho || x['Photo'] ? `<div class="photoav" style="margin-top:14px;width:96px;height:96px">
+        <img data-srcs="${esc(photoSrcs(pho || x['Photo'], 200).join('|'))}" alt=""></div>` : ''}
+    </div>
+    <footer>
+      ${msg || pho ? '<button class="btn btn-danger" id="tbClear">Remove tribute</button>' : ''}
+      <button class="btn btn-primary" id="tbSave">Save tribute</button>
+    </footer>`);
+  wirePhotoFallbacks(document.getElementById('modalRoot'));
+
+  const write = async (message, photo, word) => {
+    const btn = document.getElementById(message || photo ? 'tbSave' : 'tbClear');
+    if(btn){ btn.disabled = true; btn.textContent = 'Saving\u2026'; }
+    const rec = Object.assign({}, x, { 'Memorial Message': message, 'Memorial Photo': photo });
+    try {
+      const r = await api('save', { sheet: MODULES.members.sheet, record: JSON.stringify(rec) });
+      if(!r || !r.ok) throw new Error((r && r.error) || 'the sheet refused the row');
+      upsertLocal('members', rec);
+      closeModal();
+      toast(word, 'good');
+      render();
+    } catch(e){
+      toast(e.message || String(e), 'bad');
+      if(btn){ btn.disabled = false; btn.textContent = message || photo ? 'Save tribute' : 'Remove tribute'; }
+    }
+  };
+
+  document.getElementById('tbSave').onclick = () => {
+    const m = document.getElementById('tbMsg').value.trim();
+    const p = document.getElementById('tbPho').value.trim();
+    if(!m && !p){ toast('Write a few words, or add a photograph', 'bad'); return; }
+    write(m, p, 'Tribute saved for ' + (x['Name'] || memberId));
+  };
+  const clr = document.getElementById('tbClear');
+  if(clr) clr.onclick = () => {
+    if(!confirm('Remove this tribute? The person stays in the register.')) return;
+    write('', '', 'Tribute removed');
+  };
 }
 
 /* Recording a death: mark the person, then settle the family head if needed. */
