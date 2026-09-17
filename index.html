@@ -3,7 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#17303f">
+<!-- GitHub Pages serves this file with a long cache life, which is why one
+     phone can keep opening an old build while incognito fetches the new one.
+     These ask the browser to revalidate instead of serving from disk. -->
+<meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
 <title>Malipatana Village Welfare</title>
 <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
@@ -1414,6 +1418,82 @@ body.modalOpen #stickyLayer{opacity:.12;pointer-events:none;filter:saturate(.4)}
 
 <script>
 /* =========================================================================
+   SELF-REPAIR — registered before anything else so it catches a crash in
+   the very first lines. A device that has used an older build can hold a
+   storage entry the current code chokes on; the page then dies with a blank
+   screen while incognito, whose storage is empty, opens perfectly. Rather
+   than asking a villager to clear browser data, the page clears its OWN keys
+   once and reloads. The sessionStorage flag stops a reload loop: if it fails
+   again in the same tab, the error is in the code and must be seen.
+   ========================================================================= */
+(function(){
+  var FLAG = 'mal_selfheal';
+  var START = Date.now();
+  var WINDOW = 12000;
+  /* Heal acts on POSITIVE evidence of corruption, never on the absence of a
+     network keyword. A storage reader that rejects a malformed entry records
+     the key here; until something does, a crash or a failed request clears
+     nothing — a weak rural line must never cost a villager their saved login
+     and offline cache, and guessing from an error message is unknowable. */
+  window.__malBadStore = null;
+  window.malNoteBadStore = function(key){
+    try { window.__malBadStore = String(key || 'stored data'); } catch(e){}
+  };
+  /* Armed only while the register is not yet on screen and we are inside the
+     startup window. One source of truth, so the loop guard can never be
+     released while heal can still fire. */
+  function armed(){
+    var app = document.getElementById('app');
+    if(app && !app.classList.contains('hide')) return false;  // register is up
+    return Date.now() - START <= WINDOW;
+  }
+  function heal(what){
+    if(!armed()) return;
+    if(!window.__malBadStore) return;   // nothing known to be wrong: leave it alone
+    try { if(sessionStorage.getItem(FLAG)) return; } catch(e){ return; }
+    try { sessionStorage.setItem(FLAG, '1'); } catch(e){}
+    try {
+      var kill = [];
+      for(var i = 0; i < localStorage.length; i++){
+        var k = localStorage.key(i);
+        /* The offline queue holds entries not yet in the sheet — clearing it
+           would lose a villager's work, so it is never touched. */
+        if(k && k.indexOf('mal_') === 0 && k.indexOf('queue') < 0) kill.push(k);
+      }
+      kill.forEach(function(k){ localStorage.removeItem(k); });
+    } catch(e){}
+    try { console.warn('Malipatana: ' + window.__malBadStore + ' was unreadable (' + what + '); cleared local data and reloading'); } catch(e){}
+    location.reload();
+  }
+  window.addEventListener('error', function(ev){
+    heal(ev && ev.message ? ev.message : 'startup error');
+  });
+  window.addEventListener('unhandledrejection', function(){
+    heal('failed startup request');
+  });
+  /* Released only once heal can no longer fire under any path. Waiting for the
+     whole window — rather than releasing as soon as the register appears —
+     also covers a log in then log out inside those 12s, which would otherwise
+     re-arm heal with no guard left. A visible login screen is never evidence
+     of health: a failed boot leaves it visible too, which is the symptom. */
+  var poll = setInterval(function(){
+    if(Date.now() - START <= WINDOW) return;
+    clearInterval(poll);
+    try { sessionStorage.removeItem(FLAG); } catch(e){}
+  }, 1000);
+})();
+  /* The guard is released only once heal can no longer fire. A visible login
+     screen is NOT evidence of health — a failed boot leaves it visible too,
+     which is the very symptom this exists to rescue. So the release waits for
+     either the register to be up or the window to close; checked on a timer
+     because the register may appear well after load. */
+  var poll = setInterval(function(){
+    if(armed()) return;
+    clearInterval(poll);
+    try { sessionStorage.removeItem(FLAG); } catch(e){}
+  }, 1000);
+})();
+/* =========================================================================
    MALIPATANA VILLAGE WELFARE DASHBOARD — Frontend V2.0.0
    Works with the existing Apps Script backend (BE V1.0.0). No backend change
    is required: saving and deleting use the same JSONP doGet endpoint.
@@ -2796,7 +2876,21 @@ function restoreLocal(k){
 
 const DBCACHE = 'mal_db_cache';
 function cacheDb(){ try { local.set(DBCACHE, JSON.stringify(DB)); } catch(e){} }
-function cachedDb(){ try { return JSON.parse(local.get(DBCACHE) || 'null'); } catch(e){ return null; } }
+/* A cache written by an older build can be valid JSON yet the wrong shape,
+   which passes JSON.parse and then crashes the first render — the reason a
+   phone with history fails where incognito, with empty storage, works. So
+   the shape is checked here, not just the syntax. */
+function cachedDb(){
+  var bad = function(why){ if(window.malNoteBadStore) window.malNoteBadStore('the offline copy of the register'); return null; };
+  try {
+    const d = JSON.parse(local.get(DBCACHE) || 'null');
+    if(d === null) return null;                       // simply absent, not broken
+    if(typeof d !== 'object') return bad();
+    if(!d.settings || typeof d.settings !== 'object') return bad();
+    if(!Array.isArray(d.families) || !Array.isArray(d.members)) return bad();
+    return d;
+  } catch(e){ return bad(); }
+}
 
 let MISSING_WARNED = false;
 async function load(){
@@ -6811,6 +6905,11 @@ initLoginScreen();
     await load();
     enterApp();
   } catch(e){
+    /* The saved login is unreadable, so the register cannot open — positive
+       evidence for the self-repair block, which is the only thing that clears
+       storage. Without this report a corrupt entry would be deleted here but
+       whatever else is stale would survive, and the blank screen with it. */
+    if(window.malNoteBadStore) window.malNoteBadStore('the saved sign-in');
     store.del('mal_user');
   } finally { busy(false); }
 })();
