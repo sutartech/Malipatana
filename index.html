@@ -8,6 +8,9 @@
 <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
 <link rel="apple-touch-icon" href="icon-180.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-title" content="Malipatana">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#122b38">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -942,6 +945,17 @@ html.odia .nav{font-family:var(--display);font-size:17px}
 .whoid{font-size:10.5px;font-weight:700;letter-spacing:.04em;color:var(--label)}
 .whoid b{color:var(--brick)}
 
+/* ---------- public-page language picker ---------- */
+.langpick{margin-top:16px;padding-top:14px;border-top:1px solid var(--line-soft)}
+.langpick .lbl{display:block;font-size:12px;font-weight:700;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--label);margin-bottom:8px}
+.segrow{display:flex;gap:8px;flex-wrap:wrap}
+.seg{background:var(--surface-2);border:1px solid var(--line);border-radius:11px;
+  padding:10px 18px;font:inherit;font-size:14px;font-weight:600;color:var(--ink);
+  cursor:pointer;min-height:44px;transition:background .15s ease,border-color .15s ease}
+.seg:hover{background:#eef2ee}
+.seg.on{background:var(--indigo);border-color:var(--indigo);color:#fff}
+
 /* ---------- the two ways in ---------- */
 .pubway{display:block;margin-top:14px;text-align:center;background:var(--surface-2);
   border:1px solid var(--line);border-radius:12px;padding:12px 16px;font-size:13.5px;
@@ -1188,6 +1202,63 @@ body.modalOpen #stickyLayer{opacity:.12;pointer-events:none;filter:saturate(.4)}
 .work{margin-bottom:16px;border-color:#dcd2bb}
 .work .panel-head{background:linear-gradient(170deg,#fffdf6,#fbf6e9);border-bottom-color:#eee3c9}
 .work .alert b{display:block}
+
+/* ---------- skeleton while the sheet answers ---------- */
+@keyframes shimmer{0%{background-position:-420px 0}100%{background-position:420px 0}}
+.sk{background:linear-gradient(90deg,#eceee9 0px,#f6f7f4 140px,#eceee9 280px);
+  background-size:420px 100%;animation:shimmer 1.1s linear infinite;border-radius:8px}
+.skwrap{display:flex;flex-direction:column;gap:16px;padding:2px}
+.skcardbig{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:18px}
+.skline{height:13px;margin-bottom:10px}
+.skline.t{height:30px;width:52%;margin-bottom:16px}
+.skline.s{width:70%}
+.skline.xs{width:38%}
+.skgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px}
+.skgrid .skcardbig{padding:16px}
+.skrow{display:flex;gap:12px;align-items:center;padding:11px 0;border-bottom:1px solid var(--line-soft)}
+.skrow:last-child{border-bottom:0}
+.skdot{width:38px;height:38px;border-radius:50%;flex:none}
+.skrow .skline{flex:1;margin:0}
+@media (prefers-reduced-motion:reduce){.sk{animation:none}}
+
+/* ---------- phone: bigger type, real thumb targets, no hairline chrome ---------- */
+@media(max-width:760px){
+  .pagehead h2{font-size:24px}
+  .pagehead .sub{font-size:13px}
+  .btn{min-height:44px;padding:11px 15px;font-size:14px}
+  .btn-sm{min-height:38px;padding:8px 12px;font-size:13px}
+  .iconbtn{width:42px;height:42px}
+  .input,select.input,textarea.input{font-size:16px;min-height:46px}
+  .strip{grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}
+  .panel{border-radius:16px}
+  .modal{border-radius:18px 18px 0 0;max-height:92vh}
+  .modal footer{position:sticky;bottom:0;background:var(--surface);
+    border-top:1px solid var(--line);padding:12px 14px;gap:8px;flex-wrap:wrap}
+  .modal footer .btn{flex:1 1 auto;justify-content:center}
+  .toolbar{gap:8px}
+  .toolbar .input{flex:1 1 100%}
+}
+
+/* ---------- phone tab bar ---------- */
+.tabbar{display:none}
+@media(max-width:760px){
+  .tabbar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:45;
+    background:#122b38;border-top:1px solid #ffffff1f;
+    padding:4px 4px calc(4px + env(safe-area-inset-bottom));
+    box-shadow:0 -8px 24px -14px #00000073}
+  .tabbar button{flex:1;min-width:0;min-height:52px;background:none;border:0;color:#9dbfcd;
+    font:inherit;font-size:10.5px;font-weight:700;letter-spacing:.02em;cursor:pointer;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+    padding:6px 2px;border-radius:12px;transition:color .15s ease,background .15s ease}
+  .tabbar button .ic{font-size:19px;line-height:1}
+  .tabbar button .lb{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .tabbar button:active{background:#ffffff14}
+  .tabbar button.on{color:#fff}
+  .tabbar button.on .ic{color:#e0a02f}
+  /* the bar sits over the page, so the last row of content needs room */
+  main.main{padding-bottom:calc(74px + env(safe-area-inset-bottom))}
+  .sticky,#skTab{bottom:calc(66px + env(safe-area-inset-bottom))}
+}
 </style>
 </head>
 <body>
@@ -1284,6 +1355,7 @@ body.modalOpen #stickyLayer{opacity:.12;pointer-events:none;filter:saturate(.4)}
     <div class="scrim" id="scrim"></div>
     <main class="main" id="main"></main>
   </div>
+  <nav class="tabbar" id="tabbar" aria-label="Main sections"></nav>
 </div>
 
 <div id="modalRoot"></div>
@@ -1381,6 +1453,21 @@ function toast(text, kind){
   $('#toasts').appendChild(el);
   setTimeout(() => el.remove(), 3200);
 }
+/* Shown once, before any data exists. Later refreshes keep the real page on
+   screen and only move the sync badge, so the reader never loses their place. */
+function skeleton(){
+  const line = (c) => '<div class="sk skline ' + (c || '') + '"></div>';
+  const card = (inner) => '<div class="skcardbig">' + inner + '</div>';
+  $('#main').innerHTML = '<div class="skwrap" aria-busy="true" aria-label="Loading the village register">' +
+    card(line('t') + line() + line('s')) +
+    '<div class="skgrid">' + card(line('xs') + line('t')) + card(line('xs') + line('t')) +
+      card(line('xs') + line('t')) + card(line('xs') + line('t')) + '</div>' +
+    card(line('xs') + '<div class="skrow"><div class="sk skdot"></div>' + line() + '</div>' +
+      '<div class="skrow"><div class="sk skdot"></div>' + line() + '</div>' +
+      '<div class="skrow"><div class="sk skdot"></div>' + line() + '</div>') +
+    '</div>';
+}
+
 function busy(on, label){
   let el = $('#loading');
   if(on){
@@ -2185,6 +2272,14 @@ function renderPublicPage(){
           ${box('Public Page', live, false)}
           <span><b>Publish the public page at all</b><em>When off, the two Public ticks below have no effect.</em></span>
         </label>
+        <div class="langpick">
+          <span class="lbl">Language a visitor first sees</span>
+          <div class="segrow">
+            <button class="seg${setting('Public Page Language', 'English').toLowerCase().indexOf('od') === 0 ? '' : ' on'}" data-lang="English">English</button>
+            <button class="seg${setting('Public Page Language', 'English').toLowerCase().indexOf('od') === 0 ? ' on' : ''}" data-lang="Odia">ଓଡ଼ିଆ</button>
+          </div>
+          <div class="fieldnote">Either way the page carries a button to switch, and a visitor's own choice is remembered on their phone.</div>
+        </div>
       </div>
     </div>
 
@@ -2228,6 +2323,14 @@ function renderPublicPage(){
       </div>
     </div>`;
 
+  /* The picker is a pair of buttons, not a select, so the choice reads at a
+     glance; the pending value lives on the wrapper until Save runs. */
+  $('#main').querySelectorAll('[data-lang]').forEach(b => {
+    b.onclick = () => {
+      $('#main').querySelectorAll('[data-lang]').forEach(o => o.classList.toggle('on', o === b));
+    };
+  });
+
   $('#pubSave').onclick = async () => {
     const btn = $('#pubSave');
     btn.disabled = true; btn.textContent = 'Saving…';
@@ -2243,6 +2346,11 @@ function renderPublicPage(){
       const r2 = await api('save', { sheet: 'Settings', record: JSON.stringify({ Setting: 'Sticky Notes Spot', Value: sp }) });
       if(!r2 || !r2.ok) throw new Error((r2 && r2.error) || 'could not save the note position');
       DB.settings['Sticky Notes Spot'] = sp;
+      const lg = ($('#main').querySelector('[data-lang].on') || {}).dataset;
+      const lang = (lg && lg.lang) || 'English';
+      const r4 = await api('save', { sheet: 'Settings', record: JSON.stringify({ Setting: 'Public Page Language', Value: lang }) });
+      if(!r4 || !r4.ok) throw new Error((r4 && r4.error) || 'could not save the language');
+      DB.settings['Public Page Language'] = lang;
       const intro = $('#pubIntro').value.trim();
       const r3 = await api('save', { sheet: 'Settings', record: JSON.stringify({ Setting: 'Public Intro', Value: intro }) });
       if(!r3 || !r3.ok) throw new Error((r3 && r3.error) || 'could not save the message');
@@ -2674,6 +2782,9 @@ async function refresh(silent){
 
 function enterApp(){
   if(!DB){ const c = cachedDb(); if(c){ DB = c; } }
+  /* No cache on this device yet, so there is nothing to paint — show the shape
+     of the page rather than a blank panel while the sheet answers. */
+  if(!DB) skeleton();
   setTimeout(() => {
     if(document.getElementById('gsBtn')) return;
     const host = document.querySelector('.topbar .sp');
@@ -2722,10 +2833,35 @@ function enterApp(){
 }
 
 /* ---------- navigation ---------- */
+const TABS = [
+  ['dashboard', '\u25a6', 'Home', null],
+  ['families', '\u2302', 'Families', 'families'],
+  ['contributions', '\u25c8', 'Money', 'contributions'],
+  ['memorial', '\u2740', 'Memory', 'members']
+];
+function buildTabs(){
+  const bar = $('#tabbar');
+  if(!bar) return;
+  const items = TABS.filter(t => !t[3] || canSee(t[3]));
+  bar.innerHTML = items.map(([page, ic, label]) =>
+      '<button data-tab="' + page + '" class="' + (PAGE === page ? 'on' : '') + '">' +
+      '<span class="ic">' + ic + '</span><span class="lb">' + label + '</span></button>').join('') +
+    '<button data-tab="__more" class="' + (items.every(i => i[0] !== PAGE) ? 'on' : '') + '">' +
+    '<span class="ic">\u2261</span><span class="lb">More</span></button>';
+  bar.querySelectorAll('[data-tab]').forEach(b => {
+    b.onclick = () => {
+      const t = b.dataset.tab;
+      if(t === '__more'){ openDrawer(); return; }
+      closeDrawer();
+      go(t);
+    };
+  });
+}
+
 function buildNav(){
   const groups = [
     ['', [['dashboard', '▦', 'Dashboard', null]]],
-    ['PEOPLE', [['families', '⌂', 'Families', 'families'], ['members', '☗', 'Members', 'members'], ['memorial', '✝', 'In memory', 'deceased'], ['guidance', '✥', 'Guidance', null]]],
+    ['PEOPLE', [['families', '⌂', 'Families', 'families'], ['members', '☗', 'Members', 'members'], ['memorial', '✝', 'In memory', 'members', 'members'], ['guidance', '✥', 'Guidance', null, 'families']]],
     ['MONEY', [['contributions', '◈', 'Contributions', 'contributions'], ['income', '↑', 'Income', 'income'],
                ['expenditure', '↓', 'Expenditure', 'expenditure'], ['events', '❋', 'Major expenses', 'events'],
                ['recurring', '↻', 'Recurring expenses', 'recurring']]],
@@ -2733,7 +2869,12 @@ function buildNav(){
     ['VILLAGERS', [['grievances', '⚑', 'Grievances', 'grievances'], ['importantDays', '❀', 'Important days', 'importantDays'],
                    ['notices', '▦', 'Notice board', 'notices']]]
   ];
-  groups.forEach(g => { g[1] = g[1].filter(it => canSee(it[0])); });
+  /* Fifth element is the PERMISSION key, when it differs from the page key.
+     In memory and Guidance are views of other sheets, so they are not in
+     ALL_PAGES and can never be ticked in Access — checking the page key alone
+     hid them from everyone with a custom access list. Each now declares the
+     permission its own render function enforces. */
+  groups.forEach(g => { g[1] = g[1].filter(it => canSee(it[4] || it[0])); });
   if(local.get('mal_odia') === '1'){
     groups.forEach(g => g[1].forEach(it => {
       const m = MODULES[it[0]];
@@ -2750,9 +2891,10 @@ function buildNav(){
     if(!items.length) return;   // a heading with nothing under it is just noise
     if(title) html += '<div class="navgroup">' + title + '</div>';
     html += items.map(([key, ic, label, dataKey]) => {
-      /* 'deceased' is a view of Members, not a sheet of its own — without this
-         the badge repeated the Members count and read as 4 deaths. */
-      const n = dataKey === 'deceased' ? (DB.members || []).filter(isDeceased).length
+      /* In memory is a view of Members, so it is gated on 'members' — the same
+         key the page itself enforces — but its badge must count the deceased,
+         not repeat the Members total. Keyed on the page, not the permission. */
+      const n = key === 'memorial' ? (DB.members || []).filter(isDeceased).length
         : dataKey ? (rowsOf(dataKey) || []).length : '';
       return '<button class="nav" data-page="' + key + '"><span class="ic">' + ic + '</span>' + esc(label) +
              (n !== '' ? '<span class="count">' + n + '</span>' : '') + '</button>';
@@ -2770,6 +2912,7 @@ function go(page){
 }
 function render(){
   buildNav();
+  buildTabs();
   setTimeout(() => { try { stickyBadge(); paintSticky(); } catch(e){} }, 0);
   document.querySelectorAll('.nav').forEach(b => b.classList.toggle('active', b.dataset.page === PAGE));
   if(PAGE === 'guidance') return renderGuidance();
@@ -5633,6 +5776,10 @@ let MEMO_Q = '';
 function renderMemorial(){
   if(!canSee('members')){ $('#main').innerHTML = '<div class="empty"><b>Not available to your account</b></div>'; return; }
   const edit = canEdit();
+  /* Recording a death is not ordinary editing: it retires a member, can hand a
+     family's headship to someone else, and writes a date the whole village
+     sees. Tributes stay open to editors; the death itself is the admin's. */
+  const rec = isAdmin();
   const gone = (DB.members || []).filter(isDeceased);
   const q = MEMO_Q.trim().toLowerCase();
   const hit = m => !q || [m['Name'], m['Member ID'], m['Family ID'], m['Cause of Death']]
@@ -5666,7 +5813,7 @@ function renderMemorial(){
           <span class="whoid">${esc(mid)}${m['Family ID'] ? ' \u00b7 ' + esc(m['Family ID']) : ''}${famHead(m) ? ' \u00b7 ' + esc(famHead(m)) : ''}</span>
           <button class="btn btn-sm" data-openmem="${esc(mid)}">Open record</button>
           ${edit ? `<button class="btn btn-sm${m['Memorial Message'] || m['Memorial Photo'] ? ' btn-primary' : ''}" data-tribute="${esc(mid)}">${m['Memorial Message'] || m['Memorial Photo'] ? 'Tribute \u2713' : 'Add tribute'}</button>` : ''}
-          ${edit && !d ? `<button class="btn btn-sm" data-fixdeath="${esc(mid)}">Add the date</button>` : ''}
+          ${rec && !d ? `<button class="btn btn-sm" data-fixdeath="${esc(mid)}">Add the date</button>` : ''}
         </div>
       </div>
     </article>`;
@@ -5679,11 +5826,11 @@ function renderMemorial(){
       <div class="sp"></div>
       <div class="hhacts">
         <button class="btn btn-sm" data-remcal="1">Remembrance calendar</button>
-        ${edit ? '<button class="btn btn-primary" id="memoAdd">+ Record a death</button>' : ''}
+        ${rec ? '<button class="btn btn-primary" id="memoAdd">+ Record a death</button>' : ''}
       </div>
     </div>
 
-    ${edit ? `<div class="panel" style="margin-bottom:16px">
+    ${rec ? `<div class="panel" style="margin-bottom:16px">
       <div class="panel-head"><h3>Record a death</h3></div>
       <div class="panel-body">
         <div class="fieldnote" style="margin-bottom:10px">Type the name of the person who has died. Date and cause are asked for next, and if they headed a family you will be asked who takes over.</div>
@@ -5815,7 +5962,8 @@ function openTribute(memberId){
 
 /* Recording a death: mark the person, then settle the family head if needed. */
 async function markDeceased(memberId){
-  if(!canEdit()) { toast('Your account cannot change records', 'bad'); return; }
+  /* Guarded here too, so editing the page in a browser console changes nothing. */
+  if(!isAdmin()) { toast('Only the village admin can record a death', 'bad'); return; }
   const x = (DB.members || []).find(r => String(r['Member ID']).trim() === String(memberId).trim());
   if(!x) return;
   const famId = String(x['Family ID'] || '').trim();
@@ -6372,7 +6520,6 @@ function openMember(id){
     </div>
     <footer>
       ${famId ? `<button class="btn" onclick="closeModal();openProfile('${esc(famId)}')">Open family</button>` : ''}
-      ${canEdit() && !isDeceased(x) ? `<button class="btn" data-act="death" data-id="${esc(id)}">Record death</button>` : ''}
       ${canEdit() ? `<button class="btn btn-primary" onclick="closeModal();openForm('members','${esc(id)}')">Edit member</button>` : ''}
     </footer>`);
 

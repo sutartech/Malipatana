@@ -245,6 +245,7 @@ tr:last-child td{border-bottom:0}
 @media print{ #pubSticky{display:none !important} }
 .gfab{position:fixed;right:22px;bottom:22px;z-index:60;background:var(--brick);color:#fff;border:0;
   border-radius:999px;padding:15px 22px 15px 18px;font:inherit;font-weight:700;font-size:14.5px;
+  white-space:nowrap;
   cursor:pointer;box-shadow:0 16px 34px -12px #a8341e99;display:flex;align-items:center;gap:9px;
   transition:transform .15s ease,box-shadow .15s ease}
 .gfab:hover{transform:translateY(-2px);box-shadow:0 20px 40px -12px #a8341eb0}
@@ -275,6 +276,26 @@ tr:last-child td{border-bottom:0}
   .card{box-shadow:none;break-inside:avoid;border-radius:0}
   .noprint{display:none}
 }
+
+.topright{position:fixed;top:14px;right:16px;z-index:55;display:flex;gap:8px;align-items:center}
+.topright .signin{position:static;top:auto;right:auto}
+.langbtn{background:#ffffff1f;color:#fff;border:1px solid #ffffff3d;border-radius:999px;
+  padding:9px 15px;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;white-space:nowrap;
+  backdrop-filter:blur(8px);transition:background .15s ease,transform .15s ease}
+.langbtn:hover{background:#ffffff33;transform:translateY(-1px)}
+@media print{ .topright{display:none} }
+/* nowrap keeps the pill a pill, but on a narrow phone a long label would then
+   run off the screen instead of wrapping — so there it loses its words and
+   keeps the icon, which is what a thumb aims at anyway. */
+@media(max-width:430px){
+  .gfab{right:14px;bottom:14px;padding:14px;gap:0}
+  .gfab .lbl{display:none}
+  .gfab .ico{font-size:20px}
+}
+@media(max-width:560px){
+  .topright{top:10px;right:10px;gap:6px}
+  .langbtn,.topright .signin{padding:8px 12px;font-size:12px}
+}
 </style>
 </head>
 <body>
@@ -288,67 +309,71 @@ tr:last-child td{border-bottom:0}
       <div class="eyebrow" id="place">JAGATSINGHPUR · ODISHA</div>
       <h1 id="title">ଆମ ଗାଁ ମାଳିପାଟଣା</h1>
       <div class="rule"></div>
-      <div class="sub">Village fund &middot; public account &middot; <span id="asof">loading&hellip;</span></div>
+      <div class="sub"><span data-t="Village fund · public account">Village fund &middot; public account</span> &middot; <span id="asof">loading&hellip;</span></div>
     </div>
   </div>
 </header>
 
-<a class="signin" href="index.html">Committee sign-in &rarr;</a>
+<div class="topright">
+  <button class="langbtn" id="langBtn" type="button" aria-label="Change language">ଓଡିଆ</button>
+  <a class="signin" href="index.html"><span data-t="Committee sign-in">Committee sign-in</span> &rarr;</a>
+</div>
 
 <div class="wrap">
-  <div id="out"><div class="card"><div class="state"><b>Loading the village account…</b>This page reads the same sheet the committee uses.</div></div></div>
+  <div id="out"><div class="card"><div class="state"><b data-t="Loading the village account…">Loading the village account…</b><span data-t="This page reads the same sheet the committee uses.">This page reads the same sheet the committee uses.</span></div></div></div>
 
-  <button class="gfab noprint" id="gFab"><span class="ico">📣</span> Raise / track a grievance</button>
+  <button class="gfab noprint" id="gFab" aria-label="Raise or track a grievance"><span class="ico">📣</span> <span class="lbl" data-t="Raise / track a grievance">Raise / track a grievance</span></button>
 
   <div class="goverlay noprint" id="gOverlay">
   <div class="gmodal">
-    <div class="gmhead"><h3>Grievance</h3><button class="gmclose" id="gClose">×</button></div>
+    <div class="gmhead"><h3 data-t="Grievance">Grievance</h3><button class="gmclose" id="gClose">×</button></div>
     <div class="gtabs">
-      <button class="on" id="tabNew">Raise a grievance</button>
-      <button id="tabTrack">Track a grievance</button>
-      <button id="tabSteps">How it is resolved</button>
+      <button class="on" id="tabNew" data-t="Raise a grievance">Raise a grievance</button>
+      <button id="tabTrack" data-t="Track a grievance">Track a grievance</button>
+      <button id="tabSteps" data-t="How it is resolved">How it is resolved</button>
     </div>
 
     <form class="gform" id="gformNew">
-      <label for="gName">Your name</label>
-      <input id="gName" required placeholder="Full name">
-      <label for="gMobile">Mobile number</label>
+      <label for="gName" data-t="Your name">Your name</label>
+      <input id="gName" required placeholder="Full name" data-tph="Full name">
+      <label for="gMobile" data-t="Mobile number">Mobile number</label>
       <input id="gMobile" required placeholder="10-digit mobile" inputmode="numeric">
-      <label for="gCat">What is this about</label>
+      <label for="gCat" data-t="What is this about">What is this about</label>
       <select id="gCat">
         <option>Water</option><option>Road</option><option>Electricity</option><option>Sanitation</option>
         <option>Fund misuse</option><option>Welfare benefit</option><option>Family record error</option><option>Other</option>
       </select>
-      <label for="gDesc">Describe the problem</label>
+      <label for="gDesc" data-t="Describe the problem">Describe the problem</label>
       <textarea id="gDesc" required placeholder="What happened, where, and since when"></textarea>
       <div class="btnrow">
-        <button type="submit" class="gbtn" id="gSubmitBtn">Submit grievance</button>
+        <button type="submit" class="gbtn" id="gSubmitBtn" data-t="Submit grievance">Submit grievance</button>
       </div>
       <div class="gmsg" id="gMsg"></div>
     </form>
 
     <div class="gform" id="gformTrack" style="display:none">
-      <label for="gLookup">Grievance number</label>
+      <label for="gLookup" data-t="Grievance number">Grievance number</label>
       <input id="gLookup" placeholder="e.g. GRV-014">
-      <div class="btnrow"><button class="gbtn ghost" id="gTrackBtn">Check status</button></div>
+      <div class="btnrow"><button class="gbtn ghost" id="gTrackBtn" data-t="Check status">Check status</button></div>
       <div class="gmsg" id="gTrackMsg"></div>
     </div>
 
     <div class="gsteps" id="gformSteps" style="display:none">
-      <div class="gstep"><div class="no">1</div><div class="tx"><b>Received</b><span>Your grievance reaches the committee the moment you submit it, with a grievance number to track it.</span></div></div>
-      <div class="gstep"><div class="no">2</div><div class="tx"><b>Under review</b><span>A committee member looks into it and may contact you on the mobile number given.</span></div></div>
-      <div class="gstep"><div class="no">3</div><div class="tx"><b>Action taken</b><span>The committee acts — repair, correction, or a decision — and notes what was done.</span></div></div>
-      <div class="gstep"><div class="no">4</div><div class="tx"><b>Resolved</b><span>Marked resolved with a remark you can read back using your grievance number.</span></div></div>
+      <div class="gstep"><div class="no">1</div><div class="tx"><b data-t="Received">Received</b><span>Your grievance reaches the committee the moment you submit it, with a grievance number to track it.</span></div></div>
+      <div class="gstep"><div class="no">2</div><div class="tx"><b data-t="Under review">Under review</b><span>A committee member looks into it and may contact you on the mobile number given.</span></div></div>
+      <div class="gstep"><div class="no">3</div><div class="tx"><b data-t="Action taken">Action taken</b><span>The committee acts — repair, correction, or a decision — and notes what was done.</span></div></div>
+      <div class="gstep"><div class="no">4</div><div class="tx"><b data-t="Resolved">Resolved</b><span>Marked resolved with a remark you can read back using your grievance number.</span></div></div>
     </div>
   </div>
   </div>
 
   <div class="foot">
-    Published by the Malipatana village committee. Figures come straight from the fund register.<br>
-    <a href="index.html">Committee sign-in</a> · <a href="#" onclick="window.print();return false" class="noprint">Print this page</a>
+    <span data-t="Published by the Malipatana village committee. Figures come straight from the fund register.">Published by the Malipatana village committee. Figures come straight from the fund register.</span><br>
+    <a href="index.html" data-t="Committee sign-in">Committee sign-in</a> · <a href="#" onclick="window.print();return false" class="noprint" data-t="Print this page">Print this page</a>
   </div>
 </div>
 
+<script src="or.js"></script>
 <script>
 /* Reads ONE endpoint: publicSummary, which returns totals only. It must never
    call 'bootstrap' — that payload carries names, mobile numbers and logins. */
@@ -364,6 +389,48 @@ var fmtDate = function(v){
   return m ? m[3] + '/' + m[2] + '/' + m[1] : String(v);
 };
 
+/* Bilingual by lookup, not duplicated markup: the English string is the key
+   and the Odia is its translation, so a label cannot exist in one language
+   and be forgotten in the other. Anything untranslated falls back to English
+   rather than rendering blank. */
+var OR = window.OR || {};
+var LANG = 'en';
+function t(s){
+  if(LANG !== 'or') return s;
+  var k = String(s == null ? '' : s);
+  return OR[k] || k;
+}
+
+/* Static markup is tagged once with data-t holding its English original, so
+   switching back and forth never loses the source string. */
+function applyLang(){
+  document.documentElement.lang = LANG === 'or' ? 'or' : 'en';
+  document.querySelectorAll('[data-t]').forEach(function(el){
+    el.textContent = t(el.getAttribute('data-t'));
+  });
+  document.querySelectorAll('[data-tph]').forEach(function(el){
+    el.placeholder = t(el.getAttribute('data-tph'));
+  });
+  document.querySelectorAll('#gCat option').forEach(function(o){
+    if(!o.dataset.t) o.dataset.t = o.textContent.trim();
+    /* The value must stay English whatever the reader sees. Without this the
+       option had no value attribute, so .value fell back to the translated
+       textContent and the sheet's Category column filled up half Odia — two
+       parallel sets that no longer group or filter together. */
+    o.value = o.dataset.t;
+    o.textContent = t(o.dataset.t);
+  });
+  var b = document.getElementById('langBtn');
+  if(b) b.textContent = LANG === 'or' ? 'English' : 'ଓଡ଼ିଆ';
+}
+
+function setLang(l, remember){
+  LANG = l === 'or' ? 'or' : 'en';
+  if(remember){ try { localStorage.setItem('mal_pub_lang', LANG); } catch(e){} }
+  applyLang();
+  if(LAST) render(LAST);
+}
+
 function api(action){
   return new Promise(function(resolve, reject){
     var cb = 'mpcb' + Date.now();
@@ -377,14 +444,19 @@ function api(action){
   });
 }
 
+/* The last payload, kept so a language switch can repaint from memory rather
+   than making the reader wait on the sheet again. */
+var LAST = null;
+
 function render(d){
+  LAST = d;
   var f = d.fund || null, c = d.counts || null, v = d.village || {};
   var show = d.shows || {};
   var available = f ? num(f.available) : 0;
 
   document.getElementById('title').textContent = v.name || 'Malipatana';
   document.getElementById('place').textContent = String(v.area || '').toUpperCase();
-  document.getElementById('asof').textContent = 'as on ' + fmtDate(d.asOf);
+  document.getElementById('asof').textContent = t('as on') + ' ' + fmtDate(d.asOf);
 
   var rows = !f || show.breakdown === false ? [] : [
     ['in', 'Opening fund', 'Balance carried into the register', num(f.opening)],
@@ -398,40 +470,43 @@ function render(d){
   /* The fund leads on its own; everything after it is a quiet card in a grid
      that reflows, so a laptop does not show one narrow column with three
      cards stranded below the fold. */
+  var how = function(head, body){
+    return '<div><b>' + t(head) + '</b><span>' + t(body) + '</span></div>';
+  };
   var lead = '';
   if(f){
     var empty = !rows.length;
     var say = empty
-      ? 'Nothing has been recorded in the fund register yet. This figure will move as soon as the committee enters the first contribution.'
-      : 'Money the committee holds today, after everything recorded in the register.';
+      ? t('Nothing has been recorded in the fund register yet. This figure will move as soon as the committee enters the first contribution.')
+      : t('Money the committee holds today, after everything recorded in the register.');
     /* The card is always two columns. With an empty register the right half
        explains how the fund works instead of sitting blank — a full-bleed dark
        card with one narrow column of text was the "mostly empty" complaint. */
     var side = empty
-      ? '<div class="fundledger"><div class="lhead">How the village fund works</div>' +
+      ? '<div class="fundledger"><div class="lhead">' + t('How the village fund works') + '</div>' +
         '<div class="fundhow">' +
-        '<div><b>Chanda from families</b><span>Each household pays a monthly share to the committee.</span></div>' +
-        '<div><b>Donations and interest</b><span>Gifts from villagers and those living outside.</span></div>' +
-        '<div><b>Spent on the village</b><span>Emergency help, medical and school support, repairs and festivals.</span></div>' +
+        how('Chanda from families', 'Each household pays a monthly share to the committee.') +
+        how('Donations and interest', 'Gifts from villagers and those living outside.') +
+        how('Spent on the village', 'Emergency help, medical and school support, repairs and festivals.') +
         '</div></div>'
       : '<div class="fundledger">' +
-        '<div class="lhead">How it adds up</div>' +
+        '<div class="lhead">' + t('How it adds up') + '</div>' +
         '<div class="rows" style="padding:0">' + rows.map(function(r){
           return '<div class="row ' + r[0] + '"><div class="n">' + esc(r[1]) + '<em>' + esc(r[2]) + '</em></div>' +
                  '<div class="a">' + (r[3] < 0 ? '\u2212' : '+') + ' ' + money(Math.abs(r[3])) + '</div></div>';
         }).join('') +
-        '<div class="row total"><div class="n">Balance in hand</div><div class="a">' + money(available) + '</div></div>' +
+        '<div class="row total"><div class="n">' + t('Balance in hand') + '</div><div class="a">' + money(available) + '</div></div>' +
         '</div></div>';
     lead += '<div class="card fund"><div class="fundgrid split">' +
       '<div class="fundmain">' +
-        '<div class="cap">Fund available today</div>' +
+        '<div class="cap">' + t('Fund available today') + '</div>' +
         '<div class="v">' + money(available) + '</div>' +
         '<div class="rule"></div>' +
         '<div class="say">' + say + '</div>' +
       '</div>' + side +
       '</div>' +
-      '<div class="note">Every rupee shown here is entered by the village committee in the fund register. ' +
-      'If something looks wrong, tell any committee member.</div></div>';
+      '<div class="note">' + t('Every rupee shown here is entered by the village committee in the fund register. ' +
+      'If something looks wrong, tell any committee member.') + '</div></div>';
   }
 
   /* The committee's own words, if they wrote any. */
@@ -447,14 +522,14 @@ function render(d){
       '<div class="v' + (warmWhenSet && v > 0 ? ' warm' : '') + '">' + v + '</div></div>';
   }
 
-  if(c) cards.push('<div class="card"><h2>The village</h2><div class="grid4">' +
-    tile('Families', c.families) + tile('Members', c.members) +
-    tile('Helped this year', c.helpedThisYear, true) + tile('Support running', c.supportRunning, true) +
+  if(c) cards.push('<div class="card"><h2>' + t('The village') + '</h2><div class="grid4">' +
+    tile(t('Families'), c.families) + tile(t('Members'), c.members) +
+    tile(t('Helped this year'), c.helpedThisYear, true) + tile(t('Support running'), c.supportRunning, true) +
     '</div></div>');
 
   if((d.events || []).length){
-    cards.push('<div class="card"><h2>Major expenses completed</h2><table>' +
-      '<thead><tr><th>Occasion</th><th>Year</th><th class="num">Budget</th><th class="num">Spent</th></tr></thead><tbody>' +
+    cards.push('<div class="card"><h2>' + t('Major expenses completed') + '</h2><table>' +
+      '<thead><tr><th>' + t('Occasion') + '</th><th>' + t('Year') + '</th><th class="num">' + t('Budget') + '</th><th class="num">' + t('Spent') + '</th></tr></thead><tbody>' +
       d.events.map(function(e){
         return '<tr><td>' + esc(e.name) + '</td><td>' + esc(e.year) + '</td>' +
                '<td class="num">' + (num(e.budget) ? money(e.budget) : '\u2014') + '</td>' +
@@ -463,8 +538,8 @@ function render(d){
   }
 
   if((d.recent || []).length){
-    cards.push('<div class="card"><h2>Recent spending</h2><table>' +
-      '<thead><tr><th>Date</th><th>What for</th><th class="num">Amount</th></tr></thead><tbody>' +
+    cards.push('<div class="card"><h2>' + t('Recent spending') + '</h2><table>' +
+      '<thead><tr><th>' + t('Date') + '</th><th>' + t('What for') + '</th><th class="num">' + t('Amount') + '</th></tr></thead><tbody>' +
       d.recent.map(function(r){
         return '<tr><td>' + esc(fmtDate(r.date)) + '</td><td>' + esc(r.what) + '</td>' +
                '<td class="num">' + money(r.amount) + '</td></tr>';
@@ -693,7 +768,7 @@ function renderNotices(n){
   box.className = 'noticeboard';
   box.id = 'pubNotices';
   box.innerHTML = '<div class="nbhead"><b>\u0B38\u0B42\u0B1A\u0B28\u0B3E \u00b7 Notice board</b>' +
-    '<span class="muted small">' + list.length + (list.length === 1 ? ' post' : ' posts') + '</span></div>' +
+    '<span class="muted small">' + list.length + ' ' + t(list.length === 1 ? 'post' : 'posts') + '</span></div>' +
     '<div class="ntcs">' + cards + '</div>';
   var foot = document.querySelector('.foot');
   if(foot && foot.parentNode) foot.parentNode.insertBefore(box, foot);
@@ -704,6 +779,11 @@ function renderNotices(n){
 function loadPublic(attempt){
   return api('publicSummary').then(function(r){
     if(!r || !r.ok) throw new Error('no public data');
+    /* The admin's choice is the default a first-time reader lands on; once
+       someone picks a language themselves, their choice wins on that phone. */
+    var saved = null;
+    try { saved = localStorage.getItem('mal_pub_lang'); } catch(e){}
+    setLang(saved || (r.lang === 'or' ? 'or' : 'en'), false);
     if(r.off){
       document.getElementById('asof').textContent = 'not public at the moment';
       document.getElementById('out').innerHTML =
@@ -730,11 +810,16 @@ function loadPublic(attempt){
     }
     document.getElementById('asof').textContent = 'could not load';
     document.getElementById('out').innerHTML =
-      '<div class="card"><div class="state"><b>Could not load the account just now</b>' +
-      'The connection to the village register did not answer. ' +
-      '<button class="gbtn ghost" onclick="loadPublic(0)" style="margin-top:12px">Try again</button></div></div>';
+      '<div class="card"><div class="state"><b>' + t('Could not load the account just now') + '</b>' +
+      t('The connection to the village register did not answer.') + ' ' +
+      '<button class="gbtn ghost" onclick="loadPublic(0)" style="margin-top:12px">' + t('Try again') + '</button></div></div>';
   });
 }
+
+document.getElementById('langBtn').onclick = function(){
+  setLang(LANG === 'or' ? 'en' : 'or', true);
+};
+applyLang();
 
 loadPublic(0);
 </script>
