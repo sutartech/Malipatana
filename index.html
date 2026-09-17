@@ -1345,7 +1345,8 @@ body.modalOpen #stickyLayer{opacity:.12;pointer-events:none;filter:saturate(.4)}
         <b>ମାଳିପାଟଣା</b>
       </div>
 
-      <div class="photoframe"><img id="loginPhoto" alt="Malipatana village temple"></div>
+      <div class="photoframe"><img id="loginPhoto" src="village.jpg" alt="Malipatana village temple"
+        onerror="var f=this.closest('.photoframe');if(f)f.remove();var c=document.querySelector('.photocap');if(c)c.remove()"></div>
       <div class="photocap">ଗାଁ ମନ୍ଦିର · the village temple</div>
 
       <div class="brandtext">
@@ -1482,17 +1483,6 @@ body.modalOpen #stickyLayer{opacity:.12;pointer-events:none;filter:saturate(.4)}
     try { sessionStorage.removeItem(FLAG); } catch(e){}
   }, 1000);
 })();
-  /* The guard is released only once heal can no longer fire. A visible login
-     screen is NOT evidence of health — a failed boot leaves it visible too,
-     which is the very symptom this exists to rescue. So the release waits for
-     either the register to be up or the window to close; checked on a timer
-     because the register may appear well after load. */
-  var poll = setInterval(function(){
-    if(armed()) return;
-    clearInterval(poll);
-    try { sessionStorage.removeItem(FLAG); } catch(e){}
-  }, 1000);
-})();
 /* =========================================================================
    MALIPATANA VILLAGE WELFARE DASHBOARD — Frontend V2.0.0
    Works with the existing Apps Script backend (BE V1.0.0). No backend change
@@ -1551,9 +1541,16 @@ function photoOf(name){
   return photoSrc(v || CONFIG.DEFAULT_PHOTO);
 }
 function applyLoginPhoto(){
-  const url = photoSrc(local.get('mal_login_photo') || CONFIG.DEFAULT_PHOTO);
   const img = document.getElementById('loginPhoto');
-  if(!img || !url) return;
+  if(!img) return;
+  /* The markup already carries village.jpg and its own onerror, so the photo
+     stands up with no JavaScript at all. This only overrides it when the admin
+     has set a different picture — previously the src was set here alone, so any
+     error earlier in the script left an empty box showing its alt text. */
+  const saved = local.get('mal_login_photo');
+  if(!saved) return;
+  const url = photoSrc(saved);
+  if(!url || url === img.getAttribute('src')) return;
   img.onerror = () => {
     const frame = img.closest('.photoframe');
     if(frame) frame.remove();
@@ -6823,7 +6820,8 @@ function paintPublicSticky(){
 }
 
 function initLoginScreen(){
-  $('#feChip').textContent = CONFIG.VERSION.replace('FE ', 'FE ');
+  const fe = $('#feChip');
+  if(fe) fe.textContent = CONFIG.VERSION;
 
   const saved = local.get('mal_saved_user');
   if(saved){ $('#u').value = saved; $('#rememberMe').checked = true; $('#p').focus(); }
@@ -6893,8 +6891,11 @@ $('#refreshBtn').onclick = () => refresh(false);
 $('#menuBtn').onclick = () => $('#sidebar').classList.contains('open') ? closeDrawer() : openDrawer();
 $('#scrim').onclick = closeDrawer;
 
-applyLoginPhoto();
-initLoginScreen();
+/* Independently guarded: these are the last statements before the async boot,
+   and when one throws the other must still run — a failure in the photo must
+   not leave the version chips, the Show toggle and Repair unbound. */
+try { applyLoginPhoto(); } catch(e){ console.warn('login photo:', e); }
+try { initLoginScreen(); } catch(e){ console.warn('login screen:', e); }
 
 (async () => {
   const saved = store.get('mal_user');
