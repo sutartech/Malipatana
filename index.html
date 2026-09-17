@@ -80,7 +80,11 @@ label.lbl{display:block;font-size:12.5px;font-weight:700;color:var(--label);marg
 .brandside h2{font-family:var(--display);font-size:clamp(16px,1.7vw,20px);font-weight:500;margin:0 0 14px;color:#ffe6cc}
 .brandside p{max-width:42ch;color:#e8eff3;line-height:1.65;margin:0 0 18px;font-size:14px}
 .pills{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:26px}
-.pills span{background:#ffffff1f;border:1px solid #ffffff2e;border-radius:999px;padding:6px 13px;font-size:12.5px;font-weight:600}
+/* Each pill shrink-wraps its text, so it sits at zero slack — any font
+   fallback forces a two-word label to break inside itself, and .brandside
+   clips the overflow. The row already wraps, so a pill that no longer fits
+   moves down whole instead. Same fix as .signin, .langbtn and .gfab. */
+.pills span{background:#ffffff1f;border:1px solid #ffffff2e;border-radius:999px;padding:6px 13px;font-size:12.5px;font-weight:600;white-space:nowrap}
 .photoframe{margin-top:auto;border-radius:16px;overflow:hidden;border:1px solid #ffffff38;
   box-shadow:0 18px 40px #00000047;background:#0e2b3c}
 .photoframe img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover}
@@ -662,11 +666,10 @@ tr.gonerow .cellav{filter:grayscale(1)}
 /* Stacked on a desktop card, inline on a phone — the wrapper only exists so
    the phone rule can pull the number up beside the title. */
 .startcard .top{display:flex;flex-direction:column;align-items:flex-start}
-.startcard.done .num{background:var(--green)}
+.startcard.going .num{background:var(--green)}
 .startcard b{font-family:var(--display);font-size:16px;font-weight:600;line-height:1.5}
 .startcard .d{font-size:12.5px;color:var(--label);line-height:1.5;flex:1}
 .startcard .btn{margin-top:8px}
-.startcard.done b,.startcard.done .d{opacity:.7}
 
 /* ---------- phone: one next step instead of four ---------- */
 .startnext{display:none}
@@ -675,15 +678,19 @@ tr.gonerow .cellav{filter:grayscale(1)}
   .startnext{display:flex;flex-direction:column;align-items:flex-start;gap:7px;padding:16px 16px 18px}
   .startnext .trail{display:flex;align-items:center;gap:8px;margin-bottom:2px}
   /* Real buttons, not decoration — 38px so a thumb can hit them, and the
-     numeral inside tells the reader which step each one is. */
-  .startnext .dot{width:38px;height:38px;border-radius:50%;flex:none;padding:0;
+     numeral always stays put so the row can be counted against "Step 3 of 4".
+     Green means under way, not finished: adding one family does not finish
+     the families, so there is no tick to imply it. */
+  .startnext .dot{width:38px;height:38px;border-radius:50%;flex:none;padding:0;position:relative;
     background:var(--surface-2);border:1px solid var(--line);color:var(--label);
     font:inherit;font-size:13.5px;font-weight:700;cursor:pointer;
     display:flex;align-items:center;justify-content:center;
     transition:background .15s ease,border-color .15s ease,color .15s ease}
-  .startnext .dot.done{background:#e9f3ec;border-color:#bfe0cb;color:var(--green)}
+  .startnext .dot.going{background:#e9f3ec;border-color:#bfe0cb;color:var(--green)}
   .startnext .dot.now{background:var(--brick);border-color:var(--brick);color:#fff;
     box-shadow:0 0 0 3px #a8341e26}
+  .startnext .dot.now.going{background:var(--green);border-color:var(--green);color:#fff;
+    box-shadow:0 0 0 3px #2c6b4126}
   .startnext .sofar{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
     color:var(--label)}
   .startnext .stepnav{display:flex;justify-content:space-between;gap:8px;width:100%;margin-top:9px}
@@ -694,7 +701,6 @@ tr.gonerow .cellav{filter:grayscale(1)}
   .startnext .d{font-size:14px;color:var(--label);line-height:1.5}
   .startnext .btn{width:100%;justify-content:center;min-height:48px;font-size:15px;margin-top:5px}
   .startnext .after{display:flex;flex-direction:column;gap:3px;font-size:12px;line-height:1.5;margin-top:4px}
-  .startnext .after .ok{color:var(--green);font-weight:600}
   .startnext .after .then{color:var(--label)}
 }
 /* Four steps stacked one per row ate the whole first screen on a phone, so
@@ -3869,57 +3875,57 @@ function startPanel(){
   const fams = (DB.families || []).length;
   const mems = (DB.members || []).length;
   const opening = num(setting('Opening Fund', 0));
+  const cons = (DB.contributions || []).length;
   const steps = [
-    { done: fams > 0, n: 'Add the families', d: fams ? fams + ' families in the register' : 'Every household in the village',
-      act: "openForm('families')", go: 'families', cta: fams ? 'Add another' : 'Add the first family' },
-    { done: mems > fams, n: 'Add the members', d: mems ? mems + ' people recorded' : 'Each person in those households',
+    { started: fams > 0, n: 'Add the families', d: fams ? fams + (fams === 1 ? ' family' : ' families') + ' in the register so far' : 'Every household in the village',
+      act: "openForm('families')", go: 'families', cta: fams ? 'Add another family' : 'Add the first family' },
+    { started: mems > 0, n: 'Add the members', d: mems ? mems + (mems === 1 ? ' person' : ' people') + ' recorded so far' : 'Each person in those households',
       act: "openForm('members')", go: 'members', cta: 'Add a member' },
-    { done: opening > 0, n: 'Set the opening fund', d: opening ? money(opening) + ' carried in' : 'What the fund already holds',
-      act: "openOpeningFund()", go: 'settingsList', cta: 'Set the amount' },
-    { done: (DB.contributions || []).length > 0, n: "Record this month's ଚାନ୍ଦା", d: 'Contributions from each family',
+    { started: opening > 0, n: 'Set the opening fund', d: opening ? money(opening) + ' carried in' : 'What the fund already holds',
+      act: "openOpeningFund()", go: 'settingsList', cta: opening ? 'Change the amount' : 'Set the amount', once: true },
+    { started: cons > 0,
+      n: "Record this month's ଚାନ୍ଦା",
+      d: cons ? cons + (cons === 1 ? ' contribution' : ' contributions') + ' recorded so far' : 'Contributions from each family',
       act: "openForm('contributions')", go: 'contributions', cta: 'Add a contribution' }
   ];
-  const left = steps.filter(s => !s.done).length;
+  const notStarted = steps.filter(s => !s.started).length;
   /* On a phone the steps are strictly sequential — no chanda before families
      exist — so the card opens on the step they are actually on. But a villager
      may want to jump ahead or back to one already done, so the four markers at
      the top are real buttons, not decoration. */
-  const nextIdx = steps.findIndex(s => !s.done);
+  const nextIdx = steps.findIndex(s => !s.started);
   const openIdx = START_STEP != null && steps[START_STEP] ? START_STEP
     : (nextIdx < 0 ? steps.length - 1 : nextIdx);
   const cur = steps[openIdx];
   const trail = steps.map((s, i) =>
-    `<button class="dot${s.done ? ' done' : ''}${i === openIdx ? ' now' : ''}" data-step="${i}"
-       aria-label="Step ${i + 1}: ${esc(s.n)}">${s.done ? '✓' : i + 1}</button>`).join('');
-  const doneNames = steps.filter(s => s.done).map(s => s.n);
-  const rest = steps.filter((s, i) => i !== openIdx && !s.done).map(s => s.n);
+    `<button class="dot${s.started ? ' going' : ''}${i === openIdx ? ' now' : ''}" data-step="${i}"
+       aria-label="Step ${i + 1}: ${esc(s.n)}${s.started ? ' (started)' : ' (not started yet)'}">${i + 1}</button>`).join('');
+  const notYet = steps.filter((s, i) => i !== openIdx && !s.started).map(s => s.n);
 
   return `<div class="panel start">
     <div class="panel-head">
       <h3>Start the register</h3>
-      <span class="small">${left ? left + ' of ' + steps.length + ' steps left' : 'all set — add an entry to see the fund'}</span>
+      <span class="small">${notStarted ? notStarted + ' of ' + steps.length + ' not begun yet' : 'all four under way — keep adding as the village grows'}</span>
     </div>
     ${cur ? `<div class="startnext">
       <div class="trail">${trail}</div>
-      <div class="sofar">Step ${openIdx + 1} of ${steps.length}${cur.done ? ' · done' : ''}</div>
+      <div class="sofar">Step ${openIdx + 1} of ${steps.length}${cur.started ? '' : ' · not begun'}</div>
       <b>${cur.n}</b>
       <span class="d">${esc(cur.d)}</span>
-      <button class="btn ${cur.done ? '' : 'btn-primary'}" onclick="${cur.act}">${esc(cur.cta)}</button>
+      <button class="btn ${cur.started && cur.once ? '' : 'btn-primary'}" onclick="${cur.act}">${esc(cur.cta)}</button>
       <div class="stepnav">
         ${openIdx > 0 ? `<button class="btn btn-sm" data-step="${openIdx - 1}">← ${esc(steps[openIdx - 1].n)}</button>` : '<span></span>'}
         ${openIdx < steps.length - 1 ? `<button class="btn btn-sm" data-step="${openIdx + 1}">${esc(steps[openIdx + 1].n)} →</button>` : '<span></span>'}
       </div>
-      ${doneNames.length || rest.length ? `<div class="after">${
-        doneNames.length ? '<span class="ok">\u2713 ' + doneNames.map(esc).join(' \u00b7 ') + '</span>' : ''}${
-        rest.length ? '<span class="then">Still to do: ' + rest.map(esc).join(' \u00b7 ') + '</span>' : ''}</div>` : ''}
+      ${notYet.length ? `<div class="after"><span class="then">Not begun yet: ${notYet.map(esc).join(' \u00b7 ')}</span></div>` : ''}
     </div>` : ''}
     <div class="startgrid">
       ${steps.map((s, i) => `
-        <div class="startcard${s.done ? ' done' : ''}">
-          <div class="top"><span class="num">${s.done ? '✓' : i + 1}</span>
+        <div class="startcard${s.started ? ' going' : ''}">
+          <div class="top"><span class="num">${i + 1}</span>
           <b>${s.n}</b></div>
           <span class="d">${esc(s.d)}</span>
-          <button class="btn btn-sm ${s.done ? '' : 'btn-primary'}" onclick="${s.act}">${esc(s.cta)}</button>
+          <button class="btn btn-sm ${s.started && s.once ? '' : 'btn-primary'}" onclick="${s.act}">${esc(s.cta)}</button>
         </div>`).join('')}
     </div>
   </div>`;
