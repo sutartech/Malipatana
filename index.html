@@ -116,12 +116,17 @@ label.lbl{display:block;font-size:12.5px;font-weight:700;color:var(--label);marg
 .msg.err{color:var(--brick)}
 .msg.info{color:var(--label);font-weight:500}
 .vrow{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:18px}
+/* Both shrink-wrap their text and sit at zero slack, so any fallback font
+   breaks a label mid-phrase ("FE / V2.1.0", "Repair cache / / session") —
+   visible during FOUT or wherever Google Fonts is blocked. The row wraps, so
+   an over-wide chip moves down whole instead. Same as .pills span, .signin. */
 .vchip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 13px;
-  font-size:12px;font-weight:700;color:var(--label)}
+  font-size:12px;font-weight:700;color:var(--label);white-space:nowrap}
 .vchip.ok{border-color:#bfe0cb;background:var(--green-soft);color:var(--green)}
 .vchip.bad{border-color:#e8c8c0;background:var(--brick-soft);color:var(--brick)}
 .repair{display:block;margin:10px auto 0;border:1px solid var(--line);background:var(--surface);
-  border-radius:12px;padding:9px 15px;font-size:12.5px;font-weight:600;color:var(--indigo-2);cursor:pointer}
+  border-radius:12px;padding:9px 15px;font-size:12.5px;font-weight:600;color:var(--indigo-2);
+  cursor:pointer;white-space:nowrap;max-width:100%}
 .repair:hover{background:var(--indigo-soft)}
 .helpline{margin-top:14px;font-size:12.5px;color:var(--label);line-height:1.6;text-align:center}
 
@@ -463,13 +468,15 @@ table.grid tbody tr:hover{background:#fbfbf8}
    Nothing here may be clipped or pushed out of view: the panel grows with its
    content and the photo gives up height first. */
 .brandside{justify-content:flex-start;min-height:0;overflow:hidden}
-.photoframe{margin-top:0;margin-bottom:0;flex:0 1 auto;min-height:0}
-/* The photo is 1080×607. Capping its HEIGHT squashed the box while the width
-   stayed put, so `cover` threw away the spire and the plinth. Bound the width
-   instead — the aspect ratio then sets the height and nothing is cropped. */
-.photoframe{margin-top:0;margin-bottom:0;flex:0 1 auto;min-height:0;
-  max-width:calc(44dvh * 1080 / 607);width:100%}
-.photoframe img{aspect-ratio:1080/607;object-fit:cover;width:100%;height:auto;display:block}
+/* The photo absorbs the panel's slack. Its height cannot be reasoned about
+   from the viewport: this panel is a grid row stretched by the FORM column
+   beside it, so viewport-height media queries shrank the photo while the
+   panel stayed tall — manufacturing a void of bare gradient below the pills.
+   Letting the frame flex to whatever height is left means there is never any
+   leftover, whatever the form does. */
+.photoframe{margin-top:0;margin-bottom:0;flex:1 1 auto;min-height:140px;width:100%}
+.photoframe img{width:100%;height:100%;aspect-ratio:auto;object-fit:cover;
+  object-position:center 42%;display:block}
 /* Centring a card taller than the window puts its top and bottom outside the
    scroll range — centre only while it fits. */
 #login{align-content:safe center;justify-items:center}
@@ -480,12 +487,15 @@ table.grid tbody tr:hover{background:#fbfbf8}
 .brandside p{display:block;margin-bottom:16px}
 .pills{margin-bottom:0}
 @media(max-width:860px){
-  .photoframe{max-width:calc(30dvh * 1080 / 607)}
   .photocap{margin-bottom:12px}
   .brandtext{margin-top:12px}
+  /* Single column: there is no form column to stretch this panel, so its
+     height is its content and a flexing photo would sit at its minimum.
+     Here the aspect ratio sets the height again. */
+  .photoframe{flex:0 0 auto}
+  .photoframe img{aspect-ratio:1080/607;height:auto}
 }
-@media(max-height:760px){
-  .photoframe{max-width:calc(30dvh * 1080 / 607)}
+@media(max-height:820px){
   .brandtext{margin-top:12px}
   .brandside p{margin-bottom:12px}
 }
