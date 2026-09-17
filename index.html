@@ -656,11 +656,45 @@ tr.gonerow .cellav{filter:grayscale(1)}
   align-items:flex-start;gap:6px}
 .startcard .num{width:26px;height:26px;border-radius:9px;display:grid;place-items:center;flex:none;
   background:var(--brick);color:#fff;font-weight:700;font-size:13px;margin-bottom:4px}
+/* Stacked on a desktop card, inline on a phone — the wrapper only exists so
+   the phone rule can pull the number up beside the title. */
+.startcard .top{display:flex;flex-direction:column;align-items:flex-start}
 .startcard.done .num{background:var(--green)}
 .startcard b{font-family:var(--display);font-size:16px;font-weight:600;line-height:1.5}
 .startcard .d{font-size:12.5px;color:var(--label);line-height:1.5;flex:1}
 .startcard .btn{margin-top:8px}
 .startcard.done b,.startcard.done .d{opacity:.7}
+
+/* ---------- phone: one next step instead of four ---------- */
+.startnext{display:none}
+@media(max-width:760px){
+  .startgrid{display:none}
+  .startnext{display:flex;flex-direction:column;align-items:flex-start;gap:7px;padding:16px 16px 18px}
+  .startnext .trail{display:flex;align-items:center;gap:6px;margin-bottom:2px}
+  .startnext .dot{width:9px;height:9px;border-radius:50%;background:var(--line);flex:none}
+  .startnext .dot.done{background:var(--green)}
+  .startnext .dot.now{background:var(--brick);box-shadow:0 0 0 3px #a8341e26}
+  .startnext .sofar{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--label);margin-left:4px}
+  .startnext b{font-family:var(--display);font-size:20px;font-weight:600;line-height:1.3}
+  .startnext .d{font-size:14px;color:var(--label);line-height:1.5}
+  .startnext .btn{width:100%;justify-content:center;min-height:48px;font-size:15px;margin-top:5px}
+  .startnext .after{display:flex;flex-direction:column;gap:3px;font-size:12px;line-height:1.5;margin-top:4px}
+  .startnext .after .ok{color:var(--green);font-weight:600}
+  .startnext .after .then{color:var(--label)}
+}
+/* Four steps stacked one per row ate the whole first screen on a phone, so
+   the reader had to scroll before seeing any of their register. Two columns
+   of two: the number moves up beside the title and the description tightens,
+   which is enough to fit a 360px screen without shrinking the tap target. */
+@media(max-width:760px){
+  .startcard{padding:13px 12px 12px;gap:4px}
+  .startcard .num{width:22px;height:22px;border-radius:7px;font-size:11.5px;margin-bottom:0}
+  .startcard .top{display:flex;flex-direction:row;align-items:center;gap:8px}
+  .startcard b{font-size:14px;line-height:1.35}
+  .startcard .d{font-size:11.5px;line-height:1.45}
+  .startcard .btn{margin-top:6px;width:100%;justify-content:center;padding:10px 8px;font-size:13px}
+}
 
 /* ---------- ledger: zeros collapse to one quiet line ---------- */
 .lrow.zero .nm{color:var(--label);font-size:13px}
@@ -3820,16 +3854,37 @@ function startPanel(){
       act: "openForm('contributions')", go: 'contributions', cta: 'Add a contribution' }
   ];
   const left = steps.filter(s => !s.done).length;
+  /* On a phone the steps are strictly sequential — no chanda before families
+     exist — so only the step they are actually on is shown. Four primary
+     buttons on one screen is four decisions; this is none, and it leaves the
+     fund balance above the fold. The grid still renders for wider screens,
+     where four across genuinely reads as an overview. */
+  const nextIdx = steps.findIndex(s => !s.done);
+  const cur = nextIdx < 0 ? null : steps[nextIdx];
+  const trail = steps.map((s, i) =>
+    `<span class="dot${s.done ? ' done' : (i === nextIdx ? ' now' : '')}"></span>`).join('');
+  const rest = steps.filter((s, i) => i !== nextIdx && !s.done).map(s => s.n);
+  const doneNames = steps.filter(s => s.done).map(s => s.n);
+
   return `<div class="panel start">
     <div class="panel-head">
       <h3>Start the register</h3>
       <span class="small">${left ? left + ' of ' + steps.length + ' steps left' : 'all set — add an entry to see the fund'}</span>
     </div>
+    ${cur ? `<div class="startnext">
+      <div class="trail">${trail}<span class="sofar">Step ${nextIdx + 1} of ${steps.length}</span></div>
+      <b>${cur.n}</b>
+      <span class="d">${esc(cur.d)}</span>
+      <button class="btn btn-primary" onclick="${cur.act}">${esc(cur.cta)}</button>
+      ${doneNames.length || rest.length ? `<div class="after">${
+        doneNames.length ? '<span class="ok">\u2713 ' + doneNames.map(esc).join(' \u00b7 ') + '</span>' : ''}${
+        rest.length ? '<span class="then">Then: ' + rest.map(esc).join(' \u00b7 ') + '</span>' : ''}</div>` : ''}
+    </div>` : ''}
     <div class="startgrid">
       ${steps.map((s, i) => `
         <div class="startcard${s.done ? ' done' : ''}">
-          <span class="num">${s.done ? '✓' : i + 1}</span>
-          <b>${s.n}</b>
+          <div class="top"><span class="num">${s.done ? '✓' : i + 1}</span>
+          <b>${s.n}</b></div>
           <span class="d">${esc(s.d)}</span>
           <button class="btn btn-sm ${s.done ? '' : 'btn-primary'}" onclick="${s.act}">${esc(s.cta)}</button>
         </div>`).join('')}
