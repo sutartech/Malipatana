@@ -707,7 +707,7 @@ main.main>*{animation:rise .4s ease both}
    ========================================================================= */
 const CONFIG = {
   API_URL: 'https://script.google.com/macros/s/AKfycbzTy_-uSI9m_vVuv9G2Q8r0t0x2UWcSrkzrnQtDw9odZW_246TxnT7qj39IT1TQwt-O/exec',
-  VERSION: 'FE V3.0.0',
+  VERSION: 'FE V3.0.1',
   IDLE_MINUTES: 30,
   /* Photo shown when no photo has been set in Settings.
      village.jpg sits in the same folder as this file on GitHub. */
@@ -2386,7 +2386,7 @@ function openPlanPrint(){
 }
 function printItem(r, i, o){
   const id = r['Action ID'], done = isDone(r), prog = progOf(r), pri = String(r['Priority'] || 'Medium'), due = dueInfo(r), est = num(r['Estimated Cost']), spent = spentOf(id);
-  const ups = o.updates ? updatesOf(id).slice().reverse() : [];
+  const ups = o.updates ? updatesOf(id).filter(u => u['Type'] !== 'Completed').reverse() : [];
   const chips = `<span class="pchip ${pri.toLowerCase()}">${esc(pri)} priority</span>` + (r['Category'] ? `<span class="pchip">${esc(r['Category'])}</span>` : '') + `<span class="pchip ${done ? 'done' : 'st'}">${esc(done ? 'Completed' : r['Status'] || 'Not started')}</span>`;
   const meta = [r['Responsible'] ? '<b>Responsible:</b> ' + esc(r['Responsible']) : '', r['Start Date'] ? '<b>Start:</b> ' + esc(fmtDate(r['Start Date'])) : '',
     r['Target Date'] ? `<b>Target:</b> <span class="pdate ${due ? due.cls : ''}">${esc(fmtDate(r['Target Date']))}${due ? ' (' + due.txt + ')' : ''}</span>` : '',
