@@ -1,0 +1,9 @@
+Code.gs
+*.gs
+*.env
+.env*
+*secret*
+*credential*
+*.xlsx
+*.csv
+*.json.bak

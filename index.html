@@ -1327,6 +1327,47 @@ body.modalOpen #stickyLayer{opacity:.12;pointer-events:none;filter:saturate(.4)}
   main.main{padding-bottom:calc(74px + env(safe-area-inset-bottom))}
   .sticky,#skTab{bottom:calc(66px + env(safe-area-inset-bottom))}
 }
+
+/* Backend version is read from Apps Script, never fabricated by frontend. */
+.backend-mismatch{max-width:480px;margin:12px auto 0;padding:12px 14px;box-sizing:border-box;
+  border:1px solid #e7bc76;border-radius:13px;background:#fff8e9;color:#744716;
+  font-size:12px;line-height:1.55;text-align:left}
+.backend-mismatch[hidden]{display:none!important}
+.backend-mismatch b,.backend-mismatch span,.backend-mismatch a{display:block}
+.backend-mismatch b{font-size:13px;margin-bottom:3px}
+.backend-mismatch a{margin-top:6px;color:#0e625c;font-weight:750;text-decoration:underline}
+
+/* Recovery sign-in: compact, mobile-first, without changing the main login layout. */
+.mal-forgot,.mal-otp-back{border:0;background:transparent;color:#116d65;font-weight:750;
+  font-size:13px;cursor:pointer;padding:12px 5px;text-align:left}
+.mal-otp-panel[hidden],#malOtpCodeRow[hidden]{display:none!important}
+.mal-otp-panel{margin-top:10px;padding:16px;background:#f5faf8;border:1px solid #cddfd8;border-radius:17px}
+.mal-otp-title{font-size:17px;font-weight:850;color:#173b36}
+.mal-otp-help{color:#536a63;font-size:12.5px;line-height:1.5;margin:7px 0 13px}
+.mal-otp-panel .lbl{display:block;margin:12px 0 5px}
+.mal-otp-switch{display:flex;gap:10px;margin:11px 0;flex-wrap:wrap}
+.mal-otp-switch label[hidden]{display:none!important}
+.mal-otp-switch label{display:flex;align-items:center;gap:6px;font-weight:700;font-size:13px;
+ padding:8px 10px;border-radius:10px;background:#fff;border:1px solid #d7e4dd}
+.mal-otp-send{display:block;width:100%;border:0;border-radius:11px;padding:12px 10px;background:#087568;
+ color:#fff;font:inherit;font-weight:800;cursor:pointer;margin:10px 0}
+#malOtpCodeRow .signin{margin-top:10px;padding:12px;width:100%}
+.mal-otp-back{font-size:12px}
+@media(max-width:600px){.mal-otp-panel{padding:12px}.mal-forgot{font-size:12.5px}}
+
+/* Two explicit login methods — password or passwordless OTP. */
+.mal-login-divider{margin:12px 0 8px;display:flex;align-items:center;gap:10px;color:#81928a;font-size:11px;font-weight:750}
+.mal-login-divider:before,.mal-login-divider:after{content:"";height:1px;background:#dbe5df;flex:1}
+.mal-otp-launch{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;padding:13px 8px;
+  background:#eef8f4;border:1px solid #93cbb9;border-radius:13px;color:#086b62;
+  font-size:14px;font-weight:800;cursor:pointer;min-height:48px}
+.mal-otp-launch:focus-visible{outline:3px solid #d59e32;outline-offset:2px}
+.mal-otp-tiny{font-size:11.5px!important;line-height:1.4;color:#687b70;margin:7px 0 0!important;text-align:center}
+.formbox.mal-otp-mode>.field,.formbox.mal-otp-mode>.remember,
+.formbox.mal-otp-mode>#loginBtn,.formbox.mal-otp-mode>#loginMsg,
+.formbox.mal-otp-mode>.mal-login-divider,.formbox.mal-otp-mode>.mal-otp-launch,
+.formbox.mal-otp-mode>.mal-reset-launch,
+.formbox.mal-otp-mode>.mal-otp-tiny{display:none!important}
 </style>
 <style id="v4addon">
 /* ---------- family tree (FE V2.9) ---------- */
@@ -1430,6 +1471,27 @@ body.modalOpen #stickyLayer{opacity:.12;pointer-events:none;filter:saturate(.4)}
 .pstyle-plain .pdate.bad,.pstyle-plain .pdate.warn{font-weight:800;text-decoration:underline}
 @media print{ .psheet *{-webkit-print-color-adjust:exact;print-color-adjust:exact} }
 
+
+/* Authenticated account contact badges. No private data shown on public page. */
+.myverify-head{font:inherit;border:1px solid #cde8df;background:#e9f7f1;color:#086a5c;
+  border-radius:12px;padding:9px 11px;font-size:12px;font-weight:800;cursor:pointer;min-height:40px}
+.myverify-head.all-verified{background:#e4f5e9;color:#246a45;border-color:#b9e1c5}
+.verify-pill{display:inline-flex;align-items:center;justify-content:center;border-radius:30px;
+  padding:5px 9px;font-size:11px;font-weight:800;white-space:nowrap}
+.verify-pill.done{background:#e6f6e9;color:#236643;border:1px solid #b9e4c3}
+.verify-pill.pending{background:#f5f1e7;color:#7e6540;border:1px solid #ece0c6}
+.mal-verify-row{border:1px solid #e4ece6;background:#fafffc;border-radius:15px;
+  padding:16px;margin:14px 0;min-width:0;overflow-wrap:anywhere}
+.mal-verify-row .verify-pill{margin:10px 0 4px}
+.mal-verify-label{display:flex;gap:11px;align-items:center}
+.mal-verify-ico{display:grid;place-items:center;width:38px;height:38px;background:#e5f2ec;
+  border-radius:12px;color:#087568;font-size:20px}
+.mal-verify-code{display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin:12px 0}
+.mal-verify-code[hidden]{display:none!important}
+.mal-verify-code .input{max-width:175px}.mal-verify-code .lbl{flex-basis:100%}
+.mal-verify-summary{font-weight:800;color:#126b5d;margin:13px 0}
+@media(max-width:650px){.myverify-head{width:39px;min-width:39px;height:39px;max-width:39px;padding:0;font-size:0;overflow:hidden;line-height:1}.myverify-head::before{content:"✓";font-size:21px}
+ .mal-verify-code .input{max-width:140px}}
 </style>
 </head>
 <body>
@@ -1466,12 +1528,12 @@ body.modalOpen #stickyLayer{opacity:.12;pointer-events:none;filter:saturate(.4)}
     <div class="formside">
       <div class="kicker">VILLAGE COMMITTEE ACCESS</div>
       <h3>Welcome</h3>
-      <p class="lead">Enter the username and password given to you by the village admin.</p>
+      <p class="lead">Sign in using your username, verified mobile number or verified email address.</p>
 
       <div class="formbox">
         <div class="field">
-          <label class="lbl" for="u">Username</label>
-          <input id="u" class="input" type="text" placeholder="Enter username"
+          <label class="lbl" for="u">Username / Mobile / Email</label>
+          <input id="u" class="input" type="text" placeholder="Username, mobile or email"
                  autocomplete="username" autocapitalize="off" spellcheck="false">
         </div>
         <div class="field">
@@ -1484,11 +1546,42 @@ body.modalOpen #stickyLayer{opacity:.12;pointer-events:none;filter:saturate(.4)}
         <label class="remember"><input type="checkbox" id="rememberMe"> Remember username on this device</label>
         <button id="loginBtn" class="signin">Sign in</button>
         <div id="loginMsg" class="msg"></div>
+        <div class="mal-login-divider"><span>OR</span></div>
+        <button type="button" id="forgotLoginBtn" class="mal-otp-launch"><span aria-hidden="true">✉</span> Sign in directly with OTP</button>
+        <p class="mal-otp-tiny">No username or password required for verified-contact OTP sign-in.</p>
+        <button type="button" id="malResetLaunch" class="mal-reset-launch">Forgot password? Reset with verified email / mobile OTP</button>
+        <section id="malOtpPanel" class="mal-otp-panel" hidden aria-label="One-time code sign-in">
+          <div class="mal-otp-title">Sign in with a verification code</div>
+          <p class="mal-otp-help">Enter your verified email or mobile number. If you have not verified it yet, sign in with your password and choose My verification. Codes expire after 5 minutes.</p>
+          <label class="lbl" for="malOtpContact">Verified email or mobile</label>
+          <input id="malOtpContact" class="input" type="text" autocomplete="off" placeholder="Email address or mobile number">
+          <div class="mal-otp-switch" id="malOtpSwitch"><label><input type="radio" name="malOtpChannel" value="email" checked> Email</label><label hidden><input type="radio" name="malOtpChannel" value="sms"> SMS</label></div>
+          <button type="button" class="mal-otp-send" id="malSendOtp">Send code</button>
+          <div id="malOtpCodeRow" hidden>
+            <label class="lbl" for="malOtpCode">6-digit code</label>
+            <input id="malOtpCode" class="input" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="Enter 6 digits" autocomplete="one-time-code">
+            <button type="button" class="signin" id="malVerifyOtp">Verify & sign in</button>
+          </div>
+          <div id="malResetFields" class="mal-reset-fields" hidden>
+            <label class="lbl" for="malNewPassword">New password (12–128 characters)</label>
+            <input class="input" type="password" id="malNewPassword" minlength="12" maxlength="128" autocomplete="new-password" placeholder="Choose a strong new password">
+            <label class="lbl" for="malConfirmPassword">Confirm new password</label>
+            <input class="input" type="password" id="malConfirmPassword" minlength="12" maxlength="128" autocomplete="new-password" placeholder="Re-enter new password">
+            <button type="button" class="mal-otp-send" id="malSaveReset">Save new password</button>
+          </div>
+          <div class="msg" id="malOtpMessage" aria-live="polite"></div>
+          <button type="button" class="mal-otp-back" id="malOtpBack">Back to password sign-in</button>
+        </section>
       </div>
 
       <div class="vrow">
         <span class="vchip" id="feChip">FE —</span>
         <span class="vchip" id="beChip">BE checking…</span>
+      </div>
+      <div id="backendMismatch" class="backend-mismatch" role="status" aria-live="polite" hidden>
+        <b id="backendMismatchTitle">Backend update required</b>
+        <span id="backendMismatchText"></span>
+        <a id="backendHealthLink" target="_blank" rel="noopener noreferrer">Check connected backend version ↗</a>
       </div>
       <button class="repair" id="repairBtn">↻ Repair cache / session</button>
       <div class="helpline">Trouble signing in? Ask the village admin to check your row in the Users sheet.</div>
@@ -1506,6 +1599,7 @@ body.modalOpen #stickyLayer{opacity:.12;pointer-events:none;filter:saturate(.4)}
     <div class="sp"></div>
     <a class="iconbtn pubjump" href="public.html" target="_blank" rel="noreferrer" title="Open the public page" aria-label="Open the public page">&#127760;</a>
     <button class="iconbtn" id="refreshBtn" title="Reload data from the sheet" aria-label="Reload">&#8635;</button>
+    <button type="button" class="myverify-head" id="malMyVerifyBtn" title="Verify my email and mobile" aria-label="My contact verification">✓ Verify contacts</button>
     <div class="whochip"><span class="avatar" id="avatar">–</span><span><b id="whoName"></b><span class="role" id="whoRole"></span></span></div>
     <button class="iconbtn" id="logoutBtn" title="Sign out" aria-label="Sign out">&#9099;</button>
   </header>
@@ -1593,7 +1687,8 @@ body.modalOpen #stickyLayer{opacity:.12;pointer-events:none;filter:saturate(.4)}
    ========================================================================= */
 const CONFIG = {
   API_URL: 'https://script.google.com/macros/s/AKfycbzTy_-uSI9m_vVuv9G2Q8r0t0x2UWcSrkzrnQtDw9odZW_246TxnT7qj39IT1TQwt-O/exec',
-  VERSION: 'FE V3.3.5',
+  VERSION: 'FE V3.4.3',
+  EXPECTED_BACKEND: 'BE V1.8.2',
   IDLE_MINUTES: 30,
   /* Photo shown when no photo has been set in Settings.
      village.jpg sits in the same folder as this file on GitHub. */
@@ -2888,6 +2983,161 @@ function api(action, params){
   });
 }
 
+/* Optional account recovery. The sender verifies the configured email/phone.
+   Never save OTP values or verification challenges in browser storage. */
+let malOtpChallenge='',malOtpPurpose='login',malResetTicket='';
+function malOtpStatus(text,bad){
+  const el=document.getElementById('malOtpMessage');if(!el)return;
+  el.className='msg '+(bad?'err':'info');el.textContent=text;
+}
+async function malReadOtpOptions(){
+  try{
+    const r=await api('loginOptions');if(!r||!r.ok)return;
+    const e=document.querySelector('#malOtpSwitch input[value="email"]');
+    const s=document.querySelector('#malOtpSwitch input[value="sms"]');
+    if(e)e.parentElement.hidden=!r.otpEmail;
+    if(s)s.parentElement.hidden=!r.otpSms;
+    if(e&&s&&!r.otpEmail&&r.otpSms)s.checked=true;
+    if(!r.otpEmail&&!r.otpSms)malOtpStatus('OTP recovery is not enabled. Contact the village admin.',true);
+  }catch(err){malOtpStatus('Could not check OTP availability. Try again later.',true);}
+}
+function malSecureReceipt(){
+  const bytes=new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join('');
+}
+function malInitOtp(){
+  const toggle=document.getElementById('forgotLoginBtn');if(!toggle)return;
+  const resetLaunch=document.getElementById('malResetLaunch');
+  const container=toggle.closest('.formbox');
+  const panel=document.getElementById('malOtpPanel');
+  function start(mode){
+    malOtpPurpose=mode;malOtpChallenge='';malResetTicket='';
+    panel.hidden=false;
+    if(container)container.classList.add('mal-otp-mode');
+    document.getElementById('malOtpCodeRow').hidden=true;
+    document.getElementById('malResetFields').hidden=true;
+    document.getElementById('malOtpContact').value=document.getElementById('u').value.trim();
+    document.getElementById('malOtpCode').value='';
+    document.querySelector('#malOtpPanel .mal-otp-title').textContent=
+      mode==='reset'?'Reset your password using OTP':'Sign in with a verification code';
+    document.getElementById('malVerifyOtp').textContent=mode==='reset'?'Verify & reset password':'Verify & sign in';
+    malOtpStatus(mode==='reset'?'Only a self-verified email or mobile can reset a password. The code expires in 5 minutes.':'',false);
+    document.getElementById('malOtpContact').focus();malReadOtpOptions();
+  }
+  toggle.onclick=()=>start('login');
+  if(resetLaunch)resetLaunch.onclick=()=>start('reset');
+  function back(){
+    panel.hidden=true;malOtpChallenge='';malResetTicket='';
+    document.getElementById('malOtpCodeRow').hidden=true;
+    document.getElementById('malResetFields').hidden=true;
+    document.getElementById('malOtpCode').value='';
+    document.getElementById('malNewPassword').value='';
+    document.getElementById('malConfirmPassword').value='';
+    if(container)container.classList.remove('mal-otp-mode');
+    document.getElementById('u').focus();
+  }
+  document.getElementById('malOtpBack').onclick=back;
+  document.getElementById('malSendOtp').onclick=async()=>{
+    const btn=document.getElementById('malSendOtp'),id=document.getElementById('malOtpContact').value.trim();
+    const selected=document.querySelector('input[name="malOtpChannel"]:checked');
+    const channel=selected&&selected.value;
+    if(!id){malOtpStatus('Enter the verified email or mobile registered with admin.',true);return;}
+    btn.disabled=true;malOtpChallenge='';malResetTicket='';
+    document.getElementById('malOtpCodeRow').hidden=true;
+    document.getElementById('malResetFields').hidden=true;
+    malOtpStatus('Requesting code…',false);
+    try{
+      const r=await api('requestOtp',{identifier:id,channel});
+      if(!r||!r.ok)throw new Error((r&&r.error)||'Could not request code.');
+      malOtpChallenge=r.challenge;
+      document.getElementById('malOtpCodeRow').hidden=false;
+      malOtpStatus(r.message||'If the contact is verified, a code has been sent.',false);
+      document.getElementById('malOtpCode').focus();
+    }catch(err){malOtpStatus(err.message||'Could not request code.',true);}
+    finally{btn.disabled=false;}
+  };
+  document.getElementById('malVerifyOtp').onclick=async()=>{
+    const btn=document.getElementById('malVerifyOtp'),code=document.getElementById('malOtpCode').value.trim();
+    if(!malOtpChallenge||!/^[0-9]{6}$/.test(code)){malOtpStatus('Enter your 6-digit code.',true);return;}
+    btn.disabled=true;malOtpStatus('Verifying code…',false);
+    try{
+      const reset=malOtpPurpose==='reset';
+      const r=await api(reset?'verifyPasswordResetOtp':'verifyOtp',{challenge:malOtpChallenge,code});
+      if(!r||!r.ok)throw new Error((r&&r.error)||'Invalid or expired code.');
+      malOtpChallenge='';document.getElementById('malOtpCode').value='';
+      if(reset){
+        malResetTicket=r.resetTicket;
+        document.getElementById('malOtpCodeRow').hidden=true;
+        document.getElementById('malResetFields').hidden=false;
+        malOtpStatus(r.message||'Verified. Set your new password.',false);
+        document.getElementById('malNewPassword').focus();
+      }else{
+        USER=r.user;store.set('mal_user',JSON.stringify(USER));
+        malOtpStatus('Verified. Loading your village records…',false);
+        await load();enterApp();
+      }
+    }catch(err){malOtpStatus(err.message||'Verification failed.',true);}
+    finally{btn.disabled=false;}
+  };
+  document.getElementById('malSaveReset').onclick=async()=>{
+    const btn=document.getElementById('malSaveReset');
+    const one=document.getElementById('malNewPassword'),two=document.getElementById('malConfirmPassword');
+    if(!malResetTicket){malOtpStatus('Verify a fresh OTP first.',true);return;}
+    if(one.value.length<12||one.value.length>128||/\s/.test(one.value)){malOtpStatus('Use 12–128 characters without spaces.',true);return;}
+    if(one.value!==two.value){malOtpStatus('Passwords do not match.',true);return;}
+    btn.disabled=true;malOtpStatus('Saving your new password securely…',false);
+    const receipt=malSecureReceipt();
+    const body=new URLSearchParams({action:'resetPassword',ticket:malResetTicket,receipt,newPassword:one.value});
+    // Password is submitted in a POST body, never a URL or JSONP request.
+    one.value='';two.value='';
+    try{
+      try{await fetch(CONFIG.API_URL,{method:'POST',mode:'no-cors',credentials:'omit',cache:'no-store',redirect:'follow',
+        headers:{'Content-Type':'application/x-www-form-urlencoded'},body,referrerPolicy:'no-referrer'});}catch(_ignored){}
+      let outcome=null;
+      for(let n=0;n<13;n++){
+        await new Promise(resolve=>setTimeout(resolve,1500));
+        try{const r=await api('passwordResetStatus',{receipt});if(r&&r.state&&r.state!=='pending'){outcome=r;break;}}
+        catch(_ignored){}
+      }
+      malResetTicket='';
+      if(!outcome)throw new Error('No confirmation from backend. Do not assume the password was changed. Check your sign-in or ask admin.');
+      if(outcome.state!=='complete')throw new Error(outcome.message||'Password reset was unsuccessful. Request another OTP.');
+      back();
+      const msg=document.getElementById('loginMsg');msg.className='msg info';msg.textContent='Password updated. Sign in with your new password.';
+      document.getElementById('p').focus();
+    }catch(err){malOtpStatus(err.message||'Could not complete password reset.',true);}
+    finally{btn.disabled=false;}
+  };
+  document.getElementById('malOtpCode').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('malVerifyOtp').click();});
+}
+/* Admin controls: global methods under Settings, per-user contacts under Users. */
+function openLoginOptions(){
+  if(!isAdmin())return;
+  const defs=[['Login By Email','Email + password'],['Login By Mobile','Mobile + password'],
+    ['OTP Email Enabled','Direct email OTP sign-in and recovery'],['OTP SMS Enabled','Direct SMS OTP sign-in and recovery (gateway required)'],
+    ['Contact Email Verification','User self-verification of email by OTP'],['Contact SMS Verification','User self-verification of mobile by SMS OTP (gateway required)']];
+  openModal('<header><h3>Login & account recovery</h3><button class="btn btn-sm" onclick="closeModal()">Close</button></header>'+
+    '<div class="body"><p class="muted">Existing username/password always works. Verify contact details in Users before enabling alternatives.</p>'+
+    defs.map(([key,label],i)=>'<label style="display:flex;gap:9px;align-items:center;padding:9px 0"><input type="checkbox" id="malLoginOpt'+i+'" '+
+     (/^(yes|true)$/i.test(String(setting(key,(i===3||i===5)?'No':'Yes')))?'checked':'')+'>'+esc(label)+'</label>').join('')+
+    '<p class="muted small">SMS requires private Twilio configuration in Apps Script and compliant delivery in India. Passwordless OTP signs the user in; it does not reveal the previous password.</p>'+
+    '<button type="button" class="btn btn-primary" id="malSaveLoginOpts">Save options</button><div id="malLoginOptMsg" class="small"></div></div>');
+  document.getElementById('malSaveLoginOpts').onclick=async()=>{
+    const btn=document.getElementById('malSaveLoginOpts'),msg=document.getElementById('malLoginOptMsg');btn.disabled=true;
+    try{
+      for(let i=0;i<defs.length;i++){
+        const rec={Setting:defs[i][0],Value:document.getElementById('malLoginOpt'+i).checked?'Yes':'No'};
+        const r=await api('save',{sheet:'Settings',record:JSON.stringify(rec)});
+        if(!r||!r.ok)throw new Error((r&&r.error)||'Could not save option: '+defs[i][0]);
+        DB.settings=DB.settings||{};DB.settings[rec.Setting]=rec.Value;
+      }
+      msg.textContent='Saved. New rules apply to future sign-ins.';toast('Login options saved','good');
+    }catch(err){msg.textContent=err.message||'Could not save settings.';}
+    finally{btn.disabled=false;}
+  };
+}
+
 /* ---------- auth ---------- */
 async function doLogin(){
   const btn = $('#loginBtn'), msg = $('#loginMsg');
@@ -3078,6 +3328,7 @@ function enterApp(){
   $('#login').classList.add('hide');
   $('#app').classList.remove('hide');
   $('#whoName').textContent = USER.name || USER.username;
+  malRefreshVerificationChip();
   $('#whoRole').textContent = USER.role || 'Viewer';
   $('#avatar').textContent = String(USER.name || USER.username || '?').trim().charAt(0).toUpperCase();
   $('#brandSub').textContent = (DB.settings && DB.settings['Village Name'] ? String(DB.settings['Village Name']).toUpperCase() : 'MALIPATANA')
@@ -3493,14 +3744,18 @@ const MODULES = {
     list: ['Setting','Value'], adminOnly: true
   },
   users: {
-    sheet: 'Users', title: 'Users', odia: 'ବ୍ୟବହାରକାରୀ', idField: 'Username', blurb: 'Who can sign in to this dashboard',
+    sheet: 'Users', title: 'Users', odia: 'ବ୍ୟବହାରକାରୀ', idField: 'Username', blurb: 'Manage sign-in, self-verified contacts, and enable or disable accounts',
     fields: [
       { n:'Username', t:'text', req:true },
       { n:'Password', t:'text', hint:'Leave blank when editing to keep the current password' },
       { n:'Role', t:'select', opts:['Admin','Editor','Viewer'] },
-      { n:'Active', t:'select', opts:['YES','NO'] }, { n:'Name', t:'text' }
+      { n:'Active', t:'select', opts:['YES','NO'] }, { n:'Name', t:'text' },
+      { n:'Email', t:'text', hint:'Only admin enters or changes recovery contacts.' },
+      { n:'Mobile', t:'tel', hint:'Indian mobile number. Unique to this account.' },
+      // Verified flags are server-owned. No administrator can self-award badges from this form.
+      { n:'OTP Allowed', t:'select', opts:['Yes','No'], hint:'Allow this account to sign in by verified-contact OTP.' }
     ],
-    list: ['Username','Name','Role','Active'], adminOnly: true
+    list: ['Username','Name','Role','Active','Email','Mobile','Email Verified','Mobile Verified','OTP Allowed'], adminOnly: true
   }
 };
 
@@ -4292,6 +4547,13 @@ function fieldDef(key, col){ return allFields(key).find(f => f.n === col) || { n
 
 const GRV_TONE = { Received:'', 'Under Review':'warn', 'Action Taken':'warn', Resolved:'good', Rejected:'bad' };
 function cellHtml(key, row, col){
+  if(key==='users' && (col==='Email Verified'||col==='Mobile Verified')){
+    const ch=col==='Email Verified'?'Email':'Mobile';
+    const yesSelf=String(row[ch+' Verified']||'').toLowerCase()==='yes' &&
+      String(row[ch+' Verified By']||'')==='Self OTP' && !!String(row[ch+' Verified At']||'');
+    return {cls:'',html:yesSelf?'<span class="verify-pill done" title="Self-verified with OTP on '+esc(String(row[ch+' Verified At']))+'">✓ Verified</span>':
+      '<span class="verify-pill pending" title="The concerned user has not completed OTP verification">Not verified</span>'};
+  }
   const f = fieldDef(key, col);
   const raw = row[col];
   if(key === 'grievances' && col === 'Status'){
@@ -4433,6 +4695,7 @@ function renderModule(key){
       ${(DB.families || []).map(f => `<option value="${esc(f['Family ID'])}" ${v.fam === String(f['Family ID']) ? 'selected' : ''}>${esc(f['Family ID'])} · ${esc(f['Family Head'])}</option>`).join('')}
     </select>` : ''}
     ${key === 'members' && canEdit() ? '<button class="btn btn-sm" data-act="heads">Add missing family heads</button>' : ''}    ${isAdmin() ? `<button class="btn btn-sm" data-act="cols">Columns</button>` : ''}
+    ${key==='users' && isAdmin() ? '<button class="btn btn-sm btn-primary" data-act="loginopts">Login / OTP options</button>' : ''}
     ${isAdmin() && ['families','members'].includes(key) ? `<button class="btn btn-sm ${VIEW[key] && VIEW[key].quick ? 'btn-primary' : ''}" data-act="quick">${VIEW[key] && VIEW[key].quick ? 'Done editing' : 'Quick edit'}</button>` : ''}
     <button class="btn btn-sm" data-act="csv">Export CSV</button>
     <button class="btn btn-sm" data-act="print">Print</button>
@@ -4478,7 +4741,7 @@ function renderModule(key){
             ${key === 'recurring' && canEdit() ? `<button class="btn btn-sm" data-pay="${id}">Mark paid</button> ` : ''}
             ${['families','members','events'].includes(key) ? `<button class="btn btn-sm" data-act="profile" data-id="${id}">View</button> ` : ''}
             ${key === 'families' && isHousehold(r) ? `<button class="btn btn-sm" data-act="household" data-id="${id}">Household</button> ` : ''}
-            ${key === 'users' && isAdmin() ? `<button class="btn btn-sm" data-act="access" data-id="${id}">Access</button> ` : ''}
+            ${key === 'users' && isAdmin() ? `<button class="btn btn-sm" type="button" data-toggle-user="${id}" data-enabled="${String(r.Active||'YES').toUpperCase()==='YES'?'NO':'YES'}">${String(r.Active||'YES').toUpperCase()==='YES'?'Disable':'Enable'}</button> <button class="btn btn-sm" data-act="access" data-id="${id}">Access</button> <button class="btn btn-sm" type="button" data-verify-reset="${id}">Reset verification</button> ` : ''}
             ${key === 'contributions' ? `<button class="btn btn-sm" data-act="receipt" data-id="${id}">Receipt</button> ` : ''}
             ${canEdit() ? `<button class="btn btn-sm" data-act="edit" data-id="${id}">Edit</button>` : ''}
             ${canDelete() ? `<button class="btn btn-sm btn-danger" data-act="del" data-id="${id}">Delete</button>` : ''}
@@ -4503,6 +4766,30 @@ function renderModule(key){
     if(v.sort === c) v.dir *= -1; else { v.sort = c; v.dir = 1; }
     renderModule(key);
   });
+  if(key==='users') document.querySelectorAll('#main [data-toggle-user]').forEach(btn=>btn.addEventListener('click',async()=>{
+    if(!isAdmin())return;
+    const username=btn.dataset.toggleUser,enabled=btn.dataset.enabled;
+    const verb=enabled==='NO'?'disable':'enable';
+    if(!window.confirm('Do you want to '+verb+' '+username+'?'+(enabled==='NO'?' Their existing sessions will be revoked.':'')))return;
+    btn.disabled=true;
+    try{
+      const r=await api('setUserActive',{username,enabled});
+      if(!r||!r.ok)throw new Error(r&&r.error||'Could not update account.');
+      await refresh(true);toast(r.message||'Account updated','good');
+    }catch(err){toast(err.message||'Could not update account','bad');btn.disabled=false;}
+  }));
+  if(key==='users') document.querySelectorAll('#main [data-verify-reset]').forEach(btn=>btn.addEventListener('click',async()=>{
+    const who=btn.dataset.verifyReset;
+    const channel=window.prompt('Which verification to revoke for '+who+'? Enter email or mobile:','email');
+    if(!channel)return;
+    if(!['email','mobile'].includes(channel.trim().toLowerCase())){toast('Enter email or mobile.','bad');return;}
+    if(!window.confirm('Revoke '+channel+' verification for '+who+'?'))return;
+    btn.disabled=true;
+    try{const r=await api('revokeContactVerification',{username:who,channel:channel.trim().toLowerCase()});
+      if(!r||!r.ok)throw new Error(r&&r.error||'Could not revoke verification.');
+      await refresh(true);toast('Verification revoked','good');
+    }catch(e){toast(e.message||'Could not revoke','bad');btn.disabled=false;}
+  }));
   wirePhotoFallbacks($('#main'));
   wireActions($('#main'));
 }
@@ -4530,6 +4817,7 @@ function wireActions(root){
         case 'heads': return addMissingHeads();
         case 'cols': return openColumns(k);
         case 'access': return openAccess(id);
+        case 'loginopts': return openLoginOptions();
         case 'death': return markDeceased(id);
         case 'profile2': return openMember(id);
         case 'edit2': return openForm('families', id);
@@ -6952,6 +7240,7 @@ function initLoginScreen(){
   };
 
   $('#repairBtn').onclick = repairCache;
+  malInitOtp();
   bePing();
   paintPublicSticky();
   paintLoginRemembrance();
@@ -6959,17 +7248,45 @@ function initLoginScreen(){
   paintLoginNotices();
 }
 
-/* Confirms the sheet is reachable and shows which backend version answered. */
+/* Check the *deployed* Apps Script version. Never claim a backend version
+   merely because the matching source file was packaged or pasted elsewhere. */
 async function bePing(){
   const chip = $('#beChip');
+  const notice = document.getElementById('backendMismatch');
+  const title = document.getElementById('backendMismatchTitle');
+  const detail = document.getElementById('backendMismatchText');
+  const link = document.getElementById('backendHealthLink');
   if(!chip) return;
+  if(notice) notice.hidden = true;
+  if(link) link.href = CONFIG.API_URL + '?action=health';
   try {
     const r = await api('health');
-    if(r && r.ok){ chip.textContent = String(r.version || 'BE ?'); chip.className = 'vchip ok'; }
-    else { chip.textContent = 'BE error'; chip.className = 'vchip bad'; }
+    if(r && r.ok){
+      const actual = String(r.version || 'BE ?').trim();
+      const matches = actual === CONFIG.EXPECTED_BACKEND;
+      chip.textContent = actual;
+      chip.className = 'vchip ' + (matches ? 'ok' : 'bad');
+      if(!matches && notice){
+        title.textContent = 'The connected backend needs a new deployment';
+        detail.textContent = 'This site received ' + actual + ', but requires ' + CONFIG.EXPECTED_BACKEND +
+          '. Replace Code.gs in the Apps Script project for this exact /exec URL, then Deploy → Manage deployments → Edit → New version → Deploy. Clearing browser cache cannot update Apps Script.';
+        notice.hidden = false;
+      }
+    } else {
+      chip.textContent = 'BE error'; chip.className = 'vchip bad';
+      if(notice){
+        title.textContent = 'Unable to verify backend';
+        detail.textContent = 'The configured Apps Script deployment did not return a successful health response.';
+        notice.hidden = false;
+      }
+    }
   } catch(e){
-    chip.textContent = 'BE unreachable';
-    chip.className = 'vchip bad';
+    chip.textContent = 'BE unreachable'; chip.className = 'vchip bad';
+    if(notice){
+      title.textContent = 'Unable to reach backend';
+      detail.textContent = 'Check the Apps Script deployment URL and web-app access settings.';
+      notice.hidden = false;
+    }
   }
 }
 
@@ -7449,6 +7766,17 @@ buildNav = function(){
     const first=sb.querySelector('.navgroup');if(first)first.before(b);
   }
 };
+const _malBuildNavVerify = buildNav;
+buildNav=function(){
+  _malBuildNavVerify();
+  const side=document.getElementById('sidebar');
+  if(side && !side.querySelector('[data-mal-contact-verify]')){
+    const b=document.createElement('button');b.className='nav';b.type='button';
+    b.setAttribute('data-mal-contact-verify','1');b.innerHTML='<span class="ic">✓</span> My verification';
+    b.onclick=()=>{closeDrawer();openMyVerification();};
+    side.appendChild(b);
+  }
+};
 const _render = render;
 render = function(){
   if(PAGE === 'actionPlan' || PAGE === 'runAll' || PAGE === 'entryLinks'){
@@ -7488,10 +7816,82 @@ function renderRunAll(){
 }
 })();
 
+
+/* CONTACT VERIFICATION — private profile, separate proof for email and mobile. */
+let malContactChallenge={},malVerificationSnapshot=null;
+function malContactBadge(row){
+  if(!row || !row.present)return '<span class="verify-pill pending">Not added</span>';
+  return row.verified?'<span class="verify-pill done">✓ Verified</span>':
+    '<span class="verify-pill pending">Not verified</span>';
+}
+function malPaintContactVerification(result){
+  malVerificationSnapshot=result;
+  if(!document.getElementById('malVerificationList'))return;
+  const contacts=result.contacts||{};
+  document.getElementById('malVerificationList').innerHTML=['email','mobile'].map(ch=>{
+    const d=contacts[ch]||{},label=ch==='email'?'Email':'Mobile',ico=ch==='email'?'✉':'◉';
+    return '<section class="mal-verify-row"><div class="mal-verify-label"><span class="mal-verify-ico">'+ico+'</span><div><strong>'+label+'</strong><div class="muted small">'+esc(d.masked||'Not registered')+'</div></div></div>'+malContactBadge(d)+
+      (d.verified?'<p class="muted small">Self-verified by OTP on '+esc(d.verifiedAt||'')+'</p>':
+        '<p class="muted small">Only a successful OTP sent to this contact earns a verified badge.'+
+        (d.legacyTrusted?' Previous admin approval does not count as self-verification.':'')+'</p>')+
+      (!d.verified&&d.present&&d.available?'<button class="btn btn-primary mal-send-own" type="button" data-mal-channel="'+ch+'">Send '+label+' OTP</button>':
+        !d.verified?'<div class="muted small">'+(!d.present?'Ask the administrator to add this contact.':'Verification is unavailable until the administrator enables delivery.')+'</div>':'')+
+      '<div id="mal-verify-code-'+ch+'" hidden class="mal-verify-code"><label class="lbl">6-digit '+label+' code</label><input class="input" id="mal-verify-input-'+ch+'" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Enter code"><button class="btn btn-primary mal-confirm-own" type="button" data-mal-channel="'+ch+'">Confirm '+label+'</button></div>'+ 
+      '<div id="mal-verify-result-'+ch+'" class="small" role="status" aria-live="polite"></div></section>';
+  }).join('');
+  document.getElementById('malBothVerified').textContent=result.bothVerified?'✓ Both contacts verified':'Email and mobile are verified separately';
+  document.querySelectorAll('.mal-send-own').forEach(btn=>btn.onclick=async()=>{
+    const ch=btn.dataset.malChannel,res=document.getElementById('mal-verify-result-'+ch);
+    btn.disabled=true;res.textContent='Sending OTP…';
+    try{const r=await api('requestContactVerification',{channel:ch});
+      if(!r || !r.ok)throw new Error(r&&r.error||'Could not deliver OTP.');
+      malContactChallenge[ch]=r.challenge;
+      document.getElementById('mal-verify-code-'+ch).hidden=false;
+      res.textContent='Code sent. It expires in five minutes.';
+      document.getElementById('mal-verify-input-'+ch).focus();
+    }catch(e){res.textContent=e.message||'Could not send code.';}finally{btn.disabled=false;}
+  });
+  document.querySelectorAll('.mal-confirm-own').forEach(btn=>btn.onclick=async()=>{
+    const ch=btn.dataset.malChannel,code=document.getElementById('mal-verify-input-'+ch).value.trim(),
+      res=document.getElementById('mal-verify-result-'+ch);
+    if(!malContactChallenge[ch]||!/^[0-9]{6}$/.test(code)){res.textContent='Enter the six-digit code.';return;}
+    btn.disabled=true;res.textContent='Checking…';
+    try{const r=await api('confirmContactVerification',{challenge:malContactChallenge[ch],code});
+      if(!r || !r.ok)throw new Error(r&&r.error||'Code rejected.');
+      delete malContactChallenge[ch];malPaintContactVerification(r);
+      malUpdateVerificationChip(r);
+      toast(ch==='email'?'Email verified':'Mobile verified','good');
+      if(isAdmin())refresh(true);
+    }catch(e){res.textContent=e.message||'Could not verify code.';}finally{btn.disabled=false;}
+  });
+}
+function malUpdateVerificationChip(data){
+  const chip=document.getElementById('malMyVerifyBtn');if(!chip||!data)return;
+  const count=['email','mobile'].filter(ch=>data.contacts&&data.contacts[ch]&&data.contacts[ch].verified).length;
+  chip.textContent=count===2?'✓ Both verified':count===1?'✓ 1 contact verified':'✓ Verify contacts';
+  chip.classList.toggle('all-verified',count===2);
+}
+async function openMyVerification(){
+  if(!USER||!USER.token){toast('Sign in first','bad');return;}
+  malContactChallenge={};
+  openModal('<header><h3>My contact verification</h3><button class="btn btn-sm" type="button" onclick="closeModal()">Close</button></header>'+
+    '<div class="body"><p class="muted">Verify each contact yourself to receive its badge. Badges confirm contact ownership, not legal identity.</p>'+
+    '<div id="malVerificationList"><div class="muted">Loading your verification details…</div></div>'+
+    '<p id="malBothVerified" class="mal-verify-summary"></p><p class="muted small">Never share your OTP. Changed contacts automatically lose their badge.</p></div>');
+  try{const r=await api('myVerification');if(!r || !r.ok)throw new Error(r&&r.error||'Could not load verification data.');
+    malPaintContactVerification(r);malUpdateVerificationChip(r);
+  }catch(e){const el=document.getElementById('malVerificationList');if(el)el.textContent=e.message||'Could not load profile.';}
+}
+async function malRefreshVerificationChip(){
+  if(!USER||!USER.token)return;
+  try{const r=await api('myVerification');if(r&&r.ok)malUpdateVerificationChip(r);}catch(e){}
+}
+
 $('#loginBtn').onclick = doLogin;
 $('#p').addEventListener('keydown', e => { if(e.key === 'Enter') doLogin(); });
 $('#u').addEventListener('keydown', e => { if(e.key === 'Enter') $('#p').focus(); });
 $('#logoutBtn').onclick = doLogout;
+$('#malMyVerifyBtn').onclick = openMyVerification;
 $('#refreshBtn').onclick = () => refresh(false);
 $('#menuBtn').onclick = () => $('#sidebar').classList.contains('open') ? closeDrawer() : openDrawer();
 $('#scrim').onclick = closeDrawer;
@@ -7807,6 +8207,12 @@ async function showEntryList(){
   outline:3px solid #e8a741;outline-offset:2px}
 #malMoneyPanel .money-empty{background:#f5f8f6;color:#59706a;border-radius:12px;padding:18px 12px}
 @media(max-width:350px){#malMoneyPanel .money-choices button{padding:10px;min-height:85px}}
+.mal-reset-launch{display:block;width:100%;margin:8px 0 0;border:0;background:none;
+  color:#116d65;text-decoration:underline;text-underline-offset:3px;font-size:12px;font-weight:750;
+  padding:9px 4px;cursor:pointer}
+.mal-reset-launch:focus-visible{outline:3px solid #daa94b;outline-offset:2px;border-radius:8px}
+.mal-reset-fields[hidden]{display:none!important}
+.mal-reset-fields{margin-top:12px;padding:10px 0;border-top:1px solid #d5e4dc}
 </style>
 <script>
 /* Mobile navigation FE V3.3.5: Home | People | + Add | Money | More.
@@ -7965,6 +8371,244 @@ async function showEntryList(){
   window.addEventListener('resize',()=>{
     const bar=document.getElementById('tabbar');if(bar&&USER)buildTabs();
   },{passive:true});
+})();
+</script>
+<style>
+/* Malipatana community programmes: admin only; friendly compact mobile layout. */
+.mcg-overview{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:16px 0}
+.mcg-kpi{background:#fff;border:1px solid #e1eae5;border-radius:15px;padding:13px 14px}
+.mcg-kpi strong{display:block;color:#086b62;font-size:24px;font-weight:800;font-variant-numeric:tabular-nums}
+.mcg-kpi span{display:block;color:#5f716d;font-size:12px;margin-top:3px}
+.mcg-controls{display:flex;flex-wrap:wrap;align-items:center;gap:9px;margin:15px 0}
+.mcg-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px}
+.mcg-card{background:#fff;border:1px solid #e3eae5;border-radius:17px;padding:16px;min-width:0;box-shadow:0 2px 12px #113d3210}
+.mcg-card h3{font-size:17px;color:#162e34;margin:3px 0 8px;overflow-wrap:anywhere}
+.mcg-tag{display:inline-block;background:#ebf6f2;color:#086b62;font-size:11px;font-weight:750;padding:4px 8px;border-radius:20px}
+.mcg-date{color:#526963;font-size:12px;line-height:1.5}
+.mcg-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.mcg-action{border:1px solid #d5e8df;background:#f6fbf8;color:#0a6256;border-radius:9px;padding:8px 10px;font:inherit;font-size:12px;font-weight:700;cursor:pointer;min-height:38px}
+.mcg-action:focus-visible{outline:3px solid #edb03d}
+.mcg-action.red{background:#fff8f5;border-color:#f0ccc3;color:#ac4634}
+.mcg-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+.mcg-fields label{display:block;font-size:12px;font-weight:700;color:#31544b}
+.mcg-fields .wide{grid-column:1/-1}
+.mcg-fields input,.mcg-fields select,.mcg-fields textarea{width:100%;box-sizing:border-box;border:1px solid #d6e2db;border-radius:10px;background:#fff;color:#17362f;font:inherit;font-size:14px;padding:10px;margin-top:4px;min-height:43px}
+.mcg-fields textarea{min-height:75px;resize:vertical}
+.mcg-section{background:#f6faf7;border:1px solid #e0e9e3;border-radius:17px;padding:15px;margin-top:13px}
+.mcg-note{font-size:12px;line-height:1.5;color:#60726b;margin-top:6px}
+.mcg-person-list{margin:12px 0 0;padding-left:20px;max-height:170px;overflow:auto;font-size:12px;line-height:1.8}
+.mcg-progress{height:8px;border-radius:10px;background:#e9eee9;overflow:hidden;margin-top:8px}
+.mcg-progress>span{display:block;height:100%;background:linear-gradient(90deg,#086b62,#dcaa3d)}
+.mcg-footnote{background:#f3f8f6;padding:12px 14px;border-left:3px solid #08766c;border-radius:11px;color:#3e6059;font-size:12px;line-height:1.55;margin-top:18px}
+@media(max-width:860px){.mcg-grid{grid-template-columns:1fr}.mcg-overview{grid-template-columns:repeat(2,minmax(0,1fr))}.mcg-fields{grid-template-columns:1fr}.mcg-controls>.btn{flex:0 0 auto;min-width:0}#mcgContent .mcg-controls>.btn{min-width:136px}.mcg-card{padding:13px}}
+@media(max-width:350px){.mcg-overview{gap:7px}.mcg-kpi{padding:9px}.mcg-kpi strong{font-size:20px}}
+</style>
+<script>
+/* Community Group Programme V3.4.3 — admin-only and no private health labels. */
+(function(){
+  const initialNav=buildNav,initialRender=render;
+  const STATE={loaded:false,loading:false,groups:[],activities:[],tab:'groups',form:null,selected:'',expanded:{}};
+  const $cg=id=>document.getElementById(id);
+  const fmt=x=>String(x||'').slice(0,10);
+  const dateOffset=(d,days)=>{const a=new Date((d||new Date().toISOString().slice(0,10))+'T12:00:00');a.setDate(a.getDate()+days);return a.toISOString().slice(0,10)};
+  const aSafe=v=>esc(String(v==null?'':v));
+  const errMsg=e=>toast(String((e&&e.message)||e||'Could not save. Try again.').slice(0,240),'bad');
+  const people=()=>((DB&&DB.members)||[]).filter(m=>String(m['Life Status']||'').trim().toLowerCase()!=='deceased');
+  function familyFor(m){const id=String(m['Family ID']||'').trim();return((DB&&DB.families)||[]).find(f=>String(f['Family ID']||'').trim()===id)||{};}
+  function matches(m,g){
+    const type=String(g['Rule Type']||''),val=String(g['Rule Value']||'').trim().toLowerCase();
+    if(type==='All living')return true;
+    if(type==='Location contains')return String(familyFor(m)['Address/Area']||'').toLowerCase().includes(val)&&!!val;
+    if(type==='Age range'){
+      const parts=val.match(/^(\d+)\s*[-:]\s*(\d+)$/),age=Number(m.Age);
+      return !!parts&&m.Age!==''&&m.Age!=null&&Number.isFinite(age)&&age>=+parts[1]&&age<=+parts[2];
+    }
+    if(type==='Manual IDs')return val.split(',').map(x=>x.trim()).filter(Boolean).includes(String(m['Member ID']||'').toLowerCase());
+    return false;
+  }
+  function groupPeople(g){return people().filter(m=>matches(m,g))}
+  function kpis(){
+    const all=people(),coverage=new Set(),counts=new Map();
+    STATE.groups.filter(g=>String(g.Status||'')!=='Completed').forEach(g=>groupPeople(g).forEach(m=>{const id=String(m['Member ID']);coverage.add(id);counts.set(id,(counts.get(id)||0)+1)}));
+    return {all:all.length,covered:coverage.size,uncovered:all.filter(m=>!coverage.has(String(m['Member ID']))),overlap:[...counts.values()].filter(n=>n>1).length};
+  }
+  function shell(){
+    const k=kpis(),progress=k.all?Math.round(k.covered/k.all*100):0;
+    return `<div class="pagehead"><div><h2>Village improvement groups <span class="muted" style="font-size:15px">ଗ୍ରାମ ଉନ୍ନତି ଦଳ</span></h2><div class="sub">Organise living residents by area, age or selected members; plan respectful, time-bound activities.</div></div></div>
+      <div class="mcg-overview"><div class="mcg-kpi"><strong>${k.all}</strong><span>Living members</span></div><div class="mcg-kpi"><strong>${k.covered}</strong><span>Covered by groups</span></div><div class="mcg-kpi"><strong>${k.uncovered.length}</strong><span>Not assigned</span></div><div class="mcg-kpi"><strong>${k.overlap}</strong><span>In multiple groups</span></div></div>
+      <div class="mcg-progress" role="progressbar" aria-valuenow="${progress}" aria-valuemin="0" aria-valuemax="100" aria-label="Residents covered"><span style="width:${progress}%"></span></div>
+      <div class="mcg-note">${progress}% covered across active/planned groups. People can join more than one group. Deceased records are excluded automatically.</div>
+      <div class="mcg-controls"><button class="btn ${STATE.tab==='groups'?'btn-primary':''}" data-cg-tab="groups">Groups (${STATE.groups.length})</button>
+      <button class="btn ${STATE.tab==='activities'?'btn-primary':''}" data-cg-tab="activities">Action timetable (${STATE.activities.length})</button>
+      <button class="btn" data-cg-refresh>↻ Refresh</button></div>
+      <div id="mcgForm"></div><div id="mcgContent"></div>
+      <div class="mcg-footnote"><b>Respect and confidentiality:</b> group by location or broad age—not suspected alcohol, drug or tobacco use. Do not record a person's diagnosis, consumption or addiction status here. Counselling is voluntary; clinical concerns belong with qualified professionals. Group membership and names are available to authorised admins only.</div>`;
+  }
+  function opt(list,value){return list.map(s=>`<option value="${aSafe(s)}" ${value===s?'selected':''}>${aSafe(s)}</option>`).join('')}
+  function field(label,name,type,value,wide,choices){
+    const val=aSafe(value||'');
+    let input=type==='textarea'?`<textarea name="${name}">${val}</textarea>`:
+      type==='select'?`<select name="${name}">${opt(choices||[],String(value||''))}</select>`:
+      `<input name="${name}" type="${type||'text'}" value="${val}" ${type==='number'?'min="0"':''}>`;
+    return `<label class="${wide?'wide':''}">${aSafe(label)}${input}</label>`;
+  }
+  function formMarkup(){
+    const f=STATE.form;if(!f)return '';
+    const x=f.data||{},isGroup=f.kind==='group';
+    const now=new Date().toISOString().slice(0,10);
+    const body=isGroup?[
+      field('Group name','Group Name','text',x['Group Name'],true),
+      field('Selection rule','Rule Type','select',x['Rule Type']||'Location contains',false,['Location contains','Age range','All living','Manual IDs']),
+      field('Rule value','Rule Value','text',x['Rule Value']),
+      field('Coordinator','Coordinator','text',x.Coordinator),
+      field('Status','Status','select',x.Status||'Planned',false,['Planned','Active','Paused','Completed']),
+      field('Start date','Start Date','date',x['Start Date']||now),
+      field('Target end date','End Date','date',x['End Date']||dateOffset(now,180)),
+      field('Shared goal (not individual labels)','Goal','textarea',x.Goal,true)
+    ]:[
+      field('Group','Group ID','select',x['Group ID']||STATE.selected,false,STATE.groups.map(g=>String(g['Group ID']))),
+      field('Activity / measurable step','Title','text',x.Title,true),
+      field('Focus','Theme','select',x.Theme||'Healthy habits',false,['Healthy habits','Community awareness','Alcohol awareness','Tobacco awareness','Drug-use prevention','Sports and youth activities','Professional referral','Community review']),
+      field('Responsible person','Owner','text',x.Owner),
+      field('Target date','Due Date','date',x['Due Date']||now),
+      field('Review date','Review Date','date',x['Review Date']),
+      field('Target reached','Target Reach','number',x['Target Reach']),
+      field('Actually reached (aggregate)','Actual Reach','number',x['Actual Reach']),
+      field('Status','Status','select',x.Status||'Planned',false,['Planned','In progress','Completed','Deferred']),
+      field('Completed on','Completed On','date',x['Completed On']),
+      field('Results (no private names or diagnoses)','Outcome Summary','textarea',x['Outcome Summary'],true)
+    ];
+    return `<div class="mcg-section"><h3 style="margin:0 0 10px">${f.id?'Edit':'Create'} ${isGroup?'group':'activity'}</h3>
+      <form id="mcgEditForm"><div class="mcg-fields">${body.join('')}</div>
+      <div class="mcg-note">${isGroup?'Use an area name, age range such as 18-35, or comma-separated Member IDs. You may start with 5–6 areas and add more any time.':'Do not include individual substance-use details. Use totals for reach and outcomes.'}</div>
+      <div class="mcg-actions"><button class="btn btn-primary" type="submit">Save ${isGroup?'group':'activity'}</button><button class="btn" type="button" data-cg-cancel>Cancel</button></div></form></div>`;
+  }
+  function cardGroup(g){
+    const members=groupPeople(g),id=String(g['Group ID']||''),expanded=!!STATE.expanded[id];
+    const activityCount=STATE.activities.filter(a=>a['Group ID']===id).length;
+    return `<article class="mcg-card"><div class="mcg-tag">${aSafe(g.Status||'Planned')} · ${aSafe(id)}</div><h3>${aSafe(g['Group Name'])}</h3>
+      <div class="mcg-date">${aSafe(g['Rule Type'])}: ${aSafe(g['Rule Value']||'All residents')}<br>Coordinator: ${aSafe(g.Coordinator||'Not assigned')}<br>${aSafe(fmt(g['Start Date']))} → ${aSafe(fmt(g['End Date']))}</div>
+      <div class="mcg-kpi" style="border:0;padding:8px 0"><strong>${members.length}</strong><span>Living participants · ${activityCount} planned actions</span></div>
+      ${g.Goal?`<p class="mcg-note">${aSafe(g.Goal)}</p>`:''}
+      <div class="mcg-actions"><button class="mcg-action" data-cg-list="${aSafe(id)}">${expanded?'Hide':'View'} members</button>
+      <button class="mcg-action" data-cg-editgroup="${aSafe(id)}">Edit</button>
+      <button class="mcg-action" data-cg-newactivity="${aSafe(id)}">+ Activity</button>
+      <button class="mcg-action" data-cg-template="${aSafe(id)}">30/90/180 plan</button>
+      <button class="mcg-action red" data-cg-delgroup="${aSafe(id)}">Delete</button></div>
+      ${expanded?`<ol class="mcg-person-list">${members.map(m=>`<li>${aSafe(m.Name||m['Member ID'])} <span class="muted">(${aSafe(m['Member ID'])}, ${aSafe(familyFor(m)['Address/Area']||'area unknown')})</span></li>`).join('')||'<li>No living members match this rule.</li>'}</ol>`:''}
+      </article>`;
+  }
+  function cardActivity(a){
+    const g=STATE.groups.find(x=>x['Group ID']===a['Group ID']);
+    return `<article class="mcg-card"><div class="mcg-tag">${aSafe(a.Theme||'Community activity')} · ${aSafe(a.Status||'Planned')}</div>
+    <h3>${aSafe(a.Title||'Untitled activity')}</h3><div class="mcg-date">${aSafe(g&&g['Group Name']||a['Group ID'])} · Due ${aSafe(fmt(a['Due Date'])||'Not set')}<br>
+    Responsible: ${aSafe(a.Owner||'Not assigned')} · Reach: ${aSafe(a['Actual Reach']||'0')} / ${aSafe(a['Target Reach']||'—')}</div>
+    ${a['Outcome Summary']?`<p class="mcg-note">${aSafe(a['Outcome Summary'])}</p>`:''}
+    <div class="mcg-actions"><button class="mcg-action" data-cg-editactivity="${aSafe(a['Activity ID'])}">Update</button><button class="mcg-action red" data-cg-delactivity="${aSafe(a['Activity ID'])}">Delete</button></div></article>`;
+  }
+  function drawContents(){
+    const host=$cg('mcgContent');if(!host)return;
+    const k=kpis();
+    if(STATE.tab==='groups')host.innerHTML=`<div class="mcg-controls"><button class="btn btn-primary" data-cg-addgroup>+ Create group</button><span class="muted small">Any number of groups; start with five or six village areas.</span></div>
+      ${k.uncovered.length?`<details class="mcg-section"><summary><b>${k.uncovered.length} living residents are not covered by any planned/active group</b></summary><ul class="mcg-person-list">${k.uncovered.map(m=>`<li>${aSafe(m.Name||m['Member ID'])} (${aSafe(m['Member ID'])})</li>`).join('')}</ul></details>`:''}
+      <div class="mcg-grid">${STATE.groups.map(cardGroup).join('')||'<div class="mcg-section">No groups yet. Create your first location group or use All living for a village-wide activity.</div>'}</div>`;
+    else host.innerHTML=`<div class="mcg-controls"><button class="btn btn-primary" data-cg-addactivity ${STATE.groups.length?'':'disabled'}>+ Add activity</button><span class="muted small">Use group cards to generate 30, 90 and 180-day timelines.</span></div>
+      <div class="mcg-grid">${STATE.activities.slice().sort((a,b)=>String(a['Due Date']||'').localeCompare(String(b['Due Date']||''))).map(cardActivity).join('')||'<div class="mcg-section">No activities yet. Create a group, then add a timetable.</div>'}</div>`;
+    wire();
+  }
+  function openForm(kind,id){
+    const data=kind==='group'?STATE.groups.find(g=>g['Group ID']===id):STATE.activities.find(a=>a['Activity ID']===id);
+    STATE.form={kind,id,data:data?Object.assign({},data):{}};
+    if(kind==='activity'&&!id&&STATE.selected)STATE.form.data['Group ID']=STATE.selected;
+    drawForm();
+  }
+  function drawForm(){
+    const el=$cg('mcgForm');if(!el)return;
+    el.innerHTML=formMarkup();
+    if(!STATE.form)return;
+    const f=$cg('mcgEditForm');
+    f.onsubmit=async e=>{
+      e.preventDefault();const btn=f.querySelector('[type=submit]'),input={};
+      for(const [key,value] of new FormData(f))input[key]=value;
+      const kind=STATE.form.kind;
+      if(STATE.form.id)input[kind==='group'?'Group ID':'Activity ID']=STATE.form.id;
+      btn.disabled=true;
+      try{const out=await api(kind==='group'?'communitySaveGroup':'communitySaveActivity',{record:JSON.stringify(input)});
+        if(!out||!out.ok)throw new Error(out&&out.error||'The save was not accepted.');
+        STATE.form=null;STATE.loaded=false;toast('Saved to private programme register','good');await readGroups();
+      }catch(err){errMsg(err)}finally{btn.disabled=false}
+    };
+    f.querySelector('[data-cg-cancel]').onclick=()=>{STATE.form=null;drawForm()};
+    el.scrollIntoView({behavior:'smooth',block:'nearest'});
+  }
+  async function remove(kind,id){
+    if(!confirm('Delete this '+(kind==='group'?'group':'activity')+'? This cannot be undone.'))return;
+    try{const r=await api('communityDelete',{kind,id});if(!r||!r.ok)throw new Error(r&&r.error||'Delete failed');STATE.loaded=false;toast('Deleted','good');await readGroups();}
+    catch(e){errMsg(e)}
+  }
+  async function templates(id){
+    const g=STATE.groups.find(g=>g['Group ID']===id);if(!g)return;
+    const yes=confirm('Add THREE example activities (30 / 90 / 180 days) to '+g['Group Name']+'? You can edit each after creation.');if(!yes)return;
+    const start=fmt(g['Start Date'])||new Date().toISOString().slice(0,10);
+    const data=[
+      {days:30,title:'First 30 days: listening session and information',theme:'Community awareness',status:'Planned'},
+      {days:90,title:'By 90 days: sports, peer activities and voluntary referral information',theme:'Healthy habits',status:'Planned'},
+      {days:180,title:'By 180 days: participation review and next steps',theme:'Community review',status:'Planned'}
+    ];
+    try{
+      for(const x of data){const r=await api('communitySaveActivity',{record:JSON.stringify({'Group ID':id,Title:x.title,Theme:x.theme,'Due Date':dateOffset(start,x.days),Owner:g.Coordinator||'',Status:x.status,'Target Reach':groupPeople(g).length,'Actual Reach':''})});if(!r||!r.ok)throw new Error(r&&r.error||'An activity could not be saved');}
+      STATE.tab='activities';STATE.loaded=false;toast('Three milestones created','good');await readGroups();
+    }catch(e){errMsg(e);STATE.loaded=false;await readGroups()}
+  }
+  function wire(){
+    const host=$cg('mcgContent');if(!host)return;
+    host.querySelectorAll('[data-cg-addgroup]').forEach(b=>b.onclick=()=>openForm('group',''));
+    host.querySelectorAll('[data-cg-addactivity]').forEach(b=>b.onclick=()=>openForm('activity',''));
+    host.querySelectorAll('[data-cg-list]').forEach(b=>b.onclick=()=>{const id=b.dataset.cgList;STATE.expanded[id]=!STATE.expanded[id];drawContents()});
+    host.querySelectorAll('[data-cg-editgroup]').forEach(b=>b.onclick=()=>openForm('group',b.dataset.cgEditgroup));
+    host.querySelectorAll('[data-cg-editactivity]').forEach(b=>b.onclick=()=>openForm('activity',b.dataset.cgEditactivity));
+    host.querySelectorAll('[data-cg-newactivity]').forEach(b=>b.onclick=()=>{STATE.selected=b.dataset.cgNewactivity;openForm('activity','')});
+    host.querySelectorAll('[data-cg-template]').forEach(b=>b.onclick=()=>templates(b.dataset.cgTemplate));
+    host.querySelectorAll('[data-cg-delgroup]').forEach(b=>b.onclick=()=>remove('group',b.dataset.cgDelgroup));
+    host.querySelectorAll('[data-cg-delactivity]').forEach(b=>b.onclick=()=>remove('activity',b.dataset.cgDelactivity));
+  }
+  async function readGroups(){
+    if(STATE.loading)return;
+    STATE.loading=true;
+    try{
+      const r=await api('communityData');
+      if(!r||!r.ok)throw new Error(r&&r.error||'Cannot load private programme registers.');
+      STATE.groups=r.groups||[];STATE.activities=r.activities||[];STATE.loaded=true;
+      if(PAGE==='communityGroups')renderVillageGroups();
+    }catch(e){STATE.loaded=false;if(PAGE==='communityGroups'&&$cg('mcgContent'))$cg('mcgContent').innerHTML='<div class="mcg-section">'+aSafe(e.message)+'<br><small>Run runAll() in Apps Script and deploy BE V1.8.3 before using groups.</small></div>'}
+    finally{STATE.loading=false}
+  }
+  function renderVillageGroups(){
+    const main=$('#main');
+    if(!isAdmin()){main.innerHTML='<div class="empty">Administrator permission required.</div>';return;}
+    main.innerHTML=shell();
+    document.querySelectorAll('[data-cg-tab]').forEach(b=>b.onclick=()=>{STATE.tab=b.dataset.cgTab;STATE.form=null;renderVillageGroups()});
+    const rb=$cg('mcgContent')||main;
+    const refresh=$cg('main').querySelector('[data-cg-refresh]');
+    if(refresh)refresh.onclick=()=>{STATE.loaded=false;readGroups()};
+    if(!STATE.loaded){if(!STATE.loading)readGroups();else rb.innerHTML='<div class="mcg-section">Loading private programmes…</div>';return;}
+    drawContents();drawForm();
+  }
+  buildNav=function(){
+    initialNav();
+    const side=$cg('sidebar');
+    if(isAdmin()&&side&&!side.querySelector('[data-page="communityGroups"]')){
+      const b=document.createElement('button');b.type='button';b.className='nav';b.dataset.page='communityGroups';b.innerHTML='<span class="ic">◎</span> Village improvement groups';
+      b.onclick=()=>go('communityGroups');side.appendChild(b);
+    }
+  };
+  render=function(){
+    if(PAGE==='communityGroups'){
+      buildNav();buildTabs();document.querySelectorAll('.nav').forEach(b=>b.classList.toggle('active',b.dataset.page===PAGE));
+      renderVillageGroups();return;
+    }
+    return initialRender();
+  };
 })();
 </script>
 </body>
