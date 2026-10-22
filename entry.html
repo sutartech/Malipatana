@@ -1,78 +1,188 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#103540"><title>Malipatana | Easy entry</title>
-<style>*{box-sizing:border-box}body{margin:0;font:16px system-ui,-apple-system,sans-serif;color:#143039;background:linear-gradient(145deg,#e9f8f4,#fff8ed);min-height:100vh}.wrap{max-width:730px;margin:auto;padding:16px 16px 55px}.brand{background:#103440;color:white;padding:17px 20px;border-radius:17px;margin-bottom:18px;display:flex;align-items:center;gap:15px;box-shadow:0 6px 22px #0f354028}.brand img{width:48px;height:48px;border-radius:10px}.brand b{font-size:21px}.brand small{display:block;opacity:.77}h1{font-size:25px;margin:8px 0}h2{font-size:18px}p{line-height:1.5;color:#537076}.card{background:white;border:1px solid #dce9e4;border-radius:18px;padding:19px;margin:16px 0;box-shadow:0 7px 25px #1430390c}.row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.field{display:block;font-size:14px;font-weight:700;margin:13px 0 3px;color:#24454e}input,select,textarea{display:block;width:100%;padding:14px;border:1px solid #cbd9d6;border-radius:11px;margin-top:7px;font:inherit;font-size:16px;background:white;color:#1a353a}textarea{min-height:95px}input:focus,select:focus{outline:3px solid #49a8a44d;border-color:#007d78}button{border:0;border-radius:12px;background:#087e74;color:white;font-weight:750;font-size:16px;padding:15px 20px;cursor:pointer;min-height:48px}button:disabled{opacity:.5}button.secondary{background:#e6f4f1;color:#15605a}button.tab{flex:1;background:#edf4f3;color:#36605f}button.tab.on{background:#087e74;color:white}.tabs{display:flex;gap:8px}.hint{font-size:13px;color:#63817f}.error{padding:13px;border-radius:12px;background:#fff0eb;color:#992c1e;white-space:pre-wrap}.success{padding:13px;border-radius:12px;background:#e4f6e9;color:#145c36}.recent{padding:10px 0;border-bottom:1px solid #e4eeea}.recent small{color:#66818a}.hidden{display:none!important}@media(max-width:540px){.row{grid-template-columns:1fr}.wrap{padding:10px 12px 65px}.card{padding:17px 15px}button{width:100%}}</style></head>
-<body><main class="wrap"><header class="brand"><img src="icon-180.png" alt=""><div><b>ମାଳିପାଟଣା · Malipatana</b><small>Quick entry · No sign-in required</small></div></header><div id="status" class="card">Checking link validity…</div><section id="content" class="hidden"><div class="card"><h1 id="heading"></h1><p id="info"></p><div class="hint" id="expiry"></div></div>
-<div id="familyTabs" class="card hidden"><div class="tabs"><button class="tab on" id="familyTab" type="button">Family</button><button class="tab" id="memberTab" type="button">Member</button></div><p class="hint">First save the family and copy its Family ID. Then add members one by one.</p></div>
-<form id="familyForm" class="card hidden"><h2>Add a family</h2><label class="field">Family head *<input name="head" required maxlength="100" autocomplete="name"></label><div class="row"><label class="field">Mobile (optional)<input name="phone" inputmode="numeric" maxlength="10"></label><label class="field">House number<input name="house" maxlength="60"></label></div><label class="field">Village area / address<input name="area" maxlength="100"></label><label class="field">Note (optional)<textarea name="note" maxlength="400"></textarea></label><button type="submit">Save family</button></form>
-<form id="memberForm" class="card hidden"><h2>Add a member</h2><label class="field">Family ID *<input name="familyId" id="familyId" required placeholder="e.g. FAM-AB123456"></label><label class="field">Member name *<input name="name" required maxlength="100"></label><div class="row"><label class="field">Relationship<select name="relation"><option>Family head</option><option>Spouse</option><option>Son</option><option>Daughter</option><option>Father</option><option>Mother</option><option>Other</option></select></label><label class="field">Date of birth<input type="date" name="dob"></label><label class="field">Gender<select name="gender"><option value="">Select</option><option>Female</option><option>Male</option><option>Other</option></select></label><label class="field">Mobile (optional)<input name="phone" inputmode="numeric" maxlength="10"></label></div><button type="submit">Save member</button></form>
-<form id="expenseForm" class="card hidden"><h2>Record event expense</h2><p class="hint">Anyone with this link may enter an expense paid by themselves or by another person. The person paying and the person entering can be different.</p><div class="row"><label class="field">Date *<input type="date" name="date" required></label><label class="field">Amount (₹) *<input type="number" name="amount" min="0.01" step="0.01" required></label></div><label class="field">What was purchased / expense purpose *<input name="what" maxlength="200" required placeholder="E.g. Raja Parba decoration"></label><div class="row"><label class="field">Paid by *<input name="paidBy" maxlength="100" required placeholder="Name of person who paid"></label><label class="field">Paid to (optional)<input name="paidTo" maxlength="100" placeholder="Shop/vendor"></label><label class="field">Payment method<select name="method"><option>Cash</option><option>UPI</option><option>Bank Transfer</option><option>Cheque</option></select></label><label class="field">Entered by<input name="enteredBy" maxlength="100" placeholder="Person entering this expense"></label></div><label class="field">Additional note<textarea name="note" maxlength="400"></textarea></label><button type="submit">Save expense</button></form>
-<section id="findSection" class="card hidden"><h2>Find or correct your entry</h2>
-<p class="hint">Only entries created with this exact shared link can be found. To protect other villagers' records, enter the record ID and the private edit code supplied when the record was saved. Old entries without a code must be corrected by an administrator.</p>
-<form id="findForm"><label class="field">Record ID *<input name="id" required maxlength="65" placeholder="FAM-... / MEM-... / EXP-..."></label><label class="field">Private edit code *<input name="editCode" required maxlength="20" autocomplete="off" autocapitalize="characters" placeholder="Code shown after saving"></label><button type="submit">Find my entry</button></form>
-<form id="editForm" class="hidden"><h2>Correct saved details</h2><p id="editingId" class="hint"></p><div id="editFields"></div><button type="submit">Save corrections</button><button id="cancelEdit" type="button" class="secondary">Cancel editing</button></form></section>
-<div id="message" aria-live="polite"></div><div class="card"><h2>Last 5 submissions through this link</h2><div class="hint">A privacy-safe summary. Other families' and members' details are not displayed.</div><div id="recent"></div></div></section></main>
-<script>const API_URL='https://script.google.com/macros/s/AKfycbyfxff3MVt3Kw_CA_0aYD477nrAcWXshb9hex1LM_hl62tlrNiX5bGWgsf0Vw73sr-gbg/exec', key=new URLSearchParams(location.search).get('key');let kind='',editContext=null;const $=id=>document.getElementById(id);const esc=x=>String(x==null?'':x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-function api(action,params={}){return new Promise((resolve,reject)=>{const cb='entrycb_'+Date.now()+'_'+Math.random().toString(36).slice(2);const script=document.createElement('script');const timeout=setTimeout(()=>{done();reject(new Error('Connection timed out. Please check internet and retry.'))},28000);function done(){clearTimeout(timeout);delete window[cb];script.remove()}window[cb]=r=>{done();resolve(r)};script.onerror=()=>{done();reject(new Error('Could not connect to village register.'))};const query=new URLSearchParams({...params,...(action.startsWith('link')?{key}:{}),action,callback:cb,_:Date.now()});script.src=API_URL+'?'+query;script.referrerPolicy='no-referrer';document.body.append(script)})}
-function message(text,good){$('message').className=good?'success':'error';$('message').textContent=text;$('message').scrollIntoView({behavior:'smooth',block:'nearest'})}
-async function info(){try{const r=await api('linkInfo');if(!r.ok)throw Error(r.error||'Link unavailable');kind=r.type;$('status').classList.add('hidden');$('content').classList.remove('hidden');$('heading').textContent=kind==='expense'?'Event expenses · '+r.event:'Family and member registration';$('info').textContent=kind==='expense'?'Record expenses quickly without signing in.':'Add a household, then add its members without signing in.';$('expiry').textContent=(r.expires?'Link valid until '+new Date(r.expires).toLocaleString('en-IN'):'Valid until disabled by admin')+(r.remaining==null?'':' · '+r.remaining+' entries left');$('expenseForm').classList.toggle('hidden',kind!=='expense'||r.canSubmit===false);$('findSection').classList.toggle('hidden',!r.canEdit);$('familyTabs').classList.toggle('hidden',kind!=='family'||r.canSubmit===false);const editingMember=$('memberTab').classList.contains('on');$('familyForm').classList.toggle('hidden',kind!=='family'||r.canSubmit===false||editingMember);$('memberForm').classList.toggle('hidden',kind!=='family'||r.canSubmit===false||!editingMember);$('recent').innerHTML=(r.recent||[]).map(x=>'<div class="recent"><b>'+esc(x.preview)+'</b><br><small>'+esc(x.when)+'</small></div>').join('')||'<p>No entries yet.</p>'}catch(e){
-  $('status').className='error';
-  $('status').textContent=e.message;
-  $('content').classList.add('hidden');
-  if(/Unknown action:\s*linkInfo/i.test(String(e.message))){
-    let liveVersion='Could not verify';
-    try { const status=await api('health'); liveVersion=String(status.version||'Unknown version'); }
-    catch(ignore) {}
-    $('status').textContent='This shared-entry form is connected to an outdated or incorrect Apps Script deployment.\n\n'+
-      'Backend reported: '+liveVersion+'\nRequired: BE V1.8.9 (with linkInfo support).\n\n'+
-      'Admin: In the Apps Script project used by this website, replace Code.gs with the complete backend file, save, run runAll() once, then choose Deploy → Manage deployments → Edit the EXISTING web app → New version → Deploy. '+
-      'Confirm the same /exec URL in index.html and entry.html. '+
-      'This does not require a new spreadsheet.\n\nAfter deployment, refresh this page and try again.';
-    const retry=document.createElement('button');retry.type='button';retry.textContent='Retry link';
-    retry.style.cssText='margin-top:14px;max-width:220px';retry.onclick=()=>info();$('status').append(document.createElement('div'),retry);
-  }else if(/Sheet not found:\s*(Entry Links|Public Submissions)/i.test(String(e.message))){
-    $('status').textContent='Shared-entry register tabs are not set up. Ask the administrator to run runAll() in Apps Script and retry.';
-  }
-}}
-$('familyTab').onclick=()=>{ $('familyTab').classList.add('on');$('memberTab').classList.remove('on');$('familyForm').classList.remove('hidden');$('memberForm').classList.add('hidden')};$('memberTab').onclick=()=>{$('memberTab').classList.add('on');$('familyTab').classList.remove('on');$('memberForm').classList.remove('hidden');$('familyForm').classList.add('hidden')};
-for(const [id,mode] of [['familyForm','family'],['memberForm','member'],['expenseForm','expense']]){$(id).addEventListener('submit',async e=>{e.preventDefault();const form=e.currentTarget,button=form.querySelector('button[type="submit"]');if(button.disabled)return;const rec=Object.fromEntries(new FormData(form));button.disabled=true;const original=button.textContent;button.textContent='Saving…';try{const r=await api('linkSubmit',{mode,record:JSON.stringify(rec)});if(!r.ok)throw Error(r.error||'Save failed');message(r.message+' — ID: '+r.id+(r.editCode?' — PRIVATE EDIT CODE: '+r.editCode+' (copy this now; it is not shown again)':''),true);if(r.editCode){const btn=document.createElement('button');btn.type='button';btn.className='secondary';btn.style.marginTop='10px';btn.textContent='Copy private edit receipt';btn.onclick=()=>navigator.clipboard.writeText('Malipatana entry ID: '+r.id+'\nPrivate edit code: '+r.editCode).then(()=>{btn.textContent='Copied — keep privately';}).catch(()=>{btn.textContent='Select the code above to copy';});$('message').append(btn);}if(mode==='family'){$('familyId').value=r.id;$('memberTab').click()}form.reset();if(mode==='expense')form.elements.date.value=new Date().toLocaleDateString('en-CA');await info()}catch(err){message(err.message,false)}finally{button.disabled=false;button.textContent=original}})}
-
-// Shared-link editing is limited to the new entry's own ID and one-time-issued
-// edit code. The code must be kept by the submitter, not published in a group.
-const EDIT_CONFIG={
-  family:[['head','Family head','text'],['phone','Mobile','tel'],['house','House number','text'],['area','Village area/address','text'],['note','Note','text']],
-  member:[['name','Member name','text'],['familyId','Family ID (read-only)','text',true],['relation','Relationship','text'],['dob','Date of birth','date'],['gender','Gender','text'],['phone','Mobile','tel']],
-  expense:[['date','Date','date'],['amount','Amount (₹)','number'],['what','Description','text'],['paidBy','Paid by','text'],['paidTo','Paid to','text'],['method','Payment method','text'],['enteredBy','Entered by','text'],['note','Note','text']]
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#103b46"><meta name="referrer" content="no-referrer"><title>Malipatana · Secure shared entry</title>
+<style>
+:root{--navy:#143847;--teal:#086f63;--teal2:#dff5ed;--gold:#d49a39;--ink:#17333d;--muted:#667d81;--line:#dbe6e2;--cream:#faf7f0;--red:#a03939;--shadow:0 8px 30px rgba(16,51,59,.08)}*{box-sizing:border-box}
+body{margin:0;background:linear-gradient(145deg,#e9f7f3 0%,#fbfaf5 50%,#edf4f8 100%);font:15px/1.55 system-ui,-apple-system,'Segoe UI',sans-serif;color:var(--ink);min-height:100vh}main{width:min(840px,100%);padding:12px 14px 110px;margin:auto}.head{border-radius:20px;background:linear-gradient(120deg,#103846,#086f63);color:#fff;display:flex;gap:13px;align-items:center;padding:18px 19px;margin:3px 0 16px;box-shadow:var(--shadow)}.head img{width:46px;height:46px;border-radius:12px}.head h1{font-size:22px;line-height:1.15;margin:0}.head p{font-size:12px;color:#d9f5ec;margin:4px 0 0}.box{background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px;margin:0 0 13px;box-shadow:var(--shadow)}h2{margin:0 0 7px;font-size:19px;letter-spacing:-.35px}h3{margin:0 0 12px;font-size:15px;color:#185a57}.sub{color:var(--muted);font-size:13px;margin:0 0 13px}.alert{border-radius:12px;padding:13px;margin-bottom:12px;white-space:pre-wrap;overflow-wrap:anywhere}.alert.error{background:#fff0ed;border:1px solid #eabbb3;color:#8f362d}.alert.success{background:#e8f8ef;border:1px solid #a7d8ba;color:#14593c}.notice{background:#eef8f4;border:1px solid #c5e7d9;color:#235951;border-radius:12px;padding:10px 12px;font-size:13px;margin:12px 0}.nav{display:flex;gap:8px;padding:7px;border-radius:14px;background:#f0f6f4;margin:10px 0 14px}.nav button{flex:1;border:0;background:transparent;color:#51736d;min-height:44px;border-radius:10px;font-weight:750;cursor:pointer}.nav button.selected{background:#fff;color:#096b60;box-shadow:0 2px 8px #124b4215}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.field{display:flex;flex-direction:column;gap:5px;min-width:0;font-size:13px;font-weight:700;color:#31545a;margin-bottom:12px}.field input,.field select,.field textarea{display:block;width:100%;max-width:100%;border:1px solid #cbded9;border-radius:11px;background:#fff;font:inherit;font-size:15px;color:var(--ink);padding:10px 12px;min-height:45px}.field input:focus,.field select:focus,.field textarea:focus{outline:3px solid #c9f1e4;border-color:var(--teal)}.field textarea{min-height:72px;resize:vertical}.field small{font-size:11px;color:#718886;font-weight:450}.required{color:#bf5338}.buttons{display:flex;flex-wrap:wrap;gap:9px;align-items:center;margin:12px 0 0}.primary,.secondary{border:0;border-radius:12px;background:var(--teal);color:#fff;min-height:46px;padding:11px 20px;font:inherit;font-weight:750;cursor:pointer}.secondary{background:#e8f3ee;color:#0d665e}.primary:disabled,.secondary:disabled{opacity:.5;cursor:wait}.hero-id{padding:13px;background:var(--teal2);border:1px solid #b8e0d0;color:#126358;border-radius:12px;font-weight:800;overflow-wrap:anywhere;margin-bottom:12px}.hero-id small{display:block;font-size:12px;font-weight:500}.mini{font-size:12px;color:var(--muted)}.hidden{display:none!important}.steps{display:flex;gap:10px;align-items:center;font-size:13px;font-weight:700;color:var(--muted);margin:0 0 14px}.steps span{border-radius:20px;background:#e5f2ed;padding:5px 10px}.steps span.current{background:var(--teal);color:white}details{border:1px solid #e2e9e5;border-radius:13px;padding:13px;margin:14px 0;background:#fcfdfb}summary{cursor:pointer;font-weight:750;color:#165b55;list-style:revert}details .grid{margin-top:16px}.photo-row{display:flex;gap:12px;align-items:center}.photo-row img{border-radius:12px;width:65px;height:65px;object-fit:cover}.photo-row .preview{flex:none;width:70px;height:70px;border:1px dashed #a5cec1;border-radius:12px;display:grid;place-items:center;color:#659d8e;overflow:hidden;background:#f3faf8}.photo-row .field{flex:1}.recent{padding:10px 0;border-bottom:1px solid #e9eeeb}.recent:last-child{border:0}.receipt{padding:14px;border-radius:14px;border:1px solid #a9d9c1;background:#eaf9f0;margin:12px 0}.receipt strong{font-size:17px;color:#11634f}.receipt .codes{font-size:13px;overflow-wrap:anywhere;color:#276153}.sticky{position:sticky;top:0;z-index:3}.tab-headers{display:flex;align-items:center;justify-content:space-between}.pill{border-radius:100px;background:#e0f4ea;color:#17675b;padding:5px 10px;font-size:11px;font-weight:700}.mutedbox{border-radius:12px;background:#f6f8f6;padding:12px;color:#607b77;font-size:12px}.privacy{border-left:3px solid #dca846;background:#fff9ed;padding:10px 12px;border-radius:6px;font-size:12px;color:#7b5b25;margin-top:12px}#status{white-space:pre-line}#attachmentFeedback{font-size:13px;margin:8px 0;color:#1a6153}button:focus-visible{outline:3px solid #e6bd5d;outline-offset:2px}
+@media(max-width:600px){main{padding:9px 10px 92px}.head{padding:15px}.head h1{font-size:19px}.box{padding:14px;border-radius:15px}.grid{grid-template-columns:1fr;gap:0}.field{margin-bottom:13px}.buttons>button{flex:1;min-width:120px}.primary,.secondary{min-height:47px}.nav{gap:5px}.nav button{font-size:13px}}
+</style></head><body><main>
+<header class="head"><img src="icon-180.png" alt="Malipatana emblem"><div><h1>ମାଳିପାଟଣା · Malipatana</h1><p>Village welfare · Easy shared entry</p></div></header>
+<div id="status" class="box">Checking shared-link permission…</div>
+<section id="content" class="hidden"><div class="box"><div class="tab-headers"><h2 id="heading">Shared data entry</h2><span class="pill">No login required</span></div><p class="sub" id="info"></p><div id="expiry" class="notice"></div><div class="privacy">Private household details and photographs are not displayed to other link holders. Share this link only with trusted people.</div></div>
+<div id="familyTabs" class="box hidden"><div class="steps"><span id="stepFamily" class="current">1 · Family</span><span id="stepMember">2 · Members</span></div><div class="nav"><button type="button" id="familyTab" class="selected">Family details</button><button type="button" id="memberTab">Member details</button></div><p class="sub">Save the household once. Its Family ID will automatically appear when adding its members.</p><div class="hero-id hidden" id="selectedFamilyBanner"></div></div>
+<form id="familyForm" class="box hidden"><h2>Family details</h2><p class="sub">Required fields first. Expand additional details only when needed.</p>
+<div class="grid"><label class="field">Family head <span class="required">*</span><input name="head" required maxlength="100" autocomplete="name"></label><label class="field">Mobile number<input name="phone" type="tel" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" placeholder="10 digits, optional"></label><label class="field">House number<input name="house" maxlength="60"></label><label class="field">Address / village area<input name="area" maxlength="150"></label></div>
+<details><summary>Additional family details</summary><div class="grid"><label class="field">Parent family (optional)<select name="parentFamilyId" id="parentFamily"><option value="">Main family / none</option></select><small>Only households created through this link can be selected.</small></label><label class="field">Vulnerability<select name="vulnerable"><option>Normal</option><option>Vulnerable</option><option>Highly Vulnerable</option></select></label><label class="field">Guidance needed<select name="guidance"><option>No</option><option>Child education</option><option>Higher studies</option><option>Job or skill</option><option>Health</option><option>Money matters</option><option>Legal or papers</option><option>Other</option></select></label><label class="field">Guidance note<textarea name="guidanceNote" maxlength="500"></textarea></label></div><label class="field">Remarks<textarea name="note" maxlength="900"></textarea></label></details>
+<div class="photo-row"><div class="preview" id="familyPreview">📷</div><label class="field">Family photo (optional)<input type="file" id="familyPhoto" accept="image/jpeg,image/png,image/webp"><small>Original up to 20 MB retained privately; dashboard displays a small thumbnail.</small></label></div>
+<div class="buttons"><button type="submit" class="primary">Save family & add members →</button><button id="clearFamily" type="button" class="secondary">Clear</button></div></form>
+<form id="memberForm" class="box hidden"><h2>Member details</h2><div class="notice" id="currentFamilyText">Save a family to automatically assign its ID. You may also enter an existing Family ID supplied by the administrator.</div>
+<div class="grid"><label class="field">Current family<select id="familySelect"><option value="">Select a family added in this session</option></select></label><label class="field">Family ID (automatic / existing) <span class="required">*</span><input name="familyId" id="familyId" required maxlength="60" placeholder="Auto after saving family"></label><label class="field">Member name <span class="required">*</span><input name="name" required maxlength="100"></label><label class="field">Relationship to family head<select name="relation"><option>Self</option><option>Wife</option><option>Husband</option><option>Son</option><option>Daughter</option><option>Father</option><option>Mother</option><option>Brother</option><option>Sister</option><option>Daughter-in-law</option><option>Son-in-law</option><option>Grandson</option><option>Granddaughter</option><option>Other</option></select></label><label class="field">Gender<select name="gender"><option value="">Choose</option><option>Male</option><option>Female</option><option>Other</option></select></label><label class="field">Date of birth<input name="dob" type="date"></label><label class="field">Age (calculated)<input id="agePreview" readonly placeholder="From date of birth"></label><label class="field">Mobile<input name="phone" type="tel" inputmode="numeric" pattern="[0-9]{10}" maxlength="10"></label></div>
+<details><summary>Parents, family relations, education and work</summary><div class="grid"><label class="field">Father name<input name="fatherName" maxlength="100"></label><label class="field">Mother name<input name="motherName" maxlength="100"></label><label class="field">Spouse name<input name="spouseName" maxlength="100"></label><label class="field">Education<select name="education"><option value="">Select</option><option>Illiterate</option><option>Primary</option><option>Class 10</option><option>Class 12</option><option>ITI/Diploma</option><option>Graduate</option><option>Post Graduate</option><option>Other</option></select></label><label class="field">Occupation<select name="occupation"><option value="">Select</option><option>Farmer</option><option>Daily Wage</option><option>Fisherman</option><option>Shop</option><option>Private Job</option><option>Government Job</option><option>Student</option><option>Homemaker</option><option>Unemployed</option><option>Retired</option><option>Other</option></select></label><label class="field">Earning member<select name="earning"><option value="">Not specified</option><option>Yes</option><option>No</option></select></label><label class="field">Monthly income (₹)<input name="income" type="number" step="0.01" min="0"></label><label class="field">Disability (optional)<select name="disability"><option value="">Not specified</option><option>No</option><option>Yes</option></select></label><label class="field">Insurance<select name="insurance"><option value="">Not specified</option><option>Yes</option><option>No</option></select></label></div><label class="field">Remarks<textarea name="note" maxlength="900"></textarea></label></details>
+<div class="photo-row"><div class="preview" id="memberPreview">📷</div><label class="field">Member photograph (optional)<input type="file" id="memberPhoto" accept="image/jpeg,image/png,image/webp"><small>Original private in Google Drive · lightweight thumbnail in dashboard.</small></label></div>
+<div class="buttons"><button type="submit" class="primary">Save member</button><button type="button" class="secondary" id="addAnother">Clear for next member</button></div></form>
+<form id="expenseForm" class="box hidden"><h2>Event expense</h2><p class="sub" id="expenseEvent">Record an expense and who actually paid it.</p><div class="grid"><label class="field">Date <span class="required">*</span><input name="date" type="date" required></label><label class="field">Amount (₹) <span class="required">*</span><input name="amount" type="number" min="0.01" max="10000000" step="0.01" required></label><label class="field">Description <span class="required">*</span><input name="what" required maxlength="200" placeholder="What was purchased or paid for?"></label><label class="field">Paid by <span class="required">*</span><input name="paidBy" required maxlength="100" placeholder="Person who paid"></label><label class="field">Paid to<input name="paidTo" maxlength="100" placeholder="Shop, vendor or beneficiary"></label><label class="field">Payment mode<select name="method"><option>Cash</option><option>UPI</option><option>Bank Transfer</option><option>Cheque</option><option>Card</option><option>Other</option></select></label></div>
+<details><summary>Expense category and more details</summary><div class="grid"><label class="field">Category<select name="category"><option>Festival</option><option>Welfare</option><option>Medical</option><option>Education</option><option>Emergency</option><option>Administration</option><option>Infrastructure</option><option>Other</option></select></label><label class="field">Subcategory<input name="subcategory" maxlength="90"></label><label class="field">Family ID (if relevant)<input name="familyId" maxlength="60"></label><label class="field">Entered by<input name="enteredBy" maxlength="100" placeholder="Who is filling the form?"></label><label class="field">Existing bill/receipt link<input name="billReceipt" maxlength="240" placeholder="Optional link"></label></div><label class="field">Remarks<textarea name="note" maxlength="900"></textarea></label></details>
+<div class="photo-row"><div class="preview" id="expensePreview">📷</div><label class="field">Bill/receipt photo (optional)<input type="file" id="expensePhoto" accept="image/jpeg,image/png,image/webp"><small>Original up to 20 MB private; small preview used in dashboard.</small></label></div>
+<div class="buttons"><button class="primary" type="submit">Save expense</button></div></form>
+<div id="message" role="status" aria-live="polite"></div><div id="receipt" class="receipt hidden"></div><div id="attachmentFeedback"></div>
+<section id="findSection" class="box hidden"><h2>Find or correct your saved entry</h2><p class="sub">Only submissions made through this exact link can be edited using the private code issued when saved. This link cannot browse the village register.</p><form id="findForm"><div class="grid"><label class="field">Record ID <input name="id" required maxlength="65" placeholder="FAM-… / MEM-… / EXP-…"></label><label class="field">Private edit code<input name="editCode" required maxlength="20" autocomplete="off"></label></div><button class="secondary" type="submit">Find my saved entry</button></form><form id="editForm" class="hidden"><h3 id="editingId"></h3><div id="editFields" class="grid"></div><div class="buttons"><button class="primary" type="submit">Save corrections</button><button class="secondary" id="cancelEdit" type="button">Cancel</button></div></form></section>
+<section class="box"><h2>Recent submissions</h2><p class="sub">Last five entries through this link; no personal details are disclosed.</p><div id="recent"></div></section>
+</section></main>
+<script>
+const API_URL='https://script.google.com/macros/s/AKfycbyfxff3MVt3Kw_CA_0aYD477nrAcWXshb9hex1LM_hl62tlrNiX5bGWgsf0Vw73sr-gbg/exec';
+const key=new URLSearchParams(location.search).get('key'), $=id=>document.getElementById(id);
+let kind='',linkCanEdit=false,editContext=null,busy=false,currentFamily='';
+const familyCacheKey='mal_entry_families_'+(key||'').slice(0,9);
+let createdFamilies=[];
+try {createdFamilies=JSON.parse(sessionStorage.getItem(familyCacheKey)||'[]').filter(x=>x&&x.id&&x.head).slice(-20);}catch(e){}
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function api(action,params={}){return new Promise((resolve,reject)=>{
+ const cb='malentry_'+Date.now()+'_'+Math.random().toString(36).slice(2),script=document.createElement('script');
+ let timeout=setTimeout(()=>{end();reject(Error('The server did not respond. Please check your connection.'))},28000);
+ function end(){clearTimeout(timeout);delete window[cb];script.remove()}
+ window[cb]=r=>{end();resolve(r)};script.onerror=()=>{end();reject(Error('Cannot reach the Malipatana backend.'))};
+ script.referrerPolicy='no-referrer';script.src=API_URL+'?'+new URLSearchParams({...params,...(action.startsWith('link')?{key}:{}),action,callback:cb,_:Date.now()});
+ document.body.append(script);
+})}
+function showMessage(txt,good){$('message').className='alert '+(good?'success':'error');$('message').textContent=txt;$('message').scrollIntoView({block:'nearest',behavior:'smooth'});}
+function keepFamilies(){try{sessionStorage.setItem(familyCacheKey,JSON.stringify(createdFamilies.slice(-20)))}catch(e){}}
+function renderFamilyChoices(){
+ const list=$('familySelect'),parent=$('parentFamily');list.innerHTML='<option value="">Enter another Family ID below</option>';
+ parent.innerHTML='<option value="">Main family / none</option>';
+ createdFamilies.forEach(f=>{
+  for(const el of [list,parent]){const o=document.createElement('option');o.value=f.id;o.textContent=f.id+' · '+f.head;el.append(o)}
+ });
+ if(currentFamily){list.value=currentFamily;$('familyId').value=currentFamily;}
+ const f=createdFamilies.find(x=>x.id===currentFamily);
+ $('selectedFamilyBanner').classList.toggle('hidden',!f);
+ $('selectedFamilyBanner').textContent=f?'Current family: '+f.head+' · '+f.id:'';
+ $('currentFamilyText').textContent=f?'Member will be registered under '+f.head+' ('+f.id+').':
+  'Save a family first to fill the ID automatically. For an existing family, you can enter its ID manually.';
+}
+function showTab(tab){
+ const member=tab==='member';$('memberTab').classList.toggle('selected',member);$('familyTab').classList.toggle('selected',!member);
+ $('stepMember').classList.toggle('current',member);$('stepFamily').classList.toggle('current',!member);
+ $('familyForm').classList.toggle('hidden',member);$('memberForm').classList.toggle('hidden',!member);
+ renderFamilyChoices();
+}
+$('familyTab').onclick=()=>showTab('family');$('memberTab').onclick=()=>showTab('member');
+$('familySelect').onchange=e=>{currentFamily=e.target.value;$('familyId').value=currentFamily;renderFamilyChoices()};
+$('familyId').onchange=e=>{currentFamily=e.target.value.trim();renderFamilyChoices()};
+$('clearFamily').onclick=()=>{$('familyForm').reset();$('familyPreview').textContent='📷';};
+function clearMember(){let fam=$('familyId').value;$('memberForm').reset();$('familyId').value=fam;currentFamily=fam;$('memberPreview').textContent='📷';$('agePreview').value='';renderFamilyChoices();}
+$('addAnother').onclick=clearMember;
+$('memberForm').elements.dob.onchange=e=>{
+ const d=new Date(e.target.value+'T00:00:00'),now=new Date();if(!Number.isFinite(d.getTime())){$('agePreview').value='';return}
+ let age=now.getFullYear()-d.getFullYear();if(now.getMonth()<d.getMonth()||(now.getMonth()===d.getMonth()&&now.getDate()<d.getDate()))age--;
+ $('agePreview').value=age>=0&&age<=120?age+' years':'Check date';
 };
-$('findForm').addEventListener('submit',async ev=>{
-  ev.preventDefault();const btn=ev.currentTarget.querySelector('button');btn.disabled=true;
+function dateToday(){const d=new Date();return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10)}
+$('expenseForm').elements.date.value=dateToday();
+function newPhotoPreview(inputId,previewId){
+ $(inputId).addEventListener('change',e=>{
+  const file=e.target.files[0],host=$(previewId);host.replaceChildren();
+  if(!file){host.textContent='📷';return}
+  if(!['image/jpeg','image/png','image/webp'].includes(file.type)||file.size>20*1024*1024){
+   e.target.value='';host.textContent='📷';showMessage('Choose a JPG, PNG or WebP photo of 20 MB or less.',false);return;
+  }
+  const url=URL.createObjectURL(file);const img=document.createElement('img');img.src=url;img.onload=()=>URL.revokeObjectURL(url);img.alt='Selected photograph';host.append(img);
+ });
+}
+[['familyPhoto','familyPreview'],['memberPhoto','memberPreview'],['expensePhoto','expensePreview']].forEach(([a,b])=>newPhotoPreview(a,b));
+async function info(){
+ try{const r=await api('linkInfo');if(!r.ok)throw Error(r.error||'Link unavailable');kind=r.type;linkCanEdit=!!r.canEdit;
+  $('status').classList.add('hidden');$('content').classList.remove('hidden');
+  $('heading').textContent=kind==='expense'?'Event expense entry':'Family & member registration';
+  $('info').textContent=kind==='expense'?'Event: '+(r.event||'Village event'):'Create a family and add any number of its members.';
+  $('expiry').textContent=(r.expires?'Valid until '+new Date(r.expires).toLocaleString('en-IN'):'Valid until disabled by administrator')+(r.remaining===null||r.remaining===undefined?'':' · '+r.remaining+' entries remaining');
+  $('familyTabs').classList.toggle('hidden',kind!=='family'||!r.canSubmit);
+  $('expenseForm').classList.toggle('hidden',kind!=='expense'||!r.canSubmit);
+  $('findSection').classList.toggle('hidden',!r.canEdit);
+  if(kind==='family'&&r.canSubmit){
+    const member=$('memberTab').classList.contains('selected');showTab(member?'member':'family');
+  }else{$('familyForm').classList.add('hidden');$('memberForm').classList.add('hidden');}
+  $('recent').replaceChildren();(r.recent||[]).forEach(x=>{
+    const el=document.createElement('div');el.className='recent';el.textContent=x.preview+' · '+x.when;$('recent').append(el);
+  });if(!(r.recent||[]).length)$('recent').textContent='No submissions yet.';
+ }catch(err){$('status').className='alert error';$('status').textContent=err.message; $('content').classList.add('hidden');}
+}
+function b64Data(file){return new Promise((resolve,reject)=>{const fr=new FileReader();fr.onerror=()=>reject(Error('Could not read file'));fr.onload=()=>resolve(String(fr.result).split(',')[1]);fr.readAsDataURL(file)})}
+async function thumbData(file){
+ const url=URL.createObjectURL(file);try{
+  const img=new Image();img.src=url;await img.decode();
+  const scale=Math.min(1,320/Math.max(img.width,img.height)),canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(img.width*scale));canvas.height=Math.max(1,Math.round(img.height*scale));
+  canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);return canvas.toDataURL('image/jpeg',.65).split(',')[1];
+ }finally{URL.revokeObjectURL(url)}
+}
+async function uploadPhoto(file,receipt){
+ const notice=$('attachmentFeedback');notice.textContent='Uploading original photograph and small preview…';
+ const nonce=Array.from(crypto.getRandomValues(new Uint8Array(16)),b=>b.toString(16).padStart(2,'0')).join('');
+ const fd=new FormData();
+ for(const [k,v] of Object.entries({action:'linkUploadPhoto',key,id:receipt.id,photoCode:receipt.photoCode,nonce,mime:file.type,
+  data:await b64Data(file),thumbData:await thumbData(file)}))fd.append(k,v);
+ // Apps Script's redirect response is not CORS-readable, so verify by an independent
+ // read-only status endpoint. An opaque fetch response alone NEVER counts as success.
+ try{await fetch(API_URL,{method:'POST',mode:'no-cors',body:fd,referrerPolicy:'no-referrer'});}catch(e){}
+ for(let attempt=0;attempt<8;attempt++){
+  await new Promise(resolve=>setTimeout(resolve,1400+attempt*350));
+  let r;try{r=await api('linkPhotoStatus',{id:receipt.id,nonce})}catch(e){continue}
+  if(r.ok&&r.uploaded){notice.textContent='Photo confirmed in private Drive. Thumbnail linked to the record.';return true}
+ }
+ notice.textContent='Record was saved, but photo upload could not be confirmed. Keep the receipt and retry the photograph—do not submit a duplicate record.';
+ const retry=document.createElement('button');retry.className='secondary';retry.textContent='Retry this photo';retry.onclick=()=>{retry.remove();uploadPhoto(file,receipt)};notice.append(' ',retry);
+ return false;
+}
+function saveReceipt(rec){
+ const box=$('receipt');box.replaceChildren();box.classList.remove('hidden');
+ const h=document.createElement('strong');h.textContent='Saved · '+rec.id;box.append(h);
+ const p=document.createElement('p');p.textContent=rec.message;box.append(p);
+ const text='Malipatana record: '+rec.id+'\n'+(rec.editCode?'Private edit code: '+rec.editCode+'\n':'')+(rec.photoCode?'Photo attachment code: '+rec.photoCode+'\n':'');
+ if(rec.editCode){const c=document.createElement('p');c.className='codes';c.textContent='Private edit code: '+rec.editCode;box.append(c)}
+ const copy=document.createElement('button');copy.className='secondary';copy.type='button';copy.textContent='Copy private entry receipt';
+ copy.onclick=()=>navigator.clipboard.writeText(text).then(()=>{copy.textContent='Copied privately'}).catch(()=>{const x=document.createElement('textarea');x.value=text;box.append(x);x.select()});box.append(copy);
+ box.scrollIntoView({block:'nearest',behavior:'smooth'});
+}
+for(const [formId,mode,photoId] of [['familyForm','family','familyPhoto'],['memberForm','member','memberPhoto'],['expenseForm','expense','expensePhoto']]){
+ $(formId).addEventListener('submit',async ev=>{
+  ev.preventDefault();const form=ev.currentTarget,button=form.querySelector('button[type="submit"]');if(busy)return;busy=true;button.disabled=true;
+  const file=$(photoId).files[0],rec=Object.fromEntries(new FormData(form));
   try{
-    const vals=Object.fromEntries(new FormData(ev.currentTarget));
-    const r=await api('linkSearch',vals);
-    if(!r.ok)throw Error(r.error||'No matching record found');
-    editContext={id:r.id,editCode:vals.editCode,mode:r.type};
-    $('editFields').replaceChildren();
-    for(const [name,label,type,readonly] of EDIT_CONFIG[r.type]||[]){
-      const wrap=document.createElement('label');wrap.className='field';wrap.textContent=label;
-      const input=document.createElement('input');input.name=name;input.type=type;
-      input.value=String((r.fields||{})[name]??'');input.readOnly=!!readonly;
-      if(name==='amount'){input.min='0.01';input.step='0.01';}
-      wrap.append(input);$('editFields').append(wrap);
-    }
-    $('editingId').textContent='Editing '+r.id+' — all changes are audited.';
-    $('editForm').classList.remove('hidden');$('editForm').scrollIntoView({block:'nearest',behavior:'smooth'});
-  }catch(err){message(err.message,false);$('editForm').classList.add('hidden');editContext=null;}
-  finally{btn.disabled=false;}
+   const r=await api('linkSubmit',{mode,record:JSON.stringify(rec)});if(!r.ok)throw Error(r.error||'Could not save record');
+   saveReceipt(r);showMessage(r.message+' saved successfully.',true);
+   if(mode==='family'){
+    currentFamily=r.familyId||r.id;
+    createdFamilies.push({id:currentFamily,head:rec.head});createdFamilies=createdFamilies.slice(-20);keepFamilies();
+    form.reset();showTab('member');
+   }else if(mode==='member'){clearMember();showTab('member');}
+   else {form.reset();form.elements.date.value=dateToday();$('expensePreview').textContent='📷';}
+   await info();
+   if(file&&r.photoCode){await uploadPhoto(file,r);}
+   if(mode==='family'||mode==='member')$(photoId).value='';
+  }catch(err){showMessage(err.message,false)}
+  finally{busy=false;button.disabled=false}
+ });
+}
+const EDIT_FIELDS={
+ family:[['head','Family head'],['phone','Mobile'],['house','House number'],['area','Address'],['parentFamilyId','Parent Family ID','readonly'],['vulnerable','Vulnerability'],['guidance','Needs guidance'],['guidanceNote','Guidance note'],['note','Remarks']],
+ member:[['familyId','Family ID','readonly'],['name','Name'],['relation','Relationship'],['gender','Gender'],['dob','Date of birth','date'],['fatherName','Father'],['motherName','Mother'],['spouseName','Spouse'],['education','Education'],['occupation','Occupation'],['earning','Earning member'],['income','Monthly income','number'],['phone','Mobile'],['disability','Disability'],['insurance','Insurance'],['note','Remarks']],
+ expense:[['date','Date','date'],['amount','Amount','number'],['what','Description'],['category','Category'],['subcategory','Subcategory'],['familyId','Family ID','readonly'],['paidBy','Paid by'],['paidTo','Paid to'],['method','Payment method'],['enteredBy','Entered by'],['billReceipt','Bill/Receipt','readonly'],['note','Remarks']]
+};
+$('findForm').addEventListener('submit',async e=>{
+ e.preventDefault();const btn=e.currentTarget.querySelector('button[type="submit"]');btn.disabled=true;
+ try{const vals=Object.fromEntries(new FormData(e.currentTarget));const r=await api('linkSearch',vals);if(!r.ok)throw Error(r.error||'Cannot find record');
+  editContext={id:r.id,editCode:vals.editCode,type:r.type};$('editFields').replaceChildren();
+  (EDIT_FIELDS[r.type]||[]).forEach(([name,label,type])=>{const l=document.createElement('label');l.className='field';l.textContent=label;const inp=document.createElement('input');inp.name=name;inp.value=(r.fields||{})[name]??'';inp.readOnly=type==='readonly';inp.type=['date','number'].includes(type)?type:'text';l.append(inp);$('editFields').append(l)});
+  $('editingId').textContent='Editing '+r.id+' · Every correction is logged.';$('editForm').classList.remove('hidden');$('editForm').scrollIntoView({block:'nearest'});
+ }catch(err){showMessage(err.message,false);$('editForm').classList.add('hidden');editContext=null}
+ finally{btn.disabled=false}
 });
-$('cancelEdit').onclick=()=>{$('editForm').classList.add('hidden');editContext=null;};
-$('editForm').addEventListener('submit',async ev=>{
-  ev.preventDefault();if(!editContext)return;
-  if(!confirm('Save these corrections to the Malipatana register?'))return;
-  const button=ev.currentTarget.querySelector('button[type="submit"]');button.disabled=true;
-  try{
-    const data=Object.fromEntries(new FormData(ev.currentTarget));
-    const r=await api('linkEdit',{id:editContext.id,editCode:editContext.editCode,record:JSON.stringify(data)});
-    if(!r.ok)throw Error(r.error||'Correction failed');
-    message(r.message,true);$('editForm').classList.add('hidden');editContext=null;await info();
-  }catch(err){message(err.message,false)}finally{button.disabled=false;}
+$('cancelEdit').onclick=()=>{$('editForm').classList.add('hidden');editContext=null};
+$('editForm').addEventListener('submit',async e=>{
+ e.preventDefault();if(!editContext||!confirm('Save these corrections?'))return;
+ const btn=e.currentTarget.querySelector('button[type="submit"]');btn.disabled=true;
+ try{const r=await api('linkEdit',{id:editContext.id,editCode:editContext.editCode,record:JSON.stringify(Object.fromEntries(new FormData(e.currentTarget)))});
+  if(!r.ok)throw Error(r.error||'Edit failed');showMessage('Changes saved to register.',true);$('editForm').classList.add('hidden');editContext=null;await info();
+ }catch(err){showMessage(err.message,false)}finally{btn.disabled=false}
 });
-
-$('expenseForm').elements.date.value=new Date().toLocaleDateString('en-CA');if(!key){$('status').textContent='Missing shared entry link. Ask the admin for a link.'}else info();</script></body></html>
+renderFamilyChoices();if(!key){$('status').className='alert error';$('status').textContent='Missing link. Ask the administrator to send an active entry link.';}else info();
+</script></body></html>

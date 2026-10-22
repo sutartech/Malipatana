@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<!-- GitHub Pages serves this file with a long cache life, which is why oneurl
+<!-- GitHub Pages serves this file with a long cache life, which is why one
      phone can keep opening an old build while incognito fetches the new one.
      These ask the browser to revalidate instead of serving from disk. -->
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
@@ -1687,8 +1687,8 @@ body.modalOpen #stickyLayer{opacity:.12;pointer-events:none;filter:saturate(.4)}
    ========================================================================= */
 const CONFIG = {
   API_URL: 'https://script.google.com/macros/s/AKfycbyfxff3MVt3Kw_CA_0aYD477nrAcWXshb9hex1LM_hl62tlrNiX5bGWgsf0Vw73sr-gbg/exec',
-  VERSION: 'FE V3.5.0',
-  EXPECTED_BACKEND: 'BE V1.8.9',
+  VERSION: 'FE V3.5.1',
+  EXPECTED_BACKEND: 'BE V1.8.10',
   IDLE_MINUTES: 30,
   /* Photo shown when no photo has been set in Settings.
      village.jpg sits in the same folder as this file on GitHub. */
@@ -1938,8 +1938,8 @@ async function sendPhoto(key, rec, pending, removing){
     await new Promise(r => setTimeout(r, 3500));
     await refresh(true);
     const row = (DB[key] || []).find(r => String(r[m.idField] || '') === idVal) || {};
-    const got = String(row['Photo'] || '').trim();
-    if(pending && got && got !== String(rec['Photo']||'')){ render(); toast('Original photo saved in Drive; thumbnail created', 'good'); return; }
+    const got = String(row[m.fields.find(f => f.t === 'photo')?.n || 'Photo'] || '').trim();
+    if(pending && got && got !== String(rec[m.fields.find(f => f.t === 'photo')?.n || 'Photo']||'')){ render(); toast('Original photo saved in Drive; thumbnail created', 'good'); return; }
     if(!pending && !got){ render(); toast('Photo removed', 'good'); return; }
   }
   render();
@@ -3556,6 +3556,7 @@ const MODULES = {
       { n:'Guidance Status', t:'select', opts:['','Open','Advising','Sent to committee','Helped','Closed'] },
       { n:'Family Status', t:'select', opts:['Active','Inactive','Shifted'] },
       { n:'Remarks', t:'textarea' },
+      { n:'Photo', t:'photo', hint:'Optional household photo; original in private Drive, small preview in dashboard.' },
       { n:'Created Date', t:'date', hidden:true },
       { n:'Last Updated', t:'date', hidden:true }
     ],
@@ -3570,6 +3571,9 @@ const MODULES = {
       { n:'Name', t:'text', req:true },
       { n:'Relation to Family Head', t:'datalist', opts:['Self','Wife','Husband','Son','Daughter','Father','Mother','Brother','Sister','Daughter-in-law','Son-in-law','Grandson','Granddaughter','Other'] },
       { n:'Gender', t:'select', opts:['Male','Female','Other'] },
+      { n:'Father Name', t:'text' },
+      { n:'Mother Name', t:'text' },
+      { n:'Spouse Name', t:'text' },
       { n:'Date of Birth', t:'date' },
       { n:'Age', t:'number', hint:'Filled automatically from date of birth' },
       { n:'Education', t:'datalist', opts:['Illiterate','Primary','Class 10','Class 12','ITI/Diploma','Graduate','Post Graduate'] },
@@ -3673,11 +3677,13 @@ const MODULES = {
       { n:'Amount', t:'money', req:true },
       { n:'Paid To', t:'text' },
       { n:'Payment Mode', t:'datalist', opts:PAYMODES },
-      { n:'Bill/Receipt', t:'text' },
+      { n:'Paid By', t:'text' },
+      { n:'Entered By', t:'text' },
+      { n:'Bill/Receipt', t:'photo', hint:'Original receipt stays private in Drive, with a small dashboard thumbnail.' },
       { n:'Approved By', t:'datalist' },
       { n:'Remarks', t:'textarea' }
     ],
-    list: ['Expense ID','Date','Category','Event ID','Description','Family ID','Amount','Paid To','Payment Mode','Approved By']
+    list: ['Expense ID','Date','Category','Event ID','Description','Family ID','Amount','Paid To','Payment Mode','Bill/Receipt','Approved By']
   },
   emergency: {
     sheet: 'Emergency Cases', title: 'Emergency cases', odia: 'ଜରୁରୀ', idField: 'Case ID', prefix: 'CASE',
@@ -5031,7 +5037,7 @@ function fieldHtml(key, f, value, editing, rec){
               <button type="button" class="btn btn-sm" id="${id}_pick">Choose or take photo</button>
               <button type="button" class="btn btn-sm btn-danger ${u ? '' : 'hide'}" id="${id}_clear">Remove</button>
             </div>
-            <div class="fieldnote">Stored in Google Drive under <b>${esc(photoRoot())} › Members › Family ID</b>. The picture is resized before upload, so a phone camera photo is fine.</div>
+            <div class="fieldnote">Saved privately in the correct register folder in Google Drive; original up to 20 MB and separate small preview.</div>
             <label class="lbl" for="${id}" style="margin-top:12px;display:block">Or paste a photo link</label>
             <input class="input" id="${id}" value="${esc(u)}" placeholder="https://drive.google.com/file/d/…/view">
             <div class="fieldnote">Any Drive link shared as <b>Anyone with the link · Viewer</b>, or a normal image URL. Saved with the record — no add-on needed.</div>
@@ -8001,7 +8007,7 @@ async function renderEntryLinks(){
    const live=await api('health');
    if(!live || !live.ok || !live.capabilities || !live.capabilities.linkInfo ||
       (document.getElementById('linkAllowEdit').checked && (!live.capabilities.linkSearch || !live.capabilities.linkEdit))){
-     throw Error('Shared-entry backend is not ready. Deploy BE V1.8.9 to the same /exec URL before creating links.');
+     throw Error('Shared-entry backend is not ready. Deploy BE V1.8.10 to the same /exec URL before creating links.');
    }
    const event=ev.value,record=(DB.events||[]).find(x=>String(x['Event ID'])===event);
    const r=await api('linkCreate',{kind:kind.value,event,eventName:record?record['Event Name']:'',hours:document.getElementById('linkHours').value,untilDisabled:validity.value==='untilDisabled'?'yes':'no',max:document.getElementById('linkMax').value,allowEdit:document.getElementById('linkAllowEdit').checked?'yes':'no'});
