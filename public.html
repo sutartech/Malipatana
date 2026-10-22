@@ -167,6 +167,56 @@ tr:last-child td{border-bottom:0}
 .gpill.good{background:#e9f3ec;color:#215c33}
 .gpill.bad{background:#fbeee9;color:#8a2916}
 
+
+/* MALI NOTICE STRIP — visible announcements without tall cards. */
+.mal-notice-ticker{display:flex;align-items:center;gap:10px;min-width:0;overflow:hidden;
+  background:linear-gradient(95deg,#94241d,#b43121);border:2px solid #eac356;
+  border-radius:15px;padding:8px 10px;box-shadow:0 9px 25px -18px #822015;
+  color:#ffec98;min-height:54px}
+.mal-notice-label{flex:none;background:#ffe47a;color:#7a261c;border-radius:9px;
+  padding:7px 9px;font-weight:900;letter-spacing:.06em;font-size:11px;line-height:1.2}
+.mal-notice-lane{flex:1;min-width:0;overflow:hidden;white-space:nowrap;isolation:isolate}
+.mal-notice-track{display:inline-flex;align-items:center;gap:24px;min-width:max-content;
+  padding-inline-start:0;font-size:14px;font-weight:800;line-height:1.5;
+  animation:malNoticeMove var(--mal-notice-duration,32s) linear infinite;will-change:transform}
+.mal-notice-set{display:inline-flex;align-items:center;gap:24px;flex:0 0 auto;padding-right:30px}
+.mal-notice-track .mal-notice-item{display:inline-flex;align-items:center;gap:10px;white-space:nowrap}
+.mal-notice-track .mal-notice-sep{color:#ffe47a;opacity:.8;font-size:15px}
+@keyframes malNoticeMove{to{transform:translateX(-50%)}}
+.mal-notice-ticker:hover .mal-notice-track,
+.mal-notice-ticker:focus-within .mal-notice-track,
+.mal-notice-ticker.is-paused .mal-notice-track{animation-play-state:paused}
+.mal-notice-pause{flex:none;display:grid;place-items:center;background:#fff2c9;
+  border:1px solid #fff5cf;color:#7e261b;border-radius:9px;min-width:36px;min-height:36px;
+  font-size:17px;font-weight:800;cursor:pointer}
+.mal-notice-pause:focus-visible,.mal-notice-detail summary:focus-visible{outline:3px solid #fee990;outline-offset:3px}
+.mal-notice-detail{border:1px solid #eadfce;border-radius:0 0 13px 13px;background:#fffdf7;
+  margin:0 10px 12px;overflow:hidden}
+.mal-notice-detail summary{cursor:pointer;color:#754120;font-weight:700;font-size:12px;
+  padding:8px 13px;line-height:1.35}
+.mal-notice-detail[open] summary{border-bottom:1px solid #eadfce}
+.mal-notice-detail .ntcs{padding:12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+.mal-notice-detail .ntc{background:#fff}
+.mal-notice-screen-reader{position:absolute;width:1px;height:1px;padding:0;margin:-1px;
+  overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@media(max-width:600px){
+  .mal-notice-ticker{gap:7px;padding:7px 8px;min-height:51px;border-radius:12px}
+  .mal-notice-label{padding:6px 7px;font-size:10px}
+  .mal-notice-track{font-size:12px;gap:15px}
+  .mal-notice-pause{min-width:34px;min-height:34px}
+  .mal-notice-detail{margin:0 4px 10px}
+}
+@media(prefers-reduced-motion:reduce){
+  .mal-notice-track{animation:none!important;transform:none!important;padding-inline-start:0;
+    min-width:0;max-width:100%;white-space:normal;flex-wrap:wrap;gap:8px;will-change:auto}
+  .mal-notice-set:nth-child(2){display:none!important}
+  .mal-notice-set{white-space:normal;max-width:100%;flex-wrap:wrap}
+  .mal-notice-item{white-space:normal!important}
+  .mal-notice-lane{white-space:normal}
+  .mal-notice-pause{display:none}
+}
+@media print{.mal-notice-track{animation:none!important;transform:none!important;padding-inline-start:0}}
+
 /* ---------- notice board ---------- */
 .noticeboard{margin:22px 0 0}
 .nbhead{display:flex;align-items:baseline;gap:9px;margin-bottom:12px}
@@ -751,29 +801,51 @@ function renderRemembrance(r){
    so the reader never sees a half-loaded mixture of fresh and stale sections.
    A cold Apps Script container can take a few seconds and occasionally times
    out, so one silent retry sits between that and the apology message. */
+
+function malToggleTicker(btn){
+  var banner=btn.closest('.mal-notice-ticker');
+  if(!banner)return;
+  var paused=banner.classList.toggle('is-paused');
+  btn.textContent=paused?'▶':'Ⅱ';
+  btn.setAttribute('aria-label', paused?'Resume scrolling notices':'Pause scrolling notices');
+  btn.setAttribute('title', paused?'Resume notices':'Pause notices');
+  btn.setAttribute('aria-pressed', String(paused));
+}
+
 function renderNotices(n){
-  var old = document.getElementById('pubNotices');
-  if(old) old.remove();
-  if(!n || !(n.notices || []).length) return;
-  var list = n.notices;
-  var cards = list.map(function(p){
-    return '<article class="ntc">' +
-      (p.photo ? '<img class="nimg" data-srcs="' + esc(photoSrcList(p.photo, 640).join('|')) +
-        '" alt="' + esc(p.title) + '" loading="lazy">' : '') +
-      '<div class="nbody"><h4>' + esc(p.title) + '</h4>' +
-      (p.text ? '<p>' + esc(p.text) + '</p>' : '') +
-      (p.by || p.date ? '<div class="nmeta">' + esc(p.by) + (p.by && p.date ? ' \u00b7 ' : '') +
-        (p.date ? esc(fmtDate(p.date)) : '') + '</div>' : '') +
+  var old=document.getElementById('pubNotices');
+  if(old)old.remove();
+  if(!n || !(n.notices||[]).length)return;
+  var list=n.notices;
+  var clips=list.slice(0,5).map(function(entry){
+    var title=String(entry.title||'Village notice').trim();
+    var tx=String(entry.text||'').trim();
+    if(tx.length>100)tx=tx.slice(0,100).trim()+'…';
+    return '<span class="mal-notice-item"><span class="mal-notice-sep" aria-hidden="true">✦</span>'+esc(title)+(tx?' — '+esc(tx):'')+'</span>';
+  }).join('');
+  var announcement=list.slice(0,5).map(function(entry){return [entry.title,entry.text].filter(Boolean).join(' — ')}).join(' • ');
+  var duration=Math.min(85,Math.max(25,Math.round(announcement.length/8)));
+  var cards=list.map(function(entry){
+    return '<article class="ntc">'+
+      (entry.photo?'<img class="nimg" data-srcs="'+esc(photoSrcList(entry.photo,640).join('|'))+'" alt="'+esc(entry.title)+'" loading="lazy">':'')+
+      '<div class="nbody"><h4>'+esc(entry.title)+'</h4>'+
+      (entry.text?'<p>'+esc(entry.text)+'</p>':'')+
+      (entry.by||entry.date?'<div class="nmeta">'+esc(entry.by)+(entry.by&&entry.date?' · ':'')+(entry.date?esc(fmtDate(entry.date)):'')+'</div>':'')+
       '</div></article>';
   }).join('');
-  var box = document.createElement('div');
-  box.className = 'noticeboard';
-  box.id = 'pubNotices';
-  box.innerHTML = '<div class="nbhead"><b>\u0B38\u0B42\u0B1A\u0B28\u0B3E \u00b7 Notice board</b>' +
-    '<span class="muted small">' + list.length + ' ' + t(list.length === 1 ? 'post' : 'posts') + '</span></div>' +
-    '<div class="ntcs">' + cards + '</div>';
-  var foot = document.querySelector('.foot');
-  if(foot && foot.parentNode) foot.parentNode.insertBefore(box, foot);
+  var box=document.createElement('section');
+  box.className='noticeboard';
+  box.id='pubNotices';
+  box.setAttribute('aria-label','Village Notice Board');
+  box.innerHTML='<div class="mal-notice-ticker" role="group" aria-label="Village announcements">'+
+    '<span class="mal-notice-label">ସୂଚନା · NOTICE</span>'+
+    '<div class="mal-notice-lane" aria-hidden="true"><div class="mal-notice-track" style="--mal-notice-duration:'+duration+'s"><span class="mal-notice-set">'+clips+'</span><span class="mal-notice-set">'+clips+'</span></div></div>'+
+    '<span class="mal-notice-screen-reader">'+esc(announcement)+'</span>'+
+    '<button type="button" class="mal-notice-pause" onclick="malToggleTicker(this)" aria-label="Pause scrolling notices" aria-pressed="false" title="Pause notices">Ⅱ</button></div>'+
+    '<details class="mal-notice-detail"><summary>Read full notices and photos ('+list.length+')</summary>'+
+    '<div class="ntcs">'+cards+'</div></details>';
+  var out=document.getElementById('out');
+  if(out&&out.parentNode)out.parentNode.insertBefore(box,out);
   else document.body.appendChild(box);
   wirePubPhotos(box);
 }
