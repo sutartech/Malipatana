@@ -379,7 +379,7 @@ tr:last-child td{border-bottom:0}
 <script>
 /* Reads ONE endpoint: publicSummary, which returns totals only. It must never
    call 'bootstrap' — that payload carries names, mobile numbers and logins. */
-var API_URL = 'https://script.google.com/macros/s/AKfycbzTy_-uSI9m_vVuv9G2Q8r0t0x2UWcSrkzrnQtDw9odZW_246TxnT7qj39IT1TQwt-O/exec';
+var API_URL = 'https://script.google.com/macros/s/AKfycbyfxff3MVt3Kw_CA_0aYD477nrAcWXshb9hex1LM_hl62tlrNiX5bGWgsf0Vw73sr-gbg/exec';
 
 var num = function(v){ var n = Number(String(v == null ? 0 : v).replace(/[^0-9.-]/g, '')); return isNaN(n) ? 0 : n; };
 var money = function(v){ var n = Math.round(num(v)); return (n < 0 ? '−₹' : '₹') + Math.abs(n).toLocaleString('en-IN'); };
