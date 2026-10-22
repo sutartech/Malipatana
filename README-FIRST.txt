@@ -36,3 +36,12 @@ IMPORTANT CAVEATS
 - Existing frontend may show FE V3.2.0 and BE V1.5.0 in your screenshot; those labels indicate old published builds, not a completed deployment.
 - If Action Plan says backend needs an update after deploying: confirm /exec URL, rerun runAll(), deploy a new version, and hard refresh. Existing entries are not deleted by runAll.
 - Do not share the backend Apps Script URL publicly beyond the existing GitHub client integration; the new entry.html is the user-facing quick-entry link.
+
+
+MOBILE RESTORE — FE V3.3.1
+- Restores the rounded white bottom navigation and central plus from the 20-Oct mobile design.
+- Quick + offers Families, Members, Expenses, Major Events, Action Plan, Shared Entry Links (admin only).
+- The published screenshots show BE V1.5.0, not BE V1.7.0. A frontend upload CANNOT fix this. Replace Code.gs in the correct Apps Script project; run runAll in Apps Script editor; Deploy > Manage deployments > Edit > New version; verify the same /exec URL is configured in index.html and entry.html.
+- If website still reports old version, hard-refresh or use a private browser tab; check GitHub Pages deployment and that all files are in the repository root.
+- Shared entry links appear only after signing in as Admin. Open the + quick menu on mobile or Shared entry links in the desktop sidebar.
+- Test links with sample data before production; anyone possessing an unexpired link can submit data.

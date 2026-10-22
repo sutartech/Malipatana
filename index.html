@@ -1593,7 +1593,7 @@ body.modalOpen #stickyLayer{opacity:.12;pointer-events:none;filter:saturate(.4)}
    ========================================================================= */
 const CONFIG = {
   API_URL: 'https://script.google.com/macros/s/AKfycbzTy_-uSI9m_vVuv9G2Q8r0t0x2UWcSrkzrnQtDw9odZW_246TxnT7qj39IT1TQwt-O/exec',
-  VERSION: 'FE V3.3.0',
+  VERSION: 'FE V3.3.1',
   IDLE_MINUTES: 30,
   /* Photo shown when no photo has been set in Settings.
      village.jpg sits in the same folder as this file on GitHub. */
@@ -7559,6 +7559,76 @@ async function showEntryList(){
  host.querySelectorAll('[data-revoke]').forEach(b=>b.onclick=async()=>{if(!confirm('Revoke this link now?'))return;const r=await api('linkRevoke',{key:b.dataset.revoke});if(!r.ok)toast(r.error||'Unable to revoke','bad');else{toast('Link revoked','good');showEntryList()}})
  }catch(e){host.textContent=e.message;}
 }
+</script>
+<style id="mobile-oct20-restored">
+/* Restore the 20 October app-style navigation; retain the latest dashboard features. */
+@media(max-width:860px){
+ #menuBtn{display:none}
+ .tabbar{display:grid!important;grid-template-columns:1fr 1fr 82px 1fr 1fr;align-items:end;gap:0;
+ position:fixed;left:0;right:0;bottom:0;z-index:55;height:auto;min-height:72px;
+ background:#fffffff5!important;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+ border:0!important;border-radius:24px 24px 0 0;box-shadow:0 -8px 28px #103a3a1f!important;
+ padding:7px 7px calc(9px + env(safe-area-inset-bottom))!important}
+ .tabbar button{display:flex;min-height:55px!important;align-items:center;justify-content:center;flex-direction:column;
+ gap:3px;border:0;background:transparent!important;color:#60746f!important;font-size:11.5px!important;
+ font-weight:750;padding:4px 1px!important;touch-action:manipulation;border-radius:16px;min-width:0}
+ .tabbar button .ic{display:grid;place-items:center;width:51px;height:31px;border-radius:999px;font-size:21px!important;color:inherit!important}
+ .tabbar button .lb{font-size:11px!important;line-height:1.15;font-weight:750;max-width:100%;white-space:nowrap}
+ .tabbar button.on{color:#0f7068!important;box-shadow:none!important;background:transparent!important}
+ .tabbar button.on .ic{background:#e2f3ef;color:#0f7068!important}
+ .tabbar button.quick-center{position:relative;min-height:62px!important;align-self:center;background:#0f7068!important;
+ color:white!important;width:64px;height:64px;border:5px solid #fff;border-radius:50%!important;
+ margin:-30px auto 0;padding:0!important;box-shadow:0 8px 22px #0f70685e!important}
+ .tabbar button.quick-center .ic{font-size:33px!important;line-height:1;color:white!important;background:none!important;width:auto;height:auto}
+ .tabbar button.quick-center .lb{display:none}
+ .tabbar button.quick-center.on{background:#0d5d58!important}
+ main.main{padding-bottom:calc(115px + env(safe-area-inset-bottom))!important}
+ #toasts{bottom:calc(103px + env(safe-area-inset-bottom))}
+ .sticky,#skTab{bottom:calc(92px + env(safe-area-inset-bottom))!important}
+ .tablewrap{max-width:100%;overflow-x:auto}
+ .pagehead{gap:10px;align-items:flex-start}
+ .pagehead h2{font-size:clamp(21px,5vw,28px)}
+ .panel,.homecard{border-radius:20px}
+ .modal{max-height:96dvh}
+ .toolbar .input{min-width:0}
+}
+@media(max-width:400px){.tabbar button .lb{font-size:10px!important}.tabbar{grid-template-columns:1fr 1fr 70px 1fr 1fr}}
+@media print{.tabbar,#malQuickPanel{display:none!important}}
+#malQuickPanel{position:fixed;inset:0;z-index:86;background:#091e2799;display:none;align-items:flex-end;justify-content:center}
+#malQuickPanel.open{display:flex}
+#malQuickPanel .quick-sheet{width:min(500px,100%);max-height:82dvh;overflow:auto;background:#fff;border-radius:24px 24px 0 0;padding:18px 18px calc(24px + env(safe-area-inset-bottom));box-shadow:0 -10px 35px #0b232a30}
+#malQuickPanel .quick-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+#malQuickPanel .quick-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+#malQuickPanel .quick-grid button{border:1px solid #deebe7;background:#f3faf8;color:#153d39;padding:17px 9px;border-radius:16px;font:inherit;font-size:13px;font-weight:750;min-height:68px;text-align:center}
+#malQuickPanel .quick-grid button:active{background:#d7eee8}
+</style>
+<script>
+/* October 20-style central quick action with newest sections retained. */
+(function(){
+ const oldBuildTabs=buildTabs;
+ buildTabs=function(){
+   const bar=document.getElementById('tabbar');if(!bar)return;
+   if(window.matchMedia('(min-width:861px)').matches){oldBuildTabs();return;}
+   const cells=[['dashboard','⌂','Home'],['families','♧','Families'],['__quick','+','Quick'],['contributions','₹','Money'],['__more','☰','More']];
+   bar.innerHTML=cells.map(c=>'<button type="button" data-tab="'+c[0]+'" class="'+(c[0]==='__quick'?'quick-center ': '')+(PAGE===c[0]?'on':'')+'" aria-label="'+c[2]+'"><span class="ic">'+c[1]+'</span><span class="lb">'+c[2]+'</span></button>').join('');
+   bar.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{
+     const t=b.dataset.tab;
+     if(t==='__quick')return window.malOpenQuick();
+     if(t==='__more')return openDrawer();
+     closeDrawer();go(t);
+   }));
+ };
+ window.malOpenQuick=function(){
+   let panel=document.getElementById('malQuickPanel');
+   if(!panel){panel=document.createElement('div');panel.id='malQuickPanel';panel.innerHTML='<div class="quick-sheet" role="dialog" aria-modal="true" aria-label="Quick actions"><div class="quick-head"><strong>Quick actions</strong><button type="button" id="malQuickClose" class="btn">Close ×</button></div><div class="quick-grid" id="malQuickGrid"></div></div>';document.body.appendChild(panel);
+     panel.addEventListener('click',e=>{if(e.target===panel)panel.classList.remove('open')});panel.querySelector('#malQuickClose').onclick=()=>panel.classList.remove('open');}
+   const links=[['families','⌂ Families'],['members','♙ Members'],['expenditure','↓ Expenses'],['events','✿ Major events'],['actionPlan','◎ Action plan'],['entryLinks','⚡ Shared entry links']];
+   panel.querySelector('#malQuickGrid').innerHTML=links.filter(([id])=>id!=='entryLinks'||isAdmin()).map(([id,label])=>'<button type="button" data-quick="'+id+'">'+label+'</button>').join('');
+   panel.querySelectorAll('[data-quick]').forEach(b=>b.onclick=()=>{panel.classList.remove('open');go(b.dataset.quick)});
+   panel.classList.add('open');
+ };
+ window.addEventListener('keydown',e=>{if(e.key==='Escape'){const p=document.getElementById('malQuickPanel');if(p)p.classList.remove('open')}});
+})();
 </script>
 </body>
 </html>
