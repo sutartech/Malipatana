@@ -1593,7 +1593,7 @@ body.modalOpen #stickyLayer{opacity:.12;pointer-events:none;filter:saturate(.4)}
    ========================================================================= */
 const CONFIG = {
   API_URL: 'https://script.google.com/macros/s/AKfycbzTy_-uSI9m_vVuv9G2Q8r0t0x2UWcSrkzrnQtDw9odZW_246TxnT7qj39IT1TQwt-O/exec',
-  VERSION: 'FE V3.3.4',
+  VERSION: 'FE V3.3.5',
   IDLE_MINUTES: 30,
   /* Photo shown when no photo has been set in Settings.
      village.jpg sits in the same folder as this file on GitHub. */
@@ -7575,7 +7575,7 @@ async function showEntryList(){
 }
 </script>
 <style id="mobile-compact-oct22">
-/* MALIPATANA FE V3.3.4 · compact Android-friendly nav based on 20-Oct design.
+/* MALIPATANA FE V3.3.5 · compact Android-friendly nav based on 20-Oct design.
    5 real columns, and one separate 50px Add button. No scroll/overlap. */
 @media screen and (max-width:860px){
   :root{--mal-navy:#183644;--mal-teal:#086b62;--mal-teal-light:#e1f4ef;--mal-saffron:#e8a741}
@@ -7718,7 +7718,7 @@ async function showEntryList(){
   #tabbar.tabbar>.mobile-quick-fab{height:47px!important;min-height:47px!important}
   #tabbar.tabbar>.mobile-quick-fab .plus-bubble{width:33px!important;height:33px!important;font-size:23px!important}
 }
-@media print{#tabbar,#malQuickPanel,#malPeoplePanel{display:none!important}}
+@media print{#tabbar,#malQuickPanel,#malPeoplePanel,#malMoneyPanel{display:none!important}}
 /* Quick actions: an accessible full-width bottom sheet, coloured by purpose. */
 #malQuickPanel{position:fixed;inset:0;z-index:90;background:rgba(11,31,39,.58);
   display:none;align-items:flex-end;justify-content:center}
@@ -7743,8 +7743,8 @@ async function showEntryList(){
   background:#e0f3eb;color:#0a7062;border-radius:11px}
 #malQuickPanel .quick-grid button[data-quick="expenditure"]{background:linear-gradient(150deg,#fffbf5,#fff2dc);border-color:#f5e4c7;color:#81520d}
 #malQuickPanel .quick-grid button[data-quick="expenditure"] .quick-icon{background:#fff0cc;color:#95600a}
-#malQuickPanel .quick-grid button[data-quick="entryLinks"]{background:linear-gradient(150deg,#f8f9ff,#edf2fd);border-color:#d9e4f8;color:#2e4a80}
-#malQuickPanel .quick-grid button[data-quick="entryLinks"] .quick-icon{background:#dfeafe;color:#2e4a80}
+#malQuickPanel .quick-grid button[data-quick="contributions"]{background:linear-gradient(150deg,#f7fffb,#e5f8ef);border-color:#cfebdc;color:#1c6d58}
+#malQuickPanel .quick-grid button[data-quick="contributions"] .quick-icon{background:#d8f2e5;color:#156a53}
 #malQuickPanel .quick-grid button:active{filter:brightness(.97)}
 #malQuickPanel .quick-grid button:focus-visible{outline:3px solid #e8a741;outline-offset:2px}
 @media(max-width:330px){#malQuickPanel .quick-grid{grid-template-columns:1fr}}
@@ -7773,9 +7773,43 @@ async function showEntryList(){
   outline:3px solid #e8a741;outline-offset:2px}
 #malPeoplePanel .people-choices button:disabled{opacity:.45;cursor:not-allowed}
 @media(max-width:330px){#malPeoplePanel .people-choices button{padding:10px;min-height:100px}}
+
+/* Money button opens a single financial workspace, keeping Quick Add minimal. */
+#malMoneyPanel{position:fixed;inset:0;z-index:92;background:rgba(12,35,44,.58);
+  display:none;align-items:flex-end;justify-content:center}
+#malMoneyPanel.open{display:flex}
+#malMoneyPanel .money-sheet{box-sizing:border-box;width:min(520px,100%);
+  max-height:min(84dvh,680px);overflow-y:auto;overscroll-behavior:contain;
+  border-radius:24px 24px 0 0;background:#fff;
+  padding:17px 15px calc(22px + env(safe-area-inset-bottom,0px));
+  box-shadow:0 -12px 34px rgba(9,42,47,.22)}
+#malMoneyPanel .money-grab{height:4px;width:40px;border-radius:8px;background:#d9e6df;
+  margin:0 auto 16px}
+#malMoneyPanel .money-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+#malMoneyPanel h3{margin:0;font-size:19px;font-weight:800;color:#173741}
+#malMoneyPanel p{margin:6px 0 15px;font-size:12.5px;line-height:1.5;color:#5b706b}
+#malMoneyPanel .money-close{background:#edf5f1;border:0;border-radius:12px;
+  color:#175f54;min-width:44px;min-height:44px;font-size:24px;cursor:pointer}
+#malMoneyPanel .money-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+#malMoneyPanel .money-choices button{box-sizing:border-box;display:flex;flex-direction:column;
+  gap:5px;align-items:flex-start;justify-content:center;min-width:0;min-height:92px;
+  padding:12px;border-radius:16px;border:1px solid #d8e9e3;background:#f2faf6;
+  color:#166153;text-align:left;font:inherit;cursor:pointer;touch-action:manipulation}
+#malMoneyPanel .money-choices button[data-money="income"]{background:#eff6fe;border-color:#d7e6fc;color:#235a93}
+#malMoneyPanel .money-choices button[data-money="expenditure"]{background:#fff5ed;border-color:#f4ddc9;color:#9b4c20}
+#malMoneyPanel .money-choices button[data-money="events"]{background:#f8f2fc;border-color:#eadbf4;color:#75448e}
+#malMoneyPanel .money-choices button[data-money="recurring"]{background:#fff8e9;border-color:#f5e6bf;color:#795612}
+#malMoneyPanel .money-choices button .money-icon{font-size:20px;line-height:1.1}
+#malMoneyPanel .money-choices button strong{font-size:13.5px;font-weight:800;line-height:1.25}
+#malMoneyPanel .money-choices button small{font-size:10.8px;line-height:1.35;opacity:.85}
+#malMoneyPanel .money-choices button:active{filter:brightness(.96)}
+#malMoneyPanel .money-choices button:focus-visible,#malMoneyPanel .money-close:focus-visible{
+  outline:3px solid #e8a741;outline-offset:2px}
+#malMoneyPanel .money-empty{background:#f5f8f6;color:#59706a;border-radius:12px;padding:18px 12px}
+@media(max-width:350px){#malMoneyPanel .money-choices button{padding:10px;min-height:85px}}
 </style>
 <script>
-/* Mobile navigation FE V3.3.4: Home | People | + Add | Money | More.
+/* Mobile navigation FE V3.3.5: Home | People | + Add | Money | More.
    People opens Families/Members chooser; use existing permission and view functions. */
 (function(){
   const nativeBuildTabs=buildTabs;
@@ -7786,7 +7820,15 @@ async function showEntryList(){
     more:'<path d="M4 6h16M4 12h16M4 18h16"/>'
   };
   const icon=which=>'<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" stroke-linecap="round" stroke-linejoin="round">'+icons[which]+'</svg>';
-  const moneyKeys=['contributions','income','expenditure','events','recurring'];
+  // Money is a register chooser, not a shortcut to only Contributions.
+  const moneyOptions=[
+    ['contributions','◈','Contributions','Village collections and receipts'],
+    ['income','↗','Income','Donations and other incoming funds'],
+    ['expenditure','₹','Expenditure','All payments and expenses'],
+    ['events','✿','Major expenses','Festival and project spending'],
+    ['recurring','↻','Recurring expenses','Regular and future payments']
+  ];
+  const moneyKeys=moneyOptions.map(r=>r[0]);
   const peopleKeys=['families','members','guidance','memorial','household'];
   function allowed(page){return page==='dashboard'||canSee(page)}
   function closeQuick(restoreFocus){
@@ -7802,9 +7844,16 @@ async function showEntryList(){
     if(tab)tab.setAttribute('aria-expanded','false');
     if(restoreFocus&&tab)tab.focus({preventScroll:true});
   }
-  function goMobile(page){closePeople(false);closeQuick(false);closeDrawer();go(page)}
+  function closeMoney(restoreFocus){
+    const p=document.getElementById('malMoneyPanel');if(!p)return;
+    p.classList.remove('open');
+    const tab=document.querySelector('#tabbar [data-tab="__money"]');
+    if(tab)tab.setAttribute('aria-expanded','false');
+    if(restoreFocus&&tab)tab.focus({preventScroll:true});
+  }
+  function goMobile(page){closePeople(false);closeMoney(false);closeQuick(false);closeDrawer();go(page)}
   function showPeople(){
-    closeQuick(false);
+    closeMoney(false);closeQuick(false);
     let p=document.getElementById('malPeoplePanel');
     if(!p){
       p=document.createElement('div');p.id='malPeoplePanel';
@@ -7827,49 +7876,79 @@ async function showEntryList(){
     if(tab)tab.setAttribute('aria-expanded','true');
     p.querySelector('.people-close').focus({preventScroll:true});
   }
+  function showMoney(){
+    closePeople(false);closeQuick(false);
+    let p=document.getElementById('malMoneyPanel');
+    if(!p){
+      p=document.createElement('div');p.id='malMoneyPanel';
+      p.innerHTML='<div class="money-sheet" role="dialog" aria-modal="true" aria-labelledby="malMoneyTitle">'+
+        '<div class="money-grab" aria-hidden="true"></div><div class="money-head">'+
+        '<h3 id="malMoneyTitle">Money & accounts</h3><button type="button" class="money-close" aria-label="Close money menu">×</button></div>'+
+        '<p>Choose the financial register you want to view.</p><div class="money-choices" id="malMoneyChoices"></div></div>';
+      document.body.appendChild(p);
+      p.addEventListener('click',e=>{if(e.target===p)closeMoney(true)});
+      p.querySelector('.money-close').addEventListener('click',()=>closeMoney(true));
+    }
+    const list=moneyOptions.filter(x=>allowed(x[0]));
+    const host=p.querySelector('#malMoneyChoices');
+    host.innerHTML=list.length?list.map(([id,ic,label,desc])=>
+      '<button type="button" data-money="'+id+'"><span class="money-icon" aria-hidden="true">'+ic+'</span>'+
+      '<strong>'+label+'</strong><small>'+desc+'</small></button>').join(''):
+      '<div class="money-empty">No financial registers are available for this account.</div>';
+    host.querySelectorAll('[data-money]').forEach(b=>b.addEventListener('click',()=>goMobile(b.dataset.money)));
+    p.classList.add('open');
+    const tab=document.querySelector('#tabbar [data-tab="__money"]');
+    if(tab)tab.setAttribute('aria-expanded','true');
+    p.querySelector('.money-close').focus({preventScroll:true});
+  }
   buildTabs=function(){
     const bar=document.getElementById('tabbar');if(!bar)return;
-    if(!window.matchMedia('(max-width:860px)').matches){closePeople(false);closeQuick(false);nativeBuildTabs();return;}
-    const targetMoney=moneyKeys.find(allowed)||'dashboard';
+    if(!window.matchMedia('(max-width:860px)').matches){closePeople(false);closeMoney(false);closeQuick(false);nativeBuildTabs();return;}
     const current=PAGE==='dashboard'?'home':peopleKeys.includes(PAGE)?'people':moneyKeys.includes(PAGE)?'money':'more';
-    const tabs=[['home','dashboard','Home'],['people','__people','People'],['money',targetMoney,'Money'],['more','__more','More']];
+    const tabs=[['home','dashboard','Home'],['people','__people','People'],['money','__money','Money'],['more','__more','More']];
     bar.innerHTML=tabs.map(([key,page,label])=>{
-      const off=key==='people'?(!allowed('families')&&!allowed('members')):(page!=='__more'&&!allowed(page));
+      const off=key==='people'?(!allowed('families')&&!allowed('members')):
+        key==='money'?!moneyKeys.some(allowed):(page!=='__more'&&!allowed(page));
       return '<button type="button" data-tab="'+page+'" data-kind="'+key+'" class="'+(key===current?'on':'')+'" aria-label="'+label+'" '+
-        (key===current?'aria-current="page" ':'')+(key==='people'?'aria-haspopup="dialog" aria-expanded="false" ':'')+
+        (key===current?'aria-current="page" ':'')+(['people','money'].includes(key)?'aria-haspopup="dialog" aria-expanded="false" ':'')+
         (off?'disabled aria-disabled="true" ':'')+'><span class="ic">'+icon(key)+'</span><span class="lb">'+label+'</span></button>';
-    }).join('')+'<button type="button" id="malMobileQuickAdd" class="mobile-quick-fab" aria-label="Quick entry: add family, member, contribution or expense" aria-haspopup="dialog" aria-expanded="false">'+
+    }).join('')+'<button type="button" id="malMobileQuickAdd" class="mobile-quick-fab" aria-label="Quick entry: add expense or contribution" aria-haspopup="dialog" aria-expanded="false">'+
       '<span class="plus-bubble" aria-hidden="true">+</span><span class="lb">Add</span></button>';
     bar.querySelectorAll('button[data-tab]').forEach(b=>b.addEventListener('click',()=>{
       if(b.disabled)return;
       if(b.dataset.tab==='__people'){showPeople();return;}
-      if(b.dataset.tab==='__more'){closePeople(false);closeQuick(false);openDrawer();return;}
+      if(b.dataset.tab==='__money'){showMoney();return;}
+      if(b.dataset.tab==='__more'){closePeople(false);closeMoney(false);closeQuick(false);openDrawer();return;}
       goMobile(b.dataset.tab);
     }));
     bar.querySelector('#malMobileQuickAdd').addEventListener('click',()=>window.malOpenQuick());
   };
   window.malOpenQuick=function(){
-    closePeople(false);
+    closePeople(false);closeMoney(false);
     let p=document.getElementById('malQuickPanel');
     if(!p){
       p=document.createElement('div');p.id='malQuickPanel';
       p.innerHTML='<div class="quick-sheet" role="dialog" aria-modal="true" aria-labelledby="malQuickTitle">'+
         '<div class="quick-grabber" aria-hidden="true"></div><div class="quick-head"><h3 id="malQuickTitle">Quick entry</h3>'+
         '<button type="button" id="malQuickClose" class="quick-close" aria-label="Close quick entry">×</button></div>'+
-        '<p class="quick-sub">Choose what to enter. The forms keep existing account permissions.</p><div class="quick-grid" id="malQuickGrid"></div></div>';
+        '<p class="quick-sub">Record a payment or contribution in one step.</p><div class="quick-grid" id="malQuickGrid"></div></div>';
       document.body.appendChild(p);
       p.addEventListener('click',e=>{if(e.target===p)closeQuick(true)});
       p.querySelector('#malQuickClose').addEventListener('click',()=>closeQuick(true));
     }
+    // Only two high-frequency entry forms; all other modules remain in More.
     const links=[];
     if(canEdit()){
-      [['families','⌂','Add family'],['members','♧','Add member'],['expenditure','₹','Add expense'],['contributions','✚','Add contribution']]
+      [['expenditure','₹','Add expense'],['contributions','✚','Add contribution']]
         .forEach(([id,ic,label])=>{if(allowed(id))links.push([id,ic,label,'form']);});
     }
-    if(allowed('events'))links.push(['events','✿','Major events','nav']);
-    if(allowed('actionPlan'))links.push(['actionPlan','◎','Action plan','nav']);
-    if(isAdmin())links.push(['entryLinks','🔗','Shared entry links','nav']);
-    if(!links.length)links.push(['dashboard','⌂','Go home','nav']);
+    if(!links.length){
+      p.querySelector('#malQuickGrid').innerHTML='<div class="money-empty">Your account has no quick-entry permission. Open More to view the available registers.</div>';
+      p.classList.add('open');
+      const fab=document.getElementById('malMobileQuickAdd');if(fab)fab.setAttribute('aria-expanded','true');
+      p.querySelector('#malQuickClose').focus({preventScroll:true});
+      return;
+    }
     const box=p.querySelector('#malQuickGrid');
     box.innerHTML=links.map(([id,ic,label,action])=>'<button type="button" data-quick="'+id+'" data-mode="'+action+'"><span class="quick-icon" aria-hidden="true">'+ic+'</span><span>'+label+'</span></button>').join('');
     box.querySelectorAll('[data-quick]').forEach(b=>b.addEventListener('click',()=>{
@@ -7881,7 +7960,7 @@ async function showEntryList(){
     p.querySelector('#malQuickClose').focus({preventScroll:true});
   };
   window.addEventListener('keydown',e=>{
-    if(e.key==='Escape'){closeQuick(true);closePeople(true);}
+    if(e.key==='Escape'){closeQuick(true);closePeople(true);closeMoney(true);}
   });
   window.addEventListener('resize',()=>{
     const bar=document.getElementById('tabbar');if(bar&&USER)buildTabs();
