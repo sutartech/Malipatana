@@ -1593,7 +1593,7 @@ body.modalOpen #stickyLayer{opacity:.12;pointer-events:none;filter:saturate(.4)}
    ========================================================================= */
 const CONFIG = {
   API_URL: 'https://script.google.com/macros/s/AKfycbzTy_-uSI9m_vVuv9G2Q8r0t0x2UWcSrkzrnQtDw9odZW_246TxnT7qj39IT1TQwt-O/exec',
-  VERSION: 'FE V3.3.2',
+  VERSION: 'FE V3.3.4',
   IDLE_MINUTES: 30,
   /* Photo shown when no photo has been set in Settings.
      village.jpg sits in the same folder as this file on GitHub. */
@@ -2797,8 +2797,8 @@ document.addEventListener('keydown', e => {
    so nothing a person typed is ever lost.
    ========================================================================= */
 const QKEY = 'mal_queue';
-function queueRead(){ try { return JSON.parse(local.get(QKEY) || '[]') || []; } catch(e){ return []; } }
-function queueWrite(list){ try { local.set(QKEY, JSON.stringify(list)); } catch(e){} paintQueue(); }
+function queueRead(){ try { return JSON.parse(store.get(QKEY) || '[]') || []; } catch(e){ return []; } }
+function queueWrite(list){ try { store.set(QKEY, JSON.stringify(list)); } catch(e){} paintQueue(); }
 function queueAdd(action, params, label){
   const list = queueRead();
   list.push({ id: 'q' + Date.now() + Math.random().toString(36).slice(2, 6), action, params, label, at: Date.now() });
@@ -2969,14 +2969,28 @@ const OPTIONAL_SHEETS = ['events', 'recurring'];
 let SERVER_SHEETS = [];
 function cacheKey(k){ return 'mal_local_' + k; }
 function stashLocal(k){
-  try { local.set(cacheKey(k), JSON.stringify(DB[k] || [])); } catch(e){}
+  try { store.set(cacheKey(k), JSON.stringify(DB[k] || [])); } catch(e){}
 }
 function restoreLocal(k){
-  try { return JSON.parse(local.get(cacheKey(k)) || '[]') || []; } catch(e){ return []; }
+  try { return JSON.parse(store.get(cacheKey(k)) || '[]') || []; } catch(e){ return []; }
 }
 
+
+/* PRIVATE-DATA MIGRATION. Prior versions persisted whole registers in localStorage.
+   Remove those copies once; retain only harmless UI preferences and remembered username.
+   The in-progress offline queue (if any) is copied into sessionStorage for this tab. */
+(function clearLegacyPrivateStorage(){
+  try {
+    const keepQueue=localStorage.getItem('mal_queue');
+    if(keepQueue&&!sessionStorage.getItem('mal_queue')) sessionStorage.setItem('mal_queue',keepQueue);
+    for(const k of Object.keys(localStorage)){
+      if(k==='mal_db_cache'||k==='mal_queue'||k.startsWith('mal_local_'))localStorage.removeItem(k);
+    }
+  } catch(e){}
+})();
+
 const DBCACHE = 'mal_db_cache';
-function cacheDb(){ try { local.set(DBCACHE, JSON.stringify(DB)); } catch(e){} }
+function cacheDb(){ try { store.set(DBCACHE, JSON.stringify(DB)); } catch(e){} }
 /* A cache written by an older build can be valid JSON yet the wrong shape,
    which passes JSON.parse and then crashes the first render — the reason a
    phone with history fails where incognito, with empty storage, works. So
@@ -2984,7 +2998,7 @@ function cacheDb(){ try { local.set(DBCACHE, JSON.stringify(DB)); } catch(e){} }
 function cachedDb(){
   var bad = function(why){ if(window.malNoteBadStore) window.malNoteBadStore('the offline copy of the register'); return null; };
   try {
-    const d = JSON.parse(local.get(DBCACHE) || 'null');
+    const d = JSON.parse(store.get(DBCACHE) || 'null');
     if(d === null) return null;                       // simply absent, not broken
     if(typeof d !== 'object') return bad();
     if(!d.settings || typeof d.settings !== 'object') return bad();
@@ -7561,7 +7575,7 @@ async function showEntryList(){
 }
 </script>
 <style id="mobile-compact-oct22">
-/* MALIPATANA FE V3.3.2 · compact Android-friendly nav based on 20-Oct design.
+/* MALIPATANA FE V3.3.4 · compact Android-friendly nav based on 20-Oct design.
    5 real columns, and one separate 50px Add button. No scroll/overlap. */
 @media screen and (max-width:860px){
   :root{--mal-navy:#183644;--mal-teal:#086b62;--mal-teal-light:#e1f4ef;--mal-saffron:#e8a741}
@@ -7572,9 +7586,9 @@ async function showEntryList(){
     grid-template-columns:repeat(5,minmax(0,1fr))!important;
     column-gap:2px!important;align-items:center!important;
     box-sizing:border-box!important;width:100%!important;max-width:100vw!important;
-    min-width:0!important;height:calc(64px + env(safe-area-inset-bottom,0px))!important;
+    min-width:0!important;height:calc(76px + env(safe-area-inset-bottom,0px))!important;
     min-height:0!important;max-height:none!important;
-    padding:7px 8px calc(7px + env(safe-area-inset-bottom,0px))!important;
+    padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px))!important;
     margin:0!important;overflow:visible!important;z-index:55!important;
     background:rgba(255,255,255,.98)!important;
     border:0!important;border-top:1px solid #d9e9e3!important;
@@ -7609,27 +7623,40 @@ async function showEntryList(){
   #tabbar.tabbar>button[data-tab].on .ic{background:var(--mal-teal-light)!important;color:var(--mal-teal)!important}
   #tabbar.tabbar>button[data-tab]:active{background:#ebf4f1!important}
   #tabbar.tabbar>button[data-tab]:focus-visible,#tabbar .mobile-quick-fab:focus-visible{outline:3px solid #e8a741!important;outline-offset:1px!important}
-  /* Distinct but small + button, outside the five-column grid. */
+  /* Center: the + action occupies its own third grid cell, not a floating overlay. */
   #tabbar.tabbar>.mobile-quick-fab{
-    position:absolute!important;right:15px!important;
-    bottom:calc(100% + 6px)!important;
-    width:50px!important;height:50px!important;min-width:50px!important;min-height:50px!important;
+    position:static!important;grid-column:3!important;grid-row:1!important;
+    width:100%!important;height:60px!important;min-width:0!important;min-height:60px!important;
+    display:flex!important;flex-direction:column!important;align-items:center!important;
+    justify-content:center!important;gap:2px!important;
     margin:0!important;padding:0!important;box-sizing:border-box!important;
-    display:grid!important;place-items:center!important;
-    background:linear-gradient(145deg,#128779,#08655c)!important;color:#fff!important;
-    border:3px solid #fff!important;border-radius:17px!important;
-    box-shadow:0 4px 15px rgba(5,98,86,.25),0 0 0 1px #c8e3d9!important;
-    font-size:27px!important;font-weight:600!important;line-height:1!important;
-    cursor:pointer;z-index:2;touch-action:manipulation;
+    background:transparent!important;color:#087568!important;border:0!important;
+    border-radius:13px!important;box-shadow:none!important;font:inherit!important;
+    cursor:pointer!important;touch-action:manipulation;
   }
-  #tabbar.tabbar>.mobile-quick-fab:active{transform:scale(.95)}
+  #tabbar.tabbar>.mobile-quick-fab .plus-bubble{
+    width:44px;height:44px;display:grid;place-items:center;
+    border-radius:15px;background:linear-gradient(145deg,#159688,#087568);
+    color:#fff;box-shadow:0 4px 11px rgba(6,97,82,.24);
+    font:800 29px/1 system-ui,-apple-system,sans-serif;
+  }
+  #tabbar.tabbar>.mobile-quick-fab .lb{
+    font:750 10px/1 system-ui,-apple-system,sans-serif;
+    color:#086b62;white-space:nowrap;
+  }
+  #tabbar.tabbar>.mobile-quick-fab:active .plus-bubble{transform:scale(.94)}
+  #tabbar.tabbar>button[data-kind="home"]{grid-column:1}
+  #tabbar.tabbar>button[data-kind="people"]{grid-column:2}
+  #tabbar.tabbar>button[data-kind="money"]{grid-column:4}
+  #tabbar.tabbar>button[data-kind="more"]{grid-column:5}
+  #tabbar.tabbar>button[data-tab][disabled]{opacity:.4!important;cursor:not-allowed!important}
   /* Final family card and page rows remain fully visible above fixed footer. */
   main.main{box-sizing:border-box!important;max-width:100vw!important;min-width:0!important;
-    padding:13px 12px calc(136px + env(safe-area-inset-bottom,0px))!important;overflow-wrap:anywhere}
+    padding:13px 12px calc(116px + env(safe-area-inset-bottom,0px))!important;overflow-wrap:anywhere}
   .pagehead{flex-wrap:wrap;gap:10px!important}
   .pagehead h2{font-size:clamp(21px,5.7vw,26px)!important}
-  #toasts{bottom:calc(80px + env(safe-area-inset-bottom,0px))!important}
-  .sticky,#skTab{bottom:calc(79px + env(safe-area-inset-bottom,0px))!important}
+  #toasts{bottom:calc(93px + env(safe-area-inset-bottom,0px))!important}
+  .sticky,#skTab{bottom:calc(92px + env(safe-area-inset-bottom,0px))!important}
   .panel,.homecard{max-width:100%;border-radius:15px!important}
   .toolbar .input{min-width:0!important}
   .tablewrap{max-width:100%!important}
@@ -7688,9 +7715,10 @@ async function showEntryList(){
   #tabbar.tabbar{height:calc(52px + env(safe-area-inset-bottom,0px))!important;padding-top:2px!important;padding-bottom:calc(2px + env(safe-area-inset-bottom,0px))!important}
   #tabbar.tabbar>button[data-tab]{height:45px!important;min-height:45px!important}
   #tabbar.tabbar>button[data-tab] .lb{font-size:9px!important}
-  #tabbar.tabbar>.mobile-quick-fab{width:44px!important;height:44px!important;min-width:44px!important;min-height:44px!important}
+  #tabbar.tabbar>.mobile-quick-fab{height:47px!important;min-height:47px!important}
+  #tabbar.tabbar>.mobile-quick-fab .plus-bubble{width:33px!important;height:33px!important;font-size:23px!important}
 }
-@media print{#tabbar,#malQuickPanel{display:none!important}}
+@media print{#tabbar,#malQuickPanel,#malPeoplePanel{display:none!important}}
 /* Quick actions: an accessible full-width bottom sheet, coloured by purpose. */
 #malQuickPanel{position:fixed;inset:0;z-index:90;background:rgba(11,31,39,.58);
   display:none;align-items:flex-end;justify-content:center}
@@ -7720,20 +7748,46 @@ async function showEntryList(){
 #malQuickPanel .quick-grid button:active{filter:brightness(.97)}
 #malQuickPanel .quick-grid button:focus-visible{outline:3px solid #e8a741;outline-offset:2px}
 @media(max-width:330px){#malQuickPanel .quick-grid{grid-template-columns:1fr}}
+/* Family and Member registers share a single People navigation tab. */
+#malPeoplePanel{position:fixed;inset:0;z-index:91;background:rgba(12,35,44,.54);
+  display:none;align-items:flex-end;justify-content:center}
+#malPeoplePanel.open{display:flex}
+#malPeoplePanel .people-sheet{width:min(520px,100%);box-sizing:border-box;
+  padding:18px 16px calc(20px + env(safe-area-inset-bottom,0px));background:#fff;
+  border-radius:23px 23px 0 0;box-shadow:0 -12px 32px rgba(9,42,47,.19)}
+#malPeoplePanel .people-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+#malPeoplePanel h3{margin:0;font-size:19px;font-weight:800;color:#143b44}
+#malPeoplePanel p{margin:5px 0 16px;font-size:13px;color:#526d69}
+#malPeoplePanel .people-close{background:#edf5f1;border:0;border-radius:11px;color:#145a50;
+  min-width:44px;min-height:44px;font-size:24px;cursor:pointer}
+#malPeoplePanel .people-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+#malPeoplePanel .people-choices button{border:1px solid #d0e7df;border-radius:16px;
+  min-height:110px;padding:14px;text-align:left;background:linear-gradient(145deg,#f8fffc,#e6f7f0);
+  display:flex;flex-direction:column;justify-content:center;gap:6px;color:#126456;cursor:pointer}
+#malPeoplePanel .people-choices button[data-people="members"]{color:#345a83;border-color:#d9e5f2;
+  background:linear-gradient(145deg,#fcfdff,#edf3fb)}
+#malPeoplePanel .people-choices .people-icon{font-size:23px;line-height:1}
+#malPeoplePanel .people-choices strong{font-size:15px}
+#malPeoplePanel .people-choices small{font-size:11px;color:#56706d}
+#malPeoplePanel .people-choices button:focus-visible,#malPeoplePanel .people-close:focus-visible{
+  outline:3px solid #e8a741;outline-offset:2px}
+#malPeoplePanel .people-choices button:disabled{opacity:.45;cursor:not-allowed}
+@media(max-width:330px){#malPeoplePanel .people-choices button{padding:10px;min-height:100px}}
 </style>
 <script>
-/* Mobile navigation module: uses existing go/openForm/permission functions. */
+/* Mobile navigation FE V3.3.4: Home | People | + Add | Money | More.
+   People opens Families/Members chooser; use existing permission and view functions. */
 (function(){
   const nativeBuildTabs=buildTabs;
   const icons={
     home:'<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/>',
-    families:'<path d="M3 21v-9l9-7 9 7v9"/><path d="M9 21v-7h6v7M3 12h18"/>',
-    members:'<circle cx="9" cy="8" r="3"/><path d="M3 21v-2a6 6 0 0 1 12 0v2M16 5a3 3 0 0 1 0 6m1 4a5 5 0 0 1 4 5"/>',
+    people:'<circle cx="8" cy="8" r="2.8"/><path d="M2.5 21v-2a5.5 5.5 0 0 1 11 0v2M17 6a2.8 2.8 0 0 1 0 5.6M16 15a5 5 0 0 1 5 5v1"/>',
     money:'<rect x="2" y="6" width="20" height="13" rx="3"/><path d="M2 10h20"/><circle cx="12" cy="14.5" r="2"/>',
     more:'<path d="M4 6h16M4 12h16M4 18h16"/>'
   };
   const icon=which=>'<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" stroke-linecap="round" stroke-linejoin="round">'+icons[which]+'</svg>';
   const moneyKeys=['contributions','income','expenditure','events','recurring'];
+  const peopleKeys=['families','members','guidance','memorial','household'];
   function allowed(page){return page==='dashboard'||canSee(page)}
   function closeQuick(restoreFocus){
     const p=document.getElementById('malQuickPanel');if(!p)return;
@@ -7741,45 +7795,80 @@ async function showEntryList(){
     const fab=document.getElementById('malMobileQuickAdd');if(fab)fab.setAttribute('aria-expanded','false');
     if(restoreFocus&&fab)fab.focus({preventScroll:true});
   }
-  function goMobile(page){closeQuick(false);closeDrawer();go(page)}
+  function closePeople(restoreFocus){
+    const p=document.getElementById('malPeoplePanel');if(!p)return;
+    p.classList.remove('open');
+    const tab=document.querySelector('#tabbar [data-tab="__people"]');
+    if(tab)tab.setAttribute('aria-expanded','false');
+    if(restoreFocus&&tab)tab.focus({preventScroll:true});
+  }
+  function goMobile(page){closePeople(false);closeQuick(false);closeDrawer();go(page)}
+  function showPeople(){
+    closeQuick(false);
+    let p=document.getElementById('malPeoplePanel');
+    if(!p){
+      p=document.createElement('div');p.id='malPeoplePanel';
+      p.innerHTML='<div class="people-sheet" role="dialog" aria-modal="true" aria-labelledby="malPeopleTitle">'+
+        '<div class="people-top"><h3 id="malPeopleTitle">People & households</h3>'+
+        '<button type="button" class="people-close" aria-label="Close people menu">×</button></div>'+
+        '<p>Open a register without searching through the full menu.</p>'+
+        '<div class="people-choices"><button type="button" data-people="families"><span class="people-icon" aria-hidden="true">⌂</span><strong>Families</strong><small>Households and family trees</small></button>'+
+        '<button type="button" data-people="members"><span class="people-icon" aria-hidden="true">♧</span><strong>Members</strong><small>People and member details</small></button></div></div>';
+      document.body.appendChild(p);
+      p.addEventListener('click',e=>{if(e.target===p)closePeople(true)});
+      p.querySelector('.people-close').addEventListener('click',()=>closePeople(true));
+      p.querySelectorAll('[data-people]').forEach(b=>b.addEventListener('click',()=>{
+        if(!b.disabled)goMobile(b.dataset.people);
+      }));
+    }
+    p.querySelectorAll('[data-people]').forEach(b=>b.disabled=!allowed(b.dataset.people));
+    p.classList.add('open');
+    const tab=document.querySelector('#tabbar [data-tab="__people"]');
+    if(tab)tab.setAttribute('aria-expanded','true');
+    p.querySelector('.people-close').focus({preventScroll:true});
+  }
   buildTabs=function(){
     const bar=document.getElementById('tabbar');if(!bar)return;
-    if(!window.matchMedia('(max-width:860px)').matches){nativeBuildTabs();return;}
+    if(!window.matchMedia('(max-width:860px)').matches){closePeople(false);closeQuick(false);nativeBuildTabs();return;}
     const targetMoney=moneyKeys.find(allowed)||'dashboard';
-    const current=PAGE==='dashboard'?'home':PAGE==='families'||PAGE==='guidance'||PAGE==='household'?'families':
-      PAGE==='members'||PAGE==='memorial'?'members':moneyKeys.includes(PAGE)?'money':'more';
-    const tabs=[['home','dashboard','Home'],['families','families','Families'],['members','members','Members'],['money',targetMoney,'Money'],['more','__more','More']];
+    const current=PAGE==='dashboard'?'home':peopleKeys.includes(PAGE)?'people':moneyKeys.includes(PAGE)?'money':'more';
+    const tabs=[['home','dashboard','Home'],['people','__people','People'],['money',targetMoney,'Money'],['more','__more','More']];
     bar.innerHTML=tabs.map(([key,page,label])=>{
-      const off=page!=='__more'&&!allowed(page);
+      const off=key==='people'?(!allowed('families')&&!allowed('members')):(page!=='__more'&&!allowed(page));
       return '<button type="button" data-tab="'+page+'" data-kind="'+key+'" class="'+(key===current?'on':'')+'" aria-label="'+label+'" '+
-        (key===current?'aria-current="page" ':'')+(off?'disabled aria-disabled="true" ':'')+'><span class="ic">'+icon(key)+'</span><span class="lb">'+label+'</span></button>';
-    }).join('')+'<button type="button" id="malMobileQuickAdd" class="mobile-quick-fab" aria-label="Add new record or open quick actions" aria-haspopup="dialog" aria-expanded="false">+</button>';
+        (key===current?'aria-current="page" ':'')+(key==='people'?'aria-haspopup="dialog" aria-expanded="false" ':'')+
+        (off?'disabled aria-disabled="true" ':'')+'><span class="ic">'+icon(key)+'</span><span class="lb">'+label+'</span></button>';
+    }).join('')+'<button type="button" id="malMobileQuickAdd" class="mobile-quick-fab" aria-label="Quick entry: add family, member, contribution or expense" aria-haspopup="dialog" aria-expanded="false">'+
+      '<span class="plus-bubble" aria-hidden="true">+</span><span class="lb">Add</span></button>';
     bar.querySelectorAll('button[data-tab]').forEach(b=>b.addEventListener('click',()=>{
-      if(b.dataset.tab==='__more'){closeQuick(false);openDrawer();return;}
-      if(!b.disabled)goMobile(b.dataset.tab);
+      if(b.disabled)return;
+      if(b.dataset.tab==='__people'){showPeople();return;}
+      if(b.dataset.tab==='__more'){closePeople(false);closeQuick(false);openDrawer();return;}
+      goMobile(b.dataset.tab);
     }));
     bar.querySelector('#malMobileQuickAdd').addEventListener('click',()=>window.malOpenQuick());
   };
   window.malOpenQuick=function(){
+    closePeople(false);
     let p=document.getElementById('malQuickPanel');
     if(!p){
       p=document.createElement('div');p.id='malQuickPanel';
       p.innerHTML='<div class="quick-sheet" role="dialog" aria-modal="true" aria-labelledby="malQuickTitle">'+
-        '<div class="quick-grabber" aria-hidden="true"></div><div class="quick-head"><h3 id="malQuickTitle">Quick actions</h3>'+
-        '<button type="button" id="malQuickClose" class="quick-close" aria-label="Close quick actions">×</button></div>'+
-        '<p class="quick-sub">Choose what you want to do — no need to search through menus.</p><div class="quick-grid" id="malQuickGrid"></div></div>';
+        '<div class="quick-grabber" aria-hidden="true"></div><div class="quick-head"><h3 id="malQuickTitle">Quick entry</h3>'+
+        '<button type="button" id="malQuickClose" class="quick-close" aria-label="Close quick entry">×</button></div>'+
+        '<p class="quick-sub">Choose what to enter. The forms keep existing account permissions.</p><div class="quick-grid" id="malQuickGrid"></div></div>';
       document.body.appendChild(p);
       p.addEventListener('click',e=>{if(e.target===p)closeQuick(true)});
       p.querySelector('#malQuickClose').addEventListener('click',()=>closeQuick(true));
     }
     const links=[];
     if(canEdit()){
-      [['families','⌂','Add family'],['members','👥','Add member'],['expenditure','₹','Add expense'],['contributions','✚','Add contribution']]
-        .forEach(([id,ic,label])=>{if(allowed(id))links.push([id,ic,label,'form'])});
+      [['families','⌂','Add family'],['members','♧','Add member'],['expenditure','₹','Add expense'],['contributions','✚','Add contribution']]
+        .forEach(([id,ic,label])=>{if(allowed(id))links.push([id,ic,label,'form']);});
     }
-    if(allowed('events')) links.push(['events','✿','Major events','nav']);
-    if(allowed('actionPlan')) links.push(['actionPlan','◎','Action plan','nav']);
-    if(isAdmin()) links.push(['entryLinks','🔗','Shared entry links','nav']);
+    if(allowed('events'))links.push(['events','✿','Major events','nav']);
+    if(allowed('actionPlan'))links.push(['actionPlan','◎','Action plan','nav']);
+    if(isAdmin())links.push(['entryLinks','🔗','Shared entry links','nav']);
     if(!links.length)links.push(['dashboard','⌂','Go home','nav']);
     const box=p.querySelector('#malQuickGrid');
     box.innerHTML=links.map(([id,ic,label,action])=>'<button type="button" data-quick="'+id+'" data-mode="'+action+'"><span class="quick-icon" aria-hidden="true">'+ic+'</span><span>'+label+'</span></button>').join('');
@@ -7791,7 +7880,9 @@ async function showEntryList(){
     const fab=document.getElementById('malMobileQuickAdd');if(fab)fab.setAttribute('aria-expanded','true');
     p.querySelector('#malQuickClose').focus({preventScroll:true});
   };
-  window.addEventListener('keydown',e=>{if(e.key==='Escape')closeQuick(true)});
+  window.addEventListener('keydown',e=>{
+    if(e.key==='Escape'){closeQuick(true);closePeople(true);}
+  });
   window.addEventListener('resize',()=>{
     const bar=document.getElementById('tabbar');if(bar&&USER)buildTabs();
   },{passive:true});
