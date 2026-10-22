@@ -1681,14 +1681,14 @@ body.modalOpen #stickyLayer{opacity:.12;pointer-events:none;filter:saturate(.4)}
   }, 1000);
 })();
 /* =========================================================================
-   MALIPATANA VILLAGE WELFARE DASHBOARD — Frontend V2.0.0
-   Works with the existing Apps Script backend (BE V1.0.0). No backend change
-   is required: saving and deleting use the same JSONP doGet endpoint.
+   MALIPATANA VILLAGE WELFARE DASHBOARD — Frontend V3.4.4
+   Designed for backend BE V1.8.3. Keep Apps Script and GitHub deployments in sync.
+   Existing JSONP/GET authentication is not ideal for sensitive user credentials.
    ========================================================================= */
 const CONFIG = {
-  API_URL: 'https://script.google.com/macros/s/AKfycbyfxff3MVt3Kw_CA_0aYD477nrAcWXshb9hex1LM_hl62tlrNiX5bGWgsf0Vw73sr-gbg/exec',
-  VERSION: 'FE V3.4.3',
-  EXPECTED_BACKEND: 'BE V1.8.2',
+  API_URL: 'https://script.google.com/macros/s/AKfycbzTy_-uSI9m_vVuv9G2Q8r0t0x2UWcSrkzrnQtDw9odZW_246TxnT7qj39IT1TQwt-O/exec',
+  VERSION: 'FE V3.4.6',
+  EXPECTED_BACKEND: 'BE V1.8.5',
   IDLE_MINUTES: 30,
   /* Photo shown when no photo has been set in Settings.
      village.jpg sits in the same folder as this file on GitHub. */
@@ -7267,9 +7267,9 @@ async function bePing(){
       chip.textContent = actual;
       chip.className = 'vchip ' + (matches ? 'ok' : 'bad');
       if(!matches && notice){
-        title.textContent = 'The connected backend needs a new deployment';
-        detail.textContent = 'This site received ' + actual + ', but requires ' + CONFIG.EXPECTED_BACKEND +
-          '. Replace Code.gs in the Apps Script project for this exact /exec URL, then Deploy → Manage deployments → Edit → New version → Deploy. Clearing browser cache cannot update Apps Script.';
+        title.textContent = 'Frontend / backend version mismatch';
+        detail.textContent = 'The deployed Apps Script reports ' + actual + '; this frontend was built for ' + CONFIG.EXPECTED_BACKEND +
+          '. Check the /exec URL configured in index.html and its Apps Script deployment. Do not change version labels to conceal a mismatch.';
         notice.hidden = false;
       }
     } else {
@@ -8611,5 +8611,91 @@ async function showEntryList(){
   };
 })();
 </script>
+
+<style>
+/* Storage & Links: admin-only screen, compact and mobile-friendly. */
+.mal-store-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,290px),1fr));gap:12px}
+.mal-store-item{border:1px solid #dceae7;background:#fff;border-radius:17px;padding:15px;min-width:0}
+.mal-store-item h3{font-size:14px;font-weight:800;color:#113e42;margin:0 0 6px}
+.mal-store-name{font-size:13px;overflow-wrap:anywhere;color:#31504f;line-height:1.5}
+.mal-store-id{font-size:11px;color:#687f81;overflow-wrap:anywhere;word-break:break-all;margin:8px 0}
+.mal-store-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.mal-store-actions button,.mal-store-actions a{min-height:40px;display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none;padding:8px 12px;border-radius:11px;font-size:12px;font-weight:750;background:#e9f7f2;color:#06695d;border:1px solid #b7ded3;box-sizing:border-box}
+.mal-store-actions button:focus-visible,.mal-store-actions a:focus-visible{outline:3px solid #e2ac54;outline-offset:1px}
+.mal-store-guide{background:#fff7e9;border:1px solid #f0dcae;border-radius:13px;padding:13px 15px;color:#70511d;font-size:13px;line-height:1.6}
+.mal-store-status{display:inline-block;padding:4px 9px;border-radius:20px;font-size:11px;font-weight:750;background:#e7f4ed;color:#076b4b;margin-bottom:9px}
+.mal-store-status.warn{background:#fff2e4;color:#956117}
+@media(max-width:500px){.mal-store-grid{grid-template-columns:1fr}.mal-store-item{padding:13px}.mal-store-actions a,.mal-store-actions button{flex:1}}
+</style>
+<script>
+/* Add a private resource index, without writing IDs into the GitHub frontend. */
+(function(){
+  const previousNav=buildNav,previousRender=render;
+  function escapeStore(v){return esc(String(v==null?'':v));}
+  function safeUrl(url){return /^https:\/\/(?:drive\.google\.com|docs\.google\.com|script\.google\.com)\//.test(String(url||''))?String(url):'';}
+  function storeCard(label,obj,optional){
+    const missing=!obj;
+    const url=obj?safeUrl(obj.url):'';
+    const id=obj&&obj.id?String(obj.id):'';
+    const name=obj?obj.name:'Not yet configured';
+    return '<article class="mal-store-item"><h3>'+escapeStore(label)+'</h3><span class="mal-store-status'+(missing?' warn':'')+'">'+(missing?'Not available':'Linked')+'</span>'+ 
+      '<div class="mal-store-name">'+escapeStore(name)+'</div>'+ 
+      (id?'<div class="mal-store-id">ID: '+escapeStore(id)+'</div>':'')+
+      (obj&&obj.access?'<div class="mal-store-name">Sharing: '+escapeStore(obj.access)+'</div>':'')+
+      (optional?'<div class="mal-store-name">'+escapeStore(optional)+'</div>':'')+
+      '<div class="mal-store-actions">'+(url?'<a href="'+escapeStore(url)+'" target="_blank" rel="noopener noreferrer">↗ Open</a>':'')+
+      (id?'<button type="button" data-storage-copy="'+escapeStore(id)+'">⧉ Copy ID</button>':'')+'</div></article>';
+  }
+  async function renderStorageCentre(){
+    const main=document.getElementById('main');
+    if(!isAdmin()){main.innerHTML='<div class="empty">Admins only</div>';return;}
+    main.innerHTML='<div class="pagehead"><div><h2>Drive & files</h2><div class="sub">Private resource centre — only administrators can view IDs and links.</div></div></div><div class="panel"><div class="panel-body" id="malStoreContent">Loading private Drive inventory…</div></div>';
+    let r;
+    try{r=await api('storageInventory');if(!r||!r.ok)throw new Error(r&&r.error||'Could not load links');}
+    catch(e){const el=document.getElementById('malStoreContent');if(el)el.innerHTML='<div class="mal-store-guide">'+escapeStore(e.message)+'<p>Run the supplied Code.gs and deploy BE V1.8.5. Then open Apps Script and run previewMalipatanaDriveMove().</p></div>';return;}
+    if(PAGE!=='storageCentre')return;
+    const rows=Array.isArray(r.resources)?r.resources:[];
+    let html='<div class="mal-store-guide"><strong>'+(r.migrated?'Central folder is connected.':'Not fully consolidated yet.')+'</strong> ' +
+      'To move existing files safely, run <b>verifyOneMasterWorkbook()</b>, <b>setupIndependentBackupFolder()</b>, <b>previewMalipatanaDriveMove()</b> and then <b>consolidateMalipatanaDrive()</b> in the Apps Script editor. Two ZIP backups of all register tabs are made first (one outside the main folder). No second Google Spreadsheet is created, and no originals are deleted.</div>';
+    html+='<p class="muted small" style="margin-top:14px"><b>One designated workbook:</b> '+escapeStore(String((r.sheets||[]).length))+' register tabs, including '+escapeStore((r.sheets||[]).slice(0,6).join(', '))+'. All active registers are stored in this workbook.</p>';
+    html+='<p class="muted small"><b>Last normal backup:</b> '+escapeStore(r.lastPrimaryBackup||'Not recorded')+
+      ' · <b>Independent recovery backup:</b> '+escapeStore(r.lastIndependentBackup||'Not configured / not recorded')+'</p>';
+    html+='<div class="mal-store-grid" style="margin-top:14px">'+rows.map(x=>storeCard(x.label,x.value,x.inPlace===false?'Not yet in its central destination':'' )).join('')+
+      storeCard('Apps Script editor',r.script)+storeCard('Backend deployment',r.deployment)+'</div>';
+    if(Array.isArray(r.folders)&&r.folders.length){
+      html+='<h3 style="margin:20px 0 10px">All folders under Malipatana root ('+r.folders.length+')</h3>';
+      html+='<p class="muted small">Includes up to 150 folders, up to four levels deep. Only an administrator can see these IDs.</p>';
+      html+='<div class="mal-store-grid">'+r.folders.map(z=>storeCard(z.path,{name:z.name,url:z.url,id:z.id})).join('')+'</div>';
+    }
+    if(r.alternateSpreadsheet){const old=r.alternateSpreadsheet;html+='<div class="mal-store-guide" style="margin-top:14px"><b>Different legacy spreadsheet ID detected:</b> '+escapeStore(old.id)+'. This ID is not confirmed to be a Malipatana workbook and is not moved automatically. Verify it first.</div>';}
+    html+='<p class="muted small" style="margin-top:15px">Keeping everything under one folder simplifies management but is not protection against deleting the parent folder. Keep an independent backup outside this folder.</p>';
+    const target=document.getElementById('malStoreContent');if(!target)return;
+    target.innerHTML=html;
+    target.querySelectorAll('[data-storage-copy]').forEach(button=>button.onclick=async()=>{
+      const id=button.getAttribute('data-storage-copy');
+      try{await navigator.clipboard.writeText(id);toast('ID copied','good');}
+      catch(e){window.prompt('Copy this ID',id);}
+    });
+  }
+  buildNav=function(){
+    previousNav();
+    const side=document.getElementById('sidebar');
+    if(!side||!isAdmin()||side.querySelector('[data-page="storageCentre"]'))return;
+    const b=document.createElement('button');b.className='nav';b.type='button';b.dataset.page='storageCentre';
+    b.innerHTML='<span class="ic">▣</span> Drive & files';b.onclick=()=>go('storageCentre');
+    const settings=side.querySelector('[data-page="settingsList"]');
+    if(settings)settings.after(b);else side.appendChild(b);
+  };
+  render=function(){
+    if(PAGE==='storageCentre'){
+      buildNav();buildTabs();
+      document.querySelectorAll('.nav').forEach(b=>b.classList.toggle('active',b.dataset.page==='storageCentre'));
+      renderStorageCentre();return;
+    }
+    return previousRender();
+  };
+})();
+</script>
+
 </body>
 </html>
