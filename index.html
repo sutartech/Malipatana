@@ -1687,8 +1687,8 @@ body.modalOpen #stickyLayer{opacity:.12;pointer-events:none;filter:saturate(.4)}
    ========================================================================= */
 const CONFIG = {
   API_URL: 'https://script.google.com/macros/s/AKfycbzTy_-uSI9m_vVuv9G2Q8r0t0x2UWcSrkzrnQtDw9odZW_246TxnT7qj39IT1TQwt-O/exec',
-  VERSION: 'FE V3.4.6',
-  EXPECTED_BACKEND: 'BE V1.8.5',
+  VERSION: 'FE V3.4.7',
+  EXPECTED_BACKEND: 'BE V1.8.6',
   IDLE_MINUTES: 30,
   /* Photo shown when no photo has been set in Settings.
      village.jpg sits in the same folder as this file on GitHub. */
@@ -8652,7 +8652,7 @@ async function showEntryList(){
     main.innerHTML='<div class="pagehead"><div><h2>Drive & files</h2><div class="sub">Private resource centre — only administrators can view IDs and links.</div></div></div><div class="panel"><div class="panel-body" id="malStoreContent">Loading private Drive inventory…</div></div>';
     let r;
     try{r=await api('storageInventory');if(!r||!r.ok)throw new Error(r&&r.error||'Could not load links');}
-    catch(e){const el=document.getElementById('malStoreContent');if(el)el.innerHTML='<div class="mal-store-guide">'+escapeStore(e.message)+'<p>Run the supplied Code.gs and deploy BE V1.8.5. Then open Apps Script and run previewMalipatanaDriveMove().</p></div>';return;}
+    catch(e){const el=document.getElementById('malStoreContent');if(el)el.innerHTML='<div class="mal-store-guide">'+escapeStore(e.message)+'<p>Run the supplied Code.gs and deploy BE V1.8.6. Then open Apps Script and run previewMalipatanaDriveMove().</p></div>';return;}
     if(PAGE!=='storageCentre')return;
     const rows=Array.isArray(r.resources)?r.resources:[];
     let html='<div class="mal-store-guide"><strong>'+(r.migrated?'Central folder is connected.':'Not fully consolidated yet.')+'</strong> ' +
