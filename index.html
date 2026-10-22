@@ -1686,9 +1686,9 @@ body.modalOpen #stickyLayer{opacity:.12;pointer-events:none;filter:saturate(.4)}
    Existing JSONP/GET authentication is not ideal for sensitive user credentials.
    ========================================================================= */
 const CONFIG = {
-  API_URL: 'https://script.google.com/macros/s/AKfycbyfxff3MVt3Kw_CA_0aYD477nrAcWXshb9hex1LM_hl62tlrNiX5bGWgsf0Vw73sr-gbg/exec',
-  VERSION: 'FE V3.4.8',
-  EXPECTED_BACKEND: 'BE V1.8.7',
+  API_URL: 'https://script.google.com/macros/s/AKfycbzTy_-uSI9m_vVuv9G2Q8r0t0x2UWcSrkzrnQtDw9odZW_246TxnT7qj39IT1TQwt-O/exec',
+  VERSION: 'FE V3.4.9',
+  EXPECTED_BACKEND: 'BE V1.8.8',
   IDLE_MINUTES: 30,
   /* Photo shown when no photo has been set in Settings.
      village.jpg sits in the same folder as this file on GitHub. */
@@ -7997,6 +7997,10 @@ async function renderEntryLinks(){
  document.getElementById('linkMake').onclick=async()=>{
   const button=document.getElementById('linkMake');button.disabled=true;
   try{
+   const live=await api('health');
+   if(!live || !live.ok || !live.capabilities || !live.capabilities.linkInfo){
+     throw Error('Shared-entry backend is not ready. Deploy BE V1.8.8 to the same /exec URL before creating links.');
+   }
    const event=ev.value,record=(DB.events||[]).find(x=>String(x['Event ID'])===event);
    const r=await api('linkCreate',{kind:kind.value,event,eventName:record?record['Event Name']:'',hours:document.getElementById('linkHours').value,untilDisabled:validity.value==='untilDisabled'?'yes':'no',max:document.getElementById('linkMax').value});
    if(!r.ok)throw Error(r.error||'Unable to create link');
