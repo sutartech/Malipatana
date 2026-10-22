@@ -1687,8 +1687,8 @@ body.modalOpen #stickyLayer{opacity:.12;pointer-events:none;filter:saturate(.4)}
    ========================================================================= */
 const CONFIG = {
   API_URL: 'https://script.google.com/macros/s/AKfycbyfxff3MVt3Kw_CA_0aYD477nrAcWXshb9hex1LM_hl62tlrNiX5bGWgsf0Vw73sr-gbg/exec',
-  VERSION: 'FE V3.5.2',
-  EXPECTED_BACKEND: 'BE V1.8.11',
+  VERSION: 'FE V3.5.3',
+  EXPECTED_BACKEND: 'BE V1.8.12',
   IDLE_MINUTES: 30,
   /* Photo shown when no photo has been set in Settings.
      village.jpg sits in the same folder as this file on GitHub. */
@@ -8007,7 +8007,7 @@ async function renderEntryLinks(){
    const live=await api('health');
    if(!live || !live.ok || !live.capabilities || !live.capabilities.linkInfo ||
       (document.getElementById('linkAllowEdit').checked && (!live.capabilities.linkSearch || !live.capabilities.linkEdit))){
-     throw Error('Shared-entry backend is not ready. Deploy BE V1.8.11 to the same /exec URL before creating links.');
+     throw Error('Shared-entry backend is not ready. Deploy BE V1.8.12 to the same /exec URL before creating links.');
    }
    const event=ev.value,record=(DB.events||[]).find(x=>String(x['Event ID'])===event);
    const r=await api('linkCreate',{kind:kind.value,event,eventName:record?record['Event Name']:'',hours:document.getElementById('linkHours').value,untilDisabled:validity.value==='untilDisabled'?'yes':'no',max:document.getElementById('linkMax').value,allowEdit:document.getElementById('linkAllowEdit').checked?'yes':'no'});
