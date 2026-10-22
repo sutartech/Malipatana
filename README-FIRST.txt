@@ -1,41 +1,38 @@
-MALIPATANA — CONSOLIDATED RELEASE, 22 OCT 2026
-================================================
-FE V2.2.0 / BE V1.6.1 (version is not a proof of live deployment)
+MALIPATANA DASHBOARD — 22 OCTOBER 2026
+Frontend V3.3.0 / Backend V1.7.0
 
-FILES TO USE
-  index.html, public.html, or.js, images and manifest: upload to your GitHub Pages Malipatana repository.
-  Code.gs: replace EVERYTHING inside the existing Google Apps Script Code.gs with this entire file.
-  Do NOT append this code below any existing doGet or doPost.
+CONTENTS
+index.html     Main dashboard (GitHub Pages)
+entry.html     Temporary login-free data entry (GitHub Pages)
+public.html    Public village page (GitHub Pages)
+Code.gs        Complete Apps Script backend — replace the old Code.gs, DO NOT APPEND
+Other static files: icons, manifest, Odia support, village photo
 
-SAFE UPDATE PROCEDURE
-1. Make a copy/backup of your existing Google Sheet, Apps Script source and GitHub repo.
-2. Do not upload Code.gs or any spreadsheet exports to the public GitHub repository.
-3. In the same Apps Script project, replace existing Code.gs (not append), then Save.
-4. From Apps Script editor choose runAll and run it once, authorize permissions.
-   It creates/updates missing columns, does not intentionally clear existing sheets.
-   Check logs for failures.
-5. Deploy > Manage deployments > Edit (pencil) > New version > Deploy.
-   Keep the existing /exec URL. Verify backend health endpoint.
-6. Upload frontend files into your GitHub Pages folder; clear browser site cache or use private browsing.
-7. Sign in and test a harmless edit and refresh, Action Plan, Family Tree, photos and public page.
-8. Once verified, run enableWeeklyBackup in Apps Script editor to enable weekly workbook backup.
+DEPLOY SAFELY
+1. Make independent backups of your live Google Sheet, current Apps Script code and GitHub site.
+2. In Apps Script, replace ALL of old Code.gs with the Code.gs from this package.
+3. Click Save. Choose runAll from the function list and Run once. Authorize requested Sheets/Drive permissions. Inspect execution log for failed steps.
+4. Manage deployments > Edit > New version > Deploy. Keep the current /exec URL. If you create a fresh deployment, update API_URL in BOTH index.html and entry.html.
+5. Upload static frontend files to the ROOT of your existing sutartech/Malipatana GitHub Pages repository. DO NOT upload Code.gs or this README to a public repository if possible; keep Code.gs only in Apps Script.
+6. Clear cached pages/hard refresh. Sign in with existing admin account. Backend should show V1.7.0 and frontend V3.3.0.
+7. Admin menu: Run all setup is now at the top; Shared entry links is beside it.
+8. Create a Family & Members link (e.g. 48 hours); copy the generated URL immediately and test with a newly entered household. Members require the Family ID displayed after family submission. Test duplicates by trying the same data again.
+9. Create an event in Major Expenses first, then create an Event Expenses link and select that event. Test payer different from submitter, new expenditure posting, expiry, and revoke.
+10. Test desktop and narrow mobile screens; verify all existing features and reports before broad distribution.
 
-AUTHENTICATION CHANGE (IMPORTANT)
-- Private bootstrap, edit/delete, uploads, column changes and audit data now require a backend-issued login token.
-- All users must sign in again after update; old saved sessions will not work.
-- Sessions expire within six hours; the app's own idle logout may be shorter.
-- Login remains based on JSONP GET because this frontend uses Apps Script; passwords in login URLs are a security limitation.
-  Avoid distributing admin access widely. For stronger production security, use a proper authenticated server/API.
-- Setup no longer automatically creates the unsafe admin/admin123 default login when Users is empty.
-  For a NEW workbook, create a Users row with a long unique password and Role=Admin, Active=YES.
-  The backend upgrades plaintext on first successful login.
-- Existing accounts and data are preserved by setup.
+SHARED-LINK SAFEGUARDS
+- Each link is a random bearer token. The server stores a SHA-256 hash, never the raw token. Copy the generated link when creating it; it cannot be retrieved afterwards.
+- Admin picks link type, duration 1 to 720 hours, event (expense links), and entry cap; may revoke at any time.
+- Public users can ADD selected records ONLY. They cannot edit/delete or retrieve private registers.
+- Recent five entries are summaries without names, family details or payer details.
+- Duplicate safeguards: family head + house or phone; member name + family (and DOB when provided); expenses same event/date/amount/description/payer (last 50 entries).
+- Warning: name-only duplicate matching is approximate; household cases may require admin review. Links shared with anyone can be abused; use short lifetimes and sensible entry caps.
+- The form requires an internet connection; failed submissions are NOT quietly queued, preventing accidental duplicates.
+- Shared form writes directly into the operational registers (not approval staging). The audit and Entry Source values identify these writes. For high-risk public distribution an approval workflow is recommended.
+- Every family/member shared submission is counted towards the link entry cap separately.
 
-LIMITATIONS / MUST CHECK
-- Static inspection and JavaScript syntax checks were performed; live Apps Script, Drive, and Sheet tests
-  are impossible here without access to the running project. Take a backup before deployment.
-- Existing ledger math from earlier backend is preserved; verify whether emergency and support payments
-  are already also entered in Expenditure, to avoid double subtraction from Available Fund.
-- Existing public settings may show financial data and photos; check settings before public release.
-- Long JSONP GET submissions and photo upload may be constrained by browser/Apps Script limits.
-- This archive contains no real spreadsheet data or credentials.
+IMPORTANT CAVEATS
+- JavaScript syntax checked locally. Live Apps Script, Sheet, Drive and browser end-to-end validation is NOT possible offline.
+- Existing frontend may show FE V3.2.0 and BE V1.5.0 in your screenshot; those labels indicate old published builds, not a completed deployment.
+- If Action Plan says backend needs an update after deploying: confirm /exec URL, rerun runAll(), deploy a new version, and hard refresh. Existing entries are not deleted by runAll.
+- Do not share the backend Apps Script URL publicly beyond the existing GitHub client integration; the new entry.html is the user-facing quick-entry link.

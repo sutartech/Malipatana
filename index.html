@@ -1593,7 +1593,7 @@ body.modalOpen #stickyLayer{opacity:.12;pointer-events:none;filter:saturate(.4)}
    ========================================================================= */
 const CONFIG = {
   API_URL: 'https://script.google.com/macros/s/AKfycbzTy_-uSI9m_vVuv9G2Q8r0t0x2UWcSrkzrnQtDw9odZW_246TxnT7qj39IT1TQwt-O/exec',
-  VERSION: 'FE V3.2.0',
+  VERSION: 'FE V3.3.0',
   IDLE_MINUTES: 30,
   /* Photo shown when no photo has been set in Settings.
      village.jpg sits in the same folder as this file on GitHub. */
@@ -7426,25 +7426,28 @@ buildNav = function(){
     const anchor = ['regularSupport', 'emergency'].map(p => sb.querySelector('.nav[data-page="' + p + '"]')).find(Boolean);
     const b = mk('actionPlan', '◎', local.get('mal_odia') === '1' ? MODULES.actionPlan.odia : 'Action plan', DB && DB.actionPlan ? DB.actionPlan.filter(r => !isDone(r)).length : '');
     if(anchor) anchor.after(b); else sb.appendChild(b);
+
   }
   if(isAdmin()){
     const anchor = sb.querySelector('.nav[data-page="photos"]'), b = mk('runAll', '▶', 'Run all setup', '');
     if(anchor) anchor.after(b); else sb.appendChild(b);
+    const quick=mk('entryLinks','⚡','Shared entry links','');b.after(quick);
+    const first=sb.querySelector('.navgroup');if(first)first.before(b);
   }
 };
 const _render = render;
 render = function(){
-  if(PAGE === 'actionPlan' || PAGE === 'runAll'){
+  if(PAGE === 'actionPlan' || PAGE === 'runAll' || PAGE === 'entryLinks'){
     buildNav(); buildTabs();
     document.querySelectorAll('.nav').forEach(b => b.classList.toggle('active', b.dataset.page === PAGE));
-    return PAGE === 'actionPlan' ? renderActionPlan() : renderRunAll();
+    return PAGE === 'actionPlan' ? renderActionPlan() : PAGE === 'entryLinks' ? renderEntryLinks() : renderRunAll();
   }
   return _render();
 };
 function renderRunAll(){
   const main = $('#main');
   if(!isAdmin()){ main.innerHTML = '<div class="empty"><b>Admins only</b>Ask the village admin.</div>'; return; }
-  const steps = ['Core sheets and settings', 'Change history', 'Major expenses', 'Recurring expenses', 'Life status and date of death on Members', 'Grievances', 'Important days', 'Notice board', 'Subfamilies', 'Photos folder in Drive', 'Family tree columns on Members', 'Action Plan sheets'];
+  const steps = ['Core sheets and settings', 'Change history', 'Major expenses', 'Recurring expenses', 'Life status and date of death on Members', 'Grievances', 'Important days', 'Notice board', 'Subfamilies', 'Photos folder in Drive', 'Family tree columns on Members', 'Action Plan sheets', 'Temporary entry links'];
   main.innerHTML = `<div class="pagehead"><div><h2>Run all setup</h2><div class="sub">Prepares every sheet and column the dashboard uses, in one go. Safe to run again: it only adds what is missing.</div></div></div>
     <div class="panel"><div class="panel-body"><b>What it checks</b><ol class="small" style="line-height:1.8;margin:8px 0 14px 18px">${steps.map(s => '<li>' + esc(s) + '</li>').join('')}</ol>
     <label class="lbl" for="ra_pw">Your admin password</label><input class="input" id="ra_pw" type="password" autocomplete="current-password" style="max-width:320px">
@@ -7502,6 +7505,60 @@ try { initLoginScreen(); } catch(e){ console.warn('login screen:', e); }
     store.del('mal_user');
   } finally { busy(false); }
 })();
+</script>
+<style id="shared-mobile-improvements">
+@media(max-width:760px){
+  .tabbar{padding-bottom:max(env(safe-area-inset-bottom),6px);height:auto;min-height:64px;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:2px;background:#102d3a;box-shadow:0 -5px 24px #071e2b36}
+  .tabbar button{min-height:58px;border-radius:13px;touch-action:manipulation;padding:6px 1px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
+  .tabbar button.on{background:#ffffff16;box-shadow:inset 0 2px 0 #ecb347}
+  .tabbar button .lb{font-size:10px;font-weight:700}
+  .tabbar button .ic{font-size:21px}
+  .main{padding-bottom:calc(90px + env(safe-area-inset-bottom));min-width:0;overflow-wrap:anywhere}
+  .pagehead{flex-wrap:wrap;gap:12px}.panel{max-width:100%}
+  button,.btn,.nav{touch-action:manipulation}
+}
+.shared-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:16px}
+.shared-field{display:flex;flex-direction:column;gap:6px;margin:10px 0}.shared-field input,.shared-field select{padding:12px;border-radius:9px;border:1px solid #b9c9c8;background:white;width:100%;font:inherit}
+.shared-result{word-break:break-all;background:#edf6f4;padding:12px;border-radius:9px;margin-top:12px}
+</style>
+<script>
+async function renderEntryLinks(){
+ const host=document.getElementById('main');
+ if(!USER || String(USER.role||'').toLowerCase()!=='admin'){host.textContent='Admin only';return;}
+ host.innerHTML=`<div class="pagehead"><div><h2>⚡ Shared entry links</h2><div class="sub">Temporary login-free forms for family/member registration or event expenditure</div></div></div>
+ <div class="shared-grid"><section class="panel"><div class="panel-body"><h3>Create shared link</h3>
+ <label class="shared-field">Purpose<select id="linkKind"><option value="family">Family + Member details</option><option value="expense">Major event expenses</option></select></label>
+ <label class="shared-field">Event<select id="linkEvent"></select></label>
+ <label class="shared-field">Validity (hours)<input id="linkHours" type="number" min="1" max="720" value="48"></label>
+ <label class="shared-field">Maximum submissions (0 = unlimited)<input id="linkMax" type="number" min="0" max="5000" value="100"></label>
+ <button class="btn btn-primary" id="linkMake">Create link</button><div id="linkCreated"></div></div></section>
+ <section class="panel"><div class="panel-body"><h3>Existing links</h3><div class="small muted">Saved tokens are not recoverable. Revoke and create a replacement when needed.</div><div id="linkListing">Loading…</div></div></section></div>`;
+ const ev=document.getElementById('linkEvent'),kind=document.getElementById('linkKind');
+ ev.innerHTML='<option value="">Choose event</option>'+(Array.isArray(DB.events)?DB.events:[]).map(x=>'<option value="'+esc(x['Event ID'])+'">'+esc(x['Event Name']||x['Event ID'])+'</option>').join('');
+ const toggle=()=>ev.closest('label').style.display=kind.value==='expense'?'flex':'none';kind.onchange=toggle;toggle();
+ document.getElementById('linkMake').onclick=async()=>{
+  const button=document.getElementById('linkMake');button.disabled=true;
+  try{
+   const event=ev.value,record=(DB.events||[]).find(x=>String(x['Event ID'])===event);
+   const r=await api('linkCreate',{kind:kind.value,event,eventName:record?record['Event Name']:'',hours:document.getElementById('linkHours').value,max:document.getElementById('linkMax').value});
+   if(!r.ok)throw Error(r.error||'Unable to create link');
+   const link=new URL('entry.html',location.href);link.searchParams.set('key',r.key);
+   const out=document.getElementById('linkCreated');out.innerHTML='<div class="shared-result"><b>Copy now — link is shown only once.</b><p id="freshLink"></p><button class="btn" id="copyLink">Copy link</button> <button class="btn" id="shareLink">Share</button></div>';
+   document.getElementById('freshLink').textContent=link.href;
+   document.getElementById('copyLink').onclick=()=>navigator.clipboard.writeText(link.href).then(()=>toast('Link copied','good'));
+   document.getElementById('shareLink').onclick=()=>navigator.share?navigator.share({url:link.href,title:'Malipatana entry form'}):navigator.clipboard.writeText(link.href);
+   await showEntryList();
+  }catch(e){toast(e.message,'bad')}finally{button.disabled=false;}
+ };
+ await showEntryList();
+}
+async function showEntryList(){
+ const host=document.getElementById('linkListing');if(!host)return;
+ try{const r=await api('linkList');if(!r.ok)throw Error(r.error||'Unable to load links');
+ host.innerHTML=(r.links||[]).slice().reverse().map(l=>'<div style="padding:12px 0;border-bottom:1px solid #ddd"><b>'+esc(l.type==='family'?'Families & Members':'Expenses — '+l.event)+'</b><div class="small">'+esc(l.id)+' · '+esc(l.active)+' · Entries '+Number(l.used||0)+' / '+(l.max||'∞')+'</div><div class="small">Expires '+esc(l.expires)+'</div>'+(String(l.active).toLowerCase()==='yes'?'<button class="btn" data-revoke="'+esc(l.id)+'">Revoke</button>':'')+'</div>').join('')||'<p>No links yet.</p>';
+ host.querySelectorAll('[data-revoke]').forEach(b=>b.onclick=async()=>{if(!confirm('Revoke this link now?'))return;const r=await api('linkRevoke',{key:b.dataset.revoke});if(!r.ok)toast(r.error||'Unable to revoke','bad');else{toast('Link revoked','good');showEntryList()}})
+ }catch(e){host.textContent=e.message;}
+}
 </script>
 </body>
 </html>
