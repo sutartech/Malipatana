@@ -1686,9 +1686,9 @@ body.modalOpen #stickyLayer{opacity:.12;pointer-events:none;filter:saturate(.4)}
    Existing JSONP/GET authentication is not ideal for sensitive user credentials.
    ========================================================================= */
 const CONFIG = {
-  API_URL: 'https://script.google.com/macros/s/AKfycbyfxff3MVt3Kw_CA_0aYD477nrAcWXshb9hex1LM_hl62tlrNiX5bGWgsf0Vw73sr-gbg/exec',
-  VERSION: 'FE V3.4.9',
-  EXPECTED_BACKEND: 'BE V1.8.8',
+  API_URL: 'https://script.google.com/macros/s/AKfycbzTy_-uSI9m_vVuv9G2Q8r0t0x2UWcSrkzrnQtDw9odZW_246TxnT7qj39IT1TQwt-O/exec',
+  VERSION: 'FE V3.5.0',
+  EXPECTED_BACKEND: 'BE V1.8.9',
   IDLE_MINUTES: 30,
   /* Photo shown when no photo has been set in Settings.
      village.jpg sits in the same folder as this file on GitHub. */
@@ -7986,6 +7986,7 @@ async function renderEntryLinks(){
  <label class="shared-field">Link validity<select id="linkValidity"><option value="timed">Time-limited</option><option value="untilDisabled">Valid until disabled by admin</option></select></label>
  <label class="shared-field" id="linkHoursField">Validity (hours)<input id="linkHours" type="number" min="1" max="720" value="48"></label>
  <label class="shared-field">Maximum submissions (0 = unlimited)<input id="linkMax" type="number" min="0" max="5000" value="100"></label>
+ <label class="shared-field"><span><input type="checkbox" id="linkAllowEdit" style="width:auto;margin-right:7px"> Allow find/edit of records created through this link (with a per-record edit code)</span></label>
  <button class="btn btn-primary" id="linkMake">Create link</button><div id="linkCreated"></div></div></section>
  <section class="panel"><div class="panel-body"><h3>Existing links</h3><div class="small muted">Saved tokens are not recoverable. Revoke and create a replacement when needed.</div><div id="linkListing">Loading…</div></div></section></div>`;
  const ev=document.getElementById('linkEvent'),kind=document.getElementById('linkKind');
@@ -7998,11 +7999,12 @@ async function renderEntryLinks(){
   const button=document.getElementById('linkMake');button.disabled=true;
   try{
    const live=await api('health');
-   if(!live || !live.ok || !live.capabilities || !live.capabilities.linkInfo){
-     throw Error('Shared-entry backend is not ready. Deploy BE V1.8.8 to the same /exec URL before creating links.');
+   if(!live || !live.ok || !live.capabilities || !live.capabilities.linkInfo ||
+      (document.getElementById('linkAllowEdit').checked && (!live.capabilities.linkSearch || !live.capabilities.linkEdit))){
+     throw Error('Shared-entry backend is not ready. Deploy BE V1.8.9 to the same /exec URL before creating links.');
    }
    const event=ev.value,record=(DB.events||[]).find(x=>String(x['Event ID'])===event);
-   const r=await api('linkCreate',{kind:kind.value,event,eventName:record?record['Event Name']:'',hours:document.getElementById('linkHours').value,untilDisabled:validity.value==='untilDisabled'?'yes':'no',max:document.getElementById('linkMax').value});
+   const r=await api('linkCreate',{kind:kind.value,event,eventName:record?record['Event Name']:'',hours:document.getElementById('linkHours').value,untilDisabled:validity.value==='untilDisabled'?'yes':'no',max:document.getElementById('linkMax').value,allowEdit:document.getElementById('linkAllowEdit').checked?'yes':'no'});
    if(!r.ok)throw Error(r.error||'Unable to create link');
    const link=new URL('entry.html',location.href);link.searchParams.set('key',r.key);
    const out=document.getElementById('linkCreated');out.innerHTML='<div class="shared-result"><b>Copy now — link is shown only once.</b><p id="freshLink"></p><button class="btn" id="copyLink">Copy link</button> <button class="btn" id="shareLink">Share</button></div>';
@@ -8017,7 +8019,7 @@ async function renderEntryLinks(){
 async function showEntryList(){
  const host=document.getElementById('linkListing');if(!host)return;
  try{const r=await api('linkList');if(!r.ok)throw Error(r.error||'Unable to load links');
- host.innerHTML=(r.links||[]).slice().reverse().map(l=>'<div style="padding:12px 0;border-bottom:1px solid #ddd"><b>'+esc(l.type==='family'?'Families & Members':'Expenses — '+l.event)+'</b><div class="small">'+esc(l.id)+' · '+esc(l.active)+' · Entries '+Number(l.used||0)+' / '+(l.max||'∞')+'</div><div class="small">'+(l.expires?'Expires '+esc(l.expires):'<b>Valid until disabled by admin</b>')+'</div>'+(String(l.active).toLowerCase()==='yes'?'<button class="btn" data-revoke="'+esc(l.id)+'">Revoke</button>':'')+'</div>').join('')||'<p>No links yet.</p>';
+ host.innerHTML=(r.links||[]).slice().reverse().map(l=>'<div style="padding:12px 0;border-bottom:1px solid #ddd"><b>'+esc(l.type==='family'?'Families & Members':'Expenses — '+l.event)+'</b><div class="small">'+esc(l.id)+' · '+esc(l.active)+' · Entries '+Number(l.used||0)+' / '+(l.max||'∞')+(l.canEdit?' · Find/Edit enabled':' · Add only')+'</div><div class="small">'+(l.expires?'Expires '+esc(l.expires):'<b>Valid until disabled by admin</b>')+'</div>'+(String(l.active).toLowerCase()==='yes'?'<button class="btn" data-revoke="'+esc(l.id)+'">Revoke</button>':'')+'</div>').join('')||'<p>No links yet.</p>';
  host.querySelectorAll('[data-revoke]').forEach(b=>b.onclick=async()=>{if(!confirm('Revoke this link now?'))return;const r=await api('linkRevoke',{key:b.dataset.revoke});if(!r.ok)toast(r.error||'Unable to revoke','bad');else{toast('Link revoked','good');showEntryList()}})
  }catch(e){host.textContent=e.message;}
 }
