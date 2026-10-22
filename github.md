@@ -35,3 +35,10 @@ Malipatana Redesign.dc.html · support.js · public-notes.json · favicon.svg ·
 ## Sync history
 - 2026-09-12T12:05:00Z — dashboard redesign, photos, major/recurring expenses, admin tools.
 - 2026-09-12T10:04:43Z — first read of the repo.
+
+---
+FE V3.2.0 additions (only index.html changed - upload it, nothing else is needed)
+- Action plan: short term and long term targets, progress log, letters sent with copy enclosed, completed list with remarks, print (colour / highlighter / plain)
+- Family tree: View a family > Family tree, or Families > Print all trees. Father, Mother and Spouse can be set on a member.
+- Ages that grow by themselves when only an age is given
+- Admin > Run all setup (needs the Code.gs edits in Code-gs-edits.txt, backend BE V1.6.0)
