@@ -1686,9 +1686,9 @@ body.modalOpen #stickyLayer{opacity:.12;pointer-events:none;filter:saturate(.4)}
    Existing JSONP/GET authentication is not ideal for sensitive user credentials.
    ========================================================================= */
 const CONFIG = {
-  API_URL: 'https://script.google.com/macros/s/AKfycbyfxff3MVt3Kw_CA_0aYD477nrAcWXshb9hex1LM_hl62tlrNiX5bGWgsf0Vw73sr-gbg/exec',
-  VERSION: 'FE V3.4.7',
-  EXPECTED_BACKEND: 'BE V1.8.6',
+  API_URL: 'https://script.google.com/macros/s/AKfycbzTy_-uSI9m_vVuv9G2Q8r0t0x2UWcSrkzrnQtDw9odZW_246TxnT7qj39IT1TQwt-O/exec',
+  VERSION: 'FE V3.4.8',
+  EXPECTED_BACKEND: 'BE V1.8.7',
   IDLE_MINUTES: 30,
   /* Photo shown when no photo has been set in Settings.
      village.jpg sits in the same folder as this file on GitHub. */
@@ -1828,20 +1828,57 @@ function photoSrcs(u, w){
   ];
 }
 /* <img data-srcs="a|b|c"> — step through the list on each error. */
+/* Load private thumbnail *only when visible*, after checking user access in Apps Script.
+   Legacy publicly available photos keep their earlier URL fallbacks. */
+const MAL_THUMB_PROMISES=new Map();
+let MAL_PHOTO_OBSERVER=null;
+function malPrivatePhotoLookup_(src){
+  if(!USER || !DB)return null;
+  const original=driveId(src);if(!original)return null;
+  const sources=[['members','Members','Member ID'],['families','Families','Family ID'],['notices','Notices','Notice ID']];
+  for(const [key,sheet,idField] of sources){
+    const list=DB[key]||[];
+    if(!Array.isArray(list))continue;
+    const record=list.find(r=>driveId(r['Photo'])===original&&r['Photo Thumbnail']);
+    if(record)return {sheet,id:String(record[idField]||'')};
+  }
+  return null;
+}
+function malGetThumbnail_(info){
+  const key=info.sheet+'|'+info.id;
+  if(!MAL_THUMB_PROMISES.has(key)){
+    MAL_THUMB_PROMISES.set(key,api('photoThumbnail',info).then(r=>{
+      if(!r || !r.ok || !/^data:image\/jpeg;base64,/.test(r.data||''))throw new Error('Thumbnail unavailable');
+      return r.data;
+    }).catch(err=>{MAL_THUMB_PROMISES.delete(key);throw err;}));
+  }
+  return MAL_THUMB_PROMISES.get(key);
+}
+function malLoadPrivateImage_(img,info){
+  if(img.dataset.thumbLoading)return;
+  img.dataset.thumbLoading='1';
+  malGetThumbnail_(info).then(data=>{if(img.isConnected){img.src=data;img.dataset.thumbReady='1';}})
+  .catch(()=>{if(img.isConnected){img.onerror=null;const host=img.closest('.photoav,.cellav,.photobox');if(host)host.classList.add('photofail');}});
+}
 function wirePhotoFallbacks(root){
-  (root || document).querySelectorAll('img[data-srcs]').forEach(img => {
-    if(img.dataset.wired) return;
-    img.dataset.wired = '1';
-    const list = img.dataset.srcs.split('|').filter(Boolean);
-    let i = 0;
-    img.onerror = () => {
-      i++;
-      if(i < list.length){ img.src = list[i]; return; }
-      img.onerror = null;
-      const host = img.closest('.photoav,.cellav,.photobox');
-      if(host) host.classList.add('photofail');
-    };
-    img.src = list[0];
+  (root||document).querySelectorAll('img[data-srcs]').forEach(img=>{
+    if(img.dataset.wired)return;
+    img.dataset.wired='1';
+    const list=img.dataset.srcs.split('|').filter(Boolean);
+    const privateInfo=malPrivatePhotoLookup_(list[0]);
+    if(privateInfo){
+      if(typeof IntersectionObserver==='function'){
+        if(!MAL_PHOTO_OBSERVER)MAL_PHOTO_OBSERVER=new IntersectionObserver(entries=>entries.forEach(e=>{
+          if(e.isIntersecting){MAL_PHOTO_OBSERVER.unobserve(e.target);const info=e.target._malPrivatePhoto;if(info)malLoadPrivateImage_(e.target,info);}
+        }),{rootMargin:'200px'});
+        img._malPrivatePhoto=privateInfo;MAL_PHOTO_OBSERVER.observe(img);
+      }else malLoadPrivateImage_(img,privateInfo);
+      return;
+    }
+    let i=0;
+    img.onerror=()=>{i++;if(i<list.length){img.src=list[i];return;}img.onerror=null;
+      const host=img.closest('.photoav,.cellav,.photobox');if(host)host.classList.add('photofail');};
+    img.src=list[0];
   });
 }
 
@@ -1885,7 +1922,8 @@ async function sendPhoto(key, rec, pending, removing){
     folder: String(rec['Family ID'] || 'Unassigned'),
     name: String(rec['Name'] || rec[m.idField] || 'member'),
     root: photoRoot(), token: (USER && USER.token) || '',
-    mime: pending ? pending.mime : '', data: pending ? pending.data : ''
+    mime: pending ? pending.mime : '', data: pending ? pending.data : '',
+    thumbData: pending ? pending.thumbData : ''
   });
   const idVal = String(rec[m.idField] || '');
   try {
@@ -1896,12 +1934,12 @@ async function sendPhoto(key, rec, pending, removing){
     return;
   }
   /* The POST answer is unreadable (no-cors), so confirm by re-reading the sheet. */
-  for(let i = 0; i < 5; i++){
-    await new Promise(r => setTimeout(r, 3000));
+  for(let i = 0; i < 14; i++){
+    await new Promise(r => setTimeout(r, 3500));
     await refresh(true);
     const row = (DB[key] || []).find(r => String(r[m.idField] || '') === idVal) || {};
     const got = String(row['Photo'] || '').trim();
-    if(pending && got){ render(); toast('Photo saved to Drive', 'good'); return; }
+    if(pending && got && got !== String(rec['Photo']||'')){ render(); toast('Original photo saved in Drive; thumbnail created', 'good'); return; }
     if(!pending && !got){ render(); toast('Photo removed', 'good'); return; }
   }
   render();
@@ -1914,7 +1952,7 @@ function openPhoto(url, caption){
   openModal('<header><div><h3>Photo</h3><div class="sub">' + esc(caption || '') + '</div></div><div class="sp"></div>' +
     '<button class="btn btn-sm" onclick="closeModal()">Close</button></header>' +
     '<div class="body photobox" style="text-align:center"><img class="photofull" data-srcs="' + esc(photoSrcs(url, 1000).join('|')) + '" alt="">' +
-    '<div class="photonote">This photo is in Drive but not viewable here yet. Open it in Drive, or set its sharing to <b>Anyone with the link · Viewer</b>.</div></div>' +
+    '<div class="photonote">The original photo is private. Only people with appropriate Drive access can open it. The dashboard uses a small thumbnail for quick viewing.</div></div>' +
     '<footer><a class="btn" href="' + esc(fullUrl(url)) + '" target="_blank" rel="noreferrer">Open in Drive</a>' +
     '<button class="btn btn-primary" onclick="closeModal()">Done</button></footer>');
   wirePhotoFallbacks(document.getElementById('modal') || document);
@@ -3453,7 +3491,7 @@ const MODULES = {
       { n:'Notice ID', t:'text', auto:true },
       { n:'Title', t:'text', req:true, hint:'A short heading — Raja Parba 2026, New tube well…' },
       { n:'Text', t:'textarea', hint:'The writing villagers should read. A few lines is plenty.' },
-      { n:'Photo', t:'photo', hint:'Saved in the village Google Drive folder' },
+      { n:'Photo', t:'photo', hint:'Original saved privately (up to 20 MB) in Drive; dashboard uses a small thumbnail' },
       { n:'Credit', t:'text', hint:'Whose photo or writing this is, if it should be named' },
       { n:'Date', t:'date', def:'today' },
       { n:'Until', t:'date', hint:'Leave empty to keep it up. After this date it retires itself.' },
@@ -3542,7 +3580,7 @@ const MODULES = {
       { n:'Disability', t:'select', opts:['No','Yes'] },
       { n:'Insurance', t:'select', opts:YESNO },
       { n:'Remarks', t:'textarea' },
-      { n:'Photo', t:'photo', hint:'Saved in the village Google Drive folder' },
+      { n:'Photo', t:'photo', hint:'Original saved privately (up to 20 MB) in Drive; dashboard uses a small thumbnail' },
       { n:'Life Status', t:'select', opts:['Alive','Deceased'], hidden:true },
       { n:'Date of Death', t:'date', hidden:true },
       { n:'Cause of Death', t:'text', hidden:true },
@@ -5095,13 +5133,15 @@ function wireForm(key, rec){
     if(fileEl) fileEl.onchange = async () => {
       const file = fileEl.files && fileEl.files[0];
       if(!file) return;
-      if(!/^image\//.test(file.type)){ toast('Choose an image file', 'bad'); return; }
+      if(!['image/jpeg','image/png','image/webp'].includes(file.type)){ toast('Choose a JPEG, PNG or WebP photo', 'bad'); return; }
+      if(file.size > 20*1024*1024){toast('Original photo must be 20 MB or smaller', 'bad');return;}
       prev.innerHTML = '<span>Reading…</span>';
       try {
-        const d = await shrinkImage(file, photoMaxPx(), 0.82);
-        PENDING_PHOTO = { data: d.split(',')[1], mime: 'image/jpeg' };
+        const d = await shrinkImage(file, 320, 0.70);
+        const raw=await new Promise((resolve,reject)=>{const rd=new FileReader();rd.onload=()=>resolve(rd.result);rd.onerror=()=>reject(Error('Cannot read original'));rd.readAsDataURL(file);});
+        PENDING_PHOTO = { data: String(raw).split(',')[1], mime: file.type, thumbData:d.split(',')[1] };
         REMOVE_PHOTO = false;
-        prev.innerHTML = '<img src="' + d + '" alt="">';
+        prev.innerHTML = '<img src="' + d + '" alt="Thumbnail preview">' + '<div class="fieldnote">Original preserved: '+(file.size/1048576).toFixed(2)+' MB; the dashboard loads the lightweight preview.</div>';
         prev.classList.remove('photofail');
         if(hidden && !hidden.value.trim()) hidden.placeholder = 'Uploading to Drive on save…';
         if(clear) clear.classList.remove('hide');
@@ -7939,22 +7979,26 @@ try { initLoginScreen(); } catch(e){ console.warn('login screen:', e); }
 async function renderEntryLinks(){
  const host=document.getElementById('main');
  if(!USER || String(USER.role||'').toLowerCase()!=='admin'){host.textContent='Admin only';return;}
- host.innerHTML=`<div class="pagehead"><div><h2>⚡ Shared entry links</h2><div class="sub">Temporary login-free forms for family/member registration or event expenditure</div></div></div>
+ host.innerHTML=`<div class="pagehead"><div><h2>⚡ Shared entry links</h2><div class="sub">Admin-controlled login-free forms for family/member registration or event expenditure</div></div></div>
  <div class="shared-grid"><section class="panel"><div class="panel-body"><h3>Create shared link</h3>
  <label class="shared-field">Purpose<select id="linkKind"><option value="family">Family + Member details</option><option value="expense">Major event expenses</option></select></label>
  <label class="shared-field">Event<select id="linkEvent"></select></label>
- <label class="shared-field">Validity (hours)<input id="linkHours" type="number" min="1" max="720" value="48"></label>
+ <label class="shared-field">Link validity<select id="linkValidity"><option value="timed">Time-limited</option><option value="untilDisabled">Valid until disabled by admin</option></select></label>
+ <label class="shared-field" id="linkHoursField">Validity (hours)<input id="linkHours" type="number" min="1" max="720" value="48"></label>
  <label class="shared-field">Maximum submissions (0 = unlimited)<input id="linkMax" type="number" min="0" max="5000" value="100"></label>
  <button class="btn btn-primary" id="linkMake">Create link</button><div id="linkCreated"></div></div></section>
  <section class="panel"><div class="panel-body"><h3>Existing links</h3><div class="small muted">Saved tokens are not recoverable. Revoke and create a replacement when needed.</div><div id="linkListing">Loading…</div></div></section></div>`;
  const ev=document.getElementById('linkEvent'),kind=document.getElementById('linkKind');
  ev.innerHTML='<option value="">Choose event</option>'+(Array.isArray(DB.events)?DB.events:[]).map(x=>'<option value="'+esc(x['Event ID'])+'">'+esc(x['Event Name']||x['Event ID'])+'</option>').join('');
  const toggle=()=>ev.closest('label').style.display=kind.value==='expense'?'flex':'none';kind.onchange=toggle;toggle();
+ const validity=document.getElementById('linkValidity');
+ const syncValidity=()=>{const permanent=validity.value==='untilDisabled';document.getElementById('linkHoursField').style.display=permanent?'none':'flex';document.getElementById('linkMax').value=permanent?'0':'100';};
+ validity.onchange=syncValidity;syncValidity();
  document.getElementById('linkMake').onclick=async()=>{
   const button=document.getElementById('linkMake');button.disabled=true;
   try{
    const event=ev.value,record=(DB.events||[]).find(x=>String(x['Event ID'])===event);
-   const r=await api('linkCreate',{kind:kind.value,event,eventName:record?record['Event Name']:'',hours:document.getElementById('linkHours').value,max:document.getElementById('linkMax').value});
+   const r=await api('linkCreate',{kind:kind.value,event,eventName:record?record['Event Name']:'',hours:document.getElementById('linkHours').value,untilDisabled:validity.value==='untilDisabled'?'yes':'no',max:document.getElementById('linkMax').value});
    if(!r.ok)throw Error(r.error||'Unable to create link');
    const link=new URL('entry.html',location.href);link.searchParams.set('key',r.key);
    const out=document.getElementById('linkCreated');out.innerHTML='<div class="shared-result"><b>Copy now — link is shown only once.</b><p id="freshLink"></p><button class="btn" id="copyLink">Copy link</button> <button class="btn" id="shareLink">Share</button></div>';
@@ -7969,7 +8013,7 @@ async function renderEntryLinks(){
 async function showEntryList(){
  const host=document.getElementById('linkListing');if(!host)return;
  try{const r=await api('linkList');if(!r.ok)throw Error(r.error||'Unable to load links');
- host.innerHTML=(r.links||[]).slice().reverse().map(l=>'<div style="padding:12px 0;border-bottom:1px solid #ddd"><b>'+esc(l.type==='family'?'Families & Members':'Expenses — '+l.event)+'</b><div class="small">'+esc(l.id)+' · '+esc(l.active)+' · Entries '+Number(l.used||0)+' / '+(l.max||'∞')+'</div><div class="small">Expires '+esc(l.expires)+'</div>'+(String(l.active).toLowerCase()==='yes'?'<button class="btn" data-revoke="'+esc(l.id)+'">Revoke</button>':'')+'</div>').join('')||'<p>No links yet.</p>';
+ host.innerHTML=(r.links||[]).slice().reverse().map(l=>'<div style="padding:12px 0;border-bottom:1px solid #ddd"><b>'+esc(l.type==='family'?'Families & Members':'Expenses — '+l.event)+'</b><div class="small">'+esc(l.id)+' · '+esc(l.active)+' · Entries '+Number(l.used||0)+' / '+(l.max||'∞')+'</div><div class="small">'+(l.expires?'Expires '+esc(l.expires):'<b>Valid until disabled by admin</b>')+'</div>'+(String(l.active).toLowerCase()==='yes'?'<button class="btn" data-revoke="'+esc(l.id)+'">Revoke</button>':'')+'</div>').join('')||'<p>No links yet.</p>';
  host.querySelectorAll('[data-revoke]').forEach(b=>b.onclick=async()=>{if(!confirm('Revoke this link now?'))return;const r=await api('linkRevoke',{key:b.dataset.revoke});if(!r.ok)toast(r.error||'Unable to revoke','bad');else{toast('Link revoked','good');showEntryList()}})
  }catch(e){host.textContent=e.message;}
 }
@@ -8622,12 +8666,70 @@ async function showEntryList(){
 .mal-store-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 .mal-store-actions button,.mal-store-actions a{min-height:40px;display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none;padding:8px 12px;border-radius:11px;font-size:12px;font-weight:750;background:#e9f7f2;color:#06695d;border:1px solid #b7ded3;box-sizing:border-box}
 .mal-store-actions button:focus-visible,.mal-store-actions a:focus-visible{outline:3px solid #e2ac54;outline-offset:1px}
+.mal-photo-gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(125px,1fr));gap:10px}
+.mal-photo-tile{overflow:hidden;background:#f5faf8;border:1px solid #d9e8e2;border-radius:12px}
+.mal-photo-tile img{display:block;width:100%;height:114px;object-fit:cover;background:#e1eeea}
+.mal-photo-caption{display:grid;gap:3px;padding:9px;font-size:11px;color:#425c56;overflow-wrap:anywhere}
+.mal-photo-caption b{color:#124e45;font-size:12px}
+.mal-photo-caption a{color:#077265;font-weight:750}
 .mal-store-guide{background:#fff7e9;border:1px solid #f0dcae;border-radius:13px;padding:13px 15px;color:#70511d;font-size:13px;line-height:1.6}
 .mal-store-status{display:inline-block;padding:4px 9px;border-radius:20px;font-size:11px;font-weight:750;background:#e7f4ed;color:#076b4b;margin-bottom:9px}
 .mal-store-status.warn{background:#fff2e4;color:#956117}
 @media(max-width:500px){.mal-store-grid{grid-template-columns:1fr}.mal-store-item{padding:13px}.mal-store-actions a,.mal-store-actions button{flex:1}}
 </style>
 <script>
+/* Admin-only Photo Library. Originals are kept private; thumbnails are fetched
+   only after an authenticated request. This never writes Drive IDs into GitHub. */
+window.malWirePhotoLibrary_=function(target){
+  const btn=target.querySelector('#malPhotoUpload'),status=target.querySelector('#malPhotoUploadStatus');
+  async function refreshGallery(){
+    const gallery=target.querySelector('#malPhotoGallery');if(!gallery)return;
+    try{
+      const r=await api('photoLibraryList');if(!r||!r.ok)throw Error(r&&r.error||'Gallery unavailable');
+      const photos=(r.photos||[]).slice(0,40);
+      gallery.innerHTML=photos.map(p=>'<article class="mal-photo-tile"><img alt="Thumbnail" data-gallery-id="'+esc(p.id)+'" loading="lazy"><div class="mal-photo-caption"><b>'+esc(p.title||'Photo')+'</b><span>'+esc(p.category||'')+' / '+esc(p.folder||'')+'</span><span>'+((Number(p.bytes)||0)/1048576).toFixed(2)+' MB original</span><a href="'+esc(fullUrl(p.original||''))+'" target="_blank" rel="noopener noreferrer">Open original in Drive ↗</a></div></article>').join('')||'<p class="muted">No photos uploaded in the library yet.</p>';
+      gallery.querySelectorAll('[data-gallery-id]').forEach(img=>{
+        const info={sheet:'Photo Library',id:img.dataset.galleryId};
+        if(typeof IntersectionObserver==='function'){
+          const ob=new IntersectionObserver(entries=>entries.forEach(en=>{
+            if(en.isIntersecting){ob.unobserve(en.target);ob.disconnect();malLoadPrivateImage_(en.target,info);}
+          }),{rootMargin:'180px'});ob.observe(img);
+        }else malLoadPrivateImage_(img,info);
+      });
+    }catch(e){gallery.textContent=e.message;}
+  }
+  btn.onclick=async()=>{
+    const file=target.querySelector('#malPhotoFile').files[0];
+    if(!file){status.textContent='Choose a photo first.';return;}
+    if(!['image/jpeg','image/png','image/webp'].includes(file.type)){status.textContent='Select JPEG, PNG or WebP.';return;}
+    if(file.size>20*1024*1024){status.textContent='Maximum original size is 20 MB.';return;}
+    btn.disabled=true;status.textContent='Preparing original and thumbnail…';
+    try{
+      const small=await shrinkImage(file,320,.70);
+      const data=await new Promise((resolve,reject)=>{const f=new FileReader();f.onload=()=>resolve(String(f.result).split(',')[1]);f.onerror=()=>reject(new Error('Cannot read photo'));f.readAsDataURL(file);});
+      const form=new URLSearchParams({action:'uploadLibraryPhoto',token:USER.token,category:target.querySelector('#malPhotoCategory').value,
+        sub:target.querySelector('#malPhotoSub').value,title:target.querySelector('#malPhotoTitle').value||file.name,
+        mime:file.type,data,thumbData:small.split(',')[1]});
+      // Capture baseline BEFORE starting upload, or a fast upload could be missed.
+      const known=new Set();
+      try{const before=await api('photoLibraryList');(before.photos||[]).forEach(x=>known.add(x.id));}
+      catch(e){throw new Error('Cannot verify existing album. Upload was not started.');}
+      status.textContent='Uploading '+(file.size/1048576).toFixed(2)+' MB original to private Drive. Keep this page open…';
+      await fetch(CONFIG.API_URL,{method:'POST',mode:'no-cors',body:form});
+      // Browser cannot read cross-origin POST response; confirm via fresh album list.
+      let found=false;
+      for(let i=0;i<12;i++){
+        await new Promise(resolve=>setTimeout(resolve,4000));
+        const result=await api('photoLibraryList');
+        if((result.photos||[]).some(x=>!known.has(x.id)&&String(x.title||'')===String(target.querySelector('#malPhotoTitle').value||file.name).replace(/[\\/:*?"<>|\u0000-\u001f]/g,' ').trim().slice(0,80))){found=true;break;}
+      }
+      status.textContent=found?'Photo saved; original is private and thumbnail is ready.':'Upload sent; confirmation unavailable. Check Drive before retrying to avoid duplicates.';
+      await refreshGallery();
+    }catch(e){status.textContent='Upload could not be confirmed: '+e.message+'; check Drive before retrying.';}
+    finally{btn.disabled=false;}
+  };
+  refreshGallery();
+};
 /* Add a private resource index, without writing IDs into the GitHub frontend. */
 (function(){
   const previousNav=buildNav,previousRender=render;
@@ -8652,7 +8754,7 @@ async function showEntryList(){
     main.innerHTML='<div class="pagehead"><div><h2>Drive & files</h2><div class="sub">Private resource centre — only administrators can view IDs and links.</div></div></div><div class="panel"><div class="panel-body" id="malStoreContent">Loading private Drive inventory…</div></div>';
     let r;
     try{r=await api('storageInventory');if(!r||!r.ok)throw new Error(r&&r.error||'Could not load links');}
-    catch(e){const el=document.getElementById('malStoreContent');if(el)el.innerHTML='<div class="mal-store-guide">'+escapeStore(e.message)+'<p>Run the supplied Code.gs and deploy BE V1.8.6. Then open Apps Script and run previewMalipatanaDriveMove().</p></div>';return;}
+    catch(e){const el=document.getElementById('malStoreContent');if(el)el.innerHTML='<div class="mal-store-guide">'+escapeStore(e.message)+'<p>Run the supplied Code.gs and deploy BE V1.8.7. Then open Apps Script and run previewMalipatanaDriveMove().</p></div>';return;}
     if(PAGE!=='storageCentre')return;
     const rows=Array.isArray(r.resources)?r.resources:[];
     let html='<div class="mal-store-guide"><strong>'+(r.migrated?'Central folder is connected.':'Not fully consolidated yet.')+'</strong> ' +
@@ -8662,6 +8764,14 @@ async function showEntryList(){
       ' · <b>Independent recovery backup:</b> '+escapeStore(r.lastIndependentBackup||'Not configured / not recorded')+'</p>';
     html+='<div class="mal-store-grid" style="margin-top:14px">'+rows.map(x=>storeCard(x.label,x.value,x.inPlace===false?'Not yet in its central destination':'' )).join('')+
       storeCard('Apps Script editor',r.script)+storeCard('Backend deployment',r.deployment)+'</div>';
+    html+='<section class="panel" style="margin-top:16px"><div class="panel-body">'+
+      '<h3>📷 Photo library — save original up to 20 MB</h3><p class="muted small">Original stays private in the chosen Drive folder. Only a 320px thumbnail loads on this dashboard.</p>'+
+      '<div class="formgrid"><label class="lbl">Category<select class="input" id="malPhotoCategory"><option>Village</option><option>Events</option><option>Members</option><option>Community</option><option>Documents</option></select></label>'+
+      '<label class="lbl">Subfolder<input class="input" id="malPhotoSub" value="General" maxlength="80"></label>'+
+      '<label class="lbl wide">Photo title<input class="input" id="malPhotoTitle" placeholder="e.g. Raja Parba 2026" maxlength="80"></label>'+
+      '<label class="lbl wide">Choose original image (JPEG, PNG or WebP)<input class="input" id="malPhotoFile" type="file" accept="image/jpeg,image/png,image/webp"></label></div>'+
+      '<button class="btn btn-primary" id="malPhotoUpload">Upload original + thumbnail</button><p class="muted small" id="malPhotoUploadStatus"></p>'+
+      '<h4 style="margin-top:18px">Recent gallery</h4><div class="mal-photo-gallery" id="malPhotoGallery">Loading…</div></div></section>';
     if(Array.isArray(r.folders)&&r.folders.length){
       html+='<h3 style="margin:20px 0 10px">All folders under Malipatana root ('+r.folders.length+')</h3>';
       html+='<p class="muted small">Includes up to 150 folders, up to four levels deep. Only an administrator can see these IDs.</p>';
@@ -8671,6 +8781,7 @@ async function showEntryList(){
     html+='<p class="muted small" style="margin-top:15px">Keeping everything under one folder simplifies management but is not protection against deleting the parent folder. Keep an independent backup outside this folder.</p>';
     const target=document.getElementById('malStoreContent');if(!target)return;
     target.innerHTML=html;
+    window.malWirePhotoLibrary_(target);
     target.querySelectorAll('[data-storage-copy]').forEach(button=>button.onclick=async()=>{
       const id=button.getAttribute('data-storage-copy');
       try{await navigator.clipboard.writeText(id);toast('ID copied','good');}
