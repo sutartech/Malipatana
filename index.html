@@ -1547,6 +1547,29 @@ body.modalOpen #stickyLayer{opacity:.12;pointer-events:none;filter:saturate(.4)}
 @media(max-width:650px){.myverify-head{width:39px;min-width:39px;height:39px;max-width:39px;padding:0;font-size:0;overflow:hidden;line-height:1}.myverify-head::before{content:"✓";font-size:21px}
  .mal-verify-code .input{max-width:140px}}
 </style>
+<style id="malLiveDateBarCSS">
+/* MALIPATANA V3.5.10 — prominent live Indian date/time, on every signed-in page. */
+#app .mal-live-datetime{
+  position:sticky;top:64px;z-index:29;
+  box-sizing:border-box;display:flex;align-items:center;justify-content:center;
+  min-height:39px;padding:6px 14px;
+  background:linear-gradient(100deg,#FFF8E9 0%,#EFF8F4 50%,#FFF8E9 100%);
+  color:#124E49;border-bottom:1px solid #DFE8DD;
+  box-shadow:0 2px 9px rgba(21,55,51,.055);
+  font-family:var(--body);font-variant-numeric:tabular-nums;
+  font-weight:800;letter-spacing:.012em;font-size:14px;line-height:1.4;
+  text-align:center;
+}
+#app .mal-live-datetime time{display:block;max-width:100%;white-space:nowrap}
+#app .sidebar{top:103px;height:calc(100dvh - 103px);min-height:calc(100dvh - 103px)}
+#app .scrim.show{top:103px}
+@media(max-width:860px){
+  #app .mal-live-datetime{top:64px;min-height:38px;padding:7px 8px;font-size:clamp(12px,3.3vw,14px)}
+  #app .sidebar{top:102px;height:calc(100dvh - 102px);min-height:calc(100dvh - 102px)}
+  #app .scrim.show{top:102px}
+}
+@media print{#app .mal-live-datetime{position:static;box-shadow:none;background:#fff}}
+</style>
 </head>
 <body>
 
@@ -1657,6 +1680,10 @@ body.modalOpen #stickyLayer{opacity:.12;pointer-events:none;filter:saturate(.4)}
     <div class="whochip"><span class="avatar" id="avatar">–</span><span><b id="whoName"></b><span class="role" id="whoRole"></span></span></div>
     <button class="iconbtn" id="logoutBtn" title="Sign out" aria-label="Sign out">&#9099;</button>
   </header>
+  <!-- Current local date/time in India: display only, never stored in registers -->
+  <div class="mal-live-datetime" id="malLiveDateBar" role="status" aria-label="Current date and time in India">
+    <time id="malLiveDateTime" aria-live="off">◆ Date &amp; time loading…</time>
+  </div>
   <div class="shell">
     <aside class="sidebar" id="sidebar"></aside>
     <div class="scrim" id="scrim"></div>
@@ -1741,8 +1768,8 @@ body.modalOpen #stickyLayer{opacity:.12;pointer-events:none;filter:saturate(.4)}
    ========================================================================= */
 const CONFIG = {
   API_URL: 'https://script.google.com/macros/s/AKfycbyfxff3MVt3Kw_CA_0aYD477nrAcWXshb9hex1LM_hl62tlrNiX5bGWgsf0Vw73sr-gbg/exec',
-  VERSION: 'FE V3.5.8',
-  EXPECTED_BACKEND: 'BE V1.8.13',
+  VERSION: 'FE V3.5.10',
+  EXPECTED_BACKEND: 'BE V1.8.14',
   IDLE_MINUTES: 30,
   /* Photo shown when no photo has been set in Settings.
      village.jpg sits in the same folder as this file on GitHub. */
@@ -8067,7 +8094,7 @@ async function renderEntryLinks(){
  <label class="shared-field">Maximum submissions (0 = unlimited)<input id="linkMax" type="number" min="0" max="5000" value="100"></label>
  <label class="shared-field"><span><input type="checkbox" id="linkAllowEdit" style="width:auto;margin-right:7px"> Allow find/edit of records created through this link (with a per-record edit code)</span></label>
  <button class="btn btn-primary" id="linkMake">Create link</button><div id="linkCreated"></div></div></section>
- <section class="panel"><div class="panel-body"><h3>Existing links</h3><div class="small muted">Saved tokens are not recoverable. Revoke and create a replacement when needed.</div><div id="linkListing">Loading…</div></div></section></div>`;
+ <section class="panel"><div class="panel-body"><h3>Existing links</h3><div class="small muted">Copy any active new link later. Older links created before this update remain valid, but their secret cannot be reconstructed; create a replacement if needed.</div><div id="linkListing">Loading…</div></div></section></div>`;
  const ev=document.getElementById('linkEvent'),kind=document.getElementById('linkKind');
  ev.innerHTML='<option value="">Choose event</option>'+(Array.isArray(DB.events)?DB.events:[]).map(x=>'<option value="'+esc(x['Event ID'])+'">'+esc(x['Event Name']||x['Event ID'])+'</option>').join('');
  const toggle=()=>ev.closest('label').style.display=kind.value==='expense'?'flex':'none';kind.onchange=toggle;toggle();
@@ -8080,13 +8107,13 @@ async function renderEntryLinks(){
    const live=await api('health');
    if(!live || !live.ok || !live.capabilities || !live.capabilities.linkInfo ||
       (document.getElementById('linkAllowEdit').checked && (!live.capabilities.linkSearch || !live.capabilities.linkEdit))){
-     throw Error('Shared-entry backend is not ready. Deploy BE V1.8.13 to the same /exec URL before creating links.');
+     throw Error('Shared-entry backend is not ready. Deploy BE V1.8.14 to the same /exec URL before creating links.');
    }
    const event=ev.value,record=(DB.events||[]).find(x=>String(x['Event ID'])===event);
    const r=await api('linkCreate',{kind:kind.value,event,eventName:record?record['Event Name']:'',hours:document.getElementById('linkHours').value,untilDisabled:validity.value==='untilDisabled'?'yes':'no',max:document.getElementById('linkMax').value,allowEdit:document.getElementById('linkAllowEdit').checked?'yes':'no'});
    if(!r.ok)throw Error(r.error||'Unable to create link');
    const link=new URL('entry.html',location.href);link.searchParams.set('key',r.key);
-   const out=document.getElementById('linkCreated');out.innerHTML='<div class="shared-result"><b>Copy now — link is shown only once.</b><p id="freshLink"></p><button class="btn" id="copyLink">Copy link</button> <button class="btn" id="shareLink">Share</button></div>';
+   const out=document.getElementById('linkCreated');out.innerHTML='<div class="shared-result"><b>Link created — you can also copy it later from Existing links.</b><p id="freshLink"></p><button class="btn" id="copyLink">Copy link</button> <button class="btn" id="shareLink">Share</button></div>';
    document.getElementById('freshLink').textContent=link.href;
    document.getElementById('copyLink').onclick=()=>navigator.clipboard.writeText(link.href).then(()=>toast('Link copied','good'));
    document.getElementById('shareLink').onclick=()=>navigator.share?navigator.share({url:link.href,title:'Malipatana entry form'}):navigator.clipboard.writeText(link.href);
@@ -8097,11 +8124,51 @@ async function renderEntryLinks(){
 }
 async function showEntryList(){
  const host=document.getElementById('linkListing');if(!host)return;
- try{const r=await api('linkList');if(!r.ok)throw Error(r.error||'Unable to load links');
- host.innerHTML=(r.links||[]).slice().reverse().map(l=>'<div style="padding:12px 0;border-bottom:1px solid #ddd"><b>'+esc(l.type==='family'?'Families & Members':'Expenses — '+l.event)+'</b><div class="small">'+esc(l.id)+' · '+esc(l.active)+' · Entries '+Number(l.used||0)+' / '+(l.max||'∞')+(l.canEdit?' · Find/Edit enabled':' · Add only')+'</div><div class="small">'+(l.expires?'Expires '+esc(l.expires):'<b>Valid until disabled by admin</b>')+'</div>'+(String(l.active).toLowerCase()==='yes'?'<button class="btn" data-revoke="'+esc(l.id)+'">Revoke</button>':'')+'</div>').join('')||'<p>No links yet.</p>';
- host.querySelectorAll('[data-revoke]').forEach(b=>b.onclick=async()=>{if(!confirm('Revoke this link now?'))return;const r=await api('linkRevoke',{key:b.dataset.revoke});if(!r.ok)toast(r.error||'Unable to revoke','bad');else{toast('Link revoked','good');showEntryList()}})
+ try{
+  const r=await api('linkList');if(!r.ok)throw Error(r.error||'Unable to load links');
+  const links=(r.links||[]).slice().reverse();
+  host.innerHTML=links.map(l=>{
+   const active=String(l.active||'').toLowerCase()==='yes';
+   const usage='Entries '+Number(l.used||0)+' / '+(l.max||'∞');
+   const old=active&&!l.recoverable;
+   return '<div class="mal-saved-link" style="padding:13px 0;border-bottom:1px solid #e1e8e3">'+
+    '<b>'+esc(l.type==='family'?'Families & Members':'Expenses — '+(l.event||''))+'</b>'+
+    '<div class="small">'+esc(l.id)+' · '+esc(l.active)+' · '+usage+(l.canEdit?' · Find/Edit enabled':' · Add only')+'</div>'+
+    '<div class="small">'+(l.expires?'Expires '+esc(l.expires):'<b>Valid until disabled by admin</b>')+'</div>'+
+    (old?'<div class="small muted">Older link: its original URL cannot be recovered. You may revoke it and create a replacement.</div>':'')+
+    '<div style="display:flex;flex-wrap:wrap;gap:7px;margin-top:8px">'+
+    (l.canCopy?'<button class="btn btn-sm" data-link-copy="'+esc(l.id)+'">⧉ Copy link</button> <button class="btn btn-sm" data-link-share="'+esc(l.id)+'">Share</button>':'')+
+    (active?'<button class="btn btn-sm" data-revoke="'+esc(l.id)+'">Revoke</button>':'')+'</div></div>';
+  }).join('')||'<p>No links yet.</p>';
+  async function retrieveUrl(button){
+   button.disabled=true;
+   try{
+    const result=await api('linkGet',{id:button.dataset.linkCopy||button.dataset.linkShare});
+    if(!result||!result.ok)throw Error(result&&result.error||'Could not retrieve link');
+    const url=new URL('entry.html',location.href);url.searchParams.set('key',result.key);
+    return url.href;
+   }finally{button.disabled=false;}
+  }
+  async function copyOrShow(url){
+   try{await navigator.clipboard.writeText(url);toast('Active link copied','good');}
+   catch(e){window.prompt('Copy this active link:',url);}
+  }
+  host.querySelectorAll('[data-link-copy]').forEach(b=>b.onclick=async()=>{
+   try{await copyOrShow(await retrieveUrl(b))}catch(e){toast(e.message,'bad')}
+  });
+  host.querySelectorAll('[data-link-share]').forEach(b=>b.onclick=async()=>{
+   try{const url=await retrieveUrl(b);if(navigator.share){try{await navigator.share({title:'Malipatana shared entry',url})}catch(e){if(e.name!=='AbortError')await copyOrShow(url)}}else await copyOrShow(url);}
+   catch(e){toast(e.message,'bad')}
+  });
+  host.querySelectorAll('[data-revoke]').forEach(b=>b.onclick=async()=>{
+   if(!confirm('Revoke this link now? Anyone using a saved copy will lose access.'))return;
+   b.disabled=true;
+   try{const r=await api('linkRevoke',{key:b.dataset.revoke});if(!r.ok)throw Error(r.error||'Unable to revoke');toast('Link revoked','good');await showEntryList();}
+   catch(e){toast(e.message,'bad');b.disabled=false;}
+  });
  }catch(e){host.textContent=e.message;}
 }
+
 </script>
 <style id="mobile-compact-oct22">
 /* MALIPATANA FE V3.3.5 · compact Android-friendly nav based on 20-Oct design.
@@ -9147,6 +9214,40 @@ table.grid tbody tr:hover td:first-child{background:#EEF8F5}
     const group=active && active.closest('.ux-navsection');
     if(group)group.open=true;
   };
+})();
+</script>
+<script id="malLiveClockScript">
+/* Asia/Kolkata is explicit so that the same village date and time appears
+   when a villager opens Malipatana from outside India. Not user-editable. */
+(function(){
+  'use strict';
+  const el=document.getElementById('malLiveDateTime');
+  if(!el)return;
+  const dateFmt=new Intl.DateTimeFormat('en-GB',{
+    timeZone:'Asia/Kolkata',day:'numeric',month:'short',year:'numeric',weekday:'long'
+  });
+  const timeFmt=new Intl.DateTimeFormat('en-US',{
+    timeZone:'Asia/Kolkata',hour:'numeric',minute:'2-digit',hour12:true
+  });
+  function ordinal(n){
+    const d=n%10, t=n%100;
+    return n+(t>=11&&t<=13?'th':d===1?'st':d===2?'nd':d===3?'rd':'th');
+  }
+  function render(){
+    const now=new Date();
+    const parts=Object.fromEntries(dateFmt.formatToParts(now)
+      .filter(p=>p.type!=='literal').map(p=>[p.type,p.value]));
+    const text='◆ '+ordinal(Number(parts.day))+'-'+parts.month+'-'+parts.year+
+      ' ('+parts.weekday+') │ '+timeFmt.format(now).replace(/\s+/g,' ').toUpperCase();
+    if(el.textContent!==text)el.textContent=text;
+    el.dateTime=now.toISOString();
+    el.title='India Standard Time (IST, UTC+05:30)';
+  }
+  render();
+  const tick=setInterval(()=>{if(!document.hidden)render()},20000);
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)render()});
+  window.addEventListener('focus',render);
+  window.addEventListener('pagehide',()=>clearInterval(tick),{once:true});
 })();
 </script>
 </body>
