@@ -1653,7 +1653,7 @@ body.modalOpen #stickyLayer{opacity:.12;pointer-events:none;filter:saturate(.4)}
     <div class="formside">
       <div class="kicker">VILLAGE COMMITTEE ACCESS</div>
       <h3>Welcome</h3>
-      <p class="lead">Sign in using your username, verified mobile number or verified email address.</p>
+      <p class="lead">Sign in with username, registered mobile + password, or verified email + password.</p>
 
       <div class="formbox">
         <div class="field">
@@ -1673,14 +1673,14 @@ body.modalOpen #stickyLayer{opacity:.12;pointer-events:none;filter:saturate(.4)}
         <div id="loginMsg" class="msg"></div>
         <div class="mal-login-divider"><span>OR</span></div>
         <button type="button" id="forgotLoginBtn" class="mal-otp-launch"><span aria-hidden="true">✉</span> Sign in directly with OTP</button>
-        <p class="mal-otp-tiny">No username or password required for verified-contact OTP sign-in.</p>
-        <button type="button" id="malResetLaunch" class="mal-reset-launch">Forgot password? Reset with verified email / mobile OTP</button>
+        <p class="mal-otp-tiny">No username or password required for verified-email OTP sign-in.</p>
+        <button type="button" id="malResetLaunch" class="mal-reset-launch">Forgot password? Reset with email OTP</button>
         <section id="malOtpPanel" class="mal-otp-panel" hidden aria-label="One-time code sign-in">
           <div class="mal-otp-title">Sign in with a verification code</div>
-          <p class="mal-otp-help">Enter your verified email or mobile number. If you have not verified it yet, sign in with your password and choose My verification. Codes expire after 5 minutes.</p>
-          <label class="lbl" for="malOtpContact">Verified email or mobile</label>
-          <input id="malOtpContact" class="input" type="text" autocomplete="off" placeholder="Email address or mobile number">
-          <div class="mal-otp-switch" id="malOtpSwitch"><label><input type="radio" name="malOtpChannel" value="email" checked> Email</label><label hidden><input type="radio" name="malOtpChannel" value="sms"> SMS</label></div>
+          <p class="mal-otp-help">Enter your verified email address. If not verified, sign in with your password and select Verify email. Codes expire after 5 minutes.</p>
+          <label class="lbl" for="malOtpContact">Verified email address</label>
+          <input id="malOtpContact" class="input" type="email" inputmode="email" autocomplete="email" maxlength="254" placeholder="Email address">
+          <p class="mal-otp-tiny">Email OTP only — no SMS charges.</p>
           <button type="button" class="mal-otp-send" id="malSendOtp">Send code</button>
           <div id="malOtpCodeRow" hidden>
             <label class="lbl" for="malOtpCode">6-digit code</label>
@@ -1724,7 +1724,7 @@ body.modalOpen #stickyLayer{opacity:.12;pointer-events:none;filter:saturate(.4)}
     <div class="sp"></div>
     <a class="iconbtn pubjump" href="public.html" target="_blank" rel="noreferrer" title="Open the public page" aria-label="Open the public page">&#127760;</a>
     <button class="iconbtn" id="refreshBtn" title="Reload data from the sheet" aria-label="Reload">&#8635;</button>
-    <button type="button" class="myverify-head" id="malMyVerifyBtn" title="Verify my email and mobile" aria-label="My contact verification">✓ Verify contacts</button>
+    <button type="button" class="myverify-head" id="malMyVerifyBtn" title="Verify my email" aria-label="Verify email address">✓ Verify email</button>
     <div class="whochip"><span class="avatar" id="avatar">–</span><span><b id="whoName"></b><span class="role" id="whoRole"></span></span></div>
     <button class="iconbtn" id="logoutBtn" title="Sign out" aria-label="Sign out">&#9099;</button>
   </header>
@@ -1816,8 +1816,8 @@ body.modalOpen #stickyLayer{opacity:.12;pointer-events:none;filter:saturate(.4)}
    ========================================================================= */
 const CONFIG = {
   API_URL: 'https://script.google.com/macros/s/AKfycbyfxff3MVt3Kw_CA_0aYD477nrAcWXshb9hex1LM_hl62tlrNiX5bGWgsf0Vw73sr-gbg/exec',
-  VERSION: 'FE V3.5.11',
-  EXPECTED_BACKEND: 'BE V1.8.14',
+  VERSION: 'FE V3.5.12',
+  EXPECTED_BACKEND: 'BE V1.8.15',
   IDLE_MINUTES: 30,
   /* Photo shown when no photo has been set in Settings.
      village.jpg sits in the same folder as this file on GitHub. */
@@ -3160,12 +3160,7 @@ function malOtpStatus(text,bad){
 async function malReadOtpOptions(){
   try{
     const r=await api('loginOptions');if(!r||!r.ok)return;
-    const e=document.querySelector('#malOtpSwitch input[value="email"]');
-    const s=document.querySelector('#malOtpSwitch input[value="sms"]');
-    if(e)e.parentElement.hidden=!r.otpEmail;
-    if(s)s.parentElement.hidden=!r.otpSms;
-    if(e&&s&&!r.otpEmail&&r.otpSms)s.checked=true;
-    if(!r.otpEmail&&!r.otpSms)malOtpStatus('OTP recovery is not enabled. Contact the village admin.',true);
+    if(!r.otpEmail)malOtpStatus('Email OTP is not enabled. Contact the village admin.',true);
   }catch(err){malOtpStatus('Could not check OTP availability. Try again later.',true);}
 }
 function malSecureReceipt(){
@@ -3189,7 +3184,7 @@ function malInitOtp(){
     document.querySelector('#malOtpPanel .mal-otp-title').textContent=
       mode==='reset'?'Reset your password using OTP':'Sign in with a verification code';
     document.getElementById('malVerifyOtp').textContent=mode==='reset'?'Verify & reset password':'Verify & sign in';
-    malOtpStatus(mode==='reset'?'Only a self-verified email or mobile can reset a password. The code expires in 5 minutes.':'',false);
+    malOtpStatus(mode==='reset'?'Only a self-verified email can reset a password. The code expires in 5 minutes.':'',false);
     document.getElementById('malOtpContact').focus();malReadOtpOptions();
   }
   toggle.onclick=()=>start('login');
@@ -3207,9 +3202,8 @@ function malInitOtp(){
   document.getElementById('malOtpBack').onclick=back;
   document.getElementById('malSendOtp').onclick=async()=>{
     const btn=document.getElementById('malSendOtp'),id=document.getElementById('malOtpContact').value.trim();
-    const selected=document.querySelector('input[name="malOtpChannel"]:checked');
-    const channel=selected&&selected.value;
-    if(!id){malOtpStatus('Enter the verified email or mobile registered with admin.',true);return;}
+    const channel='email';
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(id)){malOtpStatus('Enter your registered verified email address.',true);return;}
     btn.disabled=true;malOtpChallenge='';malResetTicket='';
     document.getElementById('malOtpCodeRow').hidden=true;
     document.getElementById('malResetFields').hidden=true;
@@ -3281,14 +3275,14 @@ function malInitOtp(){
 /* Admin controls: global methods under Settings, per-user contacts under Users. */
 function openLoginOptions(){
   if(!isAdmin())return;
-  const defs=[['Login By Email','Email + password'],['Login By Mobile','Mobile + password'],
-    ['OTP Email Enabled','Direct email OTP sign-in and recovery'],['OTP SMS Enabled','Direct SMS OTP sign-in and recovery (gateway required)'],
-    ['Contact Email Verification','User self-verification of email by OTP'],['Contact SMS Verification','User self-verification of mobile by SMS OTP (gateway required)']];
+  const defs=[['Login By Email','Verified email + password'],['Login By Mobile','Registered mobile + password (no SMS)'],
+    ['OTP Email Enabled','Direct email OTP sign-in and password recovery'],
+    ['Contact Email Verification','User self-verification of email by OTP']];
   openModal('<header><h3>Login & account recovery</h3><button class="btn btn-sm" onclick="closeModal()">Close</button></header>'+
     '<div class="body"><p class="muted">Existing username/password always works. Verify contact details in Users before enabling alternatives.</p>'+
     defs.map(([key,label],i)=>'<label style="display:flex;gap:9px;align-items:center;padding:9px 0"><input type="checkbox" id="malLoginOpt'+i+'" '+
-     (/^(yes|true)$/i.test(String(setting(key,(i===3||i===5)?'No':'Yes')))?'checked':'')+'>'+esc(label)+'</label>').join('')+
-    '<p class="muted small">SMS requires private Twilio configuration in Apps Script and compliant delivery in India. Passwordless OTP signs the user in; it does not reveal the previous password.</p>'+
+     (/^(yes|true)$/i.test(String(setting(key,'Yes')))?'checked':'')+'>'+esc(label)+'</label>').join('')+
+    '<p class="muted small">Email is the only OTP channel. The mobile number is an ordinary contact and, if enabled, can be used with a password; it cannot receive verification or reset codes.</p>'+
     '<button type="button" class="btn btn-primary" id="malSaveLoginOpts">Save options</button><div id="malLoginOptMsg" class="small"></div></div>');
   document.getElementById('malSaveLoginOpts').onclick=async()=>{
     const btn=document.getElementById('malSaveLoginOpts'),msg=document.getElementById('malLoginOptMsg');btn.disabled=true;
@@ -3926,15 +3920,15 @@ const MODULES = {
       { n:'Email', t:'text', hint:'Only admin enters or changes recovery contacts.' },
       { n:'Mobile', t:'tel', hint:'Indian mobile number. Unique to this account.' },
       // Verified flags are server-owned. No administrator can self-award badges from this form.
-      { n:'OTP Allowed', t:'select', opts:['Yes','No'], hint:'Allow this account to sign in by verified-contact OTP.' }
+      { n:'OTP Allowed', t:'select', opts:['Yes','No'], hint:'Allow this account to sign in by verified-email OTP.' }
     ],
-    list: ['Username','Name','Role','Active','Email','Mobile','Email Verified','Mobile Verified','OTP Allowed'], adminOnly: true
+    list: ['Username','Name','Role','Active','Email','Email Verified','Mobile','OTP Allowed'], adminOnly: true
   }
 };
 
 function rowsOf(key){
   if(!DB) return [];
-  if(key === 'settingsList') return Object.keys(DB.settings || {}).map(k => ({ Setting: k, Value: DB.settings[k] }));
+  if(key === 'settingsList') return Object.keys(DB.settings || {}).filter(k=>!['OTP SMS Enabled','Contact SMS Verification'].includes(k)).map(k => ({ Setting: k, Value: DB.settings[k] }));
   if(key === 'users') return DB.users || [];
   return DB[key] || [];
 }
@@ -4715,7 +4709,7 @@ function customCols(key){
 function allFields(key){
   const m = MODULES[key];
   const extra = customCols(key).map(c => ({ n: c.n, t: COL_TYPES.includes(c.t) ? c.t : 'text', opts: c.opts, custom: true }));
-  return m.fields.concat(extra.filter(e => !m.fields.some(f => f.n === e.n)));
+  return m.fields.concat(extra.filter(e => !m.fields.some(f => f.n === e.n) && !(key==='users' && /^Mobile Verified(?: At| By)?$/i.test(e.n))));
 }
 async function saveCols(key, list){
   const rec = { Setting: colKey(key), Value: JSON.stringify(list) };
@@ -4739,8 +4733,8 @@ function fieldDef(key, col){ return allFields(key).find(f => f.n === col) || { n
 
 const GRV_TONE = { Received:'', 'Under Review':'warn', 'Action Taken':'warn', Resolved:'good', Rejected:'bad' };
 function cellHtml(key, row, col){
-  if(key==='users' && (col==='Email Verified'||col==='Mobile Verified')){
-    const ch=col==='Email Verified'?'Email':'Mobile';
+  if(key==='users' && col==='Email Verified'){
+    const ch='Email';
     const yesSelf=String(row[ch+' Verified']||'').toLowerCase()==='yes' &&
       String(row[ch+' Verified By']||'')==='Self OTP' && !!String(row[ch+' Verified At']||'');
     return {cls:'',html:yesSelf?'<span class="verify-pill done" title="Self-verified with OTP on '+esc(String(row[ch+' Verified At']))+'">✓ Verified</span>':
@@ -4933,7 +4927,7 @@ function renderModule(key){
             ${key === 'recurring' && canEdit() ? `<button class="btn btn-sm" data-pay="${id}">Mark paid</button> ` : ''}
             ${['families','members','events'].includes(key) ? `<button class="btn btn-sm" data-act="profile" data-id="${id}">View</button> ` : ''}
             ${key === 'families' && isHousehold(r) ? `<button class="btn btn-sm" data-act="household" data-id="${id}">Household</button> ` : ''}
-            ${key === 'users' && isAdmin() ? `<button class="btn btn-sm" type="button" data-toggle-user="${id}" data-enabled="${String(r.Active||'YES').toUpperCase()==='YES'?'NO':'YES'}">${String(r.Active||'YES').toUpperCase()==='YES'?'Disable':'Enable'}</button> <button class="btn btn-sm" data-act="access" data-id="${id}">Access</button> <button class="btn btn-sm" type="button" data-verify-reset="${id}">Reset verification</button> ` : ''}
+            ${key === 'users' && isAdmin() ? `<button class="btn btn-sm" type="button" data-toggle-user="${id}" data-enabled="${String(r.Active||'YES').toUpperCase()==='YES'?'NO':'YES'}">${String(r.Active||'YES').toUpperCase()==='YES'?'Disable':'Enable'}</button> <button class="btn btn-sm" data-act="access" data-id="${id}">Access</button> <button class="btn btn-sm" type="button" data-verify-reset="${id}">Reset email verification</button> ` : ''}
             ${key === 'contributions' ? `<button class="btn btn-sm" data-act="receipt" data-id="${id}">Receipt</button> ` : ''}
             ${canEdit() ? `<button class="btn btn-sm" data-act="edit" data-id="${id}">Edit</button>` : ''}
             ${canDelete() ? `<button class="btn btn-sm btn-danger" data-act="del" data-id="${id}">Delete</button>` : ''}
@@ -4972,12 +4966,9 @@ function renderModule(key){
   }));
   if(key==='users') document.querySelectorAll('#main [data-verify-reset]').forEach(btn=>btn.addEventListener('click',async()=>{
     const who=btn.dataset.verifyReset;
-    const channel=window.prompt('Which verification to revoke for '+who+'? Enter email or mobile:','email');
-    if(!channel)return;
-    if(!['email','mobile'].includes(channel.trim().toLowerCase())){toast('Enter email or mobile.','bad');return;}
-    if(!window.confirm('Revoke '+channel+' verification for '+who+'?'))return;
+    if(!window.confirm('Revoke EMAIL verification for '+who+'?'))return;
     btn.disabled=true;
-    try{const r=await api('revokeContactVerification',{username:who,channel:channel.trim().toLowerCase()});
+    try{const r=await api('revokeContactVerification',{username:who,channel:'email'});
       if(!r||!r.ok)throw new Error(r&&r.error||'Could not revoke verification.');
       await refresh(true);toast('Verification revoked','good');
     }catch(e){toast(e.message||'Could not revoke','bad');btn.disabled=false;}
@@ -7966,7 +7957,7 @@ buildNav=function(){
   const side=document.getElementById('sidebar');
   if(side && !side.querySelector('[data-mal-contact-verify]')){
     const b=document.createElement('button');b.className='nav';b.type='button';
-    b.setAttribute('data-mal-contact-verify','1');b.innerHTML='<span class="ic">✓</span> My verification';
+    b.setAttribute('data-mal-contact-verify','1');b.innerHTML='<span class="ic">✓</span> Verify email';
     b.onclick=()=>{closeDrawer();openMyVerification();};
     side.appendChild(b);
   }
@@ -8011,7 +8002,7 @@ function renderRunAll(){
 })();
 
 
-/* CONTACT VERIFICATION — private profile, separate proof for email and mobile. */
+/* EMAIL VERIFICATION — email OTP only. */
 let malContactChallenge={},malVerificationSnapshot=null;
 function malContactBadge(row){
   if(!row || !row.present)return '<span class="verify-pill pending">Not added</span>';
@@ -8022,8 +8013,8 @@ function malPaintContactVerification(result){
   malVerificationSnapshot=result;
   if(!document.getElementById('malVerificationList'))return;
   const contacts=result.contacts||{};
-  document.getElementById('malVerificationList').innerHTML=['email','mobile'].map(ch=>{
-    const d=contacts[ch]||{},label=ch==='email'?'Email':'Mobile',ico=ch==='email'?'✉':'◉';
+  document.getElementById('malVerificationList').innerHTML=['email'].map(ch=>{
+    const d=contacts[ch]||{},label='Email',ico='✉';
     return '<section class="mal-verify-row"><div class="mal-verify-label"><span class="mal-verify-ico">'+ico+'</span><div><strong>'+label+'</strong><div class="muted small">'+esc(d.masked||'Not registered')+'</div></div></div>'+malContactBadge(d)+
       (d.verified?'<p class="muted small">Self-verified by OTP on '+esc(d.verifiedAt||'')+'</p>':
         '<p class="muted small">Only a successful OTP sent to this contact earns a verified badge.'+
@@ -8033,7 +8024,7 @@ function malPaintContactVerification(result){
       '<div id="mal-verify-code-'+ch+'" hidden class="mal-verify-code"><label class="lbl">6-digit '+label+' code</label><input class="input" id="mal-verify-input-'+ch+'" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Enter code"><button class="btn btn-primary mal-confirm-own" type="button" data-mal-channel="'+ch+'">Confirm '+label+'</button></div>'+ 
       '<div id="mal-verify-result-'+ch+'" class="small" role="status" aria-live="polite"></div></section>';
   }).join('');
-  document.getElementById('malBothVerified').textContent=result.bothVerified?'✓ Both contacts verified':'Email and mobile are verified separately';
+  document.getElementById('malEmailVerificationSummary').textContent=contacts.email&&contacts.email.verified?'✓ Email verified':'Email verification is required for OTP sign-in and recovery';
   document.querySelectorAll('.mal-send-own').forEach(btn=>btn.onclick=async()=>{
     const ch=btn.dataset.malChannel,res=document.getElementById('mal-verify-result-'+ch);
     btn.disabled=true;res.textContent='Sending OTP…';
@@ -8054,24 +8045,24 @@ function malPaintContactVerification(result){
       if(!r || !r.ok)throw new Error(r&&r.error||'Code rejected.');
       delete malContactChallenge[ch];malPaintContactVerification(r);
       malUpdateVerificationChip(r);
-      toast(ch==='email'?'Email verified':'Mobile verified','good');
+      toast('Email verified','good');
       if(isAdmin())refresh(true);
     }catch(e){res.textContent=e.message||'Could not verify code.';}finally{btn.disabled=false;}
   });
 }
 function malUpdateVerificationChip(data){
   const chip=document.getElementById('malMyVerifyBtn');if(!chip||!data)return;
-  const count=['email','mobile'].filter(ch=>data.contacts&&data.contacts[ch]&&data.contacts[ch].verified).length;
-  chip.textContent=count===2?'✓ Both verified':count===1?'✓ 1 contact verified':'✓ Verify contacts';
-  chip.classList.toggle('all-verified',count===2);
+  const verified=!!(data.contacts&&data.contacts.email&&data.contacts.email.verified);
+  chip.textContent=verified?'✓ Email verified':'✓ Verify email';
+  chip.classList.toggle('all-verified',verified);
 }
 async function openMyVerification(){
   if(!USER||!USER.token){toast('Sign in first','bad');return;}
   malContactChallenge={};
-  openModal('<header><h3>My contact verification</h3><button class="btn btn-sm" type="button" onclick="closeModal()">Close</button></header>'+
-    '<div class="body"><p class="muted">Verify each contact yourself to receive its badge. Badges confirm contact ownership, not legal identity.</p>'+
+  openModal('<header><h3>Verify my email</h3><button class="btn btn-sm" type="button" onclick="closeModal()">Close</button></header>'+
+    '<div class="body"><p class="muted">Verify your registered email using a one-time code. The badge confirms email ownership, not legal identity.</p>'+
     '<div id="malVerificationList"><div class="muted">Loading your verification details…</div></div>'+
-    '<p id="malBothVerified" class="mal-verify-summary"></p><p class="muted small">Never share your OTP. Changed contacts automatically lose their badge.</p></div>');
+    '<p id="malEmailVerificationSummary" class="mal-verify-summary"></p><p class="muted small">Never share your OTP. Changing your email automatically removes its badge.</p></div>');
   try{const r=await api('myVerification');if(!r || !r.ok)throw new Error(r&&r.error||'Could not load verification data.');
     malPaintContactVerification(r);malUpdateVerificationChip(r);
   }catch(e){const el=document.getElementById('malVerificationList');if(el)el.textContent=e.message||'Could not load profile.';}
@@ -8155,7 +8146,7 @@ async function renderEntryLinks(){
    const live=await api('health');
    if(!live || !live.ok || !live.capabilities || !live.capabilities.linkInfo ||
       (document.getElementById('linkAllowEdit').checked && (!live.capabilities.linkSearch || !live.capabilities.linkEdit))){
-     throw Error('Shared-entry backend is not ready. Deploy BE V1.8.14 to the same /exec URL before creating links.');
+     throw Error('Shared-entry backend is not ready. Deploy BE V1.8.15 to the same /exec URL before creating links.');
    }
    const event=ev.value,record=(DB.events||[]).find(x=>String(x['Event ID'])===event);
    const r=await api('linkCreate',{kind:kind.value,event,eventName:record?record['Event Name']:'',hours:document.getElementById('linkHours').value,untilDisabled:validity.value==='untilDisabled'?'yes':'no',max:document.getElementById('linkMax').value,allowEdit:document.getElementById('linkAllowEdit').checked?'yes':'no'});
