@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="referrer" content="no-referrer">
 <!-- GitHub Pages serves this file with a long cache life, which is why one
      phone can keep opening an old build while incognito fetches the new one.
      These ask the browser to revalidate instead of serving from disk. -->
@@ -15,7 +16,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="apple-mobile-web-app-title" content="Malipatana">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#122b38">
+<meta name="theme-color" content="#102F3C">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaina+2:wght@500;600;700&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1035,42 +1036,45 @@ a.iconbtn.pubjump{display:flex;align-items:center;justify-content:center;text-de
 a.iconbtn.pubjump:hover{text-decoration:none}
 
 
-/* MALI NOTICE STRIP — visible announcements without tall cards. */
+/* MALI NOTICE STRIP — accessible warm-yellow background, dark-red text. */
 .mal-notice-ticker{display:flex;align-items:center;gap:10px;min-width:0;overflow:hidden;
-  background:linear-gradient(95deg,#94241d,#b43121);border:2px solid #eac356;
-  border-radius:15px;padding:8px 10px;box-shadow:0 9px 25px -18px #822015;
-  color:#ffec98;min-height:54px}
-.mal-notice-label{flex:none;background:#ffe47a;color:#7a261c;border-radius:9px;
-  padding:7px 9px;font-weight:900;letter-spacing:.06em;font-size:11px;line-height:1.2}
+  background:linear-gradient(105deg,#FFF4B8 0%,#FFE77E 55%,#FFED96 100%);
+  border:1.5px solid #DAAD38;border-left:5px solid #B3261E;
+  border-radius:13px;padding:8px 10px;box-shadow:0 8px 22px -17px #916322;
+  color:#A3261B;min-height:52px}
+.mal-notice-label{flex:none;background:#FFF9D5;color:#A3261B;border:1px solid #E2B75B;
+  border-radius:8px;padding:7px 9px;font-weight:900;letter-spacing:.04em;
+  font-size:11px;line-height:1.2}
 .mal-notice-lane{flex:1;min-width:0;overflow:hidden;white-space:nowrap;isolation:isolate}
 .mal-notice-track{display:inline-flex;align-items:center;gap:24px;min-width:max-content;
   padding-inline-start:0;font-size:14px;font-weight:800;line-height:1.5;
   animation:malNoticeMove var(--mal-notice-duration,32s) linear infinite;will-change:transform}
 .mal-notice-set{display:inline-flex;align-items:center;gap:24px;flex:0 0 auto;padding-right:30px}
-.mal-notice-track .mal-notice-item{display:inline-flex;align-items:center;gap:10px;white-space:nowrap}
-.mal-notice-track .mal-notice-sep{color:#ffe47a;opacity:.8;font-size:15px}
+.mal-notice-track .mal-notice-item{display:inline-flex;align-items:center;gap:10px;white-space:nowrap;color:#A3261B}
+.mal-notice-track .mal-notice-sep{color:#B3261E;opacity:.85;font-size:15px}
 @keyframes malNoticeMove{to{transform:translateX(-50%)}}
 .mal-notice-ticker:hover .mal-notice-track,
 .mal-notice-ticker:focus-within .mal-notice-track,
 .mal-notice-ticker.is-paused .mal-notice-track{animation-play-state:paused}
-.mal-notice-pause{flex:none;display:grid;place-items:center;background:#fff2c9;
-  border:1px solid #fff5cf;color:#7e261b;border-radius:9px;min-width:36px;min-height:36px;
+.mal-notice-pause{flex:none;display:grid;place-items:center;background:#FFF9DF;
+  border:1px solid #DFB959;color:#A3261B;border-radius:9px;min-width:38px;min-height:38px;
   font-size:17px;font-weight:800;cursor:pointer}
-.mal-notice-pause:focus-visible,.mal-notice-detail summary:focus-visible{outline:3px solid #fee990;outline-offset:3px}
-.mal-notice-detail{border:1px solid #eadfce;border-radius:0 0 13px 13px;background:#fffdf7;
+.mal-notice-pause:hover{background:#FFF3BB}
+.mal-notice-pause:focus-visible,.mal-notice-detail summary:focus-visible{outline:3px solid #A3261B;outline-offset:2px}
+.mal-notice-detail{border:1px solid #EBDCAA;border-radius:0 0 13px 13px;background:#FFFDF4;
   margin:0 10px 12px;overflow:hidden}
-.mal-notice-detail summary{cursor:pointer;color:#754120;font-weight:700;font-size:12px;
+.mal-notice-detail summary{cursor:pointer;color:#8B2B21;font-weight:700;font-size:12px;
   padding:8px 13px;line-height:1.35}
-.mal-notice-detail[open] summary{border-bottom:1px solid #eadfce}
+.mal-notice-detail[open] summary{border-bottom:1px solid #EBDCAA}
 .mal-notice-detail .ntcs{padding:12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
 .mal-notice-detail .ntc{background:#fff}
 .mal-notice-screen-reader{position:absolute;width:1px;height:1px;padding:0;margin:-1px;
   overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 @media(max-width:600px){
-  .mal-notice-ticker{gap:7px;padding:7px 8px;min-height:51px;border-radius:12px}
+  .mal-notice-ticker{gap:7px;padding:7px 8px;min-height:51px;border-radius:12px;border-left-width:4px}
   .mal-notice-label{padding:6px 7px;font-size:10px}
   .mal-notice-track{font-size:12px;gap:15px}
-  .mal-notice-pause{min-width:34px;min-height:34px}
+  .mal-notice-pause{min-width:36px;min-height:36px}
   .mal-notice-detail{margin:0 4px 10px}
 }
 @media(prefers-reduced-motion:reduce){
@@ -1737,8 +1741,8 @@ body.modalOpen #stickyLayer{opacity:.12;pointer-events:none;filter:saturate(.4)}
    ========================================================================= */
 const CONFIG = {
   API_URL: 'https://script.google.com/macros/s/AKfycbyfxff3MVt3Kw_CA_0aYD477nrAcWXshb9hex1LM_hl62tlrNiX5bGWgsf0Vw73sr-gbg/exec',
-  VERSION: 'FE V3.5.4',
-  EXPECTED_BACKEND: 'BE V1.8.12',
+  VERSION: 'FE V3.5.8',
+  EXPECTED_BACKEND: 'BE V1.8.13',
   IDLE_MINUTES: 30,
   /* Photo shown when no photo has been set in Settings.
      village.jpg sits in the same folder as this file on GitHub. */
@@ -1795,7 +1799,7 @@ function applyLoginPhoto(){
      stands up with no JavaScript at all. This only overrides it when the admin
      has set a different picture — previously the src was set here alone, so any
      error earlier in the script left an empty box showing its alt text. */
-  const saved = local.get('mal_login_photo');
+  const saved = store.get('mal_login_photo');
   if(!saved) return;
   const url = photoSrc(saved);
   if(!url || url === img.getAttribute('src')) return;
@@ -3322,7 +3326,7 @@ function restoreLocal(k){
     const keepQueue=localStorage.getItem('mal_queue');
     if(keepQueue&&!sessionStorage.getItem('mal_queue')) sessionStorage.setItem('mal_queue',keepQueue);
     for(const k of Object.keys(localStorage)){
-      if(k==='mal_db_cache'||k==='mal_queue'||k.startsWith('mal_local_'))localStorage.removeItem(k);
+      if(k==='mal_db_cache'||k==='mal_queue'||k==='mal_login_photo'||k.startsWith('mal_local_'))localStorage.removeItem(k);
     }
   } catch(e){}
 })();
@@ -3412,7 +3416,7 @@ function enterApp(){
   }, 200);
   setTimeout(paintQueue, 300);
   setTimeout(() => { if(queueRead().length) flushQueue(); }, 2500);
-  local.set('mal_login_photo', String(setting('Login Photo', CONFIG.DEFAULT_PHOTO)));
+  store.set('mal_login_photo', String(setting('Login Photo', CONFIG.DEFAULT_PHOTO)));
   $('#login').classList.add('hide');
   $('#app').classList.remove('hide');
   $('#whoName').textContent = USER.name || USER.username;
@@ -4291,13 +4295,17 @@ function renderDashboard(){
 
   const banner = photoOf('Dashboard Photo');
   const entries = (DB.contributions || []).length + (DB.income || []).length + (DB.expenditure || []).length;
-  const fresh = entries === 0;
+  const fresh = entries === 0 && !(DB.families || []).length && !(DB.members || []).length;
+  const visibleWork = monthWork().filter(j => canSee(j.go) !== false);
+  const upcomingDays = daysLocal();
+  const remembranceDays = remembranceLocal();
+  const upcomingCount = upcomingDays.length + remembranceDays.length;
+  const importantToday = upcomingDays.some(x => x.daysAway === 0) || remembranceDays.some(x => x.daysAway === 0);
+  const quickPanel = canEdit() ? `<div class="panel ux-quick-panel"><div class="panel-head"><h3>Quick entry</h3></div><div class="panel-body ux-quick-buttons"><button class="btn btn-primary" onclick="openForm('expenditure')">+ Expense</button><button class="btn" onclick="openForm('contributions')">+ Contribution</button></div></div>` : '';
   const html = `
-  ${noticesHtml(noticesLocal())}
-  ${fresh ? startPanel() : ''}
-  ${fresh ? '' : monthWorkHtml()}
-  ${daysHtml(daysLocal())}
-  ${remembranceHtml(remembranceLocal(), true)}
+    <div class="ux-home" aria-label="Village dashboard overview">
+      ${noticesHtml(noticesLocal())}
+      ${fresh ? startPanel() : ''}
   ${banner ? `<div class="hero">
       <img src="${esc(banner)}" alt="${esc(setting('Village Name','Malipatana'))}" onerror="this.remove()">
       <div class="veil"></div>
@@ -4316,6 +4324,7 @@ function renderDashboard(){
       <div class="sp"></div><button class="btn btn-sm" onclick="window.print()">Print</button>
     </div>`}
 
+      <div class="ux-home-identity"><div><strong>Village overview</strong><span>Key information and today's priorities</span></div></div>
   <div class="ledger">
     <div class="ledger-top">
       <div>
@@ -4329,7 +4338,7 @@ function renderDashboard(){
         <div class="small muted" style="margin-top:6px">${pct}% of the target is in hand</div>
       </div>
     </div>
-    <div class="ledger-rows">
+    <details class="ux-home-details ux-ledger"><summary><span>View fund breakdown</span><span class="ux-detail-hint">Income, expenses and support · 6 lines</span></summary><div class="ledger-rows">
       ${(() => {
         const live = ledger.filter(l => num(l[3]) !== 0);
         const zeros = ledger.filter(l => num(l[3]) === 0);
@@ -4349,8 +4358,22 @@ function renderDashboard(){
         <div class="amt tnum">${money(available)}</div>
       </div>
     </div>
+    </details>
   </div>
-
+      <div class="ux-kpi-grid" aria-label="Village at a glance">
+        <button type="button" class="ux-kpi ux-kpi-families" onclick="go('families')" ${canSee('families')?'':'disabled'}><span class="ux-kpi-icon" aria-hidden="true">⌂</span><span class="ux-kpi-label">Families</span><strong class="tnum">${num(s.families)}</strong><span class="ux-kpi-foot">View households →</span></button>
+        <button type="button" class="ux-kpi ux-kpi-members" onclick="go('members')" ${canSee('members')?'':'disabled'}><span class="ux-kpi-icon" aria-hidden="true">♧</span><span class="ux-kpi-label">Living members</span><strong class="tnum">${num(s.members)}</strong><span class="ux-kpi-foot">View members →</span></button>
+        <button type="button" class="ux-kpi ux-kpi-work" onclick="document.getElementById('ux-work-anchor')?.scrollIntoView({behavior:'smooth',block:'start'})"><span class="ux-kpi-icon" aria-hidden="true">☷</span><span class="ux-kpi-label">Tasks to review</span><strong class="tnum">${visibleWork.length}</strong><span class="ux-kpi-foot">This month's work ↓</span></button>
+      </div>
+      <div class="ux-priority-grid ${quickPanel ? '' : 'ux-single'}" id="ux-work-anchor">
+        <div class="ux-home-work">${fresh ? '' : monthWorkHtml()}</div>
+        ${quickPanel}
+      </div>
+      <details class="ux-home-section ux-upcoming" ${importantToday?'open':''}>
+        <summary><span class="ux-section-badge">◷</span><span class="ux-section-title">Coming up & remembrance<small>${upcomingCount ? upcomingCount + ' upcoming item' + (upcomingCount===1?'':'s') : 'Dates, festivals and the remembrance calendar'}</small></span><span class="ux-expand-label">Details</span></summary>
+        <div class="ux-home-expanded">${daysHtml(upcomingDays)}${remembranceHtml(remembranceDays, true)}</div>
+      </details>
+      <details class="ux-home-section ux-demographics"><summary><span class="ux-section-badge">♧</span><span class="ux-section-title">More village statistics<small>Earning members, children, elderly and coverage</small></span><span class="ux-expand-label">Details</span></summary><div class="ux-home-expanded">
   <div class="strip">
     <div><div class="k">Families</div><div class="v tnum">${num(s.families)}</div></div>
     <div><div class="k">Members</div><div class="v tnum">${num(s.members)}</div></div>
@@ -4361,34 +4384,12 @@ function renderDashboard(){
     <div><div class="k">Insured</div><div class="v tnum">${num(s.insuranceCoverage)}%</div></div>
   </div>
 
-  <div class="cols">
-    <div class="panel">
-      <div class="panel-head"><h3>Money in and out, last 12 months</h3></div>
-      <div class="panel-body" style="padding-bottom:6px">${barChart()}</div>
-      <div class="legend"><span><i style="background:var(--green)"></i>In</span><span><i style="background:var(--brick)"></i>Out</span></div>
-    </div>
-    <div class="panel">
-      <div class="panel-head"><h3>Needs attention</h3></div>
-      ${attentionList()}
-    </div>
-  </div>
-
-  <div class="cols">
-    ${recurringPanel()}
-    <div class="panel">
-      <div class="panel-head"><h3>Latest entries</h3></div>
-      ${recentList()}
-    </div>
-    <div class="panel">
-      <div class="panel-head"><h3>Quick add</h3></div>
-      <div class="panel-body" style="display:flex;flex-wrap:wrap;gap:9px">
-        ${canEdit() ? `
-          <button class="btn btn-primary btn-sm" onclick="openForm('expenditure')">Add expense</button>
-          <button class="btn btn-sm" onclick="openForm('contributions')">Add contribution</button>`
-        : '<div class="muted small">Your account can view records but not change them.</div>'}
-      </div>
-    </div>
-  </div>`;
+      </div></details>
+      <details class="ux-home-section ux-insights"><summary><span class="ux-section-badge">₹</span><span class="ux-section-title">Financial trends & insights<small>12-month chart, recurring bills and recent records</small></span><span class="ux-expand-label">Reports</span></summary>
+        <div class="ux-home-expanded"><div class="cols"><div class="panel"><div class="panel-head"><h3>Money in and out, last 12 months</h3></div><div class="panel-body" style="padding-bottom:6px">${barChart()}</div><div class="legend"><span><i style="background:var(--green)"></i>In</span><span><i style="background:var(--brick)"></i>Out</span></div></div><div class="panel"><div class="panel-head"><h3>Latest entries</h3></div>${recentList()}</div></div><div class="ux-recurring-wrap">${recurringPanel()}</div></div>
+      </details>
+      <details class="ux-home-section ux-attention"><summary><span class="ux-section-badge">!</span><span class="ux-section-title">Data checks & needs attention<small>Missing entries and register checks</small></span><span class="ux-expand-label">View</span></summary><div class="ux-home-expanded"><div class="panel"><div class="panel-head"><h3>Needs attention</h3></div>${attentionList()}</div></div></details>
+    </div>`;
   $('#main').innerHTML = html;
   wireActions($('#main'));
   wirePhotoFallbacks($('#main'));
@@ -7322,7 +7323,7 @@ function renderPhotos(){
       await api('save', { sheet: 'Settings', record: JSON.stringify({ Setting: 'Dashboard Photo', Value: di.value.trim() }) });
       DB.settings['Login Photo'] = li.value.trim();
       DB.settings['Dashboard Photo'] = di.value.trim();
-      local.set('mal_login_photo', li.value.trim() || CONFIG.DEFAULT_PHOTO);
+      store.set('mal_login_photo', li.value.trim() || CONFIG.DEFAULT_PHOTO);
       toast('Pictures saved', 'good');
     } catch(e){ toast(e.message, 'bad'); }
     finally { b.disabled = false; b.textContent = 'Save pictures'; }
@@ -8079,7 +8080,7 @@ async function renderEntryLinks(){
    const live=await api('health');
    if(!live || !live.ok || !live.capabilities || !live.capabilities.linkInfo ||
       (document.getElementById('linkAllowEdit').checked && (!live.capabilities.linkSearch || !live.capabilities.linkEdit))){
-     throw Error('Shared-entry backend is not ready. Deploy BE V1.8.12 to the same /exec URL before creating links.');
+     throw Error('Shared-entry backend is not ready. Deploy BE V1.8.13 to the same /exec URL before creating links.');
    }
    const event=ev.value,record=(DB.events||[]).find(x=>String(x['Event ID'])===event);
    const r=await api('linkCreate',{kind:kind.value,event,eventName:record?record['Event Name']:'',hours:document.getElementById('linkHours').value,untilDisabled:validity.value==='untilDisabled'?'yes':'no',max:document.getElementById('linkMax').value,allowEdit:document.getElementById('linkAllowEdit').checked?'yes':'no'});
@@ -8841,8 +8842,10 @@ window.malWirePhotoLibrary_=function(target){
     catch(e){const el=document.getElementById('malStoreContent');if(el)el.innerHTML='<div class="mal-store-guide">'+escapeStore(e.message)+'<p>Run the supplied Code.gs and deploy BE V1.8.7. Then open Apps Script and run previewMalipatanaDriveMove().</p></div>';return;}
     if(PAGE!=='storageCentre')return;
     const rows=Array.isArray(r.resources)?r.resources:[];
+    const sharingReview=rows.filter(x=>x&&x.value&&x.value.access&&String(x.value.access).toUpperCase()!=='PRIVATE');
     let html='<div class="mal-store-guide"><strong>'+(r.migrated?'Central folder is connected.':'Not fully consolidated yet.')+'</strong> ' +
       'To move existing files safely, run <b>verifyOneMasterWorkbook()</b>, <b>setupIndependentBackupFolder()</b>, <b>previewMalipatanaDriveMove()</b> and then <b>consolidateMalipatanaDrive()</b> in the Apps Script editor. Two ZIP backups of all register tabs are made first (one outside the main folder). No second Google Spreadsheet is created, and no originals are deleted.</div>';
+    html+='<div class="mal-store-guide" style="margin-top:12px"><strong>Sharing audit:</strong> '+(sharingReview.length ? sharingReview.length+' resource(s) require a permission review in Google Drive. Items with public or domain-wide access must be restricted manually or with the reviewed Apps Script editor tool.' : 'No broad access detected among reported resources. Still check inherited and individually granted permissions.')+' This is an administrator-only view.</div>';
     html+='<p class="muted small" style="margin-top:14px"><b>One designated workbook:</b> '+escapeStore(String((r.sheets||[]).length))+' register tabs, including '+escapeStore((r.sheets||[]).slice(0,6).join(', '))+'. All active registers are stored in this workbook.</p>';
     html+='<p class="muted small"><b>Last normal backup:</b> '+escapeStore(r.lastPrimaryBackup||'Not recorded')+
       ' · <b>Independent recovery backup:</b> '+escapeStore(r.lastIndependentBackup||'Not configured / not recorded')+'</p>';
@@ -8892,5 +8895,259 @@ window.malWirePhotoLibrary_=function(target){
 })();
 </script>
 
+<style>
+/* MALIPATANA FE V3.5.8 — security-aware colour dashboard, no private Drive IDs embedded */
+.ux-home{max-width:1160px;margin:0 auto;display:grid;gap:14px;align-items:start}
+.ux-home>*,.ux-home .panel,.ux-home details{min-width:0}
+.ux-home .noticeboard{margin-bottom:2px}
+.ux-home .hero{margin-bottom:0;min-height:145px}
+.ux-home .hero .txt{padding:12px 18px}
+.ux-home-identity{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:0 1px}
+.ux-home-identity strong{display:block;font-family:var(--display);font-size:22px;color:#17303f;line-height:1.2}
+.ux-home-identity span{display:block;color:#60736e;font-size:12px;line-height:1.5;margin-top:3px}
+.ux-home .ledger{box-shadow:0 5px 22px rgba(19,48,63,.06);border-color:#dce9e4}
+.ux-home .ledger-top{padding:19px 22px;gap:12px;background:linear-gradient(110deg,#fff,#f2faf6)}
+.ux-home .ledger-top .big{color:#0a6458;font-size:clamp(28px,4vw,38px)}
+.ux-home-details>summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px;border-top:1px solid #e5eee8;color:#155c53;background:#fafdfb;padding:12px 20px;font-weight:750;font-size:13px;min-height:44px}
+.ux-home-details>summary::-webkit-details-marker{display:none}
+.ux-home-details>summary:after,.ux-home-section>summary:after{content:'⌄';font-size:21px;line-height:1;color:#0e685e;transform-origin:center;transition:transform .16s}
+.ux-home-details[open]>summary:after,.ux-home-section[open]>summary:after{transform:rotate(180deg)}
+.ux-detail-hint{font-size:11px;color:#6d817a;font-weight:500;margin-left:auto}
+.ux-home .ledger-rows{padding:8px 19px 17px}
+.ux-kpi-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.ux-kpi{appearance:none;border:1px solid #dce9e4;border-radius:17px;padding:14px 16px;text-align:left;display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto 1fr auto;column-gap:12px;row-gap:3px;cursor:pointer;background:#fff;min-width:0;min-height:112px;box-shadow:0 4px 18px rgba(20,52,54,.04);font:inherit;transition:transform .14s,box-shadow .14s}
+.ux-kpi:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 10px 25px rgba(20,52,54,.11)}
+.ux-kpi:disabled{opacity:.65;cursor:default}
+.ux-kpi-icon{display:grid;place-items:center;grid-row:1/3;align-self:start;width:37px;height:37px;background:#e5f4ed;border-radius:12px;font-size:22px;color:#086d61}
+.ux-kpi-label{font-size:12px;font-weight:700;color:#506b62;line-height:1.4;min-width:0}
+.ux-kpi strong{grid-column:2;font-family:var(--display);font-size:27px;line-height:1.35;color:#153a43;font-weight:700}
+.ux-kpi-foot{grid-column:1/-1;color:#2f7768;font-size:11px;font-weight:650;line-height:1.5;margin-top:3px}
+.ux-kpi-members .ux-kpi-icon{background:#e9f1fd;color:#285899}
+.ux-kpi-work .ux-kpi-icon{background:#fff3d8;color:#97650e}
+.ux-priority-grid{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(240px,.8fr);gap:12px;scroll-margin-top:75px}
+.ux-priority-grid .panel.work{margin-bottom:0}
+.ux-priority-grid.ux-single{grid-template-columns:1fr}
+.ux-home-work:empty{display:none}
+.ux-quick-panel .panel-body{padding:14px 16px}
+.ux-quick-buttons{display:grid;gap:9px}
+.ux-quick-buttons .btn{justify-content:center;min-height:42px}
+.ux-quick-buttons .btn-primary{background:#0b7162;border-color:#0b7162;color:#fff}
+.ux-home-section{border:1px solid #dce9e4;border-radius:17px;background:#fff;box-shadow:0 4px 18px rgba(20,52,54,.035);overflow:hidden}
+.ux-home-section>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;min-height:66px;padding:13px 17px}
+.ux-home-section>summary::-webkit-details-marker{display:none}
+.ux-section-badge{width:37px;height:37px;display:grid;place-items:center;flex:0 0 37px;border-radius:12px;background:#e9f5f1;color:#0b6c60;font-weight:850;font-size:20px}
+.ux-section-title{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1;font-family:var(--display);font-size:17px;font-weight:650;color:#17333b;line-height:1.25}
+.ux-section-title small{font-family:var(--body);font-size:11px;line-height:1.45;color:#647870;font-weight:500}
+.ux-expand-label{font-family:var(--body);font-size:11px;color:#176d60;font-weight:750;white-space:nowrap}
+.ux-home-expanded{padding:14px 16px 16px;border-top:1px solid #e8efeb;display:grid;gap:12px}
+.ux-home-expanded>.cols{margin-top:0}
+.ux-home .daysband,.ux-home .remem{margin:0}
+.ux-home .strip{box-shadow:none;margin:0;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));border:1px solid #e7efea}
+.ux-recurring-wrap{max-width:100%}
+.ux-home .panel-head h3{white-space:normal;line-height:1.3}
+.ux-upcoming .ux-section-badge{background:#fff5df;color:#966012}
+.ux-attention .ux-section-badge{background:#faeeee;color:#9b342a}
+/* Group the desktop and mobile More drawer. Browser-native details are keyboard accessible. */
+.sidebar .ux-navsection{margin:3px 0 4px;border-radius:11px;overflow:visible}
+.sidebar .ux-navsection>summary{list-style:none;display:flex;align-items:center;min-height:40px;padding:7px 11px;gap:10px;cursor:pointer;color:#9ec0c9;font-size:11px;font-weight:780;letter-spacing:.085em;border-radius:9px}
+.sidebar .ux-navsection>summary::-webkit-details-marker{display:none}
+.sidebar .ux-navsection>summary:after{content:'›';font-size:20px;line-height:1;margin-left:auto;transition:transform .15s}
+.sidebar .ux-navsection[open]>summary:after{transform:rotate(90deg)}
+.sidebar .ux-navsection[open]>summary{background:rgba(255,255,255,.055);color:#dceff0}
+.sidebar .ux-navsection>.nav{width:calc(100% - 7px);margin:1px 3px;font-size:13px;min-height:39px}
+.sidebar .ux-navsection>summary:focus-visible{outline:2px solid #efbd5d;outline-offset:-2px}
+@media(max-width:860px){
+ .ux-home{gap:11px}
+ .ux-home .hero{min-height:110px}
+ .ux-home .hero .txt{padding:10px 13px}
+ .ux-home .hero .btn{display:none}
+ .ux-home-identity strong{font-size:20px}
+ .ux-home-print{display:none}
+ .ux-home .ledger-top{padding:16px;flex-direction:column;align-items:stretch}
+ .ux-home .ledger-top>div[style]{max-width:none!important;min-width:0!important;width:100%}
+ .ux-detail-hint{display:none}
+ .ux-kpi-grid{gap:8px}
+ .ux-kpi{padding:11px 9px;column-gap:7px;min-height:101px}
+ .ux-kpi-icon{width:29px;height:29px;font-size:17px;border-radius:10px}
+ .ux-kpi-label{font-size:10.5px}
+ .ux-kpi strong{font-size:23px}
+ .ux-kpi-foot{font-size:10px}
+ .ux-priority-grid{grid-template-columns:1fr}
+ .ux-quick-panel{display:none}
+ .ux-home-section>summary{min-height:62px;padding:11px 12px;gap:10px}
+ .ux-section-title{font-size:15px}
+ .ux-expand-label{font-size:10px}
+ .ux-home-expanded{padding:12px}
+ .ux-home .strip{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .ux-home .cols{grid-template-columns:1fr}
+}
+@media(max-width:350px){.ux-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.ux-kpi-work{grid-column:1/-1}}
+@media(prefers-reduced-motion:reduce){.ux-kpi,.ux-home-section>summary:after,.ux-navsection>summary:after{transition:none!important}}
+@media print{.ux-home-print,.ux-quick-panel,.ux-navsection>summary{display:none!important}.ux-home .hero{min-height:90px}.ux-home-section{break-inside:avoid}}
+
+/* ======================================================================
+   MALIPATANA V3.5.6 — Botanical Teal · River Navy · Temple Gold
+   Accessible accents and restrained visual hierarchy; colour-only release.
+   ====================================================================== */
+:root{
+ --ink:#19333B;--muted:#60777B;--label:#526A70;
+ --paper:#F3F7F6;--surface:#FFFFFF;--surface-2:#F6FAF9;
+ --line:#D9E6E3;--line-soft:#E9F0ED;
+ --indigo:#102F3C;--indigo-2:#285A70;--indigo-soft:#EAF3F8;
+ --green:#206F51;--green-soft:#E8F5EF;
+ --turmeric:#A87516;--turmeric-soft:#FFF3DA;
+ --brick:#A9362A;--brick-dark:#8B291F;--brick-soft:#FBEDE9;
+ --mal-navy:#102F3C;--mal-teal:#086D62;--mal-teal-light:#E6F6F1;
+ --mal-saffron:#D6A03E;--shadow-card:0 5px 22px -16px rgba(18,60,62,.29);
+}
+body{background:var(--paper);color:var(--ink)}
+:focus-visible{outline:3px solid #D5A23E;outline-offset:2px}
+::selection{background:#F9E6A8;color:#1D343C}
+/* Frame and site identity */
+.topbar{background:linear-gradient(105deg,#0D2835 0%,#124554 100%);border-bottom:1px solid #ffffff1a}
+.topbar .brand small{color:#B8D7DB}
+.sidebar{background:linear-gradient(180deg,#102F3C 0%,#163846 100%)}
+.sidebar .ux-navsection>summary{color:#AFCDD1}
+.sidebar .ux-navsection[open]>summary{color:#F4FAF9;background:#ffffff10}
+.sidebar .nav.active{background:#0B74693A!important;color:#FFFFFF!important}
+.sidebar .nav.active::before{background:#E3B44F!important;width:4px}
+.sidebar .nav:hover:not(.active){background:#ffffff12}
+.navgroup{color:#A0C3CA}
+.iconbtn:hover{background:#ffffff21}
+/* Surfaces: soft depth, clear borders; no heavy animations on long lists */
+.ledger,.panel,.strip,.tablewrap,.ux-home-section{border-color:#D9E6E2;background:#FFF;box-shadow:var(--shadow-card)}
+.panel,.strip,.ledger,.hero{animation:none!important}
+.panel-head{background:linear-gradient(90deg,#FBFEFD,#F6FAF8);border-bottom-color:#E6EEEA}
+.pagehead h2,.panel-head h3{color:#193F4B}
+.pagehead .sub,.small,.muted{color:var(--label)}
+.ux-home-identity strong{color:#153F49}
+.ux-home-identity span{color:#59737A}
+/* Primary action = calm teal; red is for danger and announcements */
+.btn-primary,button.btn.btn-primary:not(.btn-danger){background:#086D62!important;border-color:#086D62!important;color:#FFF!important;box-shadow:0 6px 14px -10px #0A5C53B8}
+.btn-primary:hover,button.btn.btn-primary:not(.btn-danger):hover{background:#07594F!important;border-color:#07594F!important;filter:none}
+.btn-danger,.btn.btn-danger{color:#A9362A;border-color:#E8C4BC;background:#FFF}
+.btn-danger:hover,.btn.btn-danger:hover{background:#FBEDE9}
+.btn:focus-visible,.input:focus-visible{outline:3px solid #D5A23E;outline-offset:2px}
+.input:focus,textarea.input:focus,select.input:focus{border-color:#08796C;box-shadow:0 0 0 3px #D9F1E9}
+label.lbl{color:#44636A}
+.pill.good,.pill.ok{background:#E4F4EC;color:#1E6D4A}
+/* Homepage: green fund, three distinct but muted accent cards */
+.ux-home .ledger{border:1px solid #C9E4DA;box-shadow:0 9px 24px -18px #0E5C4B88}
+.ux-home .ledger-top{background:linear-gradient(110deg,#FCFFFE 0%,#E9F7F0 100%)}
+.ux-home .ledger-top .cap{color:#386F62}
+.ux-home .ledger-top .big{color:#075D50}
+.meter{background:#DAEBE5}
+.meter i{background:linear-gradient(90deg,#0A7866 0%,#3DAA7E 100%)}
+.ux-kpi{border:1px solid #DAE9E5;box-shadow:0 8px 24px -20px #153D44A1}
+.ux-kpi-families{background:linear-gradient(145deg,#FFF 15%,#EDF9F2 100%);border-color:#CFE8DC}
+.ux-kpi-members{background:linear-gradient(145deg,#FFF 15%,#EDF4FE 100%);border-color:#D5E3F8}
+.ux-kpi-work{background:linear-gradient(145deg,#FFF 15%,#FFF5E2 100%);border-color:#F2E2BD}
+.ux-kpi-families .ux-kpi-icon{background:#DDF3E6;color:#126B50}
+.ux-kpi-members .ux-kpi-icon{background:#DCEAFE;color:#315E9E}
+.ux-kpi-work .ux-kpi-icon{background:#FFF0CE;color:#8B5C0D}
+.ux-kpi-families .ux-kpi-foot{color:#166C50}
+.ux-kpi-members .ux-kpi-foot{color:#345E92}
+.ux-kpi-work .ux-kpi-foot{color:#8D601B}
+.ux-kpi strong{color:#183C46}
+.ux-kpi:hover:not(:disabled){box-shadow:0 10px 24px -15px #144E4E69}
+.ux-home-section{border-color:#DDE9E5}
+.ux-home-section>summary{background:#FFF}
+.ux-home-section[open]>summary{background:#F7FBF9}
+.ux-section-badge{background:#E6F5F0;color:#0A685F}
+.ux-upcoming .ux-section-badge{background:#FFF0CE;color:#855811}
+.ux-demographics .ux-section-badge{background:#E9F1FF;color:#2C5E9C}
+.ux-attention .ux-section-badge{background:#FAEBE7;color:#A33A2E}
+.ux-section-title{color:#1C434B}
+.ux-home-details>summary{background:#F6FCF9;color:#0D665A}
+/* Register: header and rows feel quieter, row actions remain readable */
+table.grid th{background:#ECF4F2;color:#315C63;border-bottom-color:#D6E6E1}
+table.grid td{border-bottom-color:#E8F0ED}
+table.grid tbody tr:nth-child(even) td{background:#FBFDFC}
+table.grid tbody tr:hover td{background:#EEF8F5}
+table.grid th:first-child{background:#ECF4F2}
+table.grid tbody tr:nth-child(even) td:first-child{background:#FBFDFC}
+table.grid tbody tr:hover td:first-child{background:#EEF8F5}
+/* Login: coherent photography-first village identity */
+#login{background:radial-gradient(ellipse at 12% 5%,#DCEDE9 0%,#F6F8F5 48%,#F9F2E7 100%)}
+.brandside{background:linear-gradient(153deg,#103746 0%,#155661 44%,#655039 79%,#A56A2B 100%)}
+.brandside .orb.c{background:#F4C15B18}
+.formside{background:linear-gradient(165deg,#FFFEFC 0%,#F5F9F7 64%,#F6F1E9 100%)}
+.formside .kicker{color:#9A4E29}
+.formbox{border:1px solid #DDE9E5}
+.signin{background:linear-gradient(100deg,#08685E,#0A8173)!important;color:#FFF!important;box-shadow:0 9px 18px -13px #07584CAB!important}
+.signin:hover{background:linear-gradient(100deg,#07594F,#096F64)!important;box-shadow:0 11px 21px -13px #07584CAB!important}
+.field .input:focus{border-color:#08796C;box-shadow:0 0 0 4px #E0F3EC}
+.pwtoggle{background:#EAF2EF}
+.pubway{background:#EEF8F4;color:#135F55;border-color:#CDE6DC}
+.pubway:hover{background:#E1F2EB;color:#104F47}
+/* Consistent yellow/red announcements, including the login-page ticker. */
+.mal-notice-ticker{background:linear-gradient(105deg,#FFF4B8 0%,#FFE77E 55%,#FFED96 100%)!important;
+  border-color:#DAAD38!important;border-left:5px solid #B3261E!important;
+  color:#A3261B!important;box-shadow:0 8px 22px -17px #916322}
+.mal-notice-label{background:#FFF9D5!important;color:#A3261B!important;border-color:#E2B75B!important}
+.mal-notice-track .mal-notice-item{color:#A3261B!important}
+.mal-notice-track .mal-notice-sep{color:#B3261E!important}
+.mal-notice-pause{background:#FFF9DF!important;color:#A3261B!important;border-color:#DFB959!important}
+.mal-notice-detail{background:#FFFDF4;border-color:#EBDCAA}
+/* Mobile: white dock, the teal + as the central point of action */
+@media(max-width:860px){
+ #tabbar.tabbar{background:rgba(255,255,255,.98)!important;border-top-color:#D4E5DE!important;box-shadow:0 -7px 24px #133F4820!important}
+ #tabbar.tabbar>button[data-tab]{color:#587078!important}
+ #tabbar.tabbar>button[data-tab].on{color:#086D62!important}
+ #tabbar.tabbar>button[data-tab].on .ic{background:#E1F4ED!important;color:#086D62!important}
+ #tabbar.tabbar>button[data-kind="money"].on .ic{background:#FFF0CE!important;color:#865B11!important}
+ #tabbar.tabbar>.mobile-quick-fab .plus-bubble{background:linear-gradient(135deg,#087567,#0B8A79)!important;box-shadow:0 5px 13px #0D65533D!important}
+ #tabbar.tabbar>.mobile-quick-fab .lb{color:#086D62!important}
+ table.grid tbody tr{border-color:#D6E8E1!important;box-shadow:0 5px 17px #163C4310!important}
+ table.grid td:first-child{background:#F0F8F5!important;color:#0A6459!important}
+ table.grid td.acts{background:#F9FCFB!important}
+ table.grid td.acts .btn.btn-primary{background:#086D62!important;border-color:#086D62!important;color:#FFF!important}
+ .ux-kpi{min-height:96px}
+ .ux-kpi strong{color:#1B3E46}
+}
+@media(prefers-reduced-motion:reduce){.ux-kpi:hover:not(:disabled){transform:none}}
+@media print{.ux-kpi,.panel,.ledger,.strip{box-shadow:none!important}.mal-notice-ticker{background:#fff!important;color:#222!important}}
+
+</style>
+<script>
+/* Sidebar folding is presentation only. All existing pages and privileges stay intact.
+   Store names of collapsed groups only; never store a Family/Member record. */
+(function(){
+  const baseBuildNav=buildNav;
+  const key='mal_nav_sections_v355';
+  function pref(){try{return JSON.parse(local.get(key)||'{}')||{}}catch(e){return {}}}
+  buildNav=function(){
+    baseBuildNav();
+    const root=document.getElementById('sidebar');if(!root)return;
+    const prefs=pref();
+    const nodes=Array.from(root.children);
+    let grouping=null;
+    const fragment=document.createDocumentFragment();
+    for(const node of nodes){
+      if(node.classList && node.classList.contains('navgroup')){
+        const title=node.textContent.trim();
+        grouping=document.createElement('details');grouping.className='ux-navsection';grouping.dataset.group=title;
+        const summary=document.createElement('summary');summary.textContent=title;
+        summary.setAttribute('aria-label',title+' navigation group');grouping.appendChild(summary);
+        const saved=prefs[title];
+        grouping.open=saved===undefined ? title==='PEOPLE' : !!saved;
+        fragment.appendChild(grouping);
+        grouping.addEventListener('toggle',()=>{
+          if(!grouping.isConnected)return;
+          const all=pref();all[title]=grouping.open;
+          local.set(key,JSON.stringify(all));
+        });
+        continue;
+      }
+      if(grouping && node.matches && node.matches('.nav'))grouping.appendChild(node);
+      else fragment.appendChild(node);
+    }
+    root.replaceChildren(fragment);
+    const active=root.querySelector('.nav[data-page="'+PAGE+'"]');
+    const group=active && active.closest('.ux-navsection');
+    if(group)group.open=true;
+  };
+})();
+</script>
 </body>
 </html>

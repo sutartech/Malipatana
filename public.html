@@ -3,13 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <title>Malipatana village fund — public account</title>
 <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
 <link rel="apple-touch-icon" href="icon-180.png">
-<meta name="theme-color" content="#122b38">
+<meta name="theme-color" content="#102F3C">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaina+2:wght@500;600;700&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -168,42 +169,45 @@ tr:last-child td{border-bottom:0}
 .gpill.bad{background:#fbeee9;color:#8a2916}
 
 
-/* MALI NOTICE STRIP — visible announcements without tall cards. */
+/* MALI NOTICE STRIP — accessible warm-yellow background, dark-red text. */
 .mal-notice-ticker{display:flex;align-items:center;gap:10px;min-width:0;overflow:hidden;
-  background:linear-gradient(95deg,#94241d,#b43121);border:2px solid #eac356;
-  border-radius:15px;padding:8px 10px;box-shadow:0 9px 25px -18px #822015;
-  color:#ffec98;min-height:54px}
-.mal-notice-label{flex:none;background:#ffe47a;color:#7a261c;border-radius:9px;
-  padding:7px 9px;font-weight:900;letter-spacing:.06em;font-size:11px;line-height:1.2}
+  background:linear-gradient(105deg,#FFF4B8 0%,#FFE77E 55%,#FFED96 100%);
+  border:1.5px solid #DAAD38;border-left:5px solid #B3261E;
+  border-radius:13px;padding:8px 10px;box-shadow:0 8px 22px -17px #916322;
+  color:#A3261B;min-height:52px}
+.mal-notice-label{flex:none;background:#FFF9D5;color:#A3261B;border:1px solid #E2B75B;
+  border-radius:8px;padding:7px 9px;font-weight:900;letter-spacing:.04em;
+  font-size:11px;line-height:1.2}
 .mal-notice-lane{flex:1;min-width:0;overflow:hidden;white-space:nowrap;isolation:isolate}
 .mal-notice-track{display:inline-flex;align-items:center;gap:24px;min-width:max-content;
   padding-inline-start:0;font-size:14px;font-weight:800;line-height:1.5;
   animation:malNoticeMove var(--mal-notice-duration,32s) linear infinite;will-change:transform}
 .mal-notice-set{display:inline-flex;align-items:center;gap:24px;flex:0 0 auto;padding-right:30px}
-.mal-notice-track .mal-notice-item{display:inline-flex;align-items:center;gap:10px;white-space:nowrap}
-.mal-notice-track .mal-notice-sep{color:#ffe47a;opacity:.8;font-size:15px}
+.mal-notice-track .mal-notice-item{display:inline-flex;align-items:center;gap:10px;white-space:nowrap;color:#A3261B}
+.mal-notice-track .mal-notice-sep{color:#B3261E;opacity:.85;font-size:15px}
 @keyframes malNoticeMove{to{transform:translateX(-50%)}}
 .mal-notice-ticker:hover .mal-notice-track,
 .mal-notice-ticker:focus-within .mal-notice-track,
 .mal-notice-ticker.is-paused .mal-notice-track{animation-play-state:paused}
-.mal-notice-pause{flex:none;display:grid;place-items:center;background:#fff2c9;
-  border:1px solid #fff5cf;color:#7e261b;border-radius:9px;min-width:36px;min-height:36px;
+.mal-notice-pause{flex:none;display:grid;place-items:center;background:#FFF9DF;
+  border:1px solid #DFB959;color:#A3261B;border-radius:9px;min-width:38px;min-height:38px;
   font-size:17px;font-weight:800;cursor:pointer}
-.mal-notice-pause:focus-visible,.mal-notice-detail summary:focus-visible{outline:3px solid #fee990;outline-offset:3px}
-.mal-notice-detail{border:1px solid #eadfce;border-radius:0 0 13px 13px;background:#fffdf7;
+.mal-notice-pause:hover{background:#FFF3BB}
+.mal-notice-pause:focus-visible,.mal-notice-detail summary:focus-visible{outline:3px solid #A3261B;outline-offset:2px}
+.mal-notice-detail{border:1px solid #EBDCAA;border-radius:0 0 13px 13px;background:#FFFDF4;
   margin:0 10px 12px;overflow:hidden}
-.mal-notice-detail summary{cursor:pointer;color:#754120;font-weight:700;font-size:12px;
+.mal-notice-detail summary{cursor:pointer;color:#8B2B21;font-weight:700;font-size:12px;
   padding:8px 13px;line-height:1.35}
-.mal-notice-detail[open] summary{border-bottom:1px solid #eadfce}
+.mal-notice-detail[open] summary{border-bottom:1px solid #EBDCAA}
 .mal-notice-detail .ntcs{padding:12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
 .mal-notice-detail .ntc{background:#fff}
 .mal-notice-screen-reader{position:absolute;width:1px;height:1px;padding:0;margin:-1px;
   overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 @media(max-width:600px){
-  .mal-notice-ticker{gap:7px;padding:7px 8px;min-height:51px;border-radius:12px}
+  .mal-notice-ticker{gap:7px;padding:7px 8px;min-height:51px;border-radius:12px;border-left-width:4px}
   .mal-notice-label{padding:6px 7px;font-size:10px}
   .mal-notice-track{font-size:12px;gap:15px}
-  .mal-notice-pause{min-width:34px;min-height:34px}
+  .mal-notice-pause{min-width:36px;min-height:36px}
   .mal-notice-detail{margin:0 4px 10px}
 }
 @media(prefers-reduced-motion:reduce){
@@ -348,6 +352,14 @@ tr:last-child td{border-bottom:0}
   .topright{top:10px;right:10px;gap:6px}
   .langbtn,.topright .signin{padding:8px 12px;font-size:12px}
 }
+
+/* V3.5.6 shared Malipatana visual identity */
+:root{--paper:#F3F7F6;--surface:#FFFFFF;--surface-2:#F6FAF8;--line:#DCE8E3;--line-soft:#EAF1ED;--ink:#19353C;--label:#526A70;--muted:#60777B;--brick:#A9362A;--indigo:#102F3C;--indigo-2:#285A70;--green:#206F51;--turmeric:#A87516}
+body{background:var(--paper)}
+a{color:#09695F}a:hover{color:#07584F}
+header.top{background:linear-gradient(152deg,#102F3C,#155660 55%,#876332)}
+header.top .veil{background:linear-gradient(176deg,#0B2635B8 0%,#123A41A3 45%,#0E2C39EE 100%)}
+:focus-visible{outline:3px solid #D5A23E;outline-offset:2px}
 </style>
 </head>
 <body>
