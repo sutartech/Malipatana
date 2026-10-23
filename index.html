@@ -1570,6 +1570,54 @@ body.modalOpen #stickyLayer{opacity:.12;pointer-events:none;filter:saturate(.4)}
 }
 @media print{#app .mal-live-datetime{position:static;box-shadow:none;background:#fff}}
 </style>
+
+<style id="mal-login-layout-fix-v3511">
+/* FE 3.5.11: Prevent admin notices and oversized form content from collapsing
+   the village/photo side. Maintain a balanced, readable sign-in on desktop. */
+#login{width:100%;max-width:100%;overflow-x:clip;align-content:safe center}
+#login .loginshell{
+  width:min(1140px,100%);
+  max-width:100%;
+  grid-template-columns:minmax(0,1.02fr) minmax(0,.98fr);
+  align-items:stretch;
+}
+#login .brandside,#login .formside{
+  min-width:0;max-width:100%;width:auto;
+  overflow-wrap:anywhere;
+}
+#login .brandside{justify-content:flex-start;}
+#login .brandside .photoframe{margin-top:12px;flex:none;max-width:100%;}
+#login .brandside .brandtext,#login .brandside .wordmark{min-width:0;max-width:100%;}
+#login .formside{justify-content:flex-start;overflow-x:clip;}
+#login .formside > *,#login .formbox,#login .pwwrap{
+  box-sizing:border-box;min-width:0;max-width:100%;
+}
+#login .formside .noticeboard,#login .formside .remem,
+#login .formside .daysband,#login .formside .mal-notice-ticker,
+#login .formside .mal-notice-detail{min-width:0;max-width:100%;}
+#login .formside img{max-width:100%;}
+#login .formside .input,#login .formside input{max-width:100%;}
+@media (max-width:920px){
+  #login .loginshell{grid-template-columns:minmax(0,1fr);border-radius:0;}
+  #login .brandside{padding:20px;}
+  #login .brandside .photoframe img{max-height:210px;object-fit:cover;}
+  #login .formside{padding:24px 20px 36px;}
+}
+@media (max-width:640px){
+  /* Keep a compact village identity on phones so sign-in is visible sooner. */
+  #login .brandside{padding:16px 18px 14px;}
+  #login .wordmark{margin-bottom:10px;}
+  #login .brandside .photoframe{margin-top:0;border-radius:12px;}
+  #login .brandside .photoframe img{aspect-ratio:3.4/1;max-height:105px;object-fit:cover;}
+  #login .brandside .photocap,#login .brandside p,#login .brandside .pills{display:none!important;}
+  #login .brandside .brandtext{margin-top:9px;}
+  #login .brandside h1{font-size:23px;line-height:1.25;margin:3px 0 4px;}
+  #login .brandside h2{font-size:13px;line-height:1.35;margin:0;}
+  #login .brandside .eyebrow{font-size:10px;letter-spacing:.12em;}
+  #login .formside{padding:22px 18px 36px;}
+  #login .formbox{padding:16px;}
+}
+</style>
 </head>
 <body>
 
@@ -1768,7 +1816,7 @@ body.modalOpen #stickyLayer{opacity:.12;pointer-events:none;filter:saturate(.4)}
    ========================================================================= */
 const CONFIG = {
   API_URL: 'https://script.google.com/macros/s/AKfycbyfxff3MVt3Kw_CA_0aYD477nrAcWXshb9hex1LM_hl62tlrNiX5bGWgsf0Vw73sr-gbg/exec',
-  VERSION: 'FE V3.5.10',
+  VERSION: 'FE V3.5.11',
   EXPECTED_BACKEND: 'BE V1.8.14',
   IDLE_MINUTES: 30,
   /* Photo shown when no photo has been set in Settings.
