@@ -1882,7 +1882,7 @@ body.modalOpen #stickyLayer{opacity:.12;pointer-events:none;filter:saturate(.4)}
    ========================================================================= */
 const CONFIG = {
   API_URL: 'https://script.google.com/macros/s/AKfycbyfxff3MVt3Kw_CA_0aYD477nrAcWXshb9hex1LM_hl62tlrNiX5bGWgsf0Vw73sr-gbg/exec',
-  VERSION: 'FE V3.5.19',
+  VERSION: 'FE V3.5.20',
   EXPECTED_BACKEND: 'BE V1.8.17',
   IDLE_MINUTES: 30,
   /* Photo shown when no photo has been set in Settings.
@@ -5317,6 +5317,59 @@ function openForm(key, id, prefill){
   try { return openFormInner(key, id, prefill); }
   catch(e){ console.error('openForm failed', e); toast('Could not open the form: ' + (e.message || e), 'bad'); }
 }
+/* MALIPATANA SURNAME VISIBILITY FIX V1 — harmless until form opens. */
+function malStripVisibleSurname_(name, surname){
+  let first = String(name || '').trim().replace(/\s+/g, ' ');
+  const last = String(surname || '').trim().replace(/\s+/g, ' ');
+  if(!first || !last)return first;
+  while(first.toLocaleLowerCase().endsWith(' ' + last.toLocaleLowerCase())){
+    first = first.slice(0, -(last.length + 1)).trim();
+  }
+  return first;
+}
+function malFillSurnameForEdit_(key, rec, editing){
+  if(!editing || (key !== 'families' && key !== 'members')) return '';
+  const tidy = s => String(s || '').trim().replace(/\s+/g, ' ');
+  const priorFull = tidy(rec[key === 'families' ? 'Family Head' : 'Name']);
+  const typedGiven = tidy(rec['Given Name']);
+  const savedSurname = tidy(rec.Surname);
+  const isPrefix = priorFull && typedGiven && priorFull.toLocaleLowerCase().startsWith(typedGiven.toLocaleLowerCase() + ' ');
+  let full = (priorFull && (!typedGiven || isPrefix)) ? priorFull : (typedGiven || priorFull);
+  if(!full && !savedSurname) return '';
+
+  if(savedSurname){
+    const given = malStripVisibleSurname_(typedGiven || full, savedSurname);
+    if(given && given !== typedGiven){
+      rec['Given Name'] = given;
+      return 'Surname was already saved. The repeated surname was removed from Given Name.';
+    }
+    if(!typedGiven && given){rec['Given Name']=given; return 'Existing surname is displayed separately below.';}
+    return '';
+  }
+  if(!full || !/\s/.test(full)) return '';
+
+  // Prefer the family surname or a surname already confirmed in another record.
+  const family = key === 'members' ? (DB.families || []).find(f =>
+    String(f['Family ID'] || '').trim() === String(rec['Family ID'] || '').trim()) : null;
+  const surnames = [];
+  if(family && family.Surname) surnames.push(tidy(family.Surname));
+  for(const kind of ['families','members']){
+    for(const r of (DB && DB[kind]) || []) if(r.Surname) surnames.push(tidy(r.Surname));
+  }
+  const candidates = [...new Set(surnames.filter(Boolean))].sort((a,b) => b.length - a.length);
+  let last = candidates.find(c => full.toLocaleLowerCase().endsWith(' ' + c.toLocaleLowerCase()));
+  const known = !!last;
+  if(!last) last = full.split(' ').slice(-1)[0];
+  const given = malStripVisibleSurname_(full,last);
+  if(!given || given.toLocaleLowerCase() === last.toLocaleLowerCase()) return '';
+  rec['Given Name'] = given;
+  rec.Surname = last;
+  return known
+    ? 'Surname filled from the existing full name and matched with a known surname. No re-entry needed.'
+    : 'Surname suggested from the last word of the existing full name. Please check it before saving.';
+}
+/* END MALIPATANA SURNAME VISIBILITY FIX V1 */
+
 function openFormInner(key, id, prefill){
   if(!canEdit()) { toast('Your account cannot change records', 'bad'); return; }
   const m = MODULES[key];
@@ -5327,6 +5380,7 @@ function openFormInner(key, id, prefill){
     if(m.prefix) rec[m.idField] = nextId(key);
   }
   if(prefill) Object.keys(prefill).forEach(k => { rec[k] = prefill[k]; });
+  const malVisibleNotice = malFillSurnameForEdit_(key, rec, !!existing);
 
   if(key==='members' && !existing && prefill && prefill['Family ID']){
     const family=(DB.families||[]).find(f=>String(f['Family ID'])===String(prefill['Family ID']));
@@ -5335,7 +5389,7 @@ function openFormInner(key, id, prefill){
   const legacyName=existing && (key==='families'||key==='members') && !rec['Given Name'] && !rec.Surname ?
     '<div class="fieldnote" style="grid-column:1/-1;background:#fff5db;border-radius:9px;padding:12px">Historical full name retained: <strong>'+esc(rec[key==='families'?'Family Head':'Name']||'')+'</strong>. Enter Given Name + Surname to classify this record. No automatic surname guessing.</div>' : '';
   const namePreview = key==='families'||key==='members';
-  const body = legacyName + allFields(key).filter(f => !f.hidden && !(f.t === 'photo' && !photosOn())).map(f =>
+  const body = (malVisibleNotice ? '<div class="fieldnote" style="grid-column:1/-1;background:#ecf7ef;border:1px solid #b9dbc4;border-radius:10px;padding:10px 12px" role="status">✔ ' + esc(malVisibleNotice) + '</div>' : '') + legacyName + allFields(key).filter(f => !f.hidden && !(f.t === 'photo' && !photosOn())).map(f =>
     fieldHtml(key, f, rec[f.n], !!existing, rec) + (namePreview && f.n==='Surname' ?
       '<div class="mal-live-name" id="malFullNamePreview" role="status" aria-live="polite"><strong>Full name (automatic):</strong> <span id="malFullNameValue">Enter first name and surname</span><div class="fieldnote">Saved as one full name for display and search; surname remains separate for filtering.</div></div>' : '')
   ).join('');
@@ -5384,6 +5438,11 @@ function malWireFullNamePreview_(key, rec){
     else if(!a&&!b&&legacy){label.textContent=legacy+' (existing record)';host.classList.remove('ready');}
     else{label.textContent='Enter both first name and surname';host.classList.remove('ready');}
   };
+  first.addEventListener('blur',()=>{
+    if(!surname.value.trim())return;
+    const fixed=malStripVisibleSurname_(first.value,surname.value);
+    if(fixed && fixed!==first.value.trim()){first.value=fixed;update();}
+  });
   first.addEventListener('input',update);
   surname.addEventListener('input',update);
   surname.addEventListener('change',update);
@@ -5971,7 +6030,12 @@ async function saveRecord(key, rec, editing, opts){
     out[f.n] = v;
   });
   if(key==='families'||key==='members'){
-    const given=String(out['Given Name']||'').trim(),surname=String(out.Surname||'').trim();
+    let given=String(out['Given Name']||'').trim(),surname=String(out.Surname||'').trim();
+    if(given&&surname){
+      const noRepeat=malStripVisibleSurname_(given,surname);
+      if(noRepeat && noRepeat!==given){given=noRepeat;out['Given Name']=given;}
+      if(given.toLocaleLowerCase()===surname.toLocaleLowerCase())problems.push('Given Name must not be only the surname.');
+    }
     if((given&&!surname)||(!given&&surname)||(!editing&&(!given||!surname)))
       problems.push('Please enter both Given Name and Surname.');
     if(given&&surname){out[key==='families'?'Family Head':'Name']=(given+' '+surname).replace(/\s+/g,' ').trim();}
