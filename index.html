@@ -1422,6 +1422,7 @@ body.modalOpen #stickyLayer{opacity:.12;pointer-events:none;filter:saturate(.4)}
 .formbox.mal-otp-mode>.mal-login-divider,.formbox.mal-otp-mode>.mal-otp-launch,
 .formbox.mal-otp-mode>.mal-reset-launch,
 .formbox.mal-otp-mode>.mal-otp-tiny{display:none!important}
+.mal-dup-note{display:block;margin:8px 0 14px;padding:12px;border:1px solid #e3be64;border-radius:12px;background:#fff2c5;color:#81500c;font-weight:650;line-height:1.45}.mal-dup-note.blocking{background:#fff0e9;border-color:#da948c;color:#9e2b22}.mal-dup-note[hidden]{display:none!important}
 </style>
 <style id="v4addon">
 /* ---------- family tree (FE V2.9) ---------- */
@@ -1548,7 +1549,7 @@ body.modalOpen #stickyLayer{opacity:.12;pointer-events:none;filter:saturate(.4)}
  .mal-verify-code .input{max-width:140px}}
 </style>
 <style id="malLiveDateBarCSS">
-/* FE V3.5.13 — India time INSIDE the top header, immediately left of language.
+/* FE V3.5.15 — India time INSIDE the top header, immediately left of language.
    The former second sticky date row is intentionally removed. */
 #app .topbar{min-width:0}
 #app .topbar .mal-live-datetime{
@@ -1849,8 +1850,8 @@ body.modalOpen #stickyLayer{opacity:.12;pointer-events:none;filter:saturate(.4)}
    ========================================================================= */
 const CONFIG = {
   API_URL: 'https://script.google.com/macros/s/AKfycbyfxff3MVt3Kw_CA_0aYD477nrAcWXshb9hex1LM_hl62tlrNiX5bGWgsf0Vw73sr-gbg/exec',
-  VERSION: 'FE V3.5.13',
-  EXPECTED_BACKEND: 'BE V1.8.15',
+  VERSION: 'FE V3.5.15',
+  EXPECTED_BACKEND: 'BE V1.8.17',
   IDLE_MINUTES: 30,
   /* Photo shown when no photo has been set in Settings.
      village.jpg sits in the same folder as this file on GitHub. */
@@ -3697,10 +3698,13 @@ const MODULES = {
     blurb: 'Every household in the village register',
     fields: [
       { n:'Family ID', t:'text', auto:true },
-      { n:'Family Head', t:'text', req:true },
+      { n:'Given Name', t:'text', req:true, hint:'Family head: first / given name only' },
+      { n:'Surname', t:'datalist', req:true, hint:'Choose or enter the family surname' },
+      { n:'Family Head', t:'text', hidden:true },
       { n:'Parent Family ID', t:'family', hint:'Leave empty for a main family. Set it to make this a subfamily of a bigger household.' },
-      { n:'House No', t:'text' },
-      { n:'Address/Area', t:'datalist' },
+      { n:'Village Locality', t:'datalist', hint:'Sahi / neighbourhood within Malipatana; independent of surname' },
+      { n:'House No', t:'text', hidden:true },
+      { n:'Address/Area', t:'datalist', hidden:true },
       { n:'Mobile', t:'tel' },
       { n:'Total Members', t:'counted', hint:'Counted from the living members of this family' },
       { n:'Earning Members', t:'counted' },
@@ -3719,7 +3723,7 @@ const MODULES = {
       { n:'Created Date', t:'date', hidden:true },
       { n:'Last Updated', t:'date', hidden:true }
     ],
-    list: ['Family ID','Family Head','Parent Family ID','House No','Address/Area','Mobile','Total Members','Earning Members','Vulnerable Status','Needs Guidance','Guide Member ID','Guidance Status','Family Status']
+    list: ['Family ID','Family Head','Surname','Village Locality','Parent Family ID','Mobile','Total Members','Earning Members','Vulnerable Status','Needs Guidance','Guide Member ID','Guidance Status','Family Status']
   },
   members: {
     sheet: 'Members', title: 'Members', odia: 'ସଦସ୍ୟ', idField: 'Member ID', prefix: 'MEM',
@@ -3727,7 +3731,9 @@ const MODULES = {
     fields: [
       { n:'Member ID', t:'text', auto:true },
       { n:'Family ID', t:'family', req:true },
-      { n:'Name', t:'text', req:true },
+      { n:'Given Name', t:'text', req:true, hint:'First/given name. Existing full names are preserved for legacy records.' },
+      { n:'Surname', t:'datalist', req:true, hint:'Choose or enter surname; may differ from family head surname' },
+      { n:'Name', t:'text', hidden:true },
       { n:'Relation to Family Head', t:'datalist', opts:['Self','Wife','Husband','Son','Daughter','Father','Mother','Brother','Sister','Daughter-in-law','Son-in-law','Grandson','Granddaughter','Other'] },
       { n:'Gender', t:'select', opts:['Male','Female','Other'] },
       { n:'Father Name', t:'text' },
@@ -3740,6 +3746,12 @@ const MODULES = {
       { n:'Earning Member', t:'select', opts:YESNO },
       { n:'Monthly Income', t:'money' },
       { n:'Mobile', t:'tel' },
+      { n:'Residence Status', t:'select', opts:['Living in Malipatana','Outside temporarily','Shifted permanently'], hint:'For counting current residents, without changing ancestral Family ID' },
+      { n:'Current City', t:'text' },
+      { n:'Current District', t:'text' },
+      { n:'Current State', t:'text' },
+      { n:'Current Country', t:'text' },
+      { n:'Outside Address', t:'textarea', hint:'Optional private address for members who live outside Malipatana' },
       { n:'Disability', t:'select', opts:['No','Yes'] },
       { n:'Insurance', t:'select', opts:YESNO },
       { n:'Remarks', t:'textarea' },
@@ -3750,7 +3762,7 @@ const MODULES = {
       { n:'Memorial Message', t:'textarea', hidden:true },
       { n:'Memorial Photo', t:'photo', hidden:true }
     ],
-    list: ['Photo','Member ID','Name','Family ID','Relation to Family Head','Gender','Age','Education','Occupation','Earning Member','Monthly Income','Mobile','Life Status']
+    list: ['Photo','Member ID','Name','Surname','Family ID','Residence Status','Relation to Family Head','Gender','Age','Education','Occupation','Earning Member','Monthly Income','Mobile','Life Status']
   },
   recurring: {
     sheet: 'Recurring Expenses', title: 'Recurring expenses', odia: 'ନିୟମିତ ଖର୍ଚ୍ଚ', idField: 'Recurring ID', prefix: 'REC',
@@ -4863,6 +4875,17 @@ function filterRows(key){
   const m = MODULES[key], v = VIEW[key] || (VIEW[key] = { q: '', sort: '', dir: 1, fam: '' });
   let rows = rowsOf(key).slice();
   if(v.fam) rows = rows.filter(r => String(r['Family ID'] || '').trim() === v.fam);
+  if((key==='families'||key==='members')&&v.surname)
+    rows=rows.filter(r=>String(r.Surname||'').toLowerCase()===v.surname.toLowerCase());
+  if((key==='families'||key==='members')&&v.locality)
+    rows=rows.filter(r=>{
+      const fam=key==='families'?r:(DB.families||[]).find(f=>String(f['Family ID'])===String(r['Family ID']));
+      return String(fam && fam['Village Locality'] || '').toLowerCase()===v.locality.toLowerCase();
+    });
+  if(key==='members'&&v.residence)
+    rows=rows.filter(r=>String(r['Residence Status']||'Living in Malipatana')===v.residence);
+  if(key==='members'&&v.life)
+    rows=rows.filter(r=>v.life==='Alive' ? !isDeceased(r) : isDeceased(r));
   if(v.q){
     const q = v.q.toLowerCase();
     rows = rows.filter(r => m.fields.some(f => String(r[f.n] ?? '').toLowerCase().includes(q)) ||
@@ -4916,6 +4939,7 @@ function renderModule(key){
       <option value="">All families</option>
       ${(DB.families || []).map(f => `<option value="${esc(f['Family ID'])}" ${v.fam === String(f['Family ID']) ? 'selected' : ''}>${esc(f['Family ID'])} · ${esc(f['Family Head'])}</option>`).join('')}
     </select>` : ''}
+    ${['families','members'].includes(key)?`<select class="input" id="surnameFilter" aria-label="Filter by surname"><option value="">All surnames</option>${[...new Set(rowsOf(key).map(r=>String(r.Surname||'').trim()).filter(Boolean))].sort().map(n=>`<option value="${esc(n)}" ${v.surname===n?'selected':''}>${esc(n)}</option>`).join('')}</select><select class="input" id="sahiFilter" aria-label="Filter by village locality"><option value="">All village localities</option>${[...new Set((DB.families||[]).map(r=>String(r['Village Locality']||'').trim()).filter(Boolean))].sort().map(n=>`<option value="${esc(n)}" ${v.locality===n?'selected':''}>${esc(n)}</option>`).join('')}</select>${key==='members'?`<select class="input" id="residenceFilter" aria-label="Filter by residence"><option value="">All residences</option>${['Living in Malipatana','Outside temporarily','Shifted permanently'].map(n=>`<option ${v.residence===n?'selected':''}>${esc(n)}</option>`).join('')}</select><select class="input" id="lifeFilter" aria-label="Filter by life status"><option value="">All life statuses</option><option value="Alive" ${v.life==='Alive'?'selected':''}>Living only</option><option value="Deceased" ${v.life==='Deceased'?'selected':''}>In memory</option></select>`:''}`:''}
     ${key === 'members' && canEdit() ? '<button class="btn btn-sm" data-act="heads">Add missing family heads</button>' : ''}    ${isAdmin() ? `<button class="btn btn-sm" data-act="cols">Columns</button>` : ''}
     ${key==='users' && isAdmin() ? '<button class="btn btn-sm btn-primary" data-act="loginopts">Login / OTP options</button>' : ''}
     ${isAdmin() && ['families','members'].includes(key) ? `<button class="btn btn-sm ${VIEW[key] && VIEW[key].quick ? 'btn-primary' : ''}" data-act="quick">${VIEW[key] && VIEW[key].quick ? 'Done editing' : 'Quick edit'}</button>` : ''}
@@ -4924,6 +4948,7 @@ function renderModule(key){
     <span class="muted small" style="margin-left:auto">${rows.length} of ${all.length} records</span>
   </div>
 
+  ${['families','members'].includes(key)?`<div class="fieldnote" style="margin:3px 0 12px">Grouping: ${new Set(all.map(r=>String(r.Surname||'').trim()).filter(Boolean)).size} surname(s) · ${all.filter(r=>!String(r.Surname||'').trim()).length} older record(s) awaiting surname review. ${key==='families'?new Set(all.map(r=>String(r['Village Locality']||'').trim()).filter(Boolean)).size+' village localities.':'Use Sahi and current residence filters above.'}</div>`:''}
   ${OPTIONAL_SHEETS.includes(key) && !SERVER_SHEETS.includes(key) ? `<div class="notice">
     <b>These records stay on this device</b>
     The sheet is not sending ${esc(MODULES[key].sheet)} yet. Ask the admin to add
@@ -4983,6 +5008,9 @@ function renderModule(key){
   }
   const ff = $('#famFilter');
   if(ff) ff.onchange = () => { v.fam = ff.value; renderModule(key); };
+  [['surnameFilter','surname'],['sahiFilter','locality'],['residenceFilter','residence'],['lifeFilter','life']].forEach(([id,prop])=>{
+    const input=document.getElementById(id);if(input)input.onchange=()=>{v[prop]=input.value;renderModule(key);};
+  });
   $('#main').querySelectorAll('th[data-sort]').forEach(th => th.onclick = () => {
     const c = th.dataset.sort;
     if(v.sort === c) v.dir *= -1; else { v.sort = c; v.dir = 1; }
@@ -5141,7 +5169,13 @@ function openFormInner(key, id, prefill){
   }
   if(prefill) Object.keys(prefill).forEach(k => { rec[k] = prefill[k]; });
 
-  const body = allFields(key).filter(f => !f.hidden && !(f.t === 'photo' && !photosOn())).map(f => fieldHtml(key, f, rec[f.n], !!existing, rec)).join('');
+  if(key==='members' && !existing && prefill && prefill['Family ID']){
+    const family=(DB.families||[]).find(f=>String(f['Family ID'])===String(prefill['Family ID']));
+    if(family && family.Surname && !rec.Surname)rec.Surname=family.Surname;
+  }
+  const legacyName=existing && (key==='families'||key==='members') && !rec['Given Name'] && !rec.Surname ?
+    '<div class="fieldnote" style="grid-column:1/-1;background:#fff5db;border-radius:9px;padding:12px">Historical full name retained: <strong>'+esc(rec[key==='families'?'Family Head':'Name']||'')+'</strong>. Enter Given Name + Surname to classify this record. No automatic surname guessing.</div>' : '';
+  const body = legacyName + allFields(key).filter(f => !f.hidden && !(f.t === 'photo' && !photosOn())).map(f => fieldHtml(key, f, rec[f.n], !!existing, rec)).join('');
   openModal(`
     <header>
       <div>
@@ -5153,6 +5187,7 @@ function openFormInner(key, id, prefill){
     </header>
     <div class="body">
       <div id="formErr" class="errline hide"></div>
+      ${key==='families'||key==='members'?'<div id="malDuplicateWarning" class="mal-dup-note" hidden role="status" aria-live="polite"></div>':''}
       <div class="formgrid" id="formGrid">${body}</div>
     </div>
     <footer>
@@ -5163,6 +5198,7 @@ function openFormInner(key, id, prefill){
     </footer>`);
 
   wireForm(key, rec, !!existing);
+  malWireDuplicatePreview_(key, rec, !!existing);
   wirePhotoFallbacks(document.getElementById('modal') || document);
   $('#saveBtn').onclick = () => saveRecord(key, rec, !!existing);
   const more = $('#saveMoreBtn');
@@ -5226,7 +5262,8 @@ function fieldHtml(key, f, value, editing, rec){
         (f.opts || []).map(o => `<option ${String(val) === o ? 'selected' : ''}>${esc(o)}</option>`).join('') +
         (val && !(f.opts || []).includes(val) ? `<option selected>${esc(val)}</option>` : '') + `</select>`; break;
     case 'datalist': {
-      const opts = [...new Set([...(f.opts || []), ...distinct(key, f.n)])];
+      const adminLocalities=f.n==='Village Locality'?String(setting('Village Localities','')).split(/[,;|\n]/).map(x=>x.trim()).filter(Boolean):[];
+      const opts = [...new Set([...(f.opts || []), ...adminLocalities, ...distinct(key, f.n)])];
       input = `<input class="input" id="${id}" list="${id}_dl" value="${esc(val)}" autocomplete="off">
                <datalist id="${id}_dl">${opts.map(o => `<option value="${esc(o)}"></option>`).join('')}</datalist>`; break;
     }
@@ -5285,8 +5322,22 @@ function wireForm(key, rec){
     if(current && !list.some(x => String(x['Member ID']) === current)) memEl.innerHTML += `<option value="${esc(current)}" selected>${esc(current)}</option>`;
   }
   fillMembers();
-  if(famEl) famEl.addEventListener('change', () => { fillMembers(); autoFillFromFamily(key); });
+  if(famEl) famEl.addEventListener('change', () => {
+    fillMembers(); autoFillFromFamily(key);
+    if(key==='members'){
+      const selected=(DB.families||[]).find(f=>String(f['Family ID'])===String(famEl.value));
+      const surname=document.getElementById('f_Surname');
+      if(selected&&surname&&!surname.value)surname.value=selected.Surname||'';
+    }
+  });
 
+  if(key==='members'){
+    const status=document.getElementById('f_Residence_Status');
+    const outside=['Current City','Current District','Current State','Current Country','Outside Address'];
+    function toggle(){const isOutside=status && status.value && status.value!=='Living in Malipatana';
+      outside.forEach(name=>{const el=document.getElementById(fid({n:name}));if(el)el.closest('div').hidden=!isOutside;});}
+    if(status){if(!status.value)status.value='Living in Malipatana';status.addEventListener('change',toggle);toggle();}
+  }
   wireFormKeys(key, rec);
 
   PENDING_PHOTO = null; REMOVE_PHOTO = false;
@@ -5486,6 +5537,8 @@ async function addHeadAsMember(fam, quiet){
     'Member ID': freeMemberId(),
     'Family ID': famId,
     'Name': head,
+    ...(fam['Given Name']&&fam.Surname?{'Given Name':fam['Given Name'],'Surname':fam.Surname}:{}),
+    'Residence Status':'Living in Malipatana',
     'Relation to Family Head': 'Self',
     'Gender': String(fam['Head Gender'] || '').trim(),
     'Mobile': String(fam['Mobile'] || '').trim(),
@@ -5676,6 +5729,40 @@ async function renameId(key, oldId, newId){
   }
 }
 
+/* Preview duplicate risk when the household/person details change.
+   The server performs the final check again before writing. */
+function malDupCurrentForm_(key,rec){
+  const data=Object.assign({},rec||{});
+  const fields=key==='families'?['Family ID','Given Name','Surname','Village Locality','Mobile']:
+    ['Member ID','Family ID','Given Name','Surname','Date of Birth','Father Name','Mother Name','Mobile'];
+  for(const n of fields){const el=document.getElementById('f_'+n.replace(/[^a-z0-9]/gi,'_'));if(el)data[n]=el.value;}
+  const given=String(data['Given Name']||'').trim(),surname=String(data.Surname||'').trim();
+  if(given&&surname)data[key==='families'?'Family Head':'Name']=given+' '+surname;
+  return data;
+}
+let malDupPreviewRun_=0;
+function malShowDupWarning_(info){
+  const el=document.getElementById('malDuplicateWarning');if(!el)return;
+  el.hidden=!(info&&info.duplicate);
+  if(!el.hidden){el.className='mal-dup-note '+(info.level==='block'?'blocking':'');
+    el.textContent=(info.level==='block'?'⛔ Duplicate warning: ':'⚠ Check possible duplicate: ')+(info.message||'Please review existing records.');}
+}
+function malWireDuplicatePreview_(key,record,isEditing){
+  if(key!=='families'&&key!=='members')return;
+  const host=document.getElementById('formGrid');if(!host)return;
+  let timer=null;
+  host.addEventListener('change',()=>{
+    if(timer)clearTimeout(timer);
+    const run=++malDupPreviewRun_;
+    timer=setTimeout(async()=>{
+      const rec=malDupCurrentForm_(key,record);
+      if(!(key==='families'?rec['Family Head']:rec.Name&&rec['Family ID'])){malShowDupWarning_(null);return;}
+      try{const r=await api('duplicateCheck',{sheet:MODULES[key].sheet,record:JSON.stringify(rec),excludeId:isEditing?String(record[MODULES[key].idField]||''):''});
+        if(run===malDupPreviewRun_&&document.getElementById('formGrid')===host)malShowDupWarning_(r);
+      }catch(e){/* Server-side save remains authoritative. */}
+    },450);
+  });
+}
 async function saveRecord(key, rec, editing, opts){
   const m = MODULES[key];
   const originalId = editing ? String(rec[m.idField] ?? '').trim() : '';
@@ -5692,9 +5779,20 @@ async function saveRecord(key, rec, editing, opts){
     if(!el) return;
     let v = el.value;
     if(f.t === 'tel' && v && !/^\d{10}$/.test(v.trim().replace(/[\s\-+]/g, ''))) problems.push(f.n + ' should be a 10 digit mobile number');
-    if(f.req && !String(v).trim()) problems.push(f.n + ' is required');
+    if(f.req && !String(v).trim() && !(editing && (key==='families'||key==='members') && ['Given Name','Surname'].includes(f.n) && !String(rec['Given Name']||rec.Surname||'').trim())) problems.push(f.n + ' is required');
     out[f.n] = v;
   });
+  if(key==='families'||key==='members'){
+    const given=String(out['Given Name']||'').trim(),surname=String(out.Surname||'').trim();
+    if((given&&!surname)||(!given&&surname)||(!editing&&(!given||!surname)))
+      problems.push('Please enter both Given Name and Surname.');
+    if(given&&surname){out[key==='families'?'Family Head':'Name']=(given+' '+surname).replace(/\s+/g,' ').trim();}
+    else if(editing){out[key==='families'?'Family Head':'Name']=rec[key==='families'?'Family Head':'Name'];}
+    if(key==='members'){
+      out['Residence Status']=out['Residence Status']||rec['Residence Status']||'Living in Malipatana';
+      if(out['Residence Status']==='Living in Malipatana')for(const n of ['Current City','Current District','Current State','Current Country','Outside Address'])out[n]='';
+    }
+  }
   if(problems.length){
     const firstBad = FIELDS.find(f => problems.some(p => String(p).indexOf(f.n) === 0));
     const el0 = firstBad ? document.getElementById(fid(firstBad)) : null;
@@ -5714,6 +5812,20 @@ async function saveRecord(key, rec, editing, opts){
     const box = $('#formErr'); box.classList.remove('hide');
     box.textContent = m.idField + ' ' + newId + ' already exists. Change it and try again.';
     return;
+  }
+  if(key==='families'||key==='members'){
+    const note=$('#formErr');
+    if(!navigator.onLine){note.classList.remove('hide');note.textContent='Connect to the internet to check for duplicate family/member records before saving.';return;}
+    try{
+      const check=await api('duplicateCheck',{sheet:m.sheet,record:JSON.stringify(malDupCurrentForm_(key,out)),excludeId:editing?originalId:''});
+      malShowDupWarning_(check);
+      if(!check||!check.ok)throw new Error(check&&check.error||'Could not validate duplicates.');
+      if(check.level==='block'){
+        note.classList.remove('hide');note.textContent=check.message;
+        return;
+      }
+      if(check.level==='warning'&&!window.confirm('Possible duplicate found.\n\n'+check.message+'\n\nConfirm this is a DIFFERENT person or household before saving.'))return;
+    }catch(e){note.classList.remove('hide');note.textContent='Duplicate check could not finish: '+String(e.message||e)+'. Please retry when connected.';return;}
   }
   if(m.fields.some(f => f.n === 'Last Updated')) out['Last Updated'] = today();
   out['Entered By'] = String(USER && (USER.name || USER.username) || '');
@@ -5858,7 +5970,7 @@ function openProfile(id){
   openModal(`
     <header>
       <div><h3>${esc(f['Family Head'] || id)}</h3>
-      <div class="sub">${esc(id)} · House ${esc(f['House No'] || '—')} · ${esc(f['Address/Area'] || '')} ${f['Mobile'] ? '· ' + esc(f['Mobile']) : ''}</div></div>
+      <div class="sub">${esc(id)} · ${esc(f['Village Locality'] || f['Address/Area'] || 'Malipatana')} ${f['Mobile'] ? '· ' + esc(f['Mobile']) : ''}</div></div>
       <div class="sp"></div><button class="btn btn-sm" onclick="closeModal()">Close</button>
     </header>
     <div class="body">
@@ -8182,7 +8294,7 @@ async function renderEntryLinks(){
    const live=await api('health');
    if(!live || !live.ok || !live.capabilities || !live.capabilities.linkInfo ||
       (document.getElementById('linkAllowEdit').checked && (!live.capabilities.linkSearch || !live.capabilities.linkEdit))){
-     throw Error('Shared-entry backend is not ready. Deploy BE V1.8.15 to the same /exec URL before creating links.');
+     throw Error('Shared-entry backend is not ready. Deploy BE V1.8.17 to the same /exec URL before creating links.');
    }
    const event=ev.value,record=(DB.events||[]).find(x=>String(x['Event ID'])===event);
    const r=await api('linkCreate',{kind:kind.value,event,eventName:record?record['Event Name']:'',hours:document.getElementById('linkHours').value,untilDisabled:validity.value==='untilDisabled'?'yes':'no',max:document.getElementById('linkMax').value,allowEdit:document.getElementById('linkAllowEdit').checked?'yes':'no'});
