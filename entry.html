@@ -111,13 +111,32 @@ async function loadFamilyOptions(){
  })();
  return familyOptionsLoading;
 }
+function malGuestNameRepeated_(given,surname){
+ const g=String(given||'').trim().replace(/\s+/g,' ').toLocaleLowerCase('en-IN');
+ const sn=String(surname||'').trim().replace(/\s+/g,' ').toLocaleLowerCase('en-IN');
+ return !!(g&&sn&&g.endsWith(' '+sn));
+}
 function malSharedLiveName_(formId,outputId){
  const form=$(formId),out=$(outputId);
  if(!form||!out)return ()=>{};
+ const note=document.createElement('div');note.style.cssText='color:#A83225;font-weight:600;margin-top:6px';note.hidden=true;
+ const fix=document.createElement('button');fix.type='button';fix.className='secondary';fix.textContent='Remove repeated surname';
+ fix.style.marginLeft='8px';
+ note.append('Surname is already included in Given Name. ',fix);
+ out.parentNode.append(note);
+ fix.onclick=()=>{
+  const g=String(form.elements.givenName.value||'').trim().replace(/\s+/g,' '),
+        surname=String(form.elements.surname.value||'').trim().replace(/\s+/g,' ');
+  if(malGuestNameRepeated_(g,surname)){
+   form.elements.givenName.value=g.slice(0,-surname.length).trim();update();
+  }
+ };
  const update=()=>{
   const a=String(form.elements.givenName.value||'').trim().replace(/\s+/g,' ');
   const b=String(form.elements.surname.value||'').trim().replace(/\s+/g,' ');
-  out.textContent=a&&b?a+' '+b:'Enter first name and surname';
+  const repeated=malGuestNameRepeated_(a,b);
+  note.hidden=!repeated;
+  out.textContent=repeated?a+' (surname repeated — correct before saving)':a&&b?a+' '+b:'Enter first name and surname';
  };
  form.elements.givenName.addEventListener('input',update);
  form.elements.surname.addEventListener('input',update);
@@ -254,6 +273,10 @@ for(const [formId,mode,photoId] of [['familyForm','family','familyPhoto'],['memb
   const file=$(photoId).files[0],rec=Object.fromEntries(new FormData(form));
   try{
     if(mode==='family'||mode==='member'){
+      if(malGuestNameRepeated_(rec.givenName,rec.surname)){
+        form.elements.givenName.focus();
+        throw Error('Surname is already part of Given Name. Please enter Given Name and Surname separately.');
+      }
       if(!navigator.onLine)throw Error('Internet connection is required for duplicate checking before saving.');
       const dup=await api('linkDuplicateCheck',{mode,record:JSON.stringify(malGuestDupPayload(mode,rec))});
       if(!dup||!dup.ok)throw Error(dup&&dup.error||'Duplicate check failed. Please retry.');

@@ -1,47 +1,41 @@
-MALIPATANA DASHBOARD — 22 OCTOBER 2026
-Frontend V3.3.0 / Backend V1.7.0
+MALIPATANA VILLAGE WELFARE — SURNAME FIELD ALREADY FILLED
+DIRECT FRONTEND UPLOAD · FE V3.5.21 · 23 OCTOBER 2026
 
-CONTENTS
-index.html     Main dashboard (GitHub Pages)
-entry.html     Temporary login-free data entry (GitHub Pages)
-public.html    Public village page (GitHub Pages)
-Code.gs        Complete Apps Script backend — replace the old Code.gs, DO NOT APPEND
-Other static files: icons, manifest, Odia support, village photo
+READY FILES
+  index.html — full updated dashboard (upload this file)
+  entry.html — the existing shared-entry frontend (unchanged)
 
-DEPLOY SAFELY
-1. Make independent backups of your live Google Sheet, current Apps Script code and GitHub site.
-2. In Apps Script, replace ALL of old Code.gs with the Code.gs from this package.
-3. Click Save. Choose runAll from the function list and Run once. Authorize requested Sheets/Drive permissions. Inspect execution log for failed steps.
-4. Manage deployments > Edit > New version > Deploy. Keep the current /exec URL. If you create a fresh deployment, update API_URL in BOTH index.html and entry.html.
-5. Upload static frontend files to the ROOT of your existing sutartech/Malipatana GitHub Pages repository. DO NOT upload Code.gs or this README to a public repository if possible; keep Code.gs only in Apps Script.
-6. Clear cached pages/hard refresh. Sign in with existing admin account. Backend should show V1.7.0 and frontend V3.3.0.
-7. Admin menu: Run all setup is now at the top; Shared entry links is beside it.
-8. Create a Family & Members link (e.g. 48 hours); copy the generated URL immediately and test with a newly entered household. Members require the Family ID displayed after family submission. Test duplicates by trying the same data again.
-9. Create an event in Major Expenses first, then create an Event Expenses link and select that event. Test payer different from submitter, new expenditure posting, expiry, and revoke.
-10. Test desktop and narrow mobile screens; verify all existing features and reports before broad distribution.
+HOW TO APPLY TO GITHUB
+1. Extract this ZIP on your computer. Do not upload the compressed ZIP file itself.
+2. Open your GitHub repository: https://github.com/sutartech/Malipatana
+3. Choose Add file > Upload files.
+4. Drag index.html and entry.html to the ROOT of the repository.
+   GitHub should show them replacing existing files of the same names.
+5. Commit the changes. Refresh your page using Ctrl+Shift+R.
+6. FE version should show V3.5.21. Test one old Member and Family form.
 
-SHARED-LINK SAFEGUARDS
-- Each link is a random bearer token. The server stores a SHA-256 hash, never the raw token. Copy the generated link when creating it; it cannot be retrieved afterwards.
-- Admin picks link type, duration 1 to 720 hours, event (expense links), and entry cap; may revoke at any time.
-- Public users can ADD selected records ONLY. They cannot edit/delete or retrieve private registers.
-- Recent five entries are summaries without names, family details or payer details.
-- Duplicate safeguards: family head + house or phone; member name + family (and DOB when provided); expenses same event/date/amount/description/payer (last 50 entries).
-- Warning: name-only duplicate matching is approximate; household cases may require admin review. Links shared with anyone can be abused; use short lifetimes and sensible entry caps.
-- The form requires an internet connection; failed submissions are NOT quietly queued, preventing accidental duplicates.
-- Shared form writes directly into the operational registers (not approval staging). The audit and Entry Source values identify these writes. For high-risk public distribution an approval workflow is recommended.
-- Every family/member shared submission is counted towards the link entry cap separately.
+WHAT CHANGED
+- Opening a historical Member or Family for EDIT now fills the visible Surname input
+  if its existing full name already contains a likely surname.
+- Previously stored Surname values are shown directly; a duplicate suffix inside Given
+  Name is removed from the edit form.
+- Matching known surnames (from the same family or existing records) are preferred.
+- If a name has no matching existing surname, the final word is suggested in the box
+  with a yellow VERIFY checkbox. Nothing is saved unless the form is saved and the
+  uncertain suggestion is confirmed.
+- Full Name preview remains automatic. Saving strips an identical trailing Surname
+  from Given Name to avoid creating two copies.
+- Names are never mass-edited; changes reach Sheets only when an individual record
+  is reviewed and saved. All other frontend dashboard features are preserved.
 
-IMPORTANT CAVEATS
-- JavaScript syntax checked locally. Live Apps Script, Sheet, Drive and browser end-to-end validation is NOT possible offline.
-- Existing frontend may show FE V3.2.0 and BE V1.5.0 in your screenshot; those labels indicate old published builds, not a completed deployment.
-- If Action Plan says backend needs an update after deploying: confirm /exec URL, rerun runAll(), deploy a new version, and hard refresh. Existing entries are not deleted by runAll.
-- Do not share the backend Apps Script URL publicly beyond the existing GitHub client integration; the new entry.html is the user-facing quick-entry link.
+BACKEND
+- This surname-form change is frontend-only, based on FE V3.5.20 which expects
+  the existing BE V1.8.18 release. Do not upload Code.gs to public GitHub.
+- If you are running BE V1.8.17, upgrade to BE V1.8.18 from your existing
+  matching backend release package before relying on V3.5.20+ validation features.
 
-
-MOBILE RESTORE — FE V3.3.1
-- Restores the rounded white bottom navigation and central plus from the 20-Oct mobile design.
-- Quick + offers Families, Members, Expenses, Major Events, Action Plan, Shared Entry Links (admin only).
-- The published screenshots show BE V1.5.0, not BE V1.7.0. A frontend upload CANNOT fix this. Replace Code.gs in the correct Apps Script project; run runAll in Apps Script editor; Deploy > Manage deployments > Edit > New version; verify the same /exec URL is configured in index.html and entry.html.
-- If website still reports old version, hard-refresh or use a private browser tab; check GitHub Pages deployment and that all files are in the repository root.
-- Shared entry links appear only after signing in as Admin. Open the + quick menu on mobile or Shared entry links in the desktop sidebar.
-- Test links with sample data before production; anyone possessing an unexpired link can submit data.
+BACKUP AND TEST
+- Back up the old HTML before overwriting.
+- Check the visible Surname on an existing record, verify, save, then reopen.
+- The change was syntax checked and tested with local name examples; live
+  Apps Script and Google Sheets saving requires your deployment to test.

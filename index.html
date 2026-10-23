@@ -1549,7 +1549,7 @@ body.modalOpen #stickyLayer{opacity:.12;pointer-events:none;filter:saturate(.4)}
  .mal-verify-code .input{max-width:140px}}
 </style>
 <style id="malLiveDateBarCSS">
-/* FE V3.5.19 — India time INSIDE the top header, immediately left of language.
+/* FE V3.5.20 — India time INSIDE the top header, immediately left of language.
    The former second sticky date row is intentionally removed. */
 #app .topbar{min-width:0}
 #app .topbar .mal-live-datetime{
@@ -1882,8 +1882,8 @@ body.modalOpen #stickyLayer{opacity:.12;pointer-events:none;filter:saturate(.4)}
    ========================================================================= */
 const CONFIG = {
   API_URL: 'https://script.google.com/macros/s/AKfycbyfxff3MVt3Kw_CA_0aYD477nrAcWXshb9hex1LM_hl62tlrNiX5bGWgsf0Vw73sr-gbg/exec',
-  VERSION: 'FE V3.5.20',
-  EXPECTED_BACKEND: 'BE V1.8.17',
+  VERSION: 'FE V3.5.21',
+  EXPECTED_BACKEND: 'BE V1.8.18',
   IDLE_MINUTES: 30,
   /* Photo shown when no photo has been set in Settings.
      village.jpg sits in the same folder as this file on GitHub. */
@@ -5313,63 +5313,83 @@ function defaultFor(f){
   return '';
 }
 
+/* Name separation: never infer a surname silently from legacy full names. */
+function malNameTidy_(value){return String(value==null?'':value).trim().replace(/\s+/g,' ');}
+function malNameHasRepeatedSurname_(given,surname){
+  const g=malNameTidy_(given).toLocaleLowerCase('en-IN');
+  const sn=malNameTidy_(surname).toLocaleLowerCase('en-IN');
+  return !!(g&&sn&&g.endsWith(' '+sn));
+}
+function malNameSuggestLegacy_(record,key){
+  const full=malNameTidy_(record[key==='families'?'Family Head':'Name']);
+  const given=malNameTidy_(record['Given Name']);
+  const surname=malNameTidy_(record.Surname);
+  if(given&&surname&&!malNameHasRepeatedSurname_(given,surname))return null;
+  if(surname){
+    const candidate=given||full;
+    if(malNameHasRepeatedSurname_(candidate,surname))return {given:candidate.slice(0,-surname.length).trim(),surname};
+    return null;
+  }
+  // Historical combined names have no reliable separator; this is a SUGGESTION only.
+  const source=given.includes(' ')?given:full;
+  const bits=source.split(' ').filter(Boolean);
+  return bits.length>=2?{given:bits.slice(0,-1).join(' '),surname:bits[bits.length-1]}:null;
+}
+/* MALIPATANA SURNAME FIELD V3.5.21: prefill old records in the visible Surname box. */
+function malNameStripSuffix_(given,surname){
+  let first=malNameTidy_(given), last=malNameTidy_(surname);
+  if(!first||!last)return first;
+  while(first.toLocaleLowerCase('en-IN').endsWith(' '+last.toLocaleLowerCase('en-IN'))){
+    const reduced=first.slice(0,-last.length).trim();
+    if(!reduced)return first;
+    first=reduced;
+  }
+  return first;
+}
+function malNamePrefillExisting_(key, rec){
+  if(key!=='families'&&key!=='members')return null;
+  const full=malNameTidy_(rec[key==='families'?'Family Head':'Name']);
+  const given=malNameTidy_(rec['Given Name']);
+  const saved=malNameTidy_(rec.Surname);
+  if(saved){
+    // Surname was already in the underlying sheet: SHOW it, and clear any duplicate in Given Name.
+    const first=malNameStripSuffix_(given||full,saved);
+    if(first && (!given || first!==given))rec['Given Name']=first;
+    return first&&first!==given ? {level:'saved',message:'Surname already saved. Removed its duplicate from Given Name.'}:null;
+  }
+  // Prefer the full name if it contains the given name as a prefix; otherwise use the available name.
+  const givenInFull=full&&given&&(full.toLocaleLowerCase('en-IN')===given.toLocaleLowerCase('en-IN')||
+    full.toLocaleLowerCase('en-IN').startsWith(given.toLocaleLowerCase('en-IN')+' '));
+  const source=givenInFull||(!given&&full)?full:(given||full);
+  if(!source || source.split(/\s+/).length<2)return null;
+  const known=[];
+  if(key==='members'){
+    const family=(DB&&DB.families||[]).find(f=>String(f['Family ID']||'').trim()===String(rec['Family ID']||'').trim());
+    if(family&&family.Surname)known.push(malNameTidy_(family.Surname));
+  }
+  for(const k of ['families','members']){
+    for(const other of (DB&&DB[k]||[])){
+      if(other.Surname)known.push(malNameTidy_(other.Surname));
+    }
+  }
+  const lowered=source.toLocaleLowerCase('en-IN');
+  const matched=[...new Set(known.filter(Boolean))].sort((a,b)=>b.length-a.length)
+    .find(sn=>lowered.endsWith(' '+sn.toLocaleLowerCase('en-IN')));
+  const candidate=matched||source.split(/\s+/).at(-1);
+  const extracted=malNameStripSuffix_(source,candidate);
+  if(!extracted || extracted===source)return null;
+  rec['Given Name']=extracted;
+  rec.Surname=candidate;
+  return matched
+    ? {level:'known',message:'The existing surname is now visible in its own field. Please check before saving.'}
+    : {level:'suggested',message:'Surname has been suggested from the last word of the existing name. Verify it before saving.'};
+}
+/* END MALIPATANA SURNAME FIELD V3.5.21 */
+
 function openForm(key, id, prefill){
   try { return openFormInner(key, id, prefill); }
   catch(e){ console.error('openForm failed', e); toast('Could not open the form: ' + (e.message || e), 'bad'); }
 }
-/* MALIPATANA SURNAME VISIBILITY FIX V1 — harmless until form opens. */
-function malStripVisibleSurname_(name, surname){
-  let first = String(name || '').trim().replace(/\s+/g, ' ');
-  const last = String(surname || '').trim().replace(/\s+/g, ' ');
-  if(!first || !last)return first;
-  while(first.toLocaleLowerCase().endsWith(' ' + last.toLocaleLowerCase())){
-    first = first.slice(0, -(last.length + 1)).trim();
-  }
-  return first;
-}
-function malFillSurnameForEdit_(key, rec, editing){
-  if(!editing || (key !== 'families' && key !== 'members')) return '';
-  const tidy = s => String(s || '').trim().replace(/\s+/g, ' ');
-  const priorFull = tidy(rec[key === 'families' ? 'Family Head' : 'Name']);
-  const typedGiven = tidy(rec['Given Name']);
-  const savedSurname = tidy(rec.Surname);
-  const isPrefix = priorFull && typedGiven && priorFull.toLocaleLowerCase().startsWith(typedGiven.toLocaleLowerCase() + ' ');
-  let full = (priorFull && (!typedGiven || isPrefix)) ? priorFull : (typedGiven || priorFull);
-  if(!full && !savedSurname) return '';
-
-  if(savedSurname){
-    const given = malStripVisibleSurname_(typedGiven || full, savedSurname);
-    if(given && given !== typedGiven){
-      rec['Given Name'] = given;
-      return 'Surname was already saved. The repeated surname was removed from Given Name.';
-    }
-    if(!typedGiven && given){rec['Given Name']=given; return 'Existing surname is displayed separately below.';}
-    return '';
-  }
-  if(!full || !/\s/.test(full)) return '';
-
-  // Prefer the family surname or a surname already confirmed in another record.
-  const family = key === 'members' ? (DB.families || []).find(f =>
-    String(f['Family ID'] || '').trim() === String(rec['Family ID'] || '').trim()) : null;
-  const surnames = [];
-  if(family && family.Surname) surnames.push(tidy(family.Surname));
-  for(const kind of ['families','members']){
-    for(const r of (DB && DB[kind]) || []) if(r.Surname) surnames.push(tidy(r.Surname));
-  }
-  const candidates = [...new Set(surnames.filter(Boolean))].sort((a,b) => b.length - a.length);
-  let last = candidates.find(c => full.toLocaleLowerCase().endsWith(' ' + c.toLocaleLowerCase()));
-  const known = !!last;
-  if(!last) last = full.split(' ').slice(-1)[0];
-  const given = malStripVisibleSurname_(full,last);
-  if(!given || given.toLocaleLowerCase() === last.toLocaleLowerCase()) return '';
-  rec['Given Name'] = given;
-  rec.Surname = last;
-  return known
-    ? 'Surname filled from the existing full name and matched with a known surname. No re-entry needed.'
-    : 'Surname suggested from the last word of the existing full name. Please check it before saving.';
-}
-/* END MALIPATANA SURNAME VISIBILITY FIX V1 */
-
 function openFormInner(key, id, prefill){
   if(!canEdit()) { toast('Your account cannot change records', 'bad'); return; }
   const m = MODULES[key];
@@ -5380,16 +5400,32 @@ function openFormInner(key, id, prefill){
     if(m.prefix) rec[m.idField] = nextId(key);
   }
   if(prefill) Object.keys(prefill).forEach(k => { rec[k] = prefill[k]; });
-  const malVisibleNotice = malFillSurnameForEdit_(key, rec, !!existing);
 
   if(key==='members' && !existing && prefill && prefill['Family ID']){
     const family=(DB.families||[]).find(f=>String(f['Family ID'])===String(prefill['Family ID']));
     if(family && family.Surname && !rec.Surname)rec.Surname=family.Surname;
   }
-  const legacyName=existing && (key==='families'||key==='members') && !rec['Given Name'] && !rec.Surname ?
-    '<div class="fieldnote" style="grid-column:1/-1;background:#fff5db;border-radius:9px;padding:12px">Historical full name retained: <strong>'+esc(rec[key==='families'?'Family Head':'Name']||'')+'</strong>. Enter Given Name + Surname to classify this record. No automatic surname guessing.</div>' : '';
+  const namePrefill=existing?malNamePrefillExisting_(key,rec):null;
+  const nameFixApplicable=existing && (key==='families'||key==='members');
+  const nameSuggestion=nameFixApplicable?malNameSuggestLegacy_(rec,key):null;
+  const needsParts=nameFixApplicable&&(!malNameTidy_(rec['Given Name'])||!malNameTidy_(rec.Surname)||
+    malNameHasRepeatedSurname_(rec['Given Name'],rec.Surname));
+  const legacyName=needsParts ?
+    '<div class="fieldnote" style="grid-column:1/-1;background:#fff5db;border-radius:9px;padding:12px">'+
+    '<b>Review existing name:</b> '+esc(rec[key==='families'?'Family Head':'Name']||'')+
+    '. The Given Name and Surname columns need separate values. Existing records will not be split automatically.'+
+    (nameSuggestion?'<div style="margin-top:7px">Suggested: <b>'+esc(nameSuggestion.given)+'</b> / <b>'+esc(nameSuggestion.surname)+'</b> '+
+      '<button class="btn btn-sm" type="button" id="malApplySuggestedName">Use suggestion, then review</button></div>':'')+'</div>' : '';
   const namePreview = key==='families'||key==='members';
-  const body = (malVisibleNotice ? '<div class="fieldnote" style="grid-column:1/-1;background:#ecf7ef;border:1px solid #b9dbc4;border-radius:10px;padding:10px 12px" role="status">✔ ' + esc(malVisibleNotice) + '</div>' : '') + legacyName + allFields(key).filter(f => !f.hidden && !(f.t === 'photo' && !photosOn())).map(f =>
+  const nameNotice=namePrefill ?
+    '<div class="fieldnote" style="grid-column:1/-1;background:'+
+    (namePrefill.level==='suggested'?'#fff5db':'#e8f5ed')+
+    ';border:1px solid '+(namePrefill.level==='suggested'?'#ebc779':'#bedbc7')+
+    ';border-radius:9px;padding:12px" role="status">'+
+    (namePrefill.level==='suggested'?'⚠ ':'✓ ')+esc(namePrefill.message)+
+    (namePrefill.level==='suggested'?'<label style="display:block;margin-top:9px"><input type="checkbox" id="malSurnameConfirm" style="width:auto;margin-right:6px">I have checked that the suggested surname is correct.</label>':'')+
+    '</div>' : '';
+  const body = nameNotice + legacyName + allFields(key).filter(f => !f.hidden && !(f.t === 'photo' && !photosOn())).map(f =>
     fieldHtml(key, f, rec[f.n], !!existing, rec) + (namePreview && f.n==='Surname' ?
       '<div class="mal-live-name" id="malFullNamePreview" role="status" aria-live="polite"><strong>Full name (automatic):</strong> <span id="malFullNameValue">Enter first name and surname</span><div class="fieldnote">Saved as one full name for display and search; surname remains separate for filtering.</div></div>' : '')
   ).join('');
@@ -5416,6 +5452,16 @@ function openFormInner(key, id, prefill){
 
   wireForm(key, rec, !!existing);
   malWireFullNamePreview_(key, rec);
+  if(nameSuggestion){
+    const apply=document.getElementById('malApplySuggestedName');
+    if(apply)apply.onclick=()=>{
+      document.getElementById('f_Given_Name').value=nameSuggestion.given;
+      document.getElementById('f_Surname').value=nameSuggestion.surname;
+      document.getElementById('f_Given_Name').dispatchEvent(new Event('input',{bubbles:true}));
+      document.getElementById('f_Surname').dispatchEvent(new Event('change',{bubbles:true}));
+      toast('Suggested name parts filled. Check them before saving.','good');
+    };
+  }
   malWireDuplicatePreview_(key, rec, !!existing);
   wirePhotoFallbacks(document.getElementById('modal') || document);
   $('#saveBtn').onclick = () => saveRecord(key, rec, !!existing);
@@ -5432,16 +5478,34 @@ function malWireFullNamePreview_(key, rec){
   if(!first||!surname||!label||!host)return;
   const legacy=String(rec && rec[key==='families'?'Family Head':'Name']||'').trim();
   const tidy=s=>String(s||'').trim().replace(/\s+/g,' ');
+  const help=document.createElement('div');
+  help.className='fieldnote';help.style.color='#A83225';help.hidden=true;
+  help.innerHTML='Surname already appears at the end of Given Name. Keep it only in Surname. '+
+    '<button type="button" class="btn btn-sm" id="malRemoveNameRepeat">Remove repeated surname</button>';
+  host.appendChild(help);
+  help.querySelector('button').onclick=()=>{
+    const a=tidy(first.value),b=tidy(surname.value);
+    if(malNameHasRepeatedSurname_(a,b)){
+      first.value=a.slice(0,-b.length).trim();
+      first.dispatchEvent(new Event('input',{bubbles:true}));
+    }
+  };
   const update=()=>{
     const a=tidy(first.value),b=tidy(surname.value);
-    if(a&&b){label.textContent=a+' '+b;host.classList.add('ready');}
+    const repeat=malNameHasRepeatedSurname_(a,b);
+    help.hidden=!repeat;
+    if(repeat){label.textContent=a+' (surname repeated — correct before saving)';host.classList.remove('ready');}
+    else if(a&&b){label.textContent=a+' '+b;host.classList.add('ready');}
     else if(!a&&!b&&legacy){label.textContent=legacy+' (existing record)';host.classList.remove('ready');}
-    else{label.textContent='Enter both first name and surname';host.classList.remove('ready');}
+    else{label.textContent='Enter Given Name and Surname separately';host.classList.remove('ready');}
   };
   first.addEventListener('blur',()=>{
     if(!surname.value.trim())return;
-    const fixed=malStripVisibleSurname_(first.value,surname.value);
-    if(fixed && fixed!==first.value.trim()){first.value=fixed;update();}
+    const fixed=malNameStripSuffix_(first.value,surname.value);
+    if(fixed && fixed!==malNameTidy_(first.value)){
+      first.value=fixed;
+      first.dispatchEvent(new Event('input',{bubbles:true}));
+    }
   });
   first.addEventListener('input',update);
   surname.addEventListener('input',update);
@@ -6031,11 +6095,12 @@ async function saveRecord(key, rec, editing, opts){
   });
   if(key==='families'||key==='members'){
     let given=String(out['Given Name']||'').trim(),surname=String(out.Surname||'').trim();
-    if(given&&surname){
-      const noRepeat=malStripVisibleSurname_(given,surname);
-      if(noRepeat && noRepeat!==given){given=noRepeat;out['Given Name']=given;}
-      if(given.toLocaleLowerCase()===surname.toLocaleLowerCase())problems.push('Given Name must not be only the surname.');
+    if(malNameHasRepeatedSurname_(given,surname)){
+      const corrected=malNameStripSuffix_(given,surname);
+      if(corrected){given=corrected;out['Given Name']=given;}
     }
+    const confirmation=document.getElementById('malSurnameConfirm');
+    if(confirmation && !confirmation.checked)problems.push('Verify the suggested surname and tick the confirmation box before saving.');
     if((given&&!surname)||(!given&&surname)||(!editing&&(!given||!surname)))
       problems.push('Please enter both Given Name and Surname.');
     if(given&&surname){out[key==='families'?'Family Head':'Name']=(given+' '+surname).replace(/\s+/g,' ').trim();}
@@ -8546,7 +8611,7 @@ async function renderEntryLinks(){
    const live=await api('health');
    if(!live || !live.ok || !live.capabilities || !live.capabilities.linkInfo ||
       (document.getElementById('linkAllowEdit').checked && (!live.capabilities.linkSearch || !live.capabilities.linkEdit))){
-     throw Error('Shared-entry backend is not ready. Deploy BE V1.8.17 to the same /exec URL before creating links.');
+     throw Error('Shared-entry backend is not ready. Deploy BE V1.8.18 to the same /exec URL before creating links.');
    }
    const event=ev.value,record=(DB.events||[]).find(x=>String(x['Event ID'])===event);
    const r=await api('linkCreate',{kind:kind.value,event,eventName:record?record['Event Name']:'',hours:document.getElementById('linkHours').value,untilDisabled:validity.value==='untilDisabled'?'yes':'no',max:document.getElementById('linkMax').value,allowEdit:document.getElementById('linkAllowEdit').checked?'yes':'no'});
@@ -9780,6 +9845,7 @@ function qualityScan(families,members){
     else if(familyIds.get(id)>1)add('families',row,'family_id_repeated','urgent','Duplicate Family ID',id+' is used by more than one family. Review these records before editing their IDs.');
     if(!name&&!given)add('families',row,'family_name_missing','urgent','Family head name missing','Enter the family head’s name.');
     else if(!given||!last)add('families',row,'family_name_split','review',!last?'Surname not recorded':'Given name not separated',name?'The historical full name is preserved; review it and enter Given Name and Surname.':'Complete both name fields.');
+    else if(malNameHasRepeatedSurname_(given,last))add('families',row,'name_repeated_surname','review','Surname appears twice','Given Name already ends with the Surname. Open Correct and remove the repeated surname.');
     if(!qTrim(row['Village Locality']))add('families',row,'sahi_missing','review','Village locality (Sahi) missing','Select the locality to improve village-area grouping.');
     const parent=qId(row['Parent Family ID']);
     if(parent && !familyIds.has(parent))add('families',row,'family_parent_missing','urgent','Parent Family ID not found','Parent Family ID '+parent+' is absent from Families.');
@@ -9796,6 +9862,7 @@ function qualityScan(families,members){
     else if(familyIds.get(fid)>1)add('members',row,'member_family_ambiguous','urgent','Family ID refers to multiple families','Family ID '+fid+' is duplicated in Families; fix the family records first.');
     if(!name&&!given)add('members',row,'member_name_missing','urgent','Member name missing','Enter the person’s name.');
     else if(!given||!surname)add('members',row,'member_name_split','review',!surname?'Surname not recorded':'Given name not separated',name?'Keep the existing full name; fill Given Name and Surname after reviewing.':'Complete the separate name fields.');
+    else if(malNameHasRepeatedSurname_(given,surname))add('members',row,'name_repeated_surname','review','Surname appears twice','Given Name already ends with the Surname. Open Correct and remove the repeated surname.');
     if(qNorm(row['Life Status'])==='deceased'&&!qTrim(row['Date of Death']))add('members',row,'death_date_missing','optional','Date of death not entered','Add the date if it is known; do not guess.');
     const outside=qNorm(row['Residence Status']);
     if((outside==='outside temporarily'||outside==='shifted permanently') && !qTrim(row['Current City'])&&!qTrim(row['Current State']))
@@ -9842,7 +9909,7 @@ function qIssueSummary(all){
     optional:all.filter(x=>x.level==='optional').length,
     records:new Set(all.map(x=>x.key+'|'+x.id+'|'+x.name)).size};
 }
-const malQualityTypes=[['all','All issues'],['family_name_split','Surname / Given Name'],['sahi_missing','Missing Sahi'],['no_member','Families without members'],['member_family_missing','Broken Family ID'],['possible_member_duplicate','Possible duplicate Members'],['possible_family_duplicate','Possible duplicate Families'],['other','Other issues']];
+const malQualityTypes=[['all','All issues'],['name_repeated_surname','Repeated surname'],['family_name_split','Surname / Given Name'],['sahi_missing','Missing Sahi'],['no_member','Families without members'],['member_family_missing','Broken Family ID'],['possible_member_duplicate','Possible duplicate Members'],['possible_family_duplicate','Possible duplicate Families'],['other','Other issues']];
 function qualityView(){
   const main=document.getElementById('main');
   if(!main)return;
