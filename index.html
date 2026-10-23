@@ -1549,7 +1549,7 @@ body.modalOpen #stickyLayer{opacity:.12;pointer-events:none;filter:saturate(.4)}
  .mal-verify-code .input{max-width:140px}}
 </style>
 <style id="malLiveDateBarCSS">
-/* FE V3.5.17 — India time INSIDE the top header, immediately left of language.
+/* FE V3.5.19 — India time INSIDE the top header, immediately left of language.
    The former second sticky date row is intentionally removed. */
 #app .topbar{min-width:0}
 #app .topbar .mal-live-datetime{
@@ -1882,7 +1882,7 @@ body.modalOpen #stickyLayer{opacity:.12;pointer-events:none;filter:saturate(.4)}
    ========================================================================= */
 const CONFIG = {
   API_URL: 'https://script.google.com/macros/s/AKfycbyfxff3MVt3Kw_CA_0aYD477nrAcWXshb9hex1LM_hl62tlrNiX5bGWgsf0Vw73sr-gbg/exec',
-  VERSION: 'FE V3.5.17',
+  VERSION: 'FE V3.5.19',
   EXPECTED_BACKEND: 'BE V1.8.17',
   IDLE_MINUTES: 30,
   /* Photo shown when no photo has been set in Settings.
@@ -3730,7 +3730,7 @@ const MODULES = {
     blurb: 'Every household in the village register',
     fields: [
       { n:'Family ID', t:'text', auto:true },
-      { n:'Given Name', t:'text', req:true, hint:'Family head: first / given name only' },
+      { n:'Given Name', t:'text', req:true, hint:'Family head: first / given name only. Full name is shown automatically below.' },
       { n:'Surname', t:'datalist', req:true, hint:'Choose or enter the family surname' },
       { n:'Family Head', t:'text', hidden:true },
       { n:'Parent Family ID', t:'family', hint:'Leave empty for a main family. Set it to make this a subfamily of a bigger household.' },
@@ -3763,7 +3763,7 @@ const MODULES = {
     fields: [
       { n:'Member ID', t:'text', auto:true },
       { n:'Family ID', t:'family', req:true },
-      { n:'Given Name', t:'text', req:true, hint:'First/given name. Existing full names are preserved for legacy records.' },
+      { n:'Given Name', t:'text', req:true, hint:'First / given name. The full name is calculated live; legacy names are preserved.' },
       { n:'Surname', t:'datalist', req:true, hint:'Choose or enter surname; may differ from family head surname' },
       { n:'Name', t:'text', hidden:true },
       { n:'Relation to Family Head', t:'datalist', opts:['Self','Wife','Husband','Son','Daughter','Father','Mother','Brother','Sister','Daughter-in-law','Son-in-law','Grandson','Granddaughter','Other'] },
@@ -5015,29 +5015,9 @@ function malBindRegisterWidths(key){
     });
   });
 }
-function malBindRegisterOpenRow(){
-  const root=document.getElementById('main');
-  if(!root||root.dataset.malOpenRowsBound)return;
-  root.dataset.malOpenRowsBound='1';
-  const open=(row)=>{
-    const register=row.closest('table[data-register]')?.getAttribute('data-register');
-    const id=row.getAttribute('data-detail-id');
-    if(!id||register!==PAGE||!['families','members'].includes(register))return;
-    if(register==='families')openProfile(id);else openMember(id);
-  };
-  root.addEventListener('click',event=>{
-    const row=event.target.closest('tr[data-detail-id]');
-    if(!row||!root.contains(row)||event.target.closest('button,a,input,select,textarea,label,[contenteditable],.mal-col-resizer'))return;
-    if(window.getSelection && String(window.getSelection()).trim())return;
-    open(row);
-  });
-  root.addEventListener('keydown',event=>{
-    if(event.key!=='Enter'&&event.key!==' ')return;
-    const row=event.target.closest('tr[data-detail-id]');
-    if(!row||event.target!==row)return;
-    event.preventDefault();open(row);
-  });
-}
+/* v3.5.18: No click-to-open listener on whole table rows.
+   Open a record only via its explicit View button or linked name, so people
+   can scroll sideways, select text and use right-hand Edit/Delete safely. */
 
 function renderModule(key){
   const m = MODULES[key];
@@ -5092,7 +5072,7 @@ function renderModule(key){
   </div>
 
   ${['families','members'].includes(key)?`<div class="fieldnote" style="margin:3px 0 12px">Grouping: ${new Set(all.map(r=>String(r.Surname||'').trim()).filter(Boolean)).size} surname(s) · ${all.filter(r=>!String(r.Surname||'').trim()).length} older record(s) awaiting surname review. ${key==='families'?new Set(all.map(r=>String(r['Village Locality']||'').trim()).filter(Boolean)).size+' village localities.':'Use Sahi and current residence filters above.'}</div>`:''}
-  ${malPeople ? '<div class="mal-register-tip">💡 Tap or click a row or a name to open details. On PC, drag the header edge to change column width; double-click the edge to reset that column.</div>' : ''}
+  ${malPeople ? `<div class="mal-register-tip">💡 To open details, select <b>View</b> or click the name. Clicks on other cells will not open the record. Scroll sideways to reach <b>View, Edit or Delete</b> on the right. On PC, drag the column-header edge to resize.</div><div class="mal-register-nav" role="group" aria-label="Navigate wide Family and Member registers"><span class="muted small">Wide register — move horizontally:</span><button type="button" class="btn btn-sm" data-mal-scroll="start" aria-label="Scroll to names and first columns">← Names</button><button type="button" class="btn btn-sm" data-mal-scroll="end" aria-label="Scroll to View, Edit and Delete actions">Actions →</button></div>` : ''}
   ${OPTIONAL_SHEETS.includes(key) && !SERVER_SHEETS.includes(key) ? `<div class="notice">
     <b>These records stay on this device</b>
     The sheet is not sending ${esc(MODULES[key].sheet)} yet. Ask the admin to add
@@ -5119,7 +5099,7 @@ function renderModule(key){
           const quick = v.quick && isAdmin();
           const gone = key === 'members' && isDeceased(r);
           const displayName=String(key==='families'?(r['Family Head']||r['Family ID']):(r['Name']||r['Member ID'])||'').trim();
-          return '<tr' + (quick ? ' data-row="' + id + '"' : '') + (malPeople ? ' data-detail-id="'+id+'" tabindex="0" aria-label="View details: '+esc(displayName)+'"' : '') + (gone ? ' class="gonerow"' : '') + '>' +
+          return '<tr' + (quick ? ' data-row="' + id + '"' : '') + '' + (gone ? ' class="gonerow"' : '') + '>' +
             (malPeople ? `<td class="mal-open-sticky mal-view-cell" data-label=""><button class="mal-view-btn" type="button" data-act="profile" data-id="${id}" title="Open ${esc(displayName)}">◉ <span>View</span></button></td>` : '') + cols.map(c => {
             const f = fieldDef(key, c);
             if(quick && c !== m.idField && f.t !== 'photo' && f.t !== 'counted'){
@@ -5137,6 +5117,7 @@ function renderModule(key){
             ${quick ? `<button class="btn btn-sm btn-primary" data-act="rowsave" data-id="${id}">Save</button> ` : ''}
             ${key === 'recurring' && canEdit() ? `<button class="btn btn-sm" data-pay="${id}">Mark paid</button> ` : ''}
             ${key==='events' ? `<button class="btn btn-sm" data-act="profile" data-id="${id}">View</button> ` : ''}
+            ${malPeople ? `<button class="btn btn-sm mal-end-view" type="button" data-act="profile" data-id="${id}">View</button> ` : ''}
             ${key === 'families' && isHousehold(r) ? `<button class="btn btn-sm" data-act="household" data-id="${id}">Household</button> ` : ''}
             ${key === 'users' && isAdmin() ? `<button class="btn btn-sm" type="button" data-toggle-user="${id}" data-enabled="${String(r.Active||'YES').toUpperCase()==='YES'?'NO':'YES'}">${String(r.Active||'YES').toUpperCase()==='YES'?'Disable':'Enable'}</button> <button class="btn btn-sm" data-act="access" data-id="${id}">Access</button> <button class="btn btn-sm" type="button" data-verify-reset="${id}">Reset email verification</button> ` : ''}
             ${key === 'contributions' ? `<button class="btn btn-sm" data-act="receipt" data-id="${id}">Receipt</button> ` : ''}
@@ -5190,7 +5171,17 @@ function renderModule(key){
   }));
   if(malPeople){
     malBindRegisterWidths(key);
-    malBindRegisterOpenRow();
+    const nav=$('#main').querySelector('.mal-register-nav');
+    if(nav){
+      const wrap=$('#main').querySelector('.tablewrap');
+      nav.querySelectorAll('[data-mal-scroll]').forEach(button=>button.addEventListener('click',()=>{
+        if(!wrap)return;
+        const end=button.dataset.malScroll==='end';
+        const left=end?Math.max(0,wrap.scrollWidth-wrap.clientWidth):0;
+        if(typeof wrap.scrollTo==='function')wrap.scrollTo({left,behavior:'smooth'});
+        else wrap.scrollLeft=left;
+      }));
+    }
     const toggle=$('#main').querySelector('.mal-toggle-filters');
     if(toggle)toggle.onclick=()=>{
       v.toolsOpen=!v.toolsOpen;
@@ -5343,7 +5334,11 @@ function openFormInner(key, id, prefill){
   }
   const legacyName=existing && (key==='families'||key==='members') && !rec['Given Name'] && !rec.Surname ?
     '<div class="fieldnote" style="grid-column:1/-1;background:#fff5db;border-radius:9px;padding:12px">Historical full name retained: <strong>'+esc(rec[key==='families'?'Family Head':'Name']||'')+'</strong>. Enter Given Name + Surname to classify this record. No automatic surname guessing.</div>' : '';
-  const body = legacyName + allFields(key).filter(f => !f.hidden && !(f.t === 'photo' && !photosOn())).map(f => fieldHtml(key, f, rec[f.n], !!existing, rec)).join('');
+  const namePreview = key==='families'||key==='members';
+  const body = legacyName + allFields(key).filter(f => !f.hidden && !(f.t === 'photo' && !photosOn())).map(f =>
+    fieldHtml(key, f, rec[f.n], !!existing, rec) + (namePreview && f.n==='Surname' ?
+      '<div class="mal-live-name" id="malFullNamePreview" role="status" aria-live="polite"><strong>Full name (automatic):</strong> <span id="malFullNameValue">Enter first name and surname</span><div class="fieldnote">Saved as one full name for display and search; surname remains separate for filtering.</div></div>' : '')
+  ).join('');
   openModal(`
     <header>
       <div>
@@ -5366,11 +5361,36 @@ function openFormInner(key, id, prefill){
     </footer>`);
 
   wireForm(key, rec, !!existing);
+  malWireFullNamePreview_(key, rec);
   malWireDuplicatePreview_(key, rec, !!existing);
   wirePhotoFallbacks(document.getElementById('modal') || document);
   $('#saveBtn').onclick = () => saveRecord(key, rec, !!existing);
   const more = $('#saveMoreBtn');
   if(more) more.onclick = () => saveRecord(key, rec, false, { again: true });
+}
+
+function malWireFullNamePreview_(key, rec){
+  if(key!=='families' && key!=='members')return;
+  const first=document.getElementById('f_Given_Name');
+  const surname=document.getElementById('f_Surname');
+  const label=document.getElementById('malFullNameValue');
+  const host=document.getElementById('malFullNamePreview');
+  if(!first||!surname||!label||!host)return;
+  const legacy=String(rec && rec[key==='families'?'Family Head':'Name']||'').trim();
+  const tidy=s=>String(s||'').trim().replace(/\s+/g,' ');
+  const update=()=>{
+    const a=tidy(first.value),b=tidy(surname.value);
+    if(a&&b){label.textContent=a+' '+b;host.classList.add('ready');}
+    else if(!a&&!b&&legacy){label.textContent=legacy+' (existing record)';host.classList.remove('ready');}
+    else{label.textContent='Enter both first name and surname';host.classList.remove('ready');}
+  };
+  first.addEventListener('input',update);
+  surname.addEventListener('input',update);
+  surname.addEventListener('change',update);
+  document.getElementById('formGrid').addEventListener('change',event=>{
+    if(event.target&&event.target.matches('[data-role="family"]'))update();
+  });
+  update();
 }
 
 function fieldHtml(key, f, value, editing, rec){
@@ -9549,16 +9569,27 @@ table.grid tbody tr:hover td:first-child{background:#EEF8F5}
  .mal-people-register.mal-resizing,.mal-people-register.mal-resizing *{cursor:col-resize!important;user-select:none!important}
  .mal-people-register .cellinput{max-width:100%;width:100%;box-sizing:border-box}
 }
+.mal-live-name{grid-column:1/-1;min-width:0;background:#F1F9F5;border:1px solid #BCE3D5;border-radius:12px;padding:10px 12px;color:#27534D;font-size:14px;overflow-wrap:anywhere}
+.mal-live-name strong{color:#176352}
+.mal-live-name #malFullNameValue{font-weight:750;color:#26434B}
+.mal-live-name.ready #malFullNameValue{color:#096D5C}
+.mal-live-name .fieldnote{margin-top:3px;font-weight:400}
+.mal-register-toolbar #surnameFilter{border-color:#BCE0D1;color:#0B6659;max-width:235px;background:#F6FCF8}
 .mal-register-tip{font-size:12px;color:#386B64;padding:9px 12px;margin:5px 0 12px;border:1px solid #D5E9E1;background:#F2FAF7;border-radius:10px}
-.mal-people-register tbody tr[data-detail-id]{cursor:pointer}
-.mal-people-register tbody tr[data-detail-id]:focus-visible{outline:3px solid #087568;outline-offset:-3px}
+/* Cells can be inspected, selected and scrolled without opening a form. */
+.mal-people-register tbody tr{cursor:default!important}
+.mal-register-nav{display:flex;align-items:center;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin:0 0 9px}
+.mal-register-nav .btn{min-height:34px;white-space:nowrap;background:#F0F8F5;color:#086D62;border:1px solid #B7DCD0}
+.mal-end-view{border-color:#B9DAD0!important;color:#08695D!important;background:#F1FAF6!important}
+.mal-end-view:focus-visible{outline:2px solid #087568;outline-offset:2px}
 .mal-view-btn,.mal-name-view{border:0;background:transparent;font:inherit;color:#087366;cursor:pointer;font-weight:750;text-align:left}
 .mal-view-btn{display:inline-flex;align-items:center;gap:5px;border-radius:8px;padding:7px 4px;white-space:nowrap}
 .mal-view-btn:hover,.mal-name-view:hover{text-decoration:underline;background:#E4F4EC}
 .mal-view-btn:focus-visible,.mal-name-view:focus-visible{outline:2px solid #087568;outline-offset:2px}
 .mal-name-view{padding:2px 3px;white-space:normal;overflow-wrap:anywhere}
 @media screen and (max-width:760px){
- .mal-register-toolbar select,.mal-register-toolbar button:not(.mal-toggle-filters){display:none!important}
+ .mal-register-toolbar select:not(#surnameFilter),.mal-register-toolbar button:not(.mal-toggle-filters){display:none!important}
+ .mal-register-toolbar #surnameFilter{display:inline-flex!important;flex:1 1 148px!important;min-width:145px!important;max-width:245px!important;border-color:#8EC6B4!important;background:#F3FBF7!important;color:#0B6659!important}
  .mal-register-toolbar.mal-filters-open select,.mal-register-toolbar.mal-filters-open button:not(.mal-toggle-filters):not(.mal-reset-cols){display:inline-flex!important}
  .mal-register-toolbar .mal-reset-cols{display:none!important}
  .mal-register-toolbar .mal-toggle-filters{display:inline-flex!important;white-space:nowrap;flex:none;background:#F0F8F5;color:#086D62;border-color:#B7DCD0}
@@ -9568,7 +9599,7 @@ table.grid tbody tr:hover td:first-child{background:#EEF8F5}
  table.grid.mal-people-register td.mal-view-cell{position:static!important;display:block!important;background:#E7F5EF!important;padding:9px 12px!important}
  table.grid.mal-people-register td.mal-view-cell::before{display:none!important}
  table.grid.mal-people-register .mal-view-btn{display:block!important;background:#087568!important;color:#FFF!important;text-align:center!important;width:100%!important;border-radius:10px;padding:10px!important;font-weight:800!important}
- table.grid.mal-people-register tbody tr[data-detail-id]{cursor:pointer}
+ .mal-register-nav{display:none!important}
  .mal-people-register .mal-col-resizer{display:none}
  .mal-register-tip{font-size:11px}
 }
@@ -9650,7 +9681,7 @@ table.grid tbody tr:hover td:first-child{background:#EEF8F5}
 })();
 </script>
 <script id="malDataQualityScript">
-/* Malipatana FE V3.5.17 — Admin-only Data Quality & Pending Corrections.
+/* Malipatana FE V3.5.18 — Admin-only Data Quality & Pending Corrections.
  * Read-only scan of the registers already received from the authorised backend.
  * Does not change any record or create any sheet. */
 (function(){
