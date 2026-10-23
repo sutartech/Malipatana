@@ -1,41 +1,43 @@
-MALIPATANA VILLAGE WELFARE — SURNAME FIELD ALREADY FILLED
-DIRECT FRONTEND UPLOAD · FE V3.5.21 · 23 OCTOBER 2026
+MALIPATANA VILLAGE WELFARE — DIRECT UPLOAD
+Frontend version: FE V3.5.23
+Compatible backend: BE V1.8.18 (NO BACKEND UPDATE REQUIRED)
+Date: 23 October 2026
 
-READY FILES
-  index.html — full updated dashboard (upload this file)
-  entry.html — the existing shared-entry frontend (unchanged)
+CONTENTS
+index.html — complete latest dashboard with name-field updates
+entry.html — existing entry screen (unchanged)
+README-FIRST.txt — this guide
 
-HOW TO APPLY TO GITHUB
-1. Extract this ZIP on your computer. Do not upload the compressed ZIP file itself.
-2. Open your GitHub repository: https://github.com/sutartech/Malipatana
-3. Choose Add file > Upload files.
-4. Drag index.html and entry.html to the ROOT of the repository.
-   GitHub should show them replacing existing files of the same names.
-5. Commit the changes. Refresh your page using Ctrl+Shift+R.
-6. FE version should show V3.5.21. Test one old Member and Family form.
+CHANGES
+1. Family and Members input fields: Given Name(s) and Surname are visibly separate.
+   Full Name is automatically shown; users do not type it again.
+2. Main register displays Full Name derived from two saved fields, with the
+   existing Full Name as fallback for unreviewed older records.
+3. Saved surnames are shown normally; old records lacking saved surnames
+   show only a marked suggestion. A suggestion does NOT mean data is saved.
+4. Admin can review and save missing surnames from Families and Members.
+   Each row needs individual confirmation; no silent/bulk automatic updates.
+5. Quick Edit cannot independently change Given Name, Surname or Full Name,
+   which would otherwise cause inconsistent name records. Use Edit name.
+6. Prevent duplicate surnames in Full Name. Supports multiword given names
+   and existing known multiword surnames with manual verification.
+7. Uses the SAME EXISTING Families/Members Google Sheets and current Apps
+   Script backend. No new spreadsheet or sheet.
 
-WHAT CHANGED
-- Opening a historical Member or Family for EDIT now fills the visible Surname input
-  if its existing full name already contains a likely surname.
-- Previously stored Surname values are shown directly; a duplicate suffix inside Given
-  Name is removed from the edit form.
-- Matching known surnames (from the same family or existing records) are preferred.
-- If a name has no matching existing surname, the final word is suggested in the box
-  with a yellow VERIFY checkbox. Nothing is saved unless the form is saved and the
-  uncertain suggestion is confirmed.
-- Full Name preview remains automatic. Saving strips an identical trailing Surname
-  from Given Name to avoid creating two copies.
-- Names are never mass-edited; changes reach Sheets only when an individual record
-  is reviewed and saved. All other frontend dashboard features are preserved.
+DIRECT UPLOAD
+1. Back up the current repository frontend and Google Spreadsheet.
+2. Extract this ZIP on your computer.
+3. Open https://github.com/sutartech/Malipatana.
+4. Upload index.html and entry.html to the ROOT of the current repository,
+   replacing the two existing files, and Commit changes.
+5. After GitHub Pages rebuilds, refresh your dashboard and check FE V3.5.23.
+6. Sign in as admin > Families > Review missing surnames.
+7. Compare each suggested split with the actual full name, tick only correct
+   entries, then Save checked names. Repeat in Members.
+8. Confirm the Surname filter works for the SAVED names.
 
-BACKEND
-- This surname-form change is frontend-only, based on FE V3.5.20 which expects
-  the existing BE V1.8.18 release. Do not upload Code.gs to public GitHub.
-- If you are running BE V1.8.17, upgrade to BE V1.8.18 from your existing
-  matching backend release package before relying on V3.5.20+ validation features.
-
-BACKUP AND TEST
-- Back up the old HTML before overwriting.
-- Check the visible Surname on an existing record, verify, save, then reopen.
-- The change was syntax checked and tested with local name examples; live
-  Apps Script and Google Sheets saving requires your deployment to test.
+NOTES
+- No Google Apps Script changes are needed when BE V1.8.18 is deployed.
+- Do not upload Code.gs, the spreadsheet, user records or backups to GitHub.
+- Existing records are not changed merely by uploading or opening the dashboard.
+- Live authenticated functionality must be verified after deployment.

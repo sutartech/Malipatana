@@ -1423,6 +1423,20 @@ body.modalOpen #stickyLayer{opacity:.12;pointer-events:none;filter:saturate(.4)}
 .formbox.mal-otp-mode>.mal-reset-launch,
 .formbox.mal-otp-mode>.mal-otp-tiny{display:none!important}
 .mal-dup-note{display:block;margin:8px 0 14px;padding:12px;border:1px solid #e3be64;border-radius:12px;background:#fff2c5;color:#81500c;font-weight:650;line-height:1.45}.mal-dup-note.blocking{background:#fff0e9;border-color:#da948c;color:#9e2b22}.mal-dup-note[hidden]{display:none!important}
+
+/* FE V3.5.23 — separate, verified name fields and clean name display */
+.mal-surname-suggested{font-weight:800;color:#906008;text-decoration:underline dotted #b4811b;text-underline-offset:3px}
+.mal-surname-tag{display:inline-block;margin:2px 0 0;padding:2px 5px;border:1px solid #e8d199;background:#fff7df;color:#805a11;border-radius:5px;font-size:10px;font-weight:700;white-space:nowrap}
+.mal-review-guide{padding:11px;border-radius:10px;background:#eef5f1;color:#164938;line-height:1.5;margin-bottom:13px}
+.mal-review-item{padding:14px 0;border-bottom:1px solid var(--line)}
+.mal-review-person{font-size:13px;margin-bottom:9px;line-height:1.5}
+.mal-review-fields{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+.mal-review-fields label{font-size:12px;font-weight:750;color:var(--ink)}
+.mal-review-fields .input{display:block;margin-top:5px}
+.mal-review-verify{display:flex;align-items:center;gap:7px;margin-top:9px;font-size:13px;cursor:pointer}
+.mal-review-warning{color:#a83225;font-weight:650}
+.mal-review-status{font-size:12px;margin-top:4px}
+@media(max-width:560px){.mal-review-fields{grid-template-columns:1fr}.modal footer:has(#malReviewSave){flex-wrap:wrap}}
 </style>
 <style id="v4addon">
 /* ---------- family tree (FE V2.9) ---------- */
@@ -1882,7 +1896,7 @@ body.modalOpen #stickyLayer{opacity:.12;pointer-events:none;filter:saturate(.4)}
    ========================================================================= */
 const CONFIG = {
   API_URL: 'https://script.google.com/macros/s/AKfycbyfxff3MVt3Kw_CA_0aYD477nrAcWXshb9hex1LM_hl62tlrNiX5bGWgsf0Vw73sr-gbg/exec',
-  VERSION: 'FE V3.5.21',
+  VERSION: 'FE V3.5.23',
   EXPECTED_BACKEND: 'BE V1.8.18',
   IDLE_MINUTES: 30,
   /* Photo shown when no photo has been set in Settings.
@@ -3730,7 +3744,7 @@ const MODULES = {
     blurb: 'Every household in the village register',
     fields: [
       { n:'Family ID', t:'text', auto:true },
-      { n:'Given Name', t:'text', req:true, hint:'Family head: first / given name only. Full name is shown automatically below.' },
+      { n:'Given Name', t:'text', req:true, hint:'Enter one or more given names, without the surname. Full Name is automatic.' },
       { n:'Surname', t:'datalist', req:true, hint:'Choose or enter the family surname' },
       { n:'Family Head', t:'text', hidden:true },
       { n:'Parent Family ID', t:'family', hint:'Leave empty for a main family. Set it to make this a subfamily of a bigger household.' },
@@ -3763,7 +3777,7 @@ const MODULES = {
     fields: [
       { n:'Member ID', t:'text', auto:true },
       { n:'Family ID', t:'family', req:true },
-      { n:'Given Name', t:'text', req:true, hint:'First / given name. The full name is calculated live; legacy names are preserved.' },
+      { n:'Given Name', t:'text', req:true, hint:'Enter one or more given names, without the surname. Full Name is automatic.' },
       { n:'Surname', t:'datalist', req:true, hint:'Choose or enter surname; may differ from family head surname' },
       { n:'Name', t:'text', hidden:true },
       { n:'Relation to Family Head', t:'datalist', opts:['Self','Wife','Husband','Son','Daughter','Father','Mother','Brother','Sister','Daughter-in-law','Son-in-law','Grandson','Granddaughter','Other'] },
@@ -4812,6 +4826,19 @@ function singularOf(m){
 function fieldDef(key, col){ return allFields(key).find(f => f.n === col) || { n: col, t: 'text' }; }
 
 const GRV_TONE = { Received:'', 'Under Review':'warn', 'Action Taken':'warn', Resolved:'good', Rejected:'bad' };
+/* One authoritative display name. The sheet keeps the existing Family Head/Name
+   column for compatibility; Given Name + Surname are editable source fields. */
+function malDisplayFullName_(key,row){
+  const field=key==='families'?'Family Head':'Name';
+  const given=malNameTidy_(row['Given Name']);
+  const surname=malNameTidy_(row.Surname);
+  if(given&&surname){
+    const first=malNameStripSuffix_(given,surname);
+    if(first)return malNameTidy_(first+' '+surname);
+  }
+  return malNameTidy_(row[field]||given||surname);
+}
+
 function cellHtml(key, row, col){
   if(key==='users' && col==='Email Verified'){
     const ch='Email';
@@ -4820,6 +4847,15 @@ function cellHtml(key, row, col){
     return {cls:'',html:yesSelf?'<span class="verify-pill done" title="Self-verified with OTP on '+esc(String(row[ch+' Verified At']))+'">✓ Verified</span>':
       '<span class="verify-pill pending" title="The concerned user has not completed OTP verification">Not verified</span>'};
   }
+  if((key==='families'||key==='members') && col==='Surname'){
+    const saved=malNameTidy_(row.Surname);
+    if(saved)return {cls:'',html:'<strong>'+esc(saved)+'</strong>'};
+    const suggestion=malSurnameProposal_(key,row);
+    return {cls:'',html:suggestion
+      ? '<span class="mal-surname-suggested" title="Suggested from the full name; not yet saved">'+esc(suggestion.surname)+'</span> <span class="mal-surname-tag">Not yet saved</span>'
+      : '<span class="muted small">Not recorded</span>'};
+  }
+  if(key==='members' && col==='Name')return {cls:'',html:esc(malDisplayFullName_(key,row))};
   const f = fieldDef(key, col);
   const raw = row[col];
   if(key === 'grievances' && col === 'Status'){
@@ -4832,7 +4868,7 @@ function cellHtml(key, row, col){
     const fid = String(row['Family ID'] || '').trim();
     const subs = (DB.families || []).filter(x => String(x['Parent Family ID'] || '').trim() === fid).length;
     const isSub = String(row['Parent Family ID'] || '').trim() !== '';
-    return { cls: '', html: esc(String(raw == null ? '' : raw)) +
+    return { cls: '', html: esc(malDisplayFullName_(key,row)) +
       (subs ? '<span class="subtag">' + subs + (subs === 1 ? ' SUBFAMILY' : ' SUBFAMILIES') + '</span>' : '') +
       (isSub ? '<span class="subtag">SUBFAMILY</span>' : '') };
   }
@@ -5064,6 +5100,7 @@ function renderModule(key){
     ${['families','members'].includes(key)?`<select class="input" id="surnameFilter" aria-label="Filter by surname"><option value="">All surnames</option>${[...new Set(rowsOf(key).map(r=>String(r.Surname||'').trim()).filter(Boolean))].sort().map(n=>`<option value="${esc(n)}" ${v.surname===n?'selected':''}>${esc(n)}</option>`).join('')}</select><select class="input" id="sahiFilter" aria-label="Filter by village locality"><option value="">All village localities</option>${[...new Set((DB.families||[]).map(r=>String(r['Village Locality']||'').trim()).filter(Boolean))].sort().map(n=>`<option value="${esc(n)}" ${v.locality===n?'selected':''}>${esc(n)}</option>`).join('')}</select>${key==='members'?`<select class="input" id="residenceFilter" aria-label="Filter by residence"><option value="">All residences</option>${['Living in Malipatana','Outside temporarily','Shifted permanently'].map(n=>`<option ${v.residence===n?'selected':''}>${esc(n)}</option>`).join('')}</select><select class="input" id="lifeFilter" aria-label="Filter by life status"><option value="">All life statuses</option><option value="Alive" ${v.life==='Alive'?'selected':''}>Living only</option><option value="Deceased" ${v.life==='Deceased'?'selected':''}>In memory</option></select>`:''}`:''}
     ${key === 'members' && canEdit() ? '<button class="btn btn-sm" data-act="heads">Add missing family heads</button>' : ''}    ${isAdmin() ? `<button class="btn btn-sm" data-act="cols">Columns</button>` : ''}
     ${key==='users' && isAdmin() ? '<button class="btn btn-sm btn-primary" data-act="loginopts">Login / OTP options</button>' : ''}
+    ${isAdmin() && ['families','members'].includes(key) && all.some(r=>!malNameTidy_(r.Surname)) ? '<button class="btn btn-sm btn-primary" data-act="surnameReview">Review '+all.filter(r=>!malNameTidy_(r.Surname)).length+' missing surnames</button>' : ''}
     ${isAdmin() && ['families','members'].includes(key) ? `<button class="btn btn-sm ${VIEW[key] && VIEW[key].quick ? 'btn-primary' : ''}" data-act="quick">${VIEW[key] && VIEW[key].quick ? 'Done editing' : 'Quick edit'}</button>` : ''}
     ${malPeople ? '<button type="button" class="btn btn-sm mal-reset-cols" title="Restore default column widths on this device">↔ Reset widths</button>' : ''}
     <button class="btn btn-sm" data-act="csv">Export CSV</button>
@@ -5071,7 +5108,7 @@ function renderModule(key){
     <span class="muted small" style="margin-left:auto">${rows.length} of ${all.length} records</span>
   </div>
 
-  ${['families','members'].includes(key)?`<div class="fieldnote" style="margin:3px 0 12px">Grouping: ${new Set(all.map(r=>String(r.Surname||'').trim()).filter(Boolean)).size} surname(s) · ${all.filter(r=>!String(r.Surname||'').trim()).length} older record(s) awaiting surname review. ${key==='families'?new Set(all.map(r=>String(r['Village Locality']||'').trim()).filter(Boolean)).size+' village localities.':'Use Sahi and current residence filters above.'}</div>`:''}
+  ${['families','members'].includes(key)?`<div class="fieldnote" style="margin:3px 0 12px">Saved grouping: ${new Set(all.map(r=>String(r.Surname||'').trim()).filter(Boolean)).size} surname(s) · ${all.filter(r=>!String(r.Surname||'').trim()).length} older record(s) need review. Yellow surname labels are suggestions only, until saved. ${key==='families'?new Set(all.map(r=>String(r['Village Locality']||'').trim()).filter(Boolean)).size+' village localities.':'Use Sahi and current residence filters above.'}</div>`:''}
   ${malPeople ? `<div class="mal-register-tip">💡 To open details, select <b>View</b> or click the name. Clicks on other cells will not open the record. Scroll sideways to reach <b>View, Edit or Delete</b> on the right. On PC, drag the column-header edge to resize.</div><div class="mal-register-nav" role="group" aria-label="Navigate wide Family and Member registers"><span class="muted small">Wide register — move horizontally:</span><button type="button" class="btn btn-sm" data-mal-scroll="start" aria-label="Scroll to names and first columns">← Names</button><button type="button" class="btn btn-sm" data-mal-scroll="end" aria-label="Scroll to View, Edit and Delete actions">Actions →</button></div>` : ''}
   ${OPTIONAL_SHEETS.includes(key) && !SERVER_SHEETS.includes(key) ? `<div class="notice">
     <b>These records stay on this device</b>
@@ -5098,10 +5135,14 @@ function renderModule(key){
           const id = esc(r[m.idField]);
           const quick = v.quick && isAdmin();
           const gone = key === 'members' && isDeceased(r);
-          const displayName=String(key==='families'?(r['Family Head']||r['Family ID']):(r['Name']||r['Member ID'])||'').trim();
+          const displayName=malDisplayFullName_(key,r)||String(r[m.idField]||'');
           return '<tr' + (quick ? ' data-row="' + id + '"' : '') + '' + (gone ? ' class="gonerow"' : '') + '>' +
             (malPeople ? `<td class="mal-open-sticky mal-view-cell" data-label=""><button class="mal-view-btn" type="button" data-act="profile" data-id="${id}" title="Open ${esc(displayName)}">◉ <span>View</span></button></td>` : '') + cols.map(c => {
             const f = fieldDef(key, c);
+            if(quick && malPeople && ['Given Name','Surname','Family Head','Name'].includes(c)){
+              const preview=cellHtml(key,r,c);
+              return `<td data-label="${esc(c)}">${preview.html} <button class="btn btn-sm" data-act="edit" data-id="${id}" type="button">${c==='Surname'&&!malNameTidy_(r.Surname)?'Review':'Edit name'}</button></td>`;
+            }
             if(quick && c !== m.idField && f.t !== 'photo' && f.t !== 'counted'){
               const val = r[c] == null ? '' : String(r[c]);
               const type = f.t === 'money' || f.t === 'number' ? 'number' : f.t === 'date' ? 'date' : 'text';
@@ -5220,6 +5261,7 @@ function wireActions(root){
         case 'add': return openForm(k);
         case 'edit': return openForm(k, id);
         case 'del': return askDelete(k, id);
+        case 'surnameReview': return malReviewSurnames_(k);
         case 'heads': return addMissingHeads();
         case 'cols': return openColumns(k);
         case 'access': return openAccess(id);
@@ -5346,45 +5388,149 @@ function malNameStripSuffix_(given,surname){
   }
   return first;
 }
-function malNamePrefillExisting_(key, rec){
+function malNamePrefillExisting_(key,rec){
   if(key!=='families'&&key!=='members')return null;
   const full=malNameTidy_(rec[key==='families'?'Family Head':'Name']);
   const given=malNameTidy_(rec['Given Name']);
   const saved=malNameTidy_(rec.Surname);
   if(saved){
-    // Surname was already in the underlying sheet: SHOW it, and clear any duplicate in Given Name.
-    const first=malNameStripSuffix_(given||full,saved);
-    if(first && (!given || first!==given))rec['Given Name']=first;
-    return first&&first!==given ? {level:'saved',message:'Surname already saved. Removed its duplicate from Given Name.'}:null;
-  }
-  // Prefer the full name if it contains the given name as a prefix; otherwise use the available name.
-  const givenInFull=full&&given&&(full.toLocaleLowerCase('en-IN')===given.toLocaleLowerCase('en-IN')||
-    full.toLocaleLowerCase('en-IN').startsWith(given.toLocaleLowerCase('en-IN')+' '));
-  const source=givenInFull||(!given&&full)?full:(given||full);
-  if(!source || source.split(/\s+/).length<2)return null;
-  const known=[];
-  if(key==='members'){
-    const family=(DB&&DB.families||[]).find(f=>String(f['Family ID']||'').trim()===String(rec['Family ID']||'').trim());
-    if(family&&family.Surname)known.push(malNameTidy_(family.Surname));
-  }
-  for(const k of ['families','members']){
-    for(const other of (DB&&DB[k]||[])){
-      if(other.Surname)known.push(malNameTidy_(other.Surname));
+    if(given){
+      const corrected=malNameStripSuffix_(given,saved);
+      if(corrected!==given){
+        rec['Given Name']=corrected;
+        return {level:'saved',message:'Saved surname is shown separately. The repeated surname was removed from Given Name(s) in this form; save to confirm.'};
+      }
+      return null;
     }
+    // Never invent a Given Name if the sheet has a conflicting full name.
+    if(full&&full.toLocaleLowerCase('en-IN').endsWith(' '+saved.toLocaleLowerCase('en-IN'))){
+      rec['Given Name']=malNameStripSuffix_(full,saved);
+      return {level:'saved',message:'Saved surname is already filled. Given Name(s) was recovered from the stored full name.'};
+    }
+    return {level:'attention',message:'The saved surname and original full name do not agree. Check both fields before saving.'};
   }
-  const lowered=source.toLocaleLowerCase('en-IN');
-  const matched=[...new Set(known.filter(Boolean))].sort((a,b)=>b.length-a.length)
-    .find(sn=>lowered.endsWith(' '+sn.toLocaleLowerCase('en-IN')));
-  const candidate=matched||source.split(/\s+/).at(-1);
-  const extracted=malNameStripSuffix_(source,candidate);
-  if(!extracted || extracted===source)return null;
-  rec['Given Name']=extracted;
-  rec.Surname=candidate;
-  return matched
-    ? {level:'known',message:'The existing surname is now visible in its own field. Please check before saving.'}
-    : {level:'suggested',message:'Surname has been suggested from the last word of the existing name. Verify it before saving.'};
+  // Only propose: no changes to the saved record occur until the user confirms and saves.
+  const proposal=malSurnameProposal_(key,rec);
+  if(!proposal)return {level:'attention',message:'Surname is not separately recorded. Enter Given Name(s) and Surname after checking the original full name.'};
+  rec['Given Name']=proposal.given;
+  rec.Surname=proposal.surname;
+  return {level:'suggested',message:'Existing full name split into two visible fields for review. The suggested surname is NOT saved until you confirm and save.'};
 }
 /* END MALIPATANA SURNAME FIELD V3.5.21 */
+/* V3.5.22: visible-but-unverified legacy surnames and safe one-time review.
+   No data is modified by displaying a suggestion. Only explicitly checked rows
+   are saved to the existing Google Sheet via the existing authenticated API. */
+function malSurnameProposal_(key,row){
+  if(key!=='families' && key!=='members')return null;
+  const saved=malNameTidy_(row.Surname);
+  if(saved)return {surname:saved,given:malNameTidy_(row['Given Name']),saved:true};
+  const full=malNameTidy_(row[key==='families'?'Family Head':'Name']);
+  const given=malNameTidy_(row['Given Name']);
+  let source=full||given;
+  if(!source||source.split(' ').length<2)return null;
+  let surname='', first='';
+  if(given&&full.toLocaleLowerCase('en-IN').startsWith(given.toLocaleLowerCase('en-IN')+' ')){
+    surname=full.slice(given.length).trim(); first=given;
+  } else {
+    const known=[];
+    if(key==='members'){
+      const family=(DB&&DB.families||[]).find(f=>String(f['Family ID']||'').trim()===String(row['Family ID']||'').trim());
+      if(family&&family.Surname)known.push(malNameTidy_(family.Surname));
+    }
+    for(const k of ['families','members']) for(const other of (DB&&DB[k]||[])){
+      if(other.Surname)known.push(malNameTidy_(other.Surname));
+    }
+    const candidate=[...new Set(known.filter(Boolean))].sort((a,b)=>b.length-a.length)
+      .find(sn=>source.toLocaleLowerCase('en-IN').endsWith(' '+sn.toLocaleLowerCase('en-IN')));
+    surname=candidate||source.split(' ').at(-1);
+    first=malNameStripSuffix_(source,surname);
+  }
+  if(!first||!surname||first.toLocaleLowerCase('en-IN')===source.toLocaleLowerCase('en-IN'))return null;
+  return {given:first,surname:surname,saved:false,full:full||source};
+}
+function malReviewSurnames_(key){
+  if((key!=='families'&&key!=='members')||!isAdmin())return;
+  const mod=MODULES[key];
+  const idField=mod.idField;
+  const fullField=key==='families'?'Family Head':'Name';
+  const pending=rowsOf(key).filter(r=>!malNameTidy_(r.Surname));
+  if(!pending.length){toast('All surnames are already saved.','good');return;}
+  const rows=pending.map(r=>({row:r,part:malSurnameProposal_(key,r)}));
+  openModal(`<header><div><h3>Review ${esc(mod.title)} surnames</h3><div class="sub">${pending.length} older record(s) have no saved surname</div></div><div class="sp"></div><button type="button" class="btn btn-sm" id="malCloseReview">Close</button></header>
+  <div class="body">
+    <div class="mal-review-guide">Given Name(s) and Surname are separated below. Compare every suggestion with its original full name, then tick only the rows you personally verified. No bulk auto-approval. Saves to the existing <b>${esc(mod.sheet)}</b> sheet.</div>
+    <div id="malSurnameReviewList">${rows.map(({row,part},i)=>`<div class="mal-review-item" data-review-index="${i}">
+      <div class="mal-review-person"><b>${esc(row[idField]||'')}</b> · ${esc(row[fullField]||'')} ${part?'':'<span class="mal-review-warning">No reliable suggestion</span>'}</div>
+      <div class="mal-review-fields"><label>Given Name(s)<input class="input" data-review-given value="${esc(part?part.given:'')}"></label><label>Surname<input class="input" data-review-surname value="${esc(part?part.surname:'')}"></label></div>
+      <label class="mal-review-verify"><input type="checkbox" data-review-checked> I individually checked this name and approve saving its two parts.</label>
+      <div class="mal-review-status" data-review-status aria-live="polite"></div>
+    </div>`).join('')}</div>
+    <div id="malReviewResult" class="fieldnote" role="status" aria-live="polite"></div>
+  </div>
+  <footer><button class="btn" type="button" id="malReviewCancel">Cancel</button><button class="btn btn-primary" type="button" id="malReviewSave">Save checked names</button></footer>`);
+  const root=document.getElementById('modalRoot');
+  root.querySelector('#malCloseReview').onclick=closeModal;
+  root.querySelector('#malReviewCancel').onclick=closeModal;
+  root.querySelectorAll('.mal-review-item').forEach(item=>{
+    item.querySelectorAll('[data-review-given],[data-review-surname]').forEach(input=>input.addEventListener('input',()=>{
+      item.querySelector('[data-review-checked]').checked=false;
+      item.querySelector('[data-review-status]').textContent='Name changed — check this row again before saving.';
+    }));
+  });
+  root.querySelector('#malReviewSave').onclick=async()=>{
+    if(!navigator.onLine){root.querySelector('#malReviewResult').textContent='You must be online to save surnames.';return;}
+    const selected=[...root.querySelectorAll('.mal-review-item')].filter(el=>el.querySelector('[data-review-checked]').checked);
+    if(!selected.length){root.querySelector('#malReviewResult').textContent='Please review and check at least one row.';return;}
+    const updates=[];
+    for(const el of selected){
+      const idx=Number(el.dataset.reviewIndex),record=rows[idx].row;
+      const given=malNameTidy_(el.querySelector('[data-review-given]').value);
+      const surname=malNameTidy_(el.querySelector('[data-review-surname]').value);
+      const original=malNameTidy_(record[fullField]);
+      if(!given||!surname||malNameHasRepeatedSurname_(given,surname)){
+        root.querySelector('#malReviewResult').textContent='Please check the two name fields for '+record[idField]+'.';return;
+      }
+      // This one-time cleanup separates only the original full name.
+      // Any actual name correction must be made with the normal Edit form.
+      if(malNameTidy_(given+' '+surname).toLocaleLowerCase('en-IN')!==original.toLocaleLowerCase('en-IN')){
+        root.querySelector('#malReviewResult').textContent='The parts for '+record[idField]+' do not match its original full name. Use Edit to change an existing name.';
+        return;
+      }
+      updates.push({record, given, surname, el});
+    }
+    if(!window.confirm('Save '+updates.length+' verified surname(s) to the existing '+mod.sheet+' sheet?'))return;
+    const saveButton=root.querySelector('#malReviewSave'), message=root.querySelector('#malReviewResult');
+    saveButton.disabled=true;
+    let success=0,fail=0;
+    for(const [i,u] of updates.entries()){
+      message.textContent='Saving '+(i+1)+' of '+updates.length+'…';
+      const status=u.el.querySelector('[data-review-status]');
+      try{
+        const payload={
+          [idField]:String(u.record[idField]),
+          'Given Name':u.given, Surname:u.surname,
+          [fullField]:malNameTidy_(u.given+' '+u.surname),
+          'Entered By':String(USER && (USER.name||USER.username)||'')
+        };
+        if(key==='members')payload['Family ID']=u.record['Family ID'];
+        const response=await api('save',{sheet:mod.sheet,record:JSON.stringify(payload)});
+        if(!response||!response.ok)throw new Error(response&&response.error||'Save failed');
+        upsertLocal(key,Object.assign({},u.record,payload));
+        status.textContent='✓ Saved';status.style.color='#20643b';
+        u.el.querySelector('[data-review-checked]').disabled=true;
+        u.el.querySelector('[data-review-checked]').checked=false;
+        success++;
+      }catch(e){status.textContent='Could not save: '+String(e.message||e);status.style.color='#a83225';fail++;}
+    }
+    message.textContent=success+' saved, '+fail+' not saved. '+(fail?'Review failed rows and retry.':'Verified surnames are saved and ready for filtering.');
+    saveButton.disabled=false;
+    // Refresh the register after all updates; keep modal open to show any failures.
+    if(fail===0){closeModal();renderModule(key);toast(success+' surname(s) saved in '+mod.sheet+'.','good');}
+    else{saveButton.textContent='Retry remaining';}
+  };
+}
+/* END V3.5.22 SURNAME REGISTER REVIEW */
+
 
 function openForm(key, id, prefill){
   try { return openFormInner(key, id, prefill); }
@@ -5419,11 +5565,11 @@ function openFormInner(key, id, prefill){
   const namePreview = key==='families'||key==='members';
   const nameNotice=namePrefill ?
     '<div class="fieldnote" style="grid-column:1/-1;background:'+
-    (namePrefill.level==='suggested'?'#fff5db':'#e8f5ed')+
-    ';border:1px solid '+(namePrefill.level==='suggested'?'#ebc779':'#bedbc7')+
+    (namePrefill.level==='saved'?'#e8f5ed':'#fff5db')+
+    ';border:1px solid '+(namePrefill.level==='saved'?'#bedbc7':'#ebc779')+
     ';border-radius:9px;padding:12px" role="status">'+
-    (namePrefill.level==='suggested'?'⚠ ':'✓ ')+esc(namePrefill.message)+
-    (namePrefill.level==='suggested'?'<label style="display:block;margin-top:9px"><input type="checkbox" id="malSurnameConfirm" style="width:auto;margin-right:6px">I have checked that the suggested surname is correct.</label>':'')+
+    (namePrefill.level==='saved'?'✓ ':'⚠ ')+esc(namePrefill.message)+
+    (namePrefill.level==='suggested'?'<label style="display:block;margin-top:9px"><input type="checkbox" id="malSurnameConfirm" style="width:auto;margin-right:6px">I have checked the Given Name(s) and Surname against the original name.</label>':'')+
     '</div>' : '';
   const body = nameNotice + legacyName + allFields(key).filter(f => !f.hidden && !(f.t === 'photo' && !photosOn())).map(f =>
     fieldHtml(key, f, rec[f.n], !!existing, rec) + (namePreview && f.n==='Surname' ?
@@ -5527,6 +5673,7 @@ function fieldHtml(key, f, value, editing, rec){
               : 'Only an admin can change an ID.'}</div></div>`;
   }
   const req = f.req ? ' <span class="reqmark">*</span>' : '';
+  const visibleLabel=(key==='families'||key==='members')&&f.n==='Given Name'?'Given Name(s)':f.n;
   const wide = ['textarea'].includes(f.t) ? ' wide' : '';
   const val = value == null ? '' : String(value);
   let input;
@@ -5610,7 +5757,7 @@ function fieldHtml(key, f, value, editing, rec){
       input = `<input class="input" id="${id}" value="${esc(val)}" ${f.ro ? 'readonly' : ''}>`;
   }
   if(f.ro && f.t === 'money') input = `<input class="input tnum" id="${id}" value="${esc(val)}" readonly>`;
-  return `<div class="${wide}"><label class="lbl" for="${id}">${esc(f.n)}${req}</label>${input}
+  return `<div class="${wide}"><label class="lbl" for="${id}">${esc(visibleLabel)}${req}</label>${input}
           ${f.hint ? `<div class="fieldnote">${esc(f.hint)}</div>` : ''}</div>`;
 }
 
