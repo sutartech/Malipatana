@@ -1698,6 +1698,32 @@ body.modalOpen #stickyLayer{opacity:.12;pointer-events:none;filter:saturate(.4)}
 @media(max-width:540px){.mal-dq-stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.mal-dq-stat{padding:11px}.mal-dq-toolbar{grid-template-columns:1fr 1fr;gap:8px}.mal-dq-toolbar label:last-child{grid-column:1/-1}.mal-dq-item{flex-direction:column;padding:13px}.mal-dq-item-actions{flex-direction:row;width:100%}.mal-dq-item-actions .btn{flex:1}.mal-dq-actions .muted{margin-left:0}.mal-dq-actions .btn{min-height:42px}}
 
 </style>
+<style>
+/* FE V3.5.24: accessible, compact subfamily management */
+.mal-subhead{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:20px 0 9px;flex-wrap:wrap}
+.mal-subhead h4{margin:0;font-size:17px;font-family:var(--display)}
+.mal-subgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(290px,100%),1fr));gap:10px}
+.mal-subcard{border:1px solid var(--line);border-radius:13px;background:var(--surface);padding:12px;min-width:0}
+.mal-subtitle{font-weight:750;font-size:15px;color:var(--indigo);overflow-wrap:anywhere;text-align:left;border:0;background:transparent;cursor:pointer;padding:0}
+.mal-subtitle:hover{text-decoration:underline}
+.mal-submeta{color:var(--muted);font-size:12px;margin:5px 0;line-height:1.5}
+.mal-subtags{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:9px 0}
+.mal-subtag{font-size:11px;padding:3px 7px;border-radius:8px;background:var(--indigo-soft);color:var(--indigo);font-weight:650}
+.mal-subactions{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px;align-items:center}
+.mal-subactions .btn{min-height:35px;padding:6px 10px;font-size:12px}
+.mal-submore{position:relative;display:inline-block}
+.mal-submore>summary{list-style:none;cursor:pointer;user-select:none}
+.mal-submore>summary::-webkit-details-marker{display:none}
+.mal-submore .mal-moreitems{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px;padding:8px;border:1px solid var(--line);border-radius:9px;background:var(--surface-2)}
+.mal-submore .mal-moreitems .btn{min-height:32px}
+.mal-sahi-line{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px;color:var(--muted);font-size:13px}
+.mal-subform{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.mal-subform label{display:block;font-size:13px;font-weight:650;color:var(--indigo)}
+.mal-subform label input,.mal-subform label select{display:block;margin-top:5px}
+.mal-subform .span-all{grid-column:1/-1}
+.mal-subnote{border:1px solid #e9d7a3;background:#fffaf0;border-radius:9px;padding:11px;font-size:12px;line-height:1.5}
+@media(max-width:630px){.mal-subform{grid-template-columns:1fr}.mal-subactions>.btn,.mal-subactions>.mal-submore{flex:1}.mal-subactions>.mal-submore>summary{width:100%;text-align:center}.mal-subcard{padding:11px}}
+</style>
 </head>
 <body>
 
@@ -1896,7 +1922,7 @@ body.modalOpen #stickyLayer{opacity:.12;pointer-events:none;filter:saturate(.4)}
    ========================================================================= */
 const CONFIG = {
   API_URL: 'https://script.google.com/macros/s/AKfycbyfxff3MVt3Kw_CA_0aYD477nrAcWXshb9hex1LM_hl62tlrNiX5bGWgsf0Vw73sr-gbg/exec',
-  VERSION: 'FE V3.5.23',
+  VERSION: 'FE V3.5.24',
   EXPECTED_BACKEND: 'BE V1.8.18',
   IDLE_MINUTES: 30,
   /* Photo shown when no photo has been set in Settings.
@@ -4782,7 +4808,7 @@ const photoColumns = () => yes(setting('Show Photo In Tables', 'Yes'));
 function listCols(key){
   const hidden = (() => { try { return JSON.parse(setting('Hidden ' + MODULES[key].sheet, '[]')) || []; } catch(e){ return []; } })();
   const customHidden = customCols(key).filter(c => c.hidden).map(c => c.n);
-  const l = (MODULES[key].list || []).concat(customCols(key).filter(c => !c.hidden).map(c => c.n)).filter(c => !hidden.includes(c) && !customHidden.includes(c));
+  const l = (MODULES[key].list || []).concat(customCols(key).filter(c => !c.hidden).map(c => c.n)).filter(c => !hidden.includes(c) && !customHidden.includes(c) && !(key==='families' && (c==='House No'||c==='Address/Area')));
   if(photosOn() && photoColumns()) return l;
   return l.filter(c => fieldDef(key, c).t !== 'photo');
 }
@@ -5317,7 +5343,9 @@ function openModal(html){
   $('#overlay').onclick = e => { if(e.target.id === 'overlay') closeModal(); };
   document.addEventListener('keydown', escClose);
 }
+let MAL_KEEP_PENDING_HEAD_ON_CLOSE=false;
 function closeModal(){
+  if(!MAL_KEEP_PENDING_HEAD_ON_CLOSE && typeof PENDING_HEAD !== 'undefined')PENDING_HEAD=null;
   $('#modalRoot').innerHTML = '';
   document.body.classList.remove('modalOpen');
   document.removeEventListener('keydown', escClose);
@@ -5593,6 +5621,7 @@ function openFormInner(key, id, prefill){
       <span class="keyhint"><kbd>Enter</kbd> next field · <kbd>Ctrl</kbd>+<kbd>Enter</kbd> save</span>
       <button class="btn" onclick="closeModal()">Cancel</button>
       ${existing ? '' : '<button class="btn" id="saveMoreBtn">Save and add another</button>'}
+      ${key==='families'&&!existing&&rec['Parent Family ID']?'<button class="btn" id="malSaveAddMembers">Save &amp; add members</button>':''}
       <button class="btn btn-primary" id="saveBtn">${existing ? 'Save changes' : 'Add record'}</button>
     </footer>`);
 
@@ -5613,6 +5642,8 @@ function openFormInner(key, id, prefill){
   $('#saveBtn').onclick = () => saveRecord(key, rec, !!existing);
   const more = $('#saveMoreBtn');
   if(more) more.onclick = () => saveRecord(key, rec, false, { again: true });
+  const withMembers=$('#malSaveAddMembers');
+  if(withMembers)withMembers.onclick=()=>saveRecord(key,rec,false,{openMembers:true});
 }
 
 function malWireFullNamePreview_(key, rec){
@@ -6251,6 +6282,19 @@ async function saveRecord(key, rec, editing, opts){
     if((given&&!surname)||(!given&&surname)||(!editing&&(!given||!surname)))
       problems.push('Please enter both Given Name and Surname.');
     if(given&&surname){out[key==='families'?'Family Head':'Name']=(given+' '+surname).replace(/\s+/g,' ').trim();}
+    if(key==='families'){
+      const famId=String(out['Family ID']||rec['Family ID']||'').trim();
+      const pid=String(out['Parent Family ID']||'').trim();
+      if(pid&&!malFamilyById_(pid))problems.push('Parent Family ID does not exist.');
+      if(pid&&malParentWouldLoop_(famId,pid))problems.push('Parent family would create a circular relationship.');
+      if(!editing&&PENDING_HEAD&&PENDING_HEAD.memberId){
+        const person=(DB.members||[]).find(x=>String(x['Member ID']||'')===PENDING_HEAD.memberId);
+        const expected=String(person&&person.Name||'').trim();
+        const entered=String(out['Family Head']||'').trim();
+        if(!person||!expected||entered.toLocaleLowerCase('en-IN')!==expected.toLocaleLowerCase('en-IN'))
+          problems.push('Chosen existing member name must match the new subfamily head. Use the selected person or cancel and create a new head.');
+      }
+    }
     else if(editing){out[key==='families'?'Family Head':'Name']=rec[key==='families'?'Family Head':'Name'];}
     if(key==='members'){
       out['Residence Status']=out['Residence Status']||rec['Residence Status']||'Living in Malipatana';
@@ -6333,7 +6377,7 @@ async function saveRecord(key, rec, editing, opts){
          A brand-new main family instead wants its people next \u2014 open the
          roster rather than making someone hunt for it. */
       const par = String(out['Parent Family ID'] || '').trim();
-      if(par && !editing && !again) setTimeout(() => openProfile(par), 260);
+      if(par && !editing && !again) setTimeout(() => (opts&&opts.openMembers ? openRoster(fid2) : openProfile(par)), 260);
       else if(!editing && !again && fid2) setTimeout(() => openRoster(fid2), 260);
     }
   } catch(e){
@@ -6346,7 +6390,7 @@ async function saveRecord(key, rec, editing, opts){
    would otherwise retype — family, date, category. */
 function reopenBlank(key, prev){
   const keep = {};
-  ['Family ID','Date','Month','Category','Event ID','Payment Mode','Frequency','Paid To','Address/Area']
+  (key==='families' ? ['Parent Family ID','Surname','Village Locality'] : ['Family ID','Date','Month','Category','Event ID','Payment Mode','Frequency','Paid To','Address/Area'])
     .forEach(c => { if(prev[c] !== undefined && prev[c] !== '') keep[c] = prev[c]; });
   closeModal();
   setTimeout(() => openForm(key, null, keep), 30);
@@ -6374,6 +6418,13 @@ function removeLocal(key, id){
    DELETE
    ========================================================================= */
 function askDelete(key, id){
+  if(key==='families'){
+    const linked=malFamilyLinkedRecords_(id);
+    if(linked.length){
+      toast('Cannot delete '+id+': '+linked.map(([n,v])=>v+' '+n).join(', ')+'. Reassign linked records first. You can set the family to Inactive instead.','bad');
+      return;
+    }
+  }
   const m = MODULES[key];
   const row = rowsOf(key).find(r => String(r[m.idField]).trim() === String(id).trim()) || {};
   const nameCol = m.fields.find(f => ['Family Head', 'Name', 'Student Name', 'Patient', 'Beneficiary', 'Affected Person', 'Description', 'Setting'].includes(f.n));
@@ -6411,6 +6462,123 @@ function askDelete(key, id){
   };
 }
 
+
+/* FAMILY RELATION SAFETY — operate on the existing Families/Member sheets only. */
+function malFamilyById_(id){
+  const wanted=String(id||'').trim();
+  return (DB.families||[]).find(f=>String(f['Family ID']||'').trim()===wanted)||null;
+}
+function malParentWouldLoop_(familyId,newParent){
+  const id=String(familyId||'').trim();let cur=String(newParent||'').trim();
+  if(!cur)return false;
+  const visited=new Set();
+  while(cur){
+    if(cur===id || visited.has(cur))return true;
+    visited.add(cur);
+    const f=malFamilyById_(cur);
+    if(!f)return false;
+    cur=String(f['Parent Family ID']||'').trim();
+  }
+  return false;
+}
+function malFamilyLinkedRecords_(fid){
+  const id=String(fid||'').trim();
+  const detail=[['Subfamilies',(DB.families||[]).filter(f=>String(f['Parent Family ID']||'').trim()===id).length]];
+  for(const k of ['members','contributions','income','expenditure','emergency','regularSupport','insurance','education','medical']){
+    const n=(DB[k]||[]).filter(x=>String(x['Family ID']||'').trim()===id).length;
+    if(n)detail.push([MODULES[k]?.title||k,n]);
+  }
+  return detail.filter(([,n])=>n>0);
+}
+
+/* Minimal everyday editor: full record is preserved, including hidden historic House No. */
+function openSubfamilyQuickEdit(id, parentMode){
+  if(!canEdit())return;
+  const fam=malFamilyById_(id);
+  if(!fam){toast('Family record not found','bad');return;}
+  const rec=Object.assign({},fam),prefill=malNamePrefillExisting_('families',rec);
+  const original=String(fam['Family Head']||'').trim();
+  const parent=String(fam['Parent Family ID']||'').trim();
+  const localities=[...new Set((DB.families||[]).map(f=>String(f['Village Locality']||'').trim()).filter(Boolean))].sort();
+  const familyOptions=(DB.families||[]).filter(f=>{
+    const pid=String(f['Family ID']||'').trim();return pid!==id&&!malParentWouldLoop_(id,pid);
+  });
+  const idOption=f=>`<option value="${esc(f['Family ID'])}">${esc(f['Family Head']||f['Family ID'])} (${esc(f['Family ID'])})</option>`;
+  openModal(`<header><div><h3>${parentMode?'Change parent family':'Quick edit · '+esc(original||id)}</h3>
+     <div class="sub">${esc(id)} · saved into the existing Families register</div></div><div class="sp"></div>
+     <button type="button" class="btn btn-sm" id="malSubClose">Close</button></header>
+   <div class="body"><div id="malSubError" class="errline hide" role="alert"></div>
+   ${prefill&&prefill.level==='suggested'?'<div class="mal-subnote">The old full name was split into suggested parts. Check the original name and confirm before saving.</div>':''}
+   <div class="mal-subform" style="margin-top:12px">
+     <label>Given Name(s)<input class="input" id="malSubGiven" value="${esc(rec['Given Name']||'')}"></label>
+     <label>Surname<input class="input" id="malSubSurname" value="${esc(rec.Surname||'')}"></label>
+     <div class="span-all fieldnote" id="malSubFull">Full name: ${esc(original)}</div>
+     <label>Village Locality (Sahi)<input class="input" list="malSubLocalityOpts" id="malSubSahi" value="${esc(rec['Village Locality']||'')}"><datalist id="malSubLocalityOpts">${localities.map(x=>`<option value="${esc(x)}"></option>`).join('')}</datalist></label>
+     <label>Family status<select class="input" id="malSubStatus">${['Active','Inactive','Shifted'].map(x=>`<option ${String(rec['Family Status']||'Active')===x?'selected':''}>${x}</option>`).join('')}</select></label>
+     <label class="span-all">Parent family<select class="input" id="malSubParent"><option value="">No parent — main family</option>${familyOptions.map(idOption).join('')}</select></label>
+     ${prefill&&prefill.level==='suggested'?'<label class="span-all" style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="malSubVerified" style="width:auto">I checked the given name and surname against the original full name.</label>':''}
+     <div class="span-all mal-subnote">Sahi and surname are separate. Changing the head’s name updates the Family record only; if it is the same person, also check that person’s Members record. Historic hidden address details are retained in the spreadsheet.</div>
+   </div></div>
+   <footer><button class="btn" id="malSubFullEdit">Open full edit form</button>
+   <button class="btn btn-primary" id="malSubSave">Save changes</button></footer>`);
+  const $el=x=>document.getElementById(x);
+  $el('malSubParent').value=parent;
+  $el('malSubClose').onclick=closeModal;
+  $el('malSubFullEdit').onclick=()=>{closeModal();openForm('families',id)};
+  const preview=()=>{
+    const g=malNameTidy_($el('malSubGiven').value),s=malNameTidy_($el('malSubSurname').value);
+    $el('malSubFull').textContent='Full Name (automatic): '+(malNameHasRepeatedSurname_(g,s)?g+' — repeated surname, will be corrected':([g,s].filter(Boolean).join(' ')||'—'));
+  };
+  ['malSubGiven','malSubSurname'].forEach(k=>$el(k).addEventListener('input',preview));preview();
+  $el('malSubSave').onclick=async()=>{
+    const error=$el('malSubError'),btn=$el('malSubSave');
+    error.classList.add('hide');
+    let given=malNameTidy_($el('malSubGiven').value),surname=malNameTidy_($el('malSubSurname').value);
+    if(malNameHasRepeatedSurname_(given,surname))given=malNameStripSuffix_(given,surname);
+    const pid=$el('malSubParent').value.trim();
+    const locality=$el('malSubSahi').value.trim();
+    const full=[given,surname].filter(Boolean).join(' ');
+    const bad=!given||!surname?'Fill both Given Name(s) and Surname.':
+      (!!$el('malSubVerified')&&!$el('malSubVerified').checked)?'Confirm the suggested name parts first.':
+      (pid&&!malFamilyById_(pid))?'The parent family no longer exists. Reload the register.':
+      malParentWouldLoop_(id,pid)?'Cannot move a family under itself or its descendants.':'';
+    if(bad){error.textContent=bad;error.classList.remove('hide');return;}
+    const updated={...fam,'Given Name':given,'Surname':surname,'Family Head':full,
+      'Village Locality':locality,'Family Status':$el('malSubStatus').value,
+      'Parent Family ID':pid,'Last Updated':today(),
+      'Entered By':String(USER&&(USER.name||USER.username)||''),'Entered At':localStamp(new Date())};
+    btn.disabled=true;btn.textContent='Saving…';
+    try{
+      if(!navigator.onLine)throw new Error('Please connect to the internet to save this change.');
+      const duplicate=await api('duplicateCheck',{sheet:MODULES.families.sheet,record:JSON.stringify(updated),excludeId:id});
+      if(!duplicate||!duplicate.ok)throw new Error(duplicate&&duplicate.error||'Duplicate check failed');
+      if(duplicate.level==='block')throw new Error(duplicate.message||'Duplicate family record');
+      if(duplicate.level==='warning'&&!confirm('Possible duplicate. '+(duplicate.message||'')+' Confirm this is a different family?')){btn.disabled=false;btn.textContent='Save changes';return;}
+      const response=await saveThrough('save',{sheet:MODULES.families.sheet,record:JSON.stringify(updated)},'Quick edit '+id);
+      if(!response||!response.ok)throw new Error(response&&response.error||'Saving was unsuccessful');
+      upsertLocal('families',updated);
+      const changedName=full.toLocaleLowerCase('en-IN')!==original.toLocaleLowerCase('en-IN');
+      closeModal();toast('Family updated'+(changedName?' — check the corresponding Member name too':''),'good');
+      render();await refresh(true);
+      if(!response.queued)openProfile(parentMode&&pid?pid:id);
+    }catch(e){error.textContent=e.message||String(e);error.classList.remove('hide');btn.disabled=false;btn.textContent='Save changes';}
+  };
+}
+async function malDeactivateSubfamily_(id){
+  if(!canEdit())return;
+  const fam=malFamilyById_(id);
+  if(!fam)return;
+  if(String(fam['Family Status']||'Active')==='Inactive'){toast('This family is already inactive');return;}
+  if(!confirm('Mark '+(fam['Family Head']||id)+' as Inactive? The family, members, records and history will be kept.'))return;
+  const updated={...fam,'Family Status':'Inactive','Last Updated':today()};
+  try{
+    const r=await saveThrough('save',{sheet:MODULES.families.sheet,record:JSON.stringify(updated)},'Deactivate '+id);
+    if(!r||!r.ok)throw new Error(r&&r.error||'Save failed');
+    upsertLocal('families',updated);closeModal();toast('Family set to Inactive; history retained','good');render();await refresh(true);
+    openProfile(String(fam['Parent Family ID']||id).trim());
+  }catch(e){toast(e.message||String(e),'bad');}
+}
+
 /* =========================================================================
    FAMILY PROFILE
    ========================================================================= */
@@ -6434,7 +6602,7 @@ function openProfile(id){
   openModal(`
     <header>
       <div><h3>${esc(f['Family Head'] || id)}</h3>
-      <div class="sub">${esc(id)} · ${esc(f['Village Locality'] || f['Address/Area'] || 'Malipatana')} ${f['Mobile'] ? '· ' + esc(f['Mobile']) : ''}</div></div>
+      <div class="sub">${esc(id)} · Malipatana ${f['Mobile'] ? '· ' + esc(f['Mobile']) : ''}</div><div class="mal-sahi-line"><span>📍 Village Locality (Sahi): <b>${esc(f['Village Locality']||'Not entered')}</b></span><span>Surname: <b>${esc(f.Surname||'Not verified')}</b></span>${canEdit()?`<button type="button" class="btn btn-sm" data-editsub="${esc(id)}">Quick edit</button>`:''}</div></div>
       <div class="sp"></div><button class="btn btn-sm" onclick="closeModal()">Close</button>
     </header>
     <div class="body">
@@ -6447,21 +6615,28 @@ function openProfile(id){
         <div><div class="k">Status</div><div class="v" style="font-size:15px">${esc(f['Family Status'] || 'Active')}</div></div>
       </div>
       ${parent ? `<div class="subnote">Subfamily of <button class="linkish" data-fam="${esc(parentId)}">${esc(parent['Family Head'] || parentId)}</button> · ${esc(parentId)}</div>` : ''}
-      ${subs.length ? `<h4 style="font-family:var(--display);margin:20px 0 8px;font-size:16px">Subfamilies <span class="muted" style="font-size:13px">${subs.length} · ${subMembers} members in all</span></h4>
-      <div class="tablewrap" style="max-height:none"><table class="grid">
-        <thead><tr><th>ID</th><th>Head</th><th>House</th><th class="num">Members</th><th>Status</th><th></th></tr></thead>
-        <tbody>${subs.map(s => {
-          const sid = String(s['Family ID']).trim();
-          const n = (DB.members || []).filter(m2 => String(m2['Family ID']).trim() === sid).length;
-          return `<tr><td data-label="ID">${esc(sid)}</td><td data-label="Head">${esc(s['Family Head'] || '')}</td>
-            <td data-label="House">${esc(s['House No'] || '')}</td><td class="num" data-label="Members">${n}</td>
-            <td data-label="Status">${esc(s['Family Status'] || 'Active')}</td>
-            <td class="acts"><button class="btn btn-sm" data-fam="${esc(sid)}">View</button></td></tr>`;
-        }).join('')}</tbody></table></div>
-      ${canEdit() ? `<div style="margin-top:10px"><button class="btn btn-sm" data-addsub="${esc(id)}">+ Add another subfamily</button></div>` : ''}`
-      : (canEdit() && !parent ? `<div class="subnote" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
-          <span style="flex:1;min-width:200px">Is this a big household with married sons or brothers keeping separate kitchens? Record each as a subfamily.</span>
-          <button class="btn btn-sm" data-addsub="${esc(id)}">+ Add subfamily</button></div>` : '')}
+      <div class="mal-subhead"><h4>Subfamilies <span class="muted small">${subs.length} · ${subMembers} members in all</span></h4>
+        ${canEdit()?`<button class="btn btn-primary btn-sm" data-addsub="${esc(id)}">+ Add subfamily</button>`:''}</div>
+      ${subs.length?`<div class="mal-subgrid">${subs.map(s=>{
+        const sid=String(s['Family ID']||'').trim();
+        const n=(DB.members||[]).filter(m2=>String(m2['Family ID']||'').trim()===sid).length;
+        const local=String(s['Village Locality']||'').trim();
+        return `<article class="mal-subcard">
+          <button type="button" class="mal-subtitle" data-fam="${esc(sid)}" title="View this subfamily">${esc(s['Family Head']||sid)}</button>
+          <div class="mal-submeta">${esc(sid)} · ${n} ${n===1?'member':'members'} · ${esc(s['Family Status']||'Active')}</div>
+          <div class="mal-subtags"><span class="mal-subtag">Surname: ${esc(s.Surname||'Not verified')}</span>
+            <span class="mal-subtag">Sahi: ${esc(local||'Not entered')}</span></div>
+          <div class="mal-subactions">
+            <button class="btn btn-sm" type="button" data-fam="${esc(sid)}">View</button>
+            ${canEdit()?`<button class="btn btn-sm" type="button" data-editsub="${esc(sid)}">Quick Edit</button>
+              <button class="btn btn-sm" type="button" data-membersub="${esc(sid)}">Members</button>
+              <details class="mal-submore"><summary class="btn btn-sm">More ▾</summary><div class="mal-moreitems">
+                <button class="btn btn-sm" type="button" data-movesub="${esc(sid)}">Change parent</button>
+                <button class="btn btn-sm" type="button" data-deactsub="${esc(sid)}">Deactivate</button>
+                <button class="btn btn-sm" type="button" data-fullsub="${esc(sid)}">Full edit</button>
+              </div></details>`:''}
+          </div></article>`;
+      }).join('')}</div>`:`<div class="subnote">No subfamilies yet. If a member starts a separate household, select “Add subfamily”; the parent and locality will be suggested automatically.</div>`}
       <h4 style="font-family:var(--display);margin:20px 0 8px;font-size:16px;display:flex;align-items:center;gap:10px">Members
         ${canEdit() ? `<button class="btn btn-sm" data-roster="${esc(id)}" style="font-weight:600">${mem.length ? 'Edit the list' : '+ Add the household'}</button>` : ''}</h4>
       ${mem.length ? `<div class="tablewrap" style="max-height:none"><table class="grid">
@@ -6496,6 +6671,24 @@ function openProfile(id){
   });
   document.querySelectorAll('[data-roster]').forEach(b => {
     b.onclick = () => { closeModal(); openRoster(b.dataset.roster); };
+  });
+  document.querySelectorAll('[data-editsub]').forEach(b=>{
+    b.onclick=()=>{const target=b.dataset.editsub;closeModal();openSubfamilyQuickEdit(target,false);};
+  });
+  document.querySelectorAll('[data-membersub]').forEach(b=>{
+    b.onclick=()=>{const target=b.dataset.membersub;closeModal();openRoster(target);};
+  });
+  document.querySelectorAll('[data-movesub]').forEach(b=>{
+    b.onclick=()=>{const target=b.dataset.movesub;closeModal();openSubfamilyQuickEdit(target,true);};
+  });
+  document.querySelectorAll('[data-deactsub]').forEach(b=>{
+    b.onclick=()=>malDeactivateSubfamily_(b.dataset.deactsub);
+  });
+  document.querySelectorAll('[data-fullsub]').forEach(b=>{
+    b.onclick=()=>{const target=b.dataset.fullsub;closeModal();openForm('families',target);};
+  });
+  document.querySelectorAll('[data-delsub]').forEach(b=>{
+    b.onclick=()=>askDelete('families',b.dataset.delsub);
   });
 }
 
@@ -6801,11 +6994,9 @@ function renderHousehold(){
         <button class="btn btn-sm" data-openfam="${esc(fid)}">Full record</button>
         </div>
       </div>
-      ${b['House No'] || b['Address/Area'] || b['Mobile'] ? `<div class="bmeta">
-        ${b['House No'] ? `<span>House <b>${esc(b['House No'])}</b></span>` : ''}
-        ${b['Address/Area'] ? `<span>${esc(b['Address/Area'])}</span>` : ''}
-        ${b['Mobile'] ? `<span class="tnum">${esc(b['Mobile'])}</span>` : ''}
-      </div>` : ''}
+      <div class="bmeta"><span>Village Locality (Sahi): <b>${esc(b['Village Locality']||'Not entered')}</b></span>
+        <span>Surname: <b>${esc(b.Surname||'Not verified')}</b></span>
+        ${b['Mobile'] ? `<span class="tnum">${esc(b['Mobile'])}</span>` : ''}</div>
       ${people.length ? `<div class="pcards">${people.map(row).join('')}</div>`
         : `<div class="subnote">Nobody recorded in this branch yet.${edit ? ' Use <b>Add people</b> above.' : ''}</div>`}
     </section>`;
@@ -6862,7 +7053,7 @@ function renderHousehold(){
 
   $('#main').querySelectorAll('[data-openmem]').forEach(b => { b.onclick = () => openMember(b.dataset.openmem); });
   $('#main').querySelectorAll('[data-openfam]').forEach(b => { b.onclick = () => openProfile(b.dataset.openfam); });
-  $('#main').querySelectorAll('[data-editfam]').forEach(b => { b.onclick = () => openForm('families', b.dataset.editfam); });
+  $('#main').querySelectorAll('[data-editfam]').forEach(b => { b.onclick = () => openSubfamilyQuickEdit(b.dataset.editfam,false); });
   $('#main').querySelectorAll('[data-roster]').forEach(b => { b.onclick = () => openRoster(b.dataset.roster); });
   $('#main').querySelectorAll('[data-addsub]').forEach(b => { b.onclick = () => openSubfamily(b.dataset.addsub); });
 
@@ -6917,13 +7108,14 @@ function openSubfamily(parentId){
     String(m['Relation to Family Head'] || '').trim().toLowerCase() !== 'self');
 
   const start = (memberId) => {
-    PENDING_HEAD = memberId ? { memberId: memberId, from: pid } : null;
     const m = memberId ? pool.find(x => String(x['Member ID']).trim() === memberId) : null;
     closeModal();
+    PENDING_HEAD = memberId ? { memberId: memberId, from: pid } : null;
     openForm('families', null, Object.assign({
       'Parent Family ID': pid,
-      'House No': p ? (p['House No'] || '') : '',
-      'Address/Area': p ? (p['Address/Area'] || '') : ''
+      'Village Locality': p ? (p['Village Locality'] || '') : '',
+      'Surname': m ? (malNameTidy_(m.Surname) || (malSurnameProposal_('members',m)||{}).surname || (p ? p.Surname || '' : '')) : (p ? p.Surname || '' : ''),
+      'Given Name': m ? (malNameTidy_(m['Given Name']) || (malSurnameProposal_('members',m)||{}).given || '') : ''
     }, m ? {
       'Family Head': m['Name'] || '',
       'Head Gender': m['Gender'] || '',
@@ -6971,7 +7163,7 @@ const PRINT_PREF = k => 'Print ' + MODULES[k].sheet;
 
 function openPrint(key, rows){
   const m = MODULES[key];
-  const every = allFields(key).filter(f => f.t !== 'photo').map(f => f.n);
+  const every = allFields(key).filter(f => f.t !== 'photo' && !(key==='families' && (f.n==='House No'||f.n==='Address/Area'))).map(f => f.n);
   let chosen = [];
   try { chosen = JSON.parse(setting(PRINT_PREF(key), '[]')) || []; } catch(e){}
   if(!chosen.length) chosen = listCols(key).filter(c => fieldDef(key, c).t !== 'photo');
@@ -8298,7 +8490,7 @@ function treeSheet(famId){
     [0, 1, 2, 3, 4].map(i => `<circle cx="${6 + i * 10}" cy="${4 + 3 * Math.sin(Math.PI * i / 4)}" r="3.2" fill="${i % 2 ? '#d9531e' : '#e8a317'}"/>`).join('') + '</svg>';
   const leg = `<div class="tleg"><span>${dot('#2f7fb0')}Male</span><span>${dot('#d8577f')}Female</span><span>${dot('#e0a02f')}Other</span><span>${garland}ସ୍ୱର୍ଗୀୟ · Deceased</span><span style="color:#c1521e">♥ Married</span>` +
     (t.mode === 'B' ? '<span><i class="lb"></i>This household</span>' : '') + '</div>';
-  const where = (f['House No'] ? ' · House ' + esc(f['House No']) : '') + (f['Address/Area'] ? ', ' + esc(f['Address/Area']) : '');
+  const where = f['Village Locality'] ? ' · Sahi: ' + esc(f['Village Locality']) : ''; 
   return { sig: t.sig, html: `<section class="tsheet"><div class="tband"></div><div class="thead"><span class="temb"></span><div class="tt"><div class="odia">ଆମ ଗାଁ ମାଳିପାଟଣା</div><b>${esc(setting('Village Name', 'Malipatana'))} Village Welfare</b></div>` +
     `<div class="tmid"><div class="tk">ବଂଶ ବୃକ୍ଷ · FAMILY TREE</div><div>${t.mode === 'B' ? 'Generation tree' : 'Household tree'} · ${esc(famId)} · ${esc(f['Family Head'] || '')}${where}</div></div>` +
     `<div class="tdate">Printed<br>${esc(fmtDate(today()))}</div></div><div class="tribbon"></div>${t.svg}${leg}</section>` };
