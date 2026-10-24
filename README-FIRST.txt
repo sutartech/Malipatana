@@ -1,32 +1,25 @@
-MALIPATANA — ADMIN-MANAGED VILLAGE LOCALITY / SAHI
-Frontend FE V3.5.30; compatible with backend BE V1.8.23.
+MALIPATANA DOB / AGE OPTIONAL UPDATE — FRONTEND V3.5.31
 
-FRONTEND UPLOAD (GITHUB)
-1. Download and extract this ZIP.
-2. Upload the four HTML files into the root of your existing sutartech/Malipatana GitHub repository. Replace the same-named files.
-3. Do not upload Code.gs to public GitHub.
-4. Deploy BE V1.8.23 first, refresh the website and confirm FE V3.5.30 / BE V1.8.23.
+This update is built on the existing FE V3.5.30 and is compatible with BE V1.8.23.
 
-ADMIN SETTINGS
-Sign in as Admin -> left menu Settings -> Manage Sahis.
-Alternatively Families / Members -> Manage Sahis.
-Enter one approved village locality per line, such as Sutar Sahi or Uttar Sahi.
-Click Save Sahi List. The names are saved in the existing Settings sheet
-under the single Setting: Village Localities. No new sheet is created.
+CHANGES
+* Public registration (register.html): Date of Birth/Age defaults to "I do not know either — leave blank".
+* Shareable family/member form (entry.html): same three choices, with the unknown option first and no required birth fields.
+* Admin Members form (index.html): clearer instructions that DOB and age are both optional.
+* DOB given: Age calculates from DOB.
+* Only approximate age given: DOB remains blank; estimated age is recorded.
+* Both unknown: both remain blank; backend saves no fabricated age or DOB. The Members register shows a dash/Not recorded.
+* No changes to other fields, original records, family structures or spreadsheet setup.
 
-VILLAGER FORM
-register.html: Village Locality/Sahi dropdown; optional Other/not listed input.
-entry.html: Family details dropdown; Member details Sahi filter to find the right family; shared-edit family Sahi select.
-Admin Families/Subfamilies: locality dropdown.
-Admin registration review: locality dropdown; unlisted historical values remain visible.
+INSTALLATION
+1. Back up your current GitHub HTML files.
+2. Extract the ZIP and replace index.html, entry.html, register.html, and public.html at the ROOT of the existing Malipatana GitHub repo.
+3. Commit. Hard-refresh and verify FE V3.5.31 with backend BE V1.8.23.
+4. Test all three cases on public and shareable forms: exact DOB / estimated age / neither.
+5. Verify a submission with neither remains blank for both values in the master spreadsheet.
 
-NOTES
-- The official Member record inherits locality from its chosen Family; a second Sahi column is not added to Members.
-- Updating/renaming a Sahi in the approved list does NOT automatically change existing Family records. Edit those family records separately if needed.
-- Public API returns Sahi names only, never member/family personal details.
-- Uploaded photos, existing House No data, parent links and family relationships are retained.
-- If backend is not yet deployed, the forms cannot obtain the list.
-- Verify public and shared forms before distributing links.
+BACKEND
+No new backend needed; keep current BE V1.8.23. Both DOB and age were already supported as optional by the backend.
 
-LOCAL VALIDATION
-All extracted script blocks passed Node.js syntax checking. Backend catalog parsing, save and validation tests passed. Browser navigation was blocked in the test environment; live end-to-end verification is still necessary.
+SECURITY
+Do not upload Code.gs to public GitHub.

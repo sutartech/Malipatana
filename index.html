@@ -1928,7 +1928,7 @@ body.modalOpen #stickyLayer{opacity:.12;pointer-events:none;filter:saturate(.4)}
    ========================================================================= */
 const CONFIG = {
   API_URL: 'https://script.google.com/macros/s/AKfycbyfxff3MVt3Kw_CA_0aYD477nrAcWXshb9hex1LM_hl62tlrNiX5bGWgsf0Vw73sr-gbg/exec',
-  VERSION: 'FE V3.5.30',
+  VERSION: 'FE V3.5.31',
   EXPECTED_BACKEND: 'BE V1.8.23',
   IDLE_MINUTES: 30,
   /* Photo shown when no photo has been set in Settings.
@@ -3818,8 +3818,8 @@ const MODULES = {
       { n:'Mother Name', t:'text' },
       { n:'Marital Status', t:'select', opts:['Unknown','Unmarried','Married','Widowed','Divorced','Separated'], hint:'Marriage does not determine village population. Select current residence separately.' },
       { n:'Spouse Name', t:'text', hint:'For married/widowed members, enter if known. Existing spouse details are retained.' },
-      { n:'Date of Birth', t:'date', hint:'Enter only when the exact birth date is known.' },
-      { n:'Age', t:'number', hint:'Calculated from DOB; otherwise enter approximate age (years). DOB remains blank if unknown.' },
+      { n:'Date of Birth', t:'date', hint:'Optional. Enter only when the exact date is known; otherwise leave empty.' },
+      { n:'Age', t:'number', hint:'Optional. Calculated from DOB; otherwise enter approximate age if known. Leave blank if unknown.' },
       { n:'Education', t:'datalist', opts:['Illiterate','Primary','Class 10','Class 12','ITI/Diploma','Graduate','Post Graduate'] },
       { n:'Occupation', t:'datalist', opts:['Farmer','Daily Wage','Fisherman','Shop','Private Job','Government Job','Student','Homemaker','Unemployed','Retired'] },
       { n:'Earning Member', t:'select', opts:YESNO },
@@ -8587,7 +8587,7 @@ saveThrough = function(action, params, label){
   return _saveThrough(action, params, label);
 };
 const _ageField = MODULES.members.fields.find(f => f.n === 'Age');
-if(_ageField) _ageField.hint = 'Give the date of birth, or just the age. The age then grows by itself every year.';
+if(_ageField) _ageField.hint = 'Optional: enter DOB if known, otherwise an estimated age if known. If neither is known, leave both blank; age will show Not recorded.';
 
 /* ---- family tree (FE V2.9) ---- */
 /* Relationship IDs are internal references for the optional family-tree feature.
