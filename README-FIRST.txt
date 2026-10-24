@@ -1,23 +1,46 @@
-MALIPATANA FRONTEND — NEW APPS SCRIPT URL
-Frontend version: FE V3.5.35
-Original base: FE V3.5.34 (Fast Registration & Add Another)
+MALIPATANA PUBLIC REGISTRATION CONNECTION FIX
+Frontend: FE V3.5.36 | Works with Code.gs BE V1.8.25
 
-New backend URL:
-https://script.google.com/macros/s/AKfycbyccN1ErYm-NsqnZOlhV9GSLMBr9998Yk7yfi-foOpcLloDw0Mb9SLPMxDp58wWcXqEHA/exec
+IMPORTANT: THE FIRST SCREENSHOT SHOWS REGISTRATION DISABLED IN YOUR BACKEND.
+A frontend upload alone CANNOT enable registration.
 
-The new URL is configured in ALL FOUR frontend files:
-- index.html (signed-in dashboard)
-- entry.html (shareable entry form)
-- register.html (public registration)
-- public.html (public notice/account page)
+MANDATORY BACKEND SETUP (on the EXACT Apps Script project of the new /exec URL)
+1. Open Google Apps Script editor for the project you DEPLOYED.
+2. Backup Code.gs and your existing spreadsheet.
+3. Project Settings > Script properties: check MALIPATANA_SPREADSHEET_ID
+   points to your EXISTING Malipatana master spreadsheet (do not create a new one).
+4. Select setupSimpleRegistration in the editor's Run dropdown and click Run.
+   Authorize when prompted; check Executions for SUCCESS.
+   This creates/checks Registration Requests sheet in the EXISTING master
+   spreadsheet and sets MAL_REGISTRATION_ENABLED to YES.
+5. Project Settings > Script properties: verify MAL_REGISTRATION_ENABLED = YES.
+   If setupSimpleRegistration failed, fix the error; do not just set YES.
+6. Check Deploy > Manage deployments > Edit: choose New version > Deploy
+   if you replaced Code.gs. The web app must execute as its owner and allow
+   the intended public/no-login access. Share the registration page link,
+   not the Apps Script URL.
+7. If the error persists, verify the /exec URL is from the SAME Apps Script
+   project where you ran setupSimpleRegistration. Backend settings are NOT
+   shared between different Apps Script projects.
+8. Check Registration Requests for a Pending entry BEFORE resubmitting.
 
-To install:
-1. Extract this ZIP.
-2. Upload the four HTML files to the ROOT of your sutartech/Malipatana GitHub repository,
-   replacing existing versions. Do not upload the backend Code.gs to GitHub.
-3. Commit your changes. Reload the website and verify FE V3.5.35.
-4. Check the backend badge/version, login, public registration, and shared entry link.
+FRONTEND INSTALL (GitHub)
+Extract the ZIP and upload index.html, entry.html, register.html and public.html
+in the ROOT of sutartech/Malipatana on GitHub Pages, replacing the old files.
+Refresh in a private/incognito tab. Confirm dashboard FE V3.5.36.
 
-Only frontend URL references and frontend version were changed.
-Backend installation, accessibility, auth, and endpoint availability cannot be verified
-from these files. The Apps Script deployment must permit the intended requests.
+CHANGES
+- Removes artificial AbortController cancellation of public POST requests.
+- Receipt status checked before replaying the same submission key.
+- Clear admin-setup error when registration has been disabled on the backend.
+- Longer but bounded receipt polling with safe Check / retry for uncertain cases.
+- Keeps "Add another person" after actual confirmed registration.
+- Does not treat an opaque network POST as proof of a saved request.
+- Photo stays OPTIONAL and is uploaded only AFTER registration is confirmed.
+
+NO BACKEND CODE CHANGES ARE INCLUDED. Continue Code.gs BE V1.8.25.
+
+SAFETY: registration details are considered saved only after a registration
+number has been returned. Check Admin Registration Requests before retrying
+if confirmation was previously lost. Never use a different key for the same
+uncertain attempt.

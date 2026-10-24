@@ -86,6 +86,21 @@ async function malLoadPublicSahis_(){
 }
 $('publicSahi').addEventListener('change',()=>{$('publicSahiOtherRow').hidden=$('publicSahi').value!=='__other__';});
 void malLoadPublicSahis_();
+// Registration readiness is checked without accessing any private records.
+// This does not block the page if the connection is temporarily unavailable.
+async function malCheckRegistrationReady_(){
+ try{
+  const key=newSecret();
+  const state=await api('registrationStatus',{key},9500);
+  if(state&&!state.ok && /registration.*(?:disabled|not enabled)/i.test(String(state.error||''))){
+   const banner=document.createElement('div');banner.className='banner';banner.setAttribute('role','alert');
+   banner.style.background='#fff0ee';banner.style.borderColor='#e4b9ae';
+   banner.textContent='Registration is temporarily unavailable. The village administrator must enable Registration Requests in Apps Script. Please do not submit until it is enabled.';
+   $('registration').before(banner);
+  }
+ }catch(e){/* A transient connectivity issue must not prevent filling the form. */}
+}
+void malCheckRegistrationReady_();
 let submitting=false;
 function newSecret(){let a=new Uint8Array(32);crypto.getRandomValues(a);return Array.from(a,b=>b.toString(16).padStart(2,'0')).join('')}
 function api(action,params,timeoutMs=6500){return new Promise((resolve,reject)=>{
@@ -101,14 +116,16 @@ function api(action,params,timeoutMs=6500){return new Promise((resolve,reject)=>
  })}
 function show(text,ok){$('result').className=ok?'success':'error';$('result').textContent=text}
 function wait(ms){return new Promise(resolve=>setTimeout(resolve,ms))}
-async function sendPost(obj,timeoutMs=16000){
+async function sendPost(obj,timeoutMs=30000){
  const form=new FormData();for(const [key,value] of Object.entries(obj))form.append(key,value);
- // Google Apps Script POST uses a cross-origin redirect, so an opaque response
- // cannot be treated as proof of success. The receipt is verified separately.
- const controller=new AbortController();
- const timer=setTimeout(()=>controller.abort(),timeoutMs);
+ // A Google Apps Script cross-origin POST is opaque. Its response is NEVER
+ // considered proof of a saved registration: poll registrationStatus instead.
+ // Important: DO NOT AbortController.abort() an uncertain POST. Aborting the
+ // browser request can produce a misleading error and may interrupt delivery.
+ let timer;
  try{
-  await fetch(API_URL,{method:'POST',mode:'no-cors',body:form,signal:controller.signal,referrerPolicy:'no-referrer',credentials:'omit'});
+  const request=fetch(API_URL,{method:'POST',mode:'no-cors',body:form,referrerPolicy:'no-referrer',credentials:'omit'});
+  await Promise.race([request,new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Network confirmation pending')),timeoutMs)})]);
  }finally{clearTimeout(timer)}
 }
 function readB64(file){return new Promise((resolve,reject)=>{const fr=new FileReader();fr.onload=()=>resolve(String(fr.result).split(',')[1]);fr.onerror=()=>reject(Error('Could not read photo'));fr.readAsDataURL(file)})}
@@ -120,7 +137,7 @@ function makeThumb(file){return new Promise((resolve,reject)=>{
  }catch(err){URL.revokeObjectURL(objectURL);reject(err)}};img.onerror=()=>{URL.revokeObjectURL(objectURL);reject(Error('This image could not be opened.'))};img.src=objectURL;
  })}
 let currentAttempt=null,backgroundUploads=0;
-async function confirmReceipt(key,kind='record',limitMs=19000){
+async function confirmReceipt(key,kind='record',limitMs=30000){
  const end=Date.now()+limitMs;let lastError=null;
  while(Date.now()<end){
   try{
@@ -133,17 +150,24 @@ async function confirmReceipt(key,kind='record',limitMs=19000){
  }
  const err=Error(kind==='photo'
   ? 'Photo not confirmed. Your registration details remain saved if a reference number was shown.'
-  : 'No confirmation yet. Your request may still be processing. Choose “Check / retry this submission” to continue with the SAME reference key; do not start a fresh duplicate.');
+  : 'No confirmation yet. The server may still be processing your request. Choose “Check / retry this submission” to use the SAME reference key; do not start a fresh duplicate.');
  err.unconfirmed=true;err.cause=lastError;throw err;
 }
 async function submitAndCheck(attempt){
- // Poll receipt while the POST is being processed. Do not let an opaque POST
- // response or an indefinitely waiting fetch hold up the user interface.
+ // First check the SAME receipt key before sending. When a previous attempt
+ // saved successfully but its confirmation was lost, this prevents re-POSTs.
+ try{
+  const before=await api('registrationStatus',{key:attempt.key},9500);
+  if(before&&!before.ok){const e=Error(before.error||'Registration unavailable');e.final=true;throw e;}
+  if(before&&before.ok&&before.received)return before;
+ }catch(e){if(e.final)throw e;/* temporary connection problem: still try submission */}
+ // Checking registrationStatus runs independently; an opaque POST does not
+ // prevent the interface from confirming promptly once the server has saved.
  let postError=null;
- const posting=sendPost({...attempt.values,key:attempt.key,action:'registrationSubmit'},16000)
-   .catch(err=>{postError=err;});
- try{return await confirmReceipt(attempt.key,'record',20500)}catch(err){
-  if(postError&&!err.final)err.message+=' Network issue: '+postError.message;
+ const posting=sendPost({...attempt.values,key:attempt.key,action:'registrationSubmit'},30000)
+   .catch(err=>{postError=err});
+ try{return await confirmReceipt(attempt.key,'record',42000)}catch(err){
+  if(postError&&!err.final)err.message+=' The connection to the server may be slow; keep this same request for retry.';
   throw err;
  }finally{void posting}
 }
@@ -195,7 +219,7 @@ $('registration').addEventListener('submit',async event=>{
  const attempt=currentAttempt;
  submitting=true;$('sendBtn').disabled=true;
  $('sendBtn').textContent='Checking submission…';
- show('Sending details and checking the Admin receipt…',true);
+ show('Checking with the village server. Your submission is not confirmed until a registration number appears. Please keep this page open.',true);
  try{
   const receipt=await submitAndCheck(attempt);
   currentAttempt=null;
@@ -211,7 +235,7 @@ $('registration').addEventListener('submit',async event=>{
    $('sendBtn').textContent='Check / retry this submission';
   }else{
    currentAttempt=null; // A known rejection may need corrected form values.
-   show((err.message||'Submission could not be accepted.')+' Please correct the form and submit again.',false);
+   show((err.message||'Submission could not be accepted.') + (/registration.*(?:disabled|not enabled)|spreadsheet not configured|setupSimpleRegistration/i.test(String(err.message||'')) ? ' This is an administrator setup issue, not a mistake in your form. Please contact the village administrator.' : ' Please check your details or contact Admin before trying again.'),false);
    $('sendBtn').textContent='Send for Admin Review';
   }
  }finally{
