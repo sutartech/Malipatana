@@ -443,7 +443,7 @@ header.top .veil{background:linear-gradient(176deg,#0B2635B8 0%,#123A41A3 45%,#0
 <script>
 /* Reads ONE endpoint: publicSummary, which returns totals only. It must never
    call 'bootstrap' — that payload carries names, mobile numbers and logins. */
-var API_URL = 'https://script.google.com/macros/s/AKfycbyfxff3MVt3Kw_CA_0aYD477nrAcWXshb9hex1LM_hl62tlrNiX5bGWgsf0Vw73sr-gbg/exec';
+var API_URL = 'https://script.google.com/macros/s/AKfycbyccN1ErYm-NsqnZOlhV9GSLMBr9998Yk7yfi-foOpcLloDw0Mb9SLPMxDp58wWcXqEHA/exec';
 
 var num = function(v){ var n = Number(String(v == null ? 0 : v).replace(/[^0-9.-]/g, '')); return isNaN(n) ? 0 : n; };
 var money = function(v){ var n = Math.round(num(v)); return (n < 0 ? '−₹' : '₹') + Math.abs(n).toLocaleString('en-IN'); };
