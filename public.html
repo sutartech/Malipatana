@@ -361,6 +361,8 @@ header.top{background:linear-gradient(152deg,#102F3C,#155660 55%,#876332)}
 header.top .veil{background:linear-gradient(176deg,#0B2635B8 0%,#123A41A3 45%,#0E2C39EE 100%)}
 :focus-visible{outline:3px solid #D5A23E;outline-offset:2px}
 </style>
+
+<style id="mal-notice-links-css">.ntc .mal-notice-link,.noticeboard .mal-notice-link{color:#075f70;text-decoration:underline;text-underline-offset:3px;font-weight:700;overflow-wrap:anywhere}.ntc .mal-notice-link:hover,.noticeboard .mal-notice-link:hover{color:#ad441f}</style>
 </head>
 <body>
 
@@ -824,6 +826,30 @@ function malToggleTicker(btn){
   btn.setAttribute('aria-pressed', String(paused));
 }
 
+
+/* Notice text remains plain text in Sheets. Only safe web addresses render as links. */
+function malNoticeLinkify_(input){
+  const raw=String(input==null?'':input);
+  const pattern=/(?:https?:\/\/|www\.)[^\s<>'"`]+/gi;
+  let rendered='',start=0,match;
+  while((match=pattern.exec(raw))!==null){
+    rendered+=esc(raw.slice(start,match.index));
+    let urlText=match[0];
+    const punctuation=(urlText.match(/[.,;!?)\]}]+$/)||[''])[0];
+    urlText=urlText.slice(0,urlText.length-punctuation.length);
+    let target=urlText;
+    if(/^www\./i.test(target))target='https://'+target;
+    try{
+      const url=new URL(target);
+      if(!['https:','http:'].includes(url.protocol)||!url.hostname)throw Error('Invalid URL');
+      rendered+='<a class="mal-notice-link" href="'+esc(url.href)+'" target="_blank" rel="noopener noreferrer nofollow">'+esc(urlText)+'</a>';
+    }catch(e){rendered+=esc(urlText);}
+    rendered+=esc(punctuation);
+    start=match.index+match[0].length;
+  }
+  return rendered+esc(raw.slice(start)).replace(/\r?\n/g,'<br>');
+}
+
 function renderNotices(n){
   var old=document.getElementById('pubNotices');
   if(old)old.remove();
@@ -833,7 +859,7 @@ function renderNotices(n){
     var title=String(entry.title||'Village notice').trim();
     var tx=String(entry.text||'').trim();
     if(tx.length>100)tx=tx.slice(0,100).trim()+'…';
-    return '<span class="mal-notice-item"><span class="mal-notice-sep" aria-hidden="true">✦</span>'+esc(title)+(tx?' — '+esc(tx):'')+'</span>';
+    return '<span class="mal-notice-item"><span class="mal-notice-sep" aria-hidden="true">✦</span>'+esc(title)+(tx?' — '+malNoticeLinkify_(tx):'')+'</span>';
   }).join('');
   var announcement=list.slice(0,5).map(function(entry){return [entry.title,entry.text].filter(Boolean).join(' — ')}).join(' • ');
   var duration=Math.min(85,Math.max(25,Math.round(announcement.length/8)));
@@ -841,7 +867,7 @@ function renderNotices(n){
     return '<article class="ntc">'+
       (entry.photo?'<img class="nimg" data-srcs="'+esc(photoSrcList(entry.photo,640).join('|'))+'" alt="'+esc(entry.title)+'" loading="lazy">':'')+
       '<div class="nbody"><h4>'+esc(entry.title)+'</h4>'+
-      (entry.text?'<p>'+esc(entry.text)+'</p>':'')+
+      (entry.text?'<p>'+malNoticeLinkify_(entry.text)+'</p>':'')+
       (entry.by||entry.date?'<div class="nmeta">'+esc(entry.by)+(entry.by&&entry.date?' · ':'')+(entry.date?esc(fmtDate(entry.date)):'')+'</div>':'')+
       '</div></article>';
   }).join('');

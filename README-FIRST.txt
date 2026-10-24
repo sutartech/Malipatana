@@ -1,31 +1,32 @@
-MALIPATANA — MEMBER FORM & SAVE FIX
-Frontend FE V3.5.28 | Existing Backend BE V1.8.21
+MALIPATANA — ADMIN-MANAGED VILLAGE LOCALITY / SAHI
+Frontend FE V3.5.30; compatible with backend BE V1.8.23.
 
-Upload these 3 files to the root of sutartech/Malipatana on GitHub:
-  index.html  (updated; replaces the old index.html)
-  entry.html  (unchanged, retained for compatibility)
-  register.html (unchanged, retained for compatibility)
+FRONTEND UPLOAD (GITHUB)
+1. Download and extract this ZIP.
+2. Upload the four HTML files into the root of your existing sutartech/Malipatana GitHub repository. Replace the same-named files.
+3. Do not upload Code.gs to public GitHub.
+4. Deploy BE V1.8.23 first, refresh the website and confirm FE V3.5.30 / BE V1.8.23.
 
-Do NOT upload Code.gs to GitHub. BE V1.8.21 remains unchanged and does
-not need a redeploy if it is already live.
+ADMIN SETTINGS
+Sign in as Admin -> left menu Settings -> Manage Sahis.
+Alternatively Families / Members -> Manage Sahis.
+Enter one approved village locality per line, such as Sutar Sahi or Uttar Sahi.
+Click Save Sahi List. The names are saved in the existing Settings sheet
+under the single Setting: Village Localities. No new sheet is created.
 
-FIXES
-- Father Name and Mother Name remain visible once each.
-- Father ID, Mother ID and Spouse ID are hidden internal family-tree links,
-  not extra form questions. Existing values are NOT erased.
-- Changes to Given Name + Surname update the saved Full Name correctly.
-- Edit of other fields on old records no longer forces confirmation of a
-  proposed surname split; proposed names are NOT silently adopted.
-- Meaningful error messages are visible beside Save in the form footer.
-- Save buttons prevent double submissions while checks/saving are active.
-- Uses same master spreadsheet; no new sheet, no migration.
+VILLAGER FORM
+register.html: Village Locality/Sahi dropdown; optional Other/not listed input.
+entry.html: Family details dropdown; Member details Sahi filter to find the right family; shared-edit family Sahi select.
+Admin Families/Subfamilies: locality dropdown.
+Admin registration review: locality dropdown; unlisted historical values remain visible.
 
-CHECK AFTER UPLOADING
-1. Login: confirm FE V3.5.28, BE V1.8.21.
-2. Open Members > Edit; verify no Father ID/Mother ID fields.
-3. Modify a test member's Mother Name and save; reopen and verify.
-4. On another test member change Given Name then Save; check Full Name.
-5. If an error appears in red near Save, capture the exact message.
+NOTES
+- The official Member record inherits locality from its chosen Family; a second Sahi column is not added to Members.
+- Updating/renaming a Sahi in the approved list does NOT automatically change existing Family records. Edit those family records separately if needed.
+- Public API returns Sahi names only, never member/family personal details.
+- Uploaded photos, existing House No data, parent links and family relationships are retained.
+- If backend is not yet deployed, the forms cannot obtain the list.
+- Verify public and shared forms before distributing links.
 
-Local Node JavaScript syntax and isolated save-data tests passed.
-Live connected saving against your Apps Script deployment has NOT been tested.
+LOCAL VALIDATION
+All extracted script blocks passed Node.js syntax checking. Backend catalog parsing, save and validation tests passed. Browser navigation was blocked in the test environment; live end-to-end verification is still necessary.

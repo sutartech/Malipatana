@@ -20,7 +20,7 @@ button{border:0;border-radius:11px;min-height:48px;padding:11px 16px;font-size:1
 button.primary{background:#106653;color:white;width:100%;font-size:17px}button.secondary{background:#e7f3ee;color:#135d48}button:disabled{opacity:.55;cursor:wait}
 .photo{border:1px dashed #adcbb8;border-radius:13px;padding:15px;display:flex;gap:13px;align-items:center;background:#fafdfb}.photo img{width:74px;height:74px;border-radius:11px;object-fit:cover}.photo .picker{flex:1;min-width:0}.photo input{max-width:100%}
 #result{display:none;white-space:pre-wrap;border-radius:13px;padding:15px;margin-top:12px;font-size:14px;overflow-wrap:anywhere}#result.success{display:block;background:#e5f8ed;border:1px solid #a5d9b7}#result.error{display:block;background:#fff0ef;border:1px solid #f0c5c0}
-#publicSpouseField[hidden],#birthDateBlock[hidden],#birthAgeBlock[hidden]{display:none!important}#done{display:none}.consent{display:flex;gap:9px;align-items:flex-start;font-size:13px;line-height:1.5;color:#4e615a;margin-bottom:16px}.consent input{width:19px;height:19px;flex:none}
+#publicSpouseField[hidden],#birthDateBlock[hidden],#birthAgeBlock[hidden],#publicSahiOtherRow[hidden]{display:none!important}#done{display:none}.consent{display:flex;gap:9px;align-items:flex-start;font-size:13px;line-height:1.5;color:#4e615a;margin-bottom:16px}.consent input{width:19px;height:19px;flex:none}
 .foot{text-align:center;margin-top:17px;color:#68796e;font-size:12px}a{color:#0c6657}
 .honeypot{position:absolute!important;left:-9000px!important;opacity:0;pointer-events:none}
 @media(max-width:600px){.grid{grid-template-columns:1fr;gap:0}.card{padding:17px}.head{padding:14px}header h1{font-size:19px}}
@@ -32,7 +32,7 @@ button.primary{background:#106653;color:white;width:100%;font-size:17px}button.s
 <form id="registration" autocomplete="on">
 <section class="card">
 <h2>1. Your name and parents <span class="tag">Basic details</span></h2>
-<p class="hint">You may also complete this form for a relative with their permission. Fill only the details you know.</p>
+<p class="hint">You may also complete this form for a relative with their permission. If a parent is already registered, enter the same full name. The administrator can link the existing record during approval — do not submit the parent again.</p>
 <label class="field">Full name / ପୂରା ନାମ <span class="required">*</span><input name="fullName" required maxlength="180" placeholder="e.g. Dhruba Charan Sutar" autocomplete="name"></label>
 <div class="grid"><label class="field">Father's name / ପିତାଙ୍କ ନାମ<input name="fatherName" maxlength="140" placeholder="If known"></label>
 <label class="field">Mother's name / ମାତାଙ୍କ ନାମ<input name="motherName" maxlength="140" placeholder="If known"></label>
@@ -46,7 +46,8 @@ button.primary{background:#106653;color:white;width:100%;font-size:17px}button.s
 </section>
 <section class="card"><h2>2. Your home and relatives</h2>
 <p class="hint">No House Number or Family ID is required.</p>
-<div class="grid"><label class="field">Village locality / Sahi<input name="locality" maxlength="110" placeholder="e.g. Sutar Sahi"></label>
+<div class="grid"><label class="field">Village locality / Sahi<select name="locality" id="publicSahi"><option value="">Loading Sahis…</option></select><small>Select the village area. The Admin maintains this list.</small></label>
+<label class="field" id="publicSahiOtherRow" hidden>Not in the list? Enter Sahi name<input name="localityOther" maxlength="110" placeholder="Enter your Sahi / landmark"><small>Admin will verify and classify it later.</small></label>
 <label class="field">Whose household do you belong to?<input name="householdContact" maxlength="150" placeholder="e.g. Dhruba Charan Sutar"><small>Name of parent, elder or the person you live with</small></label>
 <label class="field">Your relation to this person<input name="relationship" maxlength="80" placeholder="e.g. Son, Daughter, Wife, Brother"></label>
 <label class="field">Where do you usually live now? <span class="required">*</span><select name="residence" required><option value="">Select residence</option><option value="Living in Malipatana">In Malipatana</option><option value="Outside temporarily">Away temporarily (study/work/visit)</option><option value="Shifted permanently">Settled outside Malipatana</option></select><small>Marriage alone does not change your village record. Select where you live.</small></label></div>
@@ -74,6 +75,17 @@ button.primary{background:#106653;color:white;width:100%;font-size:17px}button.s
 'use strict';
 const API_URL='https://script.google.com/macros/s/AKfycbyfxff3MVt3Kw_CA_0aYD477nrAcWXshb9hex1LM_hl62tlrNiX5bGWgsf0Vw73sr-gbg/exec';
 const $=id=>document.getElementById(id);
+async function malLoadPublicSahis_(){
+ const box=$('publicSahi');
+ try{
+  const r=await api('publicLocalities');if(!r||!r.ok)throw Error('Could not load the Sahi list');
+  box.replaceChildren(new Option('— Choose Sahi (optional) —',''));
+  (r.localities||[]).forEach(n=>box.add(new Option(n,n)));
+  box.add(new Option('Other / not listed','__other__'));
+ }catch(e){box.replaceChildren(new Option('— Select a Sahi —',''),new Option('Other / enter Sahi','__other__'));}
+}
+$('publicSahi').addEventListener('change',()=>{$('publicSahiOtherRow').hidden=$('publicSahi').value!=='__other__';});
+void malLoadPublicSahis_();
 let submitting=false;
 function newSecret(){let a=new Uint8Array(32);crypto.getRandomValues(a);return Array.from(a,b=>b.toString(16).padStart(2,'0')).join('')}
 function api(action,params){return new Promise((resolve,reject)=>{
@@ -124,7 +136,7 @@ if(publicMarital&&publicSpouse){const show=()=>{publicSpouse.hidden=!['Married',
 $('registration').addEventListener('submit',async event=>{
  event.preventDefault();if(submitting)return;
  const form=event.currentTarget;if(!form.reportValidity())return;
- const values=Object.fromEntries(new FormData(form));values.consent=$('consent').checked?'Yes':'No';
+ const values=Object.fromEntries(new FormData(form));if(values.locality==='__other__')values.locality=String(values.localityOther||'').trim();delete values.localityOther;values.consent=$('consent').checked?'Yes':'No';
  const key=newSecret();const photo=$('photo').files[0];submitting=true;$('sendBtn').disabled=true;show('Sending details securely for Admin review…',true);
  try{
  await sendPost({...values,key,action:'registrationSubmit'});

@@ -10,16 +10,16 @@ body{margin:0;background:linear-gradient(145deg,#e9f7f3 0%,#fbfaf5 50%,#edf4f8 1
 </style></head><body><main>
 <header class="head"><img src="icon-180.png" alt="Malipatana emblem"><div><h1>ମାଳିପାଟଣା · Malipatana</h1><p>Village welfare · Easy shared entry</p></div></header>
 <div id="status" class="box">Checking shared-link permission…</div>
-<section id="content" class="hidden"><div class="box"><div class="tab-headers"><h2 id="heading">Shared data entry</h2><span class="pill">No login required</span></div><p class="sub" id="info"></p><div id="expiry" class="notice"></div><div class="privacy">Private household details and photographs are not displayed to other link holders. Share this link only with trusted people.</div></div>
+<section id="content" class="hidden"><div class="box"><div class="tab-headers"><h2 id="heading">Shared data entry</h2><span class="pill">No login required</span></div><p class="sub" id="info"></p><div id="expiry" class="notice"></div><div class="privacy">Only limited identification names from the selected family appear for linking parents; private contact, finance and photographs are not shared. Give this link only to trusted people.</div></div>
 <div id="familyTabs" class="box hidden"><div class="nav"><button type="button" id="familyTab" class="selected">Family details</button><button type="button" id="memberTab">Member details</button></div><p class="sub">Enter Family or Member details directly. Choose an existing family inside Member details, or create a new family first.</p><div class="hero-id hidden" id="selectedFamilyBanner"></div></div>
 <form id="familyForm" class="box hidden"><h2>Family details</h2><p class="sub">Enter family details as in the signed-in dashboard. Family ID is created automatically when saved.</p>
-<div class="grid"><label class="field">Family head first / given name <span class="required">*</span><input name="givenName" required maxlength="100" autocomplete="given-name"></label><label class="field">Surname <span class="required">*</span><input name="surname" required maxlength="80" autocomplete="family-name" list="surnameList"></label><label class="field">Mobile number<input name="phone" type="tel" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" placeholder="10 digits, optional"></label><label class="field">Village locality / Sahi<input name="locality" maxlength="100" list="localityList" placeholder="Which part of Malipatana?"></label><div class="live-name" role="status" aria-live="polite"><strong>Full name (automatic):</strong> <span id="guestFamilyFullName">Enter first name and surname</span></div></div>
+<div class="grid"><label class="field">Family head first / given name <span class="required">*</span><input name="givenName" required maxlength="100" autocomplete="given-name"></label><label class="field">Surname <span class="required">*</span><input name="surname" required maxlength="80" autocomplete="family-name" list="surnameList"></label><label class="field">Mobile number<input name="phone" type="tel" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" placeholder="10 digits, optional"></label><label class="field">Village locality / Sahi<select name="locality" id="guestFamilySahi"><option value="">Choose Sahi (optional)</option></select><small>Admin-approved locality list.</small></label><label class="field hidden" id="guestFamilyOtherRow">Locality not listed<input name="localityOther" maxlength="100" placeholder="Enter the Sahi for Admin review"></label><div class="live-name" role="status" aria-live="polite"><strong>Full name (automatic):</strong> <span id="guestFamilyFullName">Enter first name and surname</span></div></div>
 <details><summary>Additional family details</summary><div class="grid"><label class="field">Parent family (optional)<select name="parentFamilyId" id="parentFamily"><option value="">Main family / none</option></select><small>Existing families appear in this dropdown automatically.</small></label><label class="field">Guide member ID (optional)<input name="guideMemberId" maxlength="60" placeholder="Existing member ID"></label><label class="field">Guidance status<select name="guidanceStatus"><option value="">Select</option><option>Open</option><option>Advising</option><option>Sent to committee</option><option>Helped</option><option>Closed</option></select></label><label class="field">Family status<select name="familyStatus"><option>Active</option><option>Inactive</option><option>Shifted</option></select></label><label class="field">Vulnerability<select name="vulnerable"><option>Normal</option><option>Vulnerable</option><option>Highly Vulnerable</option></select></label><label class="field">Guidance needed<select name="guidance"><option>No</option><option>Child education</option><option>Higher studies</option><option>Job or skill</option><option>Health</option><option>Money matters</option><option>Legal or papers</option><option>Other</option></select></label><label class="field">Guidance note<textarea name="guidanceNote" maxlength="500"></textarea></label></div><label class="field">Remarks<textarea name="note" maxlength="900"></textarea></label></details>
-<datalist id="localityList"></datalist><datalist id="surnameList"></datalist><div class="photo-row"><div class="preview" id="familyPreview">📷</div><label class="field">Family photo (optional)<input type="file" id="familyPhoto" accept="image/jpeg,image/png,image/webp"><small>Original up to 20 MB retained privately; dashboard displays a small thumbnail.</small></label></div>
+<datalist id="surnameList"></datalist><div class="photo-row"><div class="preview" id="familyPreview">📷</div><label class="field">Family photo (optional)<input type="file" id="familyPhoto" accept="image/jpeg,image/png,image/webp"><small>Original up to 20 MB retained privately; dashboard displays a small thumbnail.</small></label></div>
 <div class="buttons"><button type="submit" class="primary">Save family & add members →</button><button id="clearFamily" type="button" class="secondary">Clear</button></div></form>
 <form id="memberForm" class="box hidden"><h2>Member details</h2><div class="notice" id="currentFamilyText">Choose a family from the list, or save a new family first. Family ID fills automatically.</div>
-<div class="grid"><label class="field">Family <span class="required">*</span><select id="familySelect" aria-label="Choose the family"><option value="">Loading existing families…</option></select><small>Includes families already registered in the main dashboard; no search required.</small><small id="familyOptionsStatus" aria-live="polite"></small></label><label class="field">Family ID (auto-filled) <span class="required">*</span><input name="familyId" id="familyId" required maxlength="60" placeholder="Auto-filled when choosing family"></label><label class="field">Member first / given name <span class="required">*</span><input name="givenName" required maxlength="100" autocomplete="given-name"></label><label class="field">Surname <span class="required">*</span><input name="surname" required maxlength="80" autocomplete="family-name" list="surnameList"></label><label class="field">Relationship to family head<select name="relation"><option>Self</option><option>Wife</option><option>Husband</option><option>Son</option><option>Daughter</option><option>Father</option><option>Mother</option><option>Brother</option><option>Sister</option><option>Daughter-in-law</option><option>Son-in-law</option><option>Grandson</option><option>Granddaughter</option><option>Other</option></select></label><label class="field">Gender<select name="gender"><option value="">Choose</option><option>Male</option><option>Female</option><option>Other</option></select></label><label class="field">Birth information<select id="guestBirthMode"><option value="dob">Date of birth known</option><option value="age">Only approximate age known</option><option value="unknown">Neither known</option></select><small>Do not invent a birth date.</small></label><label class="field" id="guestDobBlock">Date of birth<input name="dob" type="date"></label><label class="field" id="guestAgeBlock" hidden>Approximate age (years)<input name="approxAge" type="number" min="0" max="120" step="1" inputmode="numeric" placeholder="e.g. 52" disabled><small>Marked estimated; recorded as of submission date.</small></label><label class="field">Age (calculated)<input id="agePreview" readonly placeholder="From date of birth"></label><label class="field">Mobile<input name="phone" type="tel" inputmode="numeric" pattern="[0-9]{10}" maxlength="10"></label><label class="field">Current residence<select name="residenceStatus" id="guestResidence"><option>Living in Malipatana</option><option>Outside temporarily</option><option>Shifted permanently</option></select></label><div class="live-name" role="status" aria-live="polite"><strong>Full name (automatic):</strong> <span id="guestMemberFullName">Enter first name and surname</span></div></div><details id="guestOutside" hidden><summary>Outside residence details</summary><div class="grid"><label class="field">Current city/town<input name="currentCity" maxlength="100"></label><label class="field">District<input name="currentDistrict" maxlength="100"></label><label class="field">State<input name="currentState" maxlength="100"></label><label class="field">Country<input name="currentCountry" maxlength="100"></label></div><label class="field">Full outside address (optional)<textarea name="outsideAddress" maxlength="500"></textarea></label></details>
-<details><summary>Parents, family relations, education and work</summary><div class="grid"><label class="field">Father name<input name="fatherName" maxlength="100"></label><label class="field">Mother name<input name="motherName" maxlength="100"></label><label class="field">Marital status<select name="maritalStatus" id="sharedMarital"><option value="">Not recorded</option><option>Unmarried</option><option>Married</option><option>Widowed</option><option>Divorced</option><option>Separated</option><option>Unknown</option></select></label><label class="field">Spouse name (if known)<input name="spouseName" maxlength="100"></label><label class="field">Education<select name="education"><option value="">Select</option><option>Illiterate</option><option>Primary</option><option>Class 10</option><option>Class 12</option><option>ITI/Diploma</option><option>Graduate</option><option>Post Graduate</option><option>Other</option></select></label><label class="field">Occupation<select name="occupation"><option value="">Select</option><option>Farmer</option><option>Daily Wage</option><option>Fisherman</option><option>Shop</option><option>Private Job</option><option>Government Job</option><option>Student</option><option>Homemaker</option><option>Unemployed</option><option>Retired</option><option>Other</option></select></label><label class="field">Earning member<select name="earning"><option value="">Not specified</option><option>Yes</option><option>No</option></select></label><label class="field">Monthly income (₹)<input name="income" type="number" step="0.01" min="0"></label><label class="field">Disability (optional)<select name="disability"><option value="">Not specified</option><option>No</option><option>Yes</option></select></label><label class="field">Insurance<select name="insurance"><option value="">Not specified</option><option>Yes</option><option>No</option></select></label></div><label class="field">Remarks<textarea name="note" maxlength="900"></textarea></label></details>
+<div class="grid"><label class="field">Village Locality / Sahi (find your family)<select id="guestMemberSahi"><option value="">All Sahis</option></select><small>Choose locality first, then family. The Family record owns its Sahi.</small></label><label class="field">Family <span class="required">*</span><select id="familySelect" aria-label="Choose the family"><option value="">Loading existing families…</option></select><small>Includes families already registered in the main dashboard; no search required.</small><small id="familyOptionsStatus" aria-live="polite"></small></label><label class="field">Family ID (auto-filled) <span class="required">*</span><input name="familyId" id="familyId" required maxlength="60" placeholder="Auto-filled when choosing family"></label><label class="field">Member first / given name <span class="required">*</span><input name="givenName" required maxlength="100" autocomplete="given-name"></label><label class="field">Surname <span class="required">*</span><input name="surname" required maxlength="80" autocomplete="family-name" list="surnameList"></label><label class="field">Relationship to family head<select name="relation"><option>Self</option><option>Wife</option><option>Husband</option><option>Son</option><option>Daughter</option><option>Father</option><option>Mother</option><option>Brother</option><option>Sister</option><option>Daughter-in-law</option><option>Son-in-law</option><option>Grandson</option><option>Granddaughter</option><option>Other</option></select></label><label class="field">Gender<select name="gender"><option value="">Choose</option><option>Male</option><option>Female</option><option>Other</option></select></label><label class="field">Birth information<select id="guestBirthMode"><option value="dob">Date of birth known</option><option value="age">Only approximate age known</option><option value="unknown">Neither known</option></select><small>Do not invent a birth date.</small></label><label class="field" id="guestDobBlock">Date of birth<input name="dob" type="date"></label><label class="field" id="guestAgeBlock" hidden>Approximate age (years)<input name="approxAge" type="number" min="0" max="120" step="1" inputmode="numeric" placeholder="e.g. 52" disabled><small>Marked estimated; recorded as of submission date.</small></label><label class="field">Age (calculated)<input id="agePreview" readonly placeholder="From date of birth"></label><label class="field">Mobile<input name="phone" type="tel" inputmode="numeric" pattern="[0-9]{10}" maxlength="10"></label><label class="field">Current residence<select name="residenceStatus" id="guestResidence"><option>Living in Malipatana</option><option>Outside temporarily</option><option>Shifted permanently</option></select></label><div class="live-name" role="status" aria-live="polite"><strong>Full name (automatic):</strong> <span id="guestMemberFullName">Enter first name and surname</span></div></div><details id="guestOutside" hidden><summary>Outside residence details</summary><div class="grid"><label class="field">Current city/town<input name="currentCity" maxlength="100"></label><label class="field">District<input name="currentDistrict" maxlength="100"></label><label class="field">State<input name="currentState" maxlength="100"></label><label class="field">Country<input name="currentCountry" maxlength="100"></label></div><label class="field">Full outside address (optional)<textarea name="outsideAddress" maxlength="500"></textarea></label></details>
+<details><summary>Parents, family relations, education and work</summary><div class="grid"><label class="field">Father name<select name="fatherId" id="guestFatherChoice"><option value="">Type name manually / not registered</option></select><input name="fatherName" maxlength="100" placeholder="Father's name"><small>Choose registered father from this family, or type his name.</small></label><label class="field">Mother name<select name="motherId" id="guestMotherChoice"><option value="">Type name manually / not registered</option></select><input name="motherName" maxlength="100" placeholder="Mother's name"><small>Choice links the existing member. It never creates a duplicate.</small></label><label class="field">Marital status<select name="maritalStatus" id="sharedMarital"><option value="">Not recorded</option><option>Unmarried</option><option>Married</option><option>Widowed</option><option>Divorced</option><option>Separated</option><option>Unknown</option></select></label><label class="field">Spouse name (if known)<input name="spouseName" maxlength="100"></label><label class="field">Education<select name="education"><option value="">Select</option><option>Illiterate</option><option>Primary</option><option>Class 10</option><option>Class 12</option><option>ITI/Diploma</option><option>Graduate</option><option>Post Graduate</option><option>Other</option></select></label><label class="field">Occupation<select name="occupation"><option value="">Select</option><option>Farmer</option><option>Daily Wage</option><option>Fisherman</option><option>Shop</option><option>Private Job</option><option>Government Job</option><option>Student</option><option>Homemaker</option><option>Unemployed</option><option>Retired</option><option>Other</option></select></label><label class="field">Earning member<select name="earning"><option value="">Not specified</option><option>Yes</option><option>No</option></select></label><label class="field">Monthly income (₹)<input name="income" type="number" step="0.01" min="0"></label><label class="field">Disability (optional)<select name="disability"><option value="">Not specified</option><option>No</option><option>Yes</option></select></label><label class="field">Insurance<select name="insurance"><option value="">Not specified</option><option>Yes</option><option>No</option></select></label></div><label class="field">Remarks<textarea name="note" maxlength="900"></textarea></label></details>
 <div class="photo-row"><div class="preview" id="memberPreview">📷</div><label class="field">Member photograph (optional)<input type="file" id="memberPhoto" accept="image/jpeg,image/png,image/webp"><small>Original private in Google Drive · lightweight thumbnail in dashboard.</small></label></div>
 <div class="buttons"><button type="submit" class="primary">Save member</button><button type="button" class="secondary" id="addAnother">Clear for next member</button></div></form>
 <form id="expenseForm" class="box hidden"><h2>Event expense</h2><p class="sub" id="expenseEvent">Record an expense and who actually paid it.</p><div class="grid"><label class="field">Date <span class="required">*</span><input name="date" type="date" required></label><label class="field">Amount (₹) <span class="required">*</span><input name="amount" type="number" min="0.01" max="10000000" step="0.01" required></label><label class="field">Description <span class="required">*</span><input name="what" required maxlength="200" placeholder="What was purchased or paid for?"></label><label class="field">Paid by <span class="required">*</span><input name="paidBy" required maxlength="100" placeholder="Person who paid"></label><label class="field">Paid to<input name="paidTo" maxlength="100" placeholder="Shop, vendor or beneficiary"></label><label class="field">Payment mode<select name="method"><option>Cash</option><option>UPI</option><option>Bank Transfer</option><option>Cheque</option><option>Card</option><option>Other</option></select></label></div>
@@ -34,6 +34,7 @@ body{margin:0;background:linear-gradient(145deg,#e9f7f3 0%,#fbfaf5 50%,#edf4f8 1
 const API_URL='https://script.google.com/macros/s/AKfycbyfxff3MVt3Kw_CA_0aYD477nrAcWXshb9hex1LM_hl62tlrNiX5bGWgsf0Vw73sr-gbg/exec';
 const key=new URLSearchParams(location.search).get('key'), $=id=>document.getElementById(id);
 let kind='',linkCanEdit=false,editContext=null,busy=false,currentFamily='';
+let malApprovedSahis_=[];
 const familyCacheKey='mal_entry_families_'+(key||'').slice(0,9);
 let createdFamilies=[];
 let masterFamilies=[];
@@ -48,6 +49,41 @@ function api(action,params={}){return new Promise((resolve,reject)=>{
  script.referrerPolicy='no-referrer';script.src=API_URL+'?'+new URLSearchParams({...params,...(action.startsWith('link')?{key}:{}),action,callback:cb,_:Date.now()});
  document.body.append(script);
 })}
+
+/* A shared entry key can list parent names ONLY within the selected existing family.
+   The public registration page never exposes this list. */
+let malSharedParentRequest=0;
+async function malSharedLoadParents_(){
+  const id=String($('familyId').value||'').trim();
+  const serial=++malSharedParentRequest;
+  for(const role of ['Father','Mother']){
+    const sel=$('guest'+role+'Choice');if(!sel)continue;
+    sel.replaceChildren(new Option('Type name manually / not registered',''));
+    sel.value='';
+  }
+  if(!id||kind!=='family')return;
+  try{
+    const r=await api('linkMemberChoices',{familyId:id});
+    if(serial!==malSharedParentRequest||!r.ok||String($('familyId').value||'')!==id)return;
+    for(const role of ['Father','Mother']){
+      const sel=$('guest'+role+'Choice');
+      (r.members||[]).forEach(m=>sel.add(new Option(m.name+' · '+m.id,m.id)));
+    }
+  }catch(e){/* Name typing works even when member lookup is offline. */}
+}
+for(const role of ['Father','Mother']){
+  const sel=$('guest'+role+'Choice'),field=$('memberForm').elements[role.toLowerCase()+'Name'];
+  sel.addEventListener('change',()=>{
+    if(!sel.value)return;
+    const option=sel.selectedOptions[0];
+    if(option)field.value=option.textContent.replace(/ · MEM[^ ·]*$/,'');
+  });
+  field.addEventListener('input',()=>{
+    if(sel.value&&!sel.selectedOptions[0].textContent.startsWith(field.value.trim()+' · '))sel.value='';
+  });
+}
+$('familyId').addEventListener('change',malSharedLoadParents_);
+
 function showMessage(txt,good){$('message').className='alert '+(good?'success':'error');$('message').textContent=txt;$('message').scrollIntoView({block:'nearest',behavior:'smooth'});}
 function keepFamilies(){try{sessionStorage.setItem(familyCacheKey,JSON.stringify(createdFamilies.slice(-20)))}catch(e){}}
 function allKnownFamilies(){
@@ -57,19 +93,44 @@ function allKnownFamilies(){
 }
 function updateVillageSuggestions(){
  const surnames=[...new Set([...allKnownFamilies().map(f=>f.surname||''),...createdFamilies.map(f=>f.surname||'')].filter(Boolean))].sort();
- const locs=[...new Set(allKnownFamilies().map(f=>f.locality||'').filter(Boolean))].sort();
- const s=$('surnameList'),l=$('localityList');
+ const s=$('surnameList');
  if(s)s.replaceChildren(...surnames.map(x=>{const o=document.createElement('option');o.value=x;return o;}));
- if(l)l.replaceChildren(...locs.map(x=>{const o=document.createElement('option');o.value=x;return o;}));
 }
+function malSharedLocalityOptions_(select,includeAll){
+ if(!select)return;
+ const old=select.value;
+ const names=[...new Set([...malApprovedSahis_,...allKnownFamilies().map(f=>f.locality||'').filter(Boolean)])].sort((a,b)=>a.localeCompare(b));
+ select.replaceChildren(new Option(includeAll?'All Sahis':'— Choose Sahi (optional) —',''));
+ names.forEach(name=>select.add(new Option(name,name)));
+ if(!includeAll)select.add(new Option('Other / not listed','__other__'));
+ if(old&&[...select.options].some(o=>o.value===old))select.value=old;
+}
+async function malSharedLoadSahis_(){
+ try{const r=await api('publicLocalities');if(r&&r.ok)malApprovedSahis_=(r.localities||[]).filter(Boolean);}catch(e){}
+ malSharedLocalityOptions_($('guestFamilySahi'),false);
+ malSharedLocalityOptions_($('guestMemberSahi'),true);
+}
+$('guestFamilySahi').addEventListener('change',()=>{
+ $('guestFamilyOtherRow').classList.toggle('hidden',$('guestFamilySahi').value!=='__other__');
+});
+$('guestMemberSahi').addEventListener('change',()=>{
+ const selected=$('guestMemberSahi').value;
+ const current=allKnownFamilies().find(f=>f.id===currentFamily);
+ if(selected&&(!current||current.locality!==selected)){currentFamily='';$('familyId').value='';}
+ renderFamilyChoices();
+});
+void malSharedLoadSahis_();
 function renderFamilyChoices(){
  updateVillageSuggestions();
  const list=$('familySelect'),parent=$('parentFamily');
  const prevParent=parent.value;
  list.innerHTML='<option value="">'+(familyOptionsLoading?'Loading families…':'Choose family')+'</option>';
+ malSharedLocalityOptions_($('guestMemberSahi'),true);
+ const selectedSahi=$('guestMemberSahi').value;
  parent.innerHTML='<option value="">Main family / none</option>';
  allKnownFamilies().forEach(f=>{
   for(const el of [list,parent]){
+   if(el===list&&selectedSahi&&f.locality!==selectedSahi)continue;
    const o=document.createElement('option');o.value=f.id;
    o.textContent=f.id+' · '+f.head+(f.house?' · House '+f.house:'');el.append(o)
   }
@@ -77,8 +138,10 @@ function renderFamilyChoices(){
  // If someone typed a valid Family ID manually, do not discard it.
  if(currentFamily && allKnownFamilies().some(f=>f.id===currentFamily))list.value=currentFamily;
  $('familyId').value=currentFamily;
+ void malSharedLoadParents_();
  if(prevParent && allKnownFamilies().some(f=>f.id===prevParent))parent.value=prevParent;
  const f=allKnownFamilies().find(x=>x.id===currentFamily);
+ if(f && f.locality && !selectedSahi) $('guestMemberSahi').value=f.locality;
  const memberSurname=$('memberForm').elements.surname;
  if(f&&f.surname&&memberSurname&&!memberSurname.value)memberSurname.value=f.surname;
  if(typeof updateMemberFullName==='function')updateMemberFullName();
@@ -97,6 +160,7 @@ async function loadFamilyOptions(){
      if(!r.ok)throw Error(r.error||'Could not load families');
      // Only IDs and family-head names are sent. The backend checks this link.
      masterFamilies=(r.families||[]).filter(x=>x && x.id && x.head);
+     malSharedLocalityOptions_($('guestFamilySahi'),false);malSharedLocalityOptions_($('guestMemberSahi'),true);
      familyOptionsLoaded=true;
      familyOptionsMessage='';
    }catch(err){
@@ -275,6 +339,8 @@ for(const [formId,mode,photoId] of [['familyForm','family','familyPhoto'],['memb
   const file=$(photoId).files[0],rec=Object.fromEntries(new FormData(form));
   try{
     if(mode==='family'||mode==='member'){
+      if(mode==='family'&&rec.locality==='__other__')rec.locality=String(rec.localityOther||'').trim();
+      delete rec.localityOther;
       if(malGuestNameRepeated_(rec.givenName,rec.surname)){
         form.elements.givenName.focus();
         throw Error('Surname is already part of Given Name. Please enter Given Name and Surname separately.');
@@ -311,7 +377,17 @@ $('findForm').addEventListener('submit',async e=>{
  e.preventDefault();const btn=e.currentTarget.querySelector('button[type="submit"]');btn.disabled=true;
  try{const vals=Object.fromEntries(new FormData(e.currentTarget));const r=await api('linkSearch',vals);if(!r.ok)throw Error(r.error||'Cannot find record');
   editContext={id:r.id,editCode:vals.editCode,type:r.type};$('editFields').replaceChildren();
-  (EDIT_FIELDS[r.type]||[]).forEach(([name,label,type])=>{const l=document.createElement('label');l.className='field';l.textContent=label;const inp=document.createElement('input');inp.name=name;inp.value=(r.fields||{})[name]??'';inp.readOnly=type==='readonly';inp.type=['date','number'].includes(type)?type:'text';l.append(inp);$('editFields').append(l)});
+  (EDIT_FIELDS[r.type]||[]).forEach(([name,label,type])=>{const l=document.createElement('label');l.className='field';l.textContent=label;let inp;
+   if(r.type==='family'&&name==='locality'){
+     inp=document.createElement('select');inp.name=name;
+     malSharedLocalityOptions_(inp,false);
+     const oldLocality=String((r.fields||{})[name]||'');
+     if(oldLocality&&![...inp.options].some(o=>o.value===oldLocality))inp.add(new Option(oldLocality,oldLocality));
+     inp.value=oldLocality;
+   }else{
+     inp=document.createElement('input');inp.name=name;inp.value=(r.fields||{})[name]??'';
+     inp.readOnly=type==='readonly';inp.type=['date','number'].includes(type)?type:'text';
+   }l.append(inp);$('editFields').append(l)});
   $('editingId').textContent='Editing '+r.id+' · Every correction is logged.';$('editForm').classList.remove('hidden');$('editForm').scrollIntoView({block:'nearest'});
  }catch(err){showMessage(err.message,false);$('editForm').classList.add('hidden');editContext=null}
  finally{btn.disabled=false}

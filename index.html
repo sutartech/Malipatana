@@ -1727,6 +1727,8 @@ body.modalOpen #stickyLayer{opacity:.12;pointer-events:none;filter:saturate(.4)}
 .reg-item{display:flex;gap:12px;align-items:center;justify-content:space-between;border-bottom:1px solid #dde6df;padding:13px 5px}.reg-main{font-size:15px;font-weight:750;color:#173f37}.reg-state{font-size:11px;font-weight:700;border:1px solid #d9b96c;background:#fff5d8;color:#805616;border-radius:15px;padding:3px 8px}.reg-info{min-width:0}.reg-info .small{margin-top:3px}.reg-empty{padding:25px;color:#5c766c;text-align:center}.reg-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:15px}.reg-fields label{font-size:12.5px;font-weight:700;color:#3e6458}.reg-fields .input{margin-top:5px}.reg-span{grid-column:1/-1}.reg-tip{background:#eef8f1;border:1px solid #c5e3d0;border-radius:12px;padding:11px;font-size:13px}.reg-detail{font-size:13px;line-height:1.8;border:1px solid #e2e8e2;border-radius:11px;padding:12px;margin-top:12px;white-space:pre-wrap;overflow-wrap:anywhere}.reg-caution{background:#fff2dd;color:#784c14;padding:11px;border:1px solid #ead4a5;border-radius:10px;margin-top:10px;font-size:13px}.reg-photo{margin-top:12px}@media(max-width:620px){.reg-fields{grid-template-columns:1fr}.reg-span{grid-column:1}.reg-actions>*{flex:1}.reg-item .btn{flex:none}}
 </style>
 <style>#formGrid [hidden], .reg-fields [hidden] {display:none!important}</style>
+
+<style id="mal-notice-links-css">.ntc .mal-notice-link,.noticeboard .mal-notice-link{color:#075f70;text-decoration:underline;text-underline-offset:3px;font-weight:700;overflow-wrap:anywhere}.ntc .mal-notice-link:hover,.noticeboard .mal-notice-link:hover{color:#ad441f}</style>
 </head>
 <body>
 
@@ -1926,8 +1928,8 @@ body.modalOpen #stickyLayer{opacity:.12;pointer-events:none;filter:saturate(.4)}
    ========================================================================= */
 const CONFIG = {
   API_URL: 'https://script.google.com/macros/s/AKfycbyfxff3MVt3Kw_CA_0aYD477nrAcWXshb9hex1LM_hl62tlrNiX5bGWgsf0Vw73sr-gbg/exec',
-  VERSION: 'FE V3.5.28',
-  EXPECTED_BACKEND: 'BE V1.8.21',
+  VERSION: 'FE V3.5.30',
+  EXPECTED_BACKEND: 'BE V1.8.23',
   IDLE_MINUTES: 30,
   /* Photo shown when no photo has been set in Settings.
      village.jpg sits in the same folder as this file on GitHub. */
@@ -2305,7 +2307,7 @@ function paintSticky(){
       </div>
       <div class="sticky-body">
         <b>${esc(n.title || 'Note')}</b>
-        ${n.text ? `<p>${esc(n.text)}</p>` : ''}
+        ${n.text ? `<p>${malNoticeLinkify_(n.text)}</p>` : ''}
       </div>
       <span class="sticky-grip" title="Drag to resize · double-click to reset"></span>
       ${isAdmin() ? `<div class="sticky-acts">
@@ -2676,7 +2678,7 @@ function stickyDrawer(){
         ${n.pub ? '<span class="lockpin">🌐 PUBLIC</span>' : ''}
       </div>
       <b>${esc(n.title || 'Note')}</b>
-      ${n.text ? `<p>${esc(n.text)}</p>` : ''}
+      ${n.text ? `<p>${malNoticeLinkify_(n.text)}</p>` : ''}
       <div class="skcard-acts">
         ${isAdmin() ? `<button class="btn btn-sm ${n.pin ? 'btn-primary' : ''}" data-dpin="${esc(n.id)}">${n.pin ? '📍 Pinned' : '📍 Pin'}</button>
         <button class="btn btn-sm" data-ddone="${esc(n.id)}">✓ Completed</button>
@@ -3726,7 +3728,7 @@ const MODULES = {
     fields: [
       { n:'Notice ID', t:'text', auto:true },
       { n:'Title', t:'text', req:true, hint:'A short heading — Raja Parba 2026, New tube well…' },
-      { n:'Text', t:'textarea', hint:'The writing villagers should read. A few lines is plenty.' },
+      { n:'Text', t:'textarea', hint:'Paste full https:// or www. links; they become clickable on the Notice Board and public page.' },
       { n:'Photo', t:'photo', hint:'Original saved privately (up to 20 MB) in Drive; dashboard uses a small thumbnail' },
       { n:'Credit', t:'text', hint:'Whose photo or writing this is, if it should be named' },
       { n:'Date', t:'date', def:'today' },
@@ -4061,6 +4063,50 @@ function setting(name, fallback){
   const v = DB && DB.settings ? DB.settings[name] : undefined;
   return (v === undefined || v === '') ? fallback : v;
 }
+
+/* ADMIN · Manage village localities (Sahis) centrally from the existing Settings row. */
+function malConfiguredSahis_(){
+  return [...new Set(String(setting('Village Localities','')).split(/[,;|\n\r]+/)
+    .map(x=>x.trim().replace(/\s+/g,' ')).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+}
+function malSahiChoices_(chosen){
+  const v=String(chosen||'').trim();
+  const names=malConfiguredSahis_();
+  if(v && !names.some(n=>n.toLocaleLowerCase('en-IN')===v.toLocaleLowerCase('en-IN'))) names.push(v);
+  return names.sort((a,b)=>a.localeCompare(b)).map(n=>`<option value="${esc(n)}" ${n===v?'selected':''}>${esc(n)}</option>`).join('');
+}
+function malManageSahis_(){
+  if(!isAdmin())return toast('Admin only.','bad');
+  const previous=malConfiguredSahis_().join('\n');
+  openModal(`<header><h3>📍 Village Localities (Sahi)</h3><div class="sp"></div><button class="btn btn-sm" id="malSahiClose">Close</button></header>
+    <div class="body"><p class="fieldnote">Enter one Sahi per line. Add, rename or remove names here. Only the list changes; previously saved Family and Member records are never deleted or renamed automatically.</p>
+    <label class="lbl" for="malSahiNew">Add locality</label><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><input class="input" id="malSahiNew" maxlength="100" placeholder="e.g. Uttar Sahi" style="flex:1;min-width:170px"><button class="btn" id="malSahiAdd">+ Add</button></div>
+    <label class="lbl" for="malSahiNames" style="margin-top:16px;display:block">Approved Sahis (one per line)</label><textarea class="input" id="malSahiNames" rows="10" style="min-height:185px" placeholder="Enter the approved Sahi names, one per line">${esc(previous)}</textarea>
+    <div class="fieldnote">Dropdowns appear on public registration and trusted shared-entry pages after saving and redeploying the matching backend. Historical Sahi values remain as they are.</div>
+    <div class="errline hide" id="malSahiError" role="alert"></div></div>
+    <footer><button class="btn" id="malSahiCancel">Cancel</button><button class="btn btn-primary" id="malSahiSave">Save Sahi List</button></footer>`);
+  document.getElementById('malSahiClose').onclick=closeModal;
+  document.getElementById('malSahiCancel').onclick=closeModal;
+  document.getElementById('malSahiAdd').onclick=()=>{
+    const input=document.getElementById('malSahiNew'),field=document.getElementById('malSahiNames');
+    const name=input.value.trim().replace(/\s+/g,' ');
+    if(!name)return input.focus();
+    const parts=field.value.split(/[\n\r;,|]+/).map(v=>v.trim()).filter(Boolean);
+    if(!parts.some(x=>x.toLocaleLowerCase('en-IN')===name.toLocaleLowerCase('en-IN'))) parts.push(name);
+    field.value=parts.join('\n');input.value='';input.focus();
+  };
+  document.getElementById('malSahiSave').onclick=async()=>{
+    const btn=document.getElementById('malSahiSave'),error=document.getElementById('malSahiError'),names=document.getElementById('malSahiNames').value;
+    error.classList.add('hide');btn.disabled=true;btn.textContent='Saving…';
+    try{
+      const r=await api('saveVillageLocalities',{names});
+      if(!r || !r.ok)throw new Error(r&&r.error||'Could not save Sahi list');
+      DB.settings=DB.settings||{}; DB.settings['Village Localities']=(r.localities||[]).join('\n');
+      toast((r.count||0)+' approved Sahis saved','good');closeModal();renderModule(PAGE);
+    }catch(e){error.textContent=String(e.message||e);error.classList.remove('hide');}
+    finally{if(btn&&document.getElementById('malSahiSave')){btn.disabled=false;btn.textContent='Save Sahi List';}}
+  };
+}
 function familyName(id){
   if(!id) return '';
   const f = (DB.families || []).find(x => String(x['Family ID']).trim() === String(id).trim());
@@ -4304,6 +4350,30 @@ function malToggleTicker(btn){
   btn.setAttribute('aria-pressed', String(paused));
 }
 
+
+/* Notice text remains plain text in Sheets. Only safe web addresses render as links. */
+function malNoticeLinkify_(input){
+  const raw=String(input==null?'':input);
+  const pattern=/(?:https?:\/\/|www\.)[^\s<>'"`]+/gi;
+  let rendered='',start=0,match;
+  while((match=pattern.exec(raw))!==null){
+    rendered+=esc(raw.slice(start,match.index));
+    let urlText=match[0];
+    const punctuation=(urlText.match(/[.,;!?)\]}]+$/)||[''])[0];
+    urlText=urlText.slice(0,urlText.length-punctuation.length);
+    let target=urlText;
+    if(/^www\./i.test(target))target='https://'+target;
+    try{
+      const url=new URL(target);
+      if(!['https:','http:'].includes(url.protocol)||!url.hostname)throw Error('Invalid URL');
+      rendered+='<a class="mal-notice-link" href="'+esc(url.href)+'" target="_blank" rel="noopener noreferrer nofollow">'+esc(urlText)+'</a>';
+    }catch(e){rendered+=esc(urlText);}
+    rendered+=esc(punctuation);
+    start=match.index+match[0].length;
+  }
+  return rendered+esc(raw.slice(start)).replace(/\r?\n/g,'<br>');
+}
+
 function noticesHtml(list){
   if(!list || !list.length) return '';
   /* Order remains controlled by the existing Notice Board 'Order' field.
@@ -4312,14 +4382,14 @@ function noticesHtml(list){
     const heading=String(n.title||'Village notice').trim();
     const text=String(n.text||'').trim();
     const short=text.length>100?text.slice(0,100).trim()+'…':text;
-    return `<span class="mal-notice-item"><span class="mal-notice-sep" aria-hidden="true">✦</span>${esc(heading)}${short?' — '+esc(short):''}</span>`;
+    return `<span class="mal-notice-item"><span class="mal-notice-sep" aria-hidden="true">✦</span>${esc(heading)}${short?' — '+malNoticeLinkify_(short):''}</span>`;
   });
   const announce=list.slice(0,5).map(n=>[n.title,n.text].filter(Boolean).join(' — ')).join(' • ');
   const duration=Math.min(85,Math.max(25,Math.round(announce.length/8)));
   const card=n => `<article class="ntc">
     ${n.photo ? `<img class="nimg" src="${esc(thumbUrl(n.photo, 640))}" alt="${esc(n.title)}" loading="lazy">` : ''}
     <div class="nbody"><h4>${esc(n.title)}</h4>
-      ${n.text ? `<p>${esc(n.text)}</p>` : ''}
+      ${n.text ? `<p>${malNoticeLinkify_(n.text)}</p>` : ''}
       ${n.by || n.date ? `<div class="nmeta">${esc(n.by)}${n.by && n.date?' · ':''}${n.date?esc(fmtDate(n.date)):''}</div>` : ''}
     </div>
   </article>`;
@@ -4890,6 +4960,7 @@ function cellHtml(key, row, col){
       ? '<span class="mal-surname-suggested" title="Suggested from the full name; not yet saved">'+esc(suggestion.surname)+'</span> <span class="mal-surname-tag">Not yet saved</span>'
       : '<span class="muted small">Not recorded</span>'};
   }
+  if(key==='notices' && col==='Text')return {cls:'',html:malNoticeLinkify_(row.Text||'')};
   if(key==='members' && col==='Age'){
     const rawAge=row.Age;
     if(rawAge===''||rawAge===undefined||rawAge===null)return {cls:'num',html:'<span class="muted small">—</span>'};
@@ -5144,8 +5215,9 @@ function renderModule(key){
       <option value="">All families</option>
       ${(DB.families || []).map(f => `<option value="${esc(f['Family ID'])}" ${v.fam === String(f['Family ID']) ? 'selected' : ''}>${esc(f['Family ID'])} · ${esc(f['Family Head'])}</option>`).join('')}
     </select>` : ''}
-    ${['families','members'].includes(key)?`<select class="input" id="surnameFilter" aria-label="Filter by surname"><option value="">All surnames</option>${[...new Set(rowsOf(key).map(r=>String(r.Surname||'').trim()).filter(Boolean))].sort().map(n=>`<option value="${esc(n)}" ${v.surname===n?'selected':''}>${esc(n)}</option>`).join('')}</select><select class="input" id="sahiFilter" aria-label="Filter by village locality"><option value="">All village localities</option>${[...new Set((DB.families||[]).map(r=>String(r['Village Locality']||'').trim()).filter(Boolean))].sort().map(n=>`<option value="${esc(n)}" ${v.locality===n?'selected':''}>${esc(n)}</option>`).join('')}</select>${key==='members'?`<select class="input" id="residenceFilter" aria-label="Filter by residence"><option value="">All residences</option>${['Living in Malipatana','Outside temporarily','Shifted permanently','Not verified'].map(n=>`<option ${v.residence===n?'selected':''}>${esc(n)}</option>`).join('')}</select><select class="input" id="maritalFilter" aria-label="Filter by marital status"><option value="">All marital statuses</option>${['Unknown','Unmarried','Married','Widowed','Divorced','Separated'].map(n=>`<option ${v.marital===n?'selected':''}>${esc(n)}</option>`).join('')}</select><select class="input" id="lifeFilter" aria-label="Filter by life status"><option value="">All life statuses</option><option value="Alive" ${v.life==='Alive'?'selected':''}>Living only</option><option value="Deceased" ${v.life==='Deceased'?'selected':''}>In memory</option></select>`:''}`:''}
+    ${['families','members'].includes(key)?`<select class="input" id="surnameFilter" aria-label="Filter by surname"><option value="">All surnames</option>${[...new Set(rowsOf(key).map(r=>String(r.Surname||'').trim()).filter(Boolean))].sort().map(n=>`<option value="${esc(n)}" ${v.surname===n?'selected':''}>${esc(n)}</option>`).join('')}</select><select class="input" id="sahiFilter" aria-label="Filter by village locality"><option value="">All village localities</option>${[...new Set([...malConfiguredSahis_(),...(DB.families||[]).map(r=>String(r['Village Locality']||'').trim()).filter(Boolean)])].sort().map(n=>`<option value="${esc(n)}" ${v.locality===n?'selected':''}>${esc(n)}</option>`).join('')}</select>${key==='members'?`<select class="input" id="residenceFilter" aria-label="Filter by residence"><option value="">All residences</option>${['Living in Malipatana','Outside temporarily','Shifted permanently','Not verified'].map(n=>`<option ${v.residence===n?'selected':''}>${esc(n)}</option>`).join('')}</select><select class="input" id="maritalFilter" aria-label="Filter by marital status"><option value="">All marital statuses</option>${['Unknown','Unmarried','Married','Widowed','Divorced','Separated'].map(n=>`<option ${v.marital===n?'selected':''}>${esc(n)}</option>`).join('')}</select><select class="input" id="lifeFilter" aria-label="Filter by life status"><option value="">All life statuses</option><option value="Alive" ${v.life==='Alive'?'selected':''}>Living only</option><option value="Deceased" ${v.life==='Deceased'?'selected':''}>In memory</option></select>`:''}`:''}
     ${key === 'members' && canEdit() ? '<button class="btn btn-sm" data-act="heads">Add missing family heads</button>' : ''}    ${isAdmin() ? `<button class="btn btn-sm" data-act="cols">Columns</button>` : ''}
+    ${isAdmin() && ['families','members','settingsList'].includes(key) ? '<button class="btn btn-sm btn-primary" data-act="localities">📍 Manage Sahis</button>' : ''}
     ${key==='users' && isAdmin() ? '<button class="btn btn-sm btn-primary" data-act="loginopts">Login / OTP options</button>' : ''}
     ${isAdmin() && ['families','members'].includes(key) && all.some(r=>!malNameTidy_(r.Surname)) ? '<button class="btn btn-sm btn-primary" data-act="surnameReview">Review '+all.filter(r=>!malNameTidy_(r.Surname)).length+' missing surnames</button>' : ''}
     ${isAdmin() && ['families','members'].includes(key) ? `<button class="btn btn-sm ${VIEW[key] && VIEW[key].quick ? 'btn-primary' : ''}" data-act="quick">${VIEW[key] && VIEW[key].quick ? 'Done editing' : 'Quick edit'}</button>` : ''}
@@ -5311,6 +5383,7 @@ function wireActions(root){
         case 'surnameReview': return malReviewSurnames_(k);
         case 'heads': return addMissingHeads();
         case 'cols': return openColumns(k);
+        case 'localities': return malManageSahis_();
         case 'access': return openAccess(id);
         case 'loginopts': return openLoginOptions();
         case 'death': return markDeceased(id);
@@ -5716,7 +5789,65 @@ function malWireFullNamePreview_(key, rec){
   update();
 }
 
+
+function malParentOptionsHtml_(role,editing,rec){
+  const id='f_'+role+'_Name', linked=String(rec[role+' ID']||'').trim();
+  const own=String(rec['Member ID']||'').trim();
+  const options=(DB.members||[]).filter(m=>String(m['Member ID']||'').trim()!==own)
+    .slice().sort((a,b)=>String(a.Name||'').localeCompare(String(b.Name||'')))
+    .map(m=>'<option value="'+esc(m['Member ID'])+'"'+(linked===String(m['Member ID'])?' selected':'')+'>'+esc(m.Name||'Unnamed')+' · '+esc(m['Member ID'])+'</option>').join('');
+  return '<div class="mal-parent-choice"><label class="lbl" for="'+id+'">'+role+' Name</label>'+
+    '<select class="input" id="malParentSelect'+role+'" aria-label="Choose existing '+role.toLowerCase()+'">'+
+    '<option value="">Type name manually / not in register</option>'+options+'</select>'+
+    '<input class="input" style="margin-top:7px" id="'+id+'" maxlength="140" value="'+esc(rec[role+' Name']||'')+'" placeholder="Type '+role.toLowerCase()+' full name, if not linked">'+
+    '<div class="fieldnote" id="malParentHelp'+role+'">'+(linked?'Linked to an existing Member ID.':'Choosing an existing member uses that record, not a second entry.')+'</div></div>';
+}
+function malWireParentChoices_(rec){
+  ['Father','Mother'].forEach(role=>{
+    const pick=document.getElementById('malParentSelect'+role);
+    const input=document.getElementById('f_'+role+'_Name');
+    const note=document.getElementById('malParentHelp'+role);
+    if(!pick||!input)return;
+    const id=String(rec[role+' ID']||'').trim();
+    const original=(DB.members||[]).find(x=>String(x['Member ID'])===id);
+    if(id&&!original){pick.value='';if(note)note.textContent='Previously linked ID is not in the current member list. Text remains unchanged.';}
+    if(original)input.value=String(original.Name||'');
+    if(!id&&input.value.trim()){
+      const matches=(DB.members||[]).filter(x=>String(x.Name||'').trim().toLocaleLowerCase('en-IN')===input.value.trim().toLocaleLowerCase('en-IN'));
+      if(matches.length===1&&note)note.textContent='This name matches a registered member. Choose '+matches[0]['Member ID']+' above to link it.';
+      if(matches.length>1&&note)note.textContent='Several registered members have this name. Choose the correct Member ID above.';
+    }
+    const sync=()=>{
+      const m=(DB.members||[]).find(x=>String(x['Member ID'])===pick.value);
+      if(m){input.value=String(m.Name||''); if(note)note.textContent='✓ Existing member linked ('+m['Member ID']+'). No duplicate member will be created.';}
+      else if(note)note.textContent='Name entered manually; no new parent record will be created.';
+    };
+    pick.addEventListener('change',sync);
+    input.addEventListener('input',()=>{
+      const m=(DB.members||[]).find(x=>String(x['Member ID'])===pick.value);
+      if(m&&input.value.trim()!==String(m.Name||'').trim())pick.value='';
+      if(note)note.textContent=pick.value?'Existing member linked.':'Free-text name (not linked to another record).';
+    });
+  });
+}
+function malApplyParentLinks_(out,problems){
+  const self=String(out['Member ID']||'');
+  ['Father','Mother'].forEach(role=>{
+    const pick=document.getElementById('malParentSelect'+role);
+    const field=document.getElementById('f_'+role+'_Name');
+    if(!pick||!field)return;
+    const chosen=String(pick.value||'');
+    const linked=(DB.members||[]).find(m=>String(m['Member ID'])===chosen);
+    if(chosen&&!linked){problems.push(role+' member not found; reselect.');return;}
+    if(chosen===self&&chosen)problems.push('A member cannot be their own '+role.toLowerCase()+'.');
+    if(linked){out[role+' ID']=chosen;out[role+' Name']=String(linked.Name||'');}
+    else {out[role+' ID']='';out[role+' Name']=String(field.value||'').trim();}
+  });
+  if(out['Father ID']&&out['Father ID']===out['Mother ID'])problems.push('Father and Mother cannot be the same Member ID.');
+}
+
 function fieldHtml(key, f, value, editing, rec){
+  if(key==='members'&&(f.n==='Father Name'||f.n==='Mother Name'))return malParentOptionsHtml_(f.n.split(' ')[0],editing,rec);
   const id = 'f_' + f.n.replace(/[^a-z0-9]/gi, '_');
   if(editing && f.n === MODULES[key].idField && !f.auto){
     const ro = isAdmin() ? '' : 'readonly';
@@ -5774,10 +5905,12 @@ function fieldHtml(key, f, value, editing, rec){
         (f.opts || []).map(o => `<option ${String(val) === o ? 'selected' : ''}>${esc(o)}</option>`).join('') +
         (val && !(f.opts || []).includes(val) ? `<option selected>${esc(val)}</option>` : '') + `</select>`; break;
     case 'datalist': {
-      const adminLocalities=f.n==='Village Locality'?String(setting('Village Localities','')).split(/[,;|\n]/).map(x=>x.trim()).filter(Boolean):[];
-      const opts = [...new Set([...(f.opts || []), ...adminLocalities, ...distinct(key, f.n)])];
-      input = `<input class="input" id="${id}" list="${id}_dl" value="${esc(val)}" autocomplete="off">
-               <datalist id="${id}_dl">${opts.map(o => `<option value="${esc(o)}"></option>`).join('')}</datalist>`; break;
+      if(f.n==='Village Locality' && malConfiguredSahis_().length){
+        input=`<select class="input" id="${id}"><option value="">— Choose village locality (Sahi) —</option>${malSahiChoices_(val)}</select>`;
+        return `<div class="${wide}"><label class="lbl" for="${id}">${esc(f.n)}</label>${input}<div class="fieldnote">Admin manages this dropdown under Settings → Manage Sahis.</div></div>`;
+      }
+      const opts=[...new Set([...(f.opts||[]),...distinct(key,f.n)])];
+      input = `<input class="input" id="${id}" list="${id}_dl" value="${esc(val)}" autocomplete="off"><datalist id="${id}_dl">${opts.map(o=>`<option value="${esc(o)}"></option>`).join('')}</datalist>`;break;
     }
     case 'family':
       input = `<select class="input" id="${id}" data-role="family"><option value=""></option>` +
@@ -5844,6 +5977,7 @@ function wireForm(key, rec, editing){
   });
 
   if(key==='members'){
+    malWireParentChoices_(rec);
     const status=document.getElementById('f_Residence_Status');
     const outside=['Current City','Current District','Current State','Current Country','Outside Address'];
     function toggle(){const isOutside=status && status.value && status.value!=='Living in Malipatana';
@@ -6320,6 +6454,7 @@ async function saveRecord(key, rec, editing, opts){
     if(f.req && !String(v).trim() && !(editing && (key==='families'||key==='members') && ['Given Name','Surname'].includes(f.n) && !String(rec['Given Name']||rec.Surname||'').trim())) problems.push(f.n + ' is required');
     out[f.n] = v;
   });
+  if(key==='members')malApplyParentLinks_(out,problems);
   if(key==='families'||key==='members'){
     let given=String(out['Given Name']||'').trim(),surname=String(out.Surname||'').trim();
     if(malNameHasRepeatedSurname_(given,surname)){
@@ -6598,7 +6733,7 @@ function openSubfamilyQuickEdit(id, parentMode){
      <label>Given Name(s)<input class="input" id="malSubGiven" value="${esc(rec['Given Name']||'')}"></label>
      <label>Surname<input class="input" id="malSubSurname" value="${esc(rec.Surname||'')}"></label>
      <div class="span-all fieldnote" id="malSubFull">Full name: ${esc(original)}</div>
-     <label>Village Locality (Sahi)<input class="input" list="malSubLocalityOpts" id="malSubSahi" value="${esc(rec['Village Locality']||'')}"><datalist id="malSubLocalityOpts">${localities.map(x=>`<option value="${esc(x)}"></option>`).join('')}</datalist></label>
+     <label>Village Locality (Sahi)<select class="input" id="malSubSahi"><option value="">— Select Sahi —</option>${malSahiChoices_(rec['Village Locality'])}</select></label>
      <label>Family status<select class="input" id="malSubStatus">${['Active','Inactive','Shifted'].map(x=>`<option ${String(rec['Family Status']||'Active')===x?'selected':''}>${x}</option>`).join('')}</select></label>
      <label class="span-all">Parent family<select class="input" id="malSubParent"><option value="">No parent — main family</option>${familyOptions.map(idOption).join('')}</select></label>
      ${prefill&&prefill.level==='suggested'?'<label class="span-all" style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="malSubVerified" style="width:auto">I checked the given name and surname against the original full name.</label>':''}
@@ -10518,6 +10653,9 @@ function reviewRequest(id){
  const famList=(DB&&DB.families||[]).slice().sort((a,b)=>String(a['Family Head']||'').localeCompare(String(b['Family Head']||'')));
  const options='<option value="">Select existing family…</option>'+famList.map(f=>`<option value="${safe(f['Family ID'])}">${safe(f['Family Head'])} · ${safe(f['Family ID'])}${f['Village Locality']?' · '+safe(f['Village Locality']):''}</option>`).join('');
  const duplicates=(DB&&DB.members||[]).filter(m=>String(m.Name||'').trim().toLowerCase()===regFullName(r).toLowerCase());
+ const parentChoices=(DB&&DB.members||[]).slice().sort((a,b)=>String(a.Name||'').localeCompare(String(b.Name||'')));
+ const relationOptions='<option value="">Keep submitted name (not linked)</option>'+parentChoices.map(m=>
+   '<option value="'+safe(m['Member ID'])+'">'+safe(m.Name||'')+' · '+safe(m['Member ID'])+'</option>').join('');
  const parent=String(r['Household Contact']||'');
  const familyGuess=famList.find(f=>String(f['Family Head']||'').toLowerCase()===parent.toLowerCase());
  const existing=r.Status!=='Pending';
@@ -10538,10 +10676,12 @@ function reviewRequest(id){
  <div class="reg-fields"><label>Given Name(s) — verify<input id="regGiven" class="input" value="${safe(part.given)}" ${existing?'disabled':''}></label>
  <label>Approximate age (when DOB not known)<input id="regApproxAge" class="input" type="number" min="0" max="120" step="1" value="${safe(r['Approximate Age']??'')}" ${existing?'disabled':''} ${r['Date of Birth']?'disabled':''}></label>
  <label>Surname — verify<input id="regSurname" class="input" value="${safe(part.surname)}" ${existing?'disabled':''}></label>
+ <label class="reg-span">Father: select registered member (optional)<select id="regFatherLink" class="input" ${existing?'disabled':''}>${relationOptions}</select><small>Otherwise retain the submitted name. No second member is created.</small></label>
+ <label class="reg-span">Mother: select registered member (optional)<select id="regMotherLink" class="input" ${existing?'disabled':''}>${relationOptions}</select><small>Choose only after verifying the correct person.</small></label>
  <label>Marital status<select id="regMarital" class="input" ${existing?'disabled':''}>${['','Unknown','Unmarried','Married','Widowed','Divorced','Separated'].map(n=>`<option value="${safe(n)}" ${n===String(r['Marital Status']||'')?'selected':''}>${safe(n||'Not reported')}</option>`).join('')}</select></label>
  <label id="regSpouseRow">Spouse name (if applicable)<input id="regSpouse" class="input" value="${safe(r['Spouse Name']||'')}" ${existing?'disabled':''}></label>
  <label>Residence — verified by Admin<select id="regResidence" class="input" ${existing?'disabled':''}>${['','Living in Malipatana','Outside temporarily','Shifted permanently'].map(n=>`<option value="${safe(n)}" ${n===String(r['Residence Status']||'')?'selected':''}>${safe(n||'Choose residence')}</option>`).join('')}</select></label>
- <label>Village Locality / Sahi<input id="regLocality class="input" value="${safe(r['Village Locality']||'')}" ${existing?'disabled':''}></label>
+ <label>Village Locality / Sahi<select id="regLocality" class="input" ${existing?'disabled':''}><option value="">— Select Sahi —</option>${malSahiChoices_(r['Village Locality'])}</select></label>
  <label>How to register this person<select id="regKind" class="input" ${existing?'disabled':''}>
  <option value="member">Member of an existing family</option><option value="family">Head of a new main family</option><option value="subfamily">Head of a new subfamily</option></select></label>
  <label class="reg-span" id="regFamilyRow">Existing family (or parent family)<select id="regFamily" class="input" ${existing?'disabled':''}>${options}</select></label>
@@ -10579,7 +10719,8 @@ function reviewRequest(id){
   const buttons=Array.from(document.querySelectorAll('#modal footer button'));buttons.forEach(x=>x.disabled=true);
   const err=document.getElementById('regDecisionError');if(err){err.style.display='block';err.textContent='Checking and saving…';}
   try{
-   const result=await api('registrationDecide',{id,kind,given,surname,familyId,locality,relation,note,maritalStatus,spouseName,residenceStatus,approxAge});
+   const fatherId=document.getElementById('regFatherLink').value,motherId=document.getElementById('regMotherLink').value;
+   const result=await api('registrationDecide',{id,kind,given,surname,familyId,locality,relation,note,maritalStatus,spouseName,residenceStatus,approxAge,fatherId,motherId});
    if(!result||!result.ok)throw Error(result&&result.error||'Review action failed');
    closeModal();toast(result.message||'Registration reviewed','good');
    // This refreshes the official registers from Google Sheets, not a local copy.
