@@ -1437,6 +1437,11 @@ body.modalOpen #stickyLayer{opacity:.12;pointer-events:none;filter:saturate(.4)}
 .mal-review-warning{color:#a83225;font-weight:650}
 .mal-review-status{font-size:12px;margin-top:4px}
 @media(max-width:560px){.mal-review-fields{grid-template-columns:1fr}.modal footer:has(#malReviewSave){flex-wrap:wrap}}
+/* Compact, keyboard-accessible member-name suggestions. */
+.mal-rel-matches{margin-top:4px;border:1px solid var(--line);border-radius:9px;max-height:200px;overflow:auto;background:var(--surface);box-shadow:0 8px 20px #0001}
+.mal-rel-matches[hidden]{display:none!important}
+.mal-rel-option{display:block;width:100%;border:0;border-bottom:1px solid var(--line-soft);background:transparent;padding:10px;text-align:left;cursor:pointer;font:inherit;color:var(--ink)}
+.mal-rel-option:hover,.mal-rel-option:focus-visible{background:var(--indigo-soft)}
 </style>
 <style id="v4addon">
 /* ---------- family tree (FE V2.9) ---------- */
@@ -1928,8 +1933,8 @@ body.modalOpen #stickyLayer{opacity:.12;pointer-events:none;filter:saturate(.4)}
    ========================================================================= */
 const CONFIG = {
   API_URL: 'https://script.google.com/macros/s/AKfycbyfxff3MVt3Kw_CA_0aYD477nrAcWXshb9hex1LM_hl62tlrNiX5bGWgsf0Vw73sr-gbg/exec',
-  VERSION: 'FE V3.5.31',
-  EXPECTED_BACKEND: 'BE V1.8.23',
+  VERSION: 'FE V3.5.33',
+  EXPECTED_BACKEND: 'BE V1.8.25',
   IDLE_MINUTES: 30,
   /* Photo shown when no photo has been set in Settings.
      village.jpg sits in the same folder as this file on GitHub. */
@@ -5790,64 +5795,76 @@ function malWireFullNamePreview_(key, rec){
 }
 
 
-function malParentOptionsHtml_(role,editing,rec){
-  const id='f_'+role+'_Name', linked=String(rec[role+' ID']||'').trim();
-  const own=String(rec['Member ID']||'').trim();
-  const options=(DB.members||[]).filter(m=>String(m['Member ID']||'').trim()!==own)
-    .slice().sort((a,b)=>String(a.Name||'').localeCompare(String(b.Name||'')))
-    .map(m=>'<option value="'+esc(m['Member ID'])+'"'+(linked===String(m['Member ID'])?' selected':'')+'>'+esc(m.Name||'Unnamed')+' · '+esc(m['Member ID'])+'</option>').join('');
-  return '<div class="mal-parent-choice"><label class="lbl" for="'+id+'">'+role+' Name</label>'+
-    '<select class="input" id="malParentSelect'+role+'" aria-label="Choose existing '+role.toLowerCase()+'">'+
-    '<option value="">Type name manually / not in register</option>'+options+'</select>'+
-    '<input class="input" style="margin-top:7px" id="'+id+'" maxlength="140" value="'+esc(rec[role+' Name']||'')+'" placeholder="Type '+role.toLowerCase()+' full name, if not linked">'+
-    '<div class="fieldnote" id="malParentHelp'+role+'">'+(linked?'Linked to an existing Member ID.':'Choosing an existing member uses that record, not a second entry.')+'</div></div>';
+/* Shared, safe autocomplete for registered relatives. It NEVER creates a person record.
+   The saved link is an existing Member ID only when the operator explicitly selects a suggestion. */
+function malRelationshipOptionsHtml_(role,rec){
+  const id='f_'+role+'_Name';
+  return '<div class="mal-parent-choice"'+(role==='Spouse'?' data-marital-spouse-field="yes"':'')+'>'+ 
+    '<label class="lbl" for="'+id+'">'+role+' Name</label>'+ 
+    '<input class="input" autocomplete="off" id="'+id+'" maxlength="140" value="'+esc(rec[role+' Name']||'')+'" placeholder="Type at least 2 letters to find registered '+role.toLowerCase()+'">'+
+    '<div id="malRelMatches'+role+'" class="mal-rel-matches" role="listbox" hidden></div>'+
+    '<div class="fieldnote" id="malRelHelp'+role+'">Select a matching member to link. Otherwise, type the name and save it as text.</div></div>';
 }
-function malWireParentChoices_(rec){
-  ['Father','Mother'].forEach(role=>{
-    const pick=document.getElementById('malParentSelect'+role);
-    const input=document.getElementById('f_'+role+'_Name');
-    const note=document.getElementById('malParentHelp'+role);
-    if(!pick||!input)return;
-    const id=String(rec[role+' ID']||'').trim();
-    const original=(DB.members||[]).find(x=>String(x['Member ID'])===id);
-    if(id&&!original){pick.value='';if(note)note.textContent='Previously linked ID is not in the current member list. Text remains unchanged.';}
-    if(original)input.value=String(original.Name||'');
-    if(!id&&input.value.trim()){
-      const matches=(DB.members||[]).filter(x=>String(x.Name||'').trim().toLocaleLowerCase('en-IN')===input.value.trim().toLocaleLowerCase('en-IN'));
-      if(matches.length===1&&note)note.textContent='This name matches a registered member. Choose '+matches[0]['Member ID']+' above to link it.';
-      if(matches.length>1&&note)note.textContent='Several registered members have this name. Choose the correct Member ID above.';
-    }
-    const sync=()=>{
-      const m=(DB.members||[]).find(x=>String(x['Member ID'])===pick.value);
-      if(m){input.value=String(m.Name||''); if(note)note.textContent='✓ Existing member linked ('+m['Member ID']+'). No duplicate member will be created.';}
-      else if(note)note.textContent='Name entered manually; no new parent record will be created.';
+function malWireRelationshipChoices_(rec){
+ const currentId=String(rec['Member ID']||'').trim();
+ const normalized=s=>String(s||'').trim().replace(/\s+/g,' ').toLocaleLowerCase('en-IN');
+ const registered=(DB.members||[]).filter(x=>String(x['Member ID']||'').trim()!==currentId);
+ for(const role of ['Father','Mother','Spouse']){
+  const input=document.getElementById('f_'+role+'_Name');
+  const panel=document.getElementById('malRelMatches'+role);
+  const help=document.getElementById('malRelHelp'+role);
+  if(!input||!panel)continue;
+  let linkedId=String(rec[role+' ID']||'').trim();
+  let existing=registered.find(m=>String(m['Member ID'])===linkedId);
+  if(existing){input.value=String(existing.Name||'');help.textContent='✓ Linked to existing member '+linkedId+' (not duplicated).';}
+  else if(linkedId){linkedId='';help.textContent='Previous linked ID is unavailable. Name text is preserved.';}
+  input.dataset.memberId=linkedId;
+  const close=()=>{panel.replaceChildren();panel.hidden=true;};
+  const show=()=>{
+   const q=normalized(input.value);close();
+   if(input.dataset.memberId)return;
+   if(q.length<2){help.textContent='Type 2 or more letters; select a suggestion, or keep a new name as text.';return;}
+   const matches=registered.filter(m=>normalized(m.Name).includes(q)).slice(0,8);
+   if(!matches.length){help.textContent='Not listed — this name will be saved as text. No new member will be created.';return;}
+   for(const m of matches){
+    const item=document.createElement('button');item.type='button';item.className='mal-rel-option';item.setAttribute('role','option');
+    item.textContent=String(m.Name||'')+' · '+String(m['Member ID']||'')+(m['Family ID']?' · '+m['Family ID']:'');
+    item.onclick=()=>{
+     input.value=String(m.Name||'');input.dataset.memberId=String(m['Member ID']||'');
+     help.textContent='✓ Existing member linked ('+input.dataset.memberId+'). No duplicate will be created.';close();
+     input.dispatchEvent(new Event('change',{bubbles:true}));
     };
-    pick.addEventListener('change',sync);
-    input.addEventListener('input',()=>{
-      const m=(DB.members||[]).find(x=>String(x['Member ID'])===pick.value);
-      if(m&&input.value.trim()!==String(m.Name||'').trim())pick.value='';
-      if(note)note.textContent=pick.value?'Existing member linked.':'Free-text name (not linked to another record).';
-    });
-  });
+    panel.append(item);
+   }
+   panel.hidden=false;help.textContent='Select the correct person (check Member ID). Two people may have the same name.';
+  };
+  input.addEventListener('input',()=>{input.dataset.memberId='';show();});
+  input.addEventListener('focus',show);
+  input.addEventListener('keydown',e=>{if(e.key==='Escape')close();});
+  input.addEventListener('blur',()=>{setTimeout(close,160);});
+ }
 }
-function malApplyParentLinks_(out,problems){
-  const self=String(out['Member ID']||'');
-  ['Father','Mother'].forEach(role=>{
-    const pick=document.getElementById('malParentSelect'+role);
-    const field=document.getElementById('f_'+role+'_Name');
-    if(!pick||!field)return;
-    const chosen=String(pick.value||'');
-    const linked=(DB.members||[]).find(m=>String(m['Member ID'])===chosen);
-    if(chosen&&!linked){problems.push(role+' member not found; reselect.');return;}
-    if(chosen===self&&chosen)problems.push('A member cannot be their own '+role.toLowerCase()+'.');
-    if(linked){out[role+' ID']=chosen;out[role+' Name']=String(linked.Name||'');}
-    else {out[role+' ID']='';out[role+' Name']=String(field.value||'').trim();}
-  });
-  if(out['Father ID']&&out['Father ID']===out['Mother ID'])problems.push('Father and Mother cannot be the same Member ID.');
+function malApplyRelationshipLinks_(out,problems){
+ const self=String(out['Member ID']||'').trim();
+ for(const role of ['Father','Mother','Spouse']){
+  const field=document.getElementById('f_'+role+'_Name');if(!field)continue;
+  const chosen=String(field.dataset.memberId||'');
+  const person=(DB.members||[]).find(m=>String(m['Member ID'])===chosen);
+  if(chosen&&!person){problems.push(role+' record was not found. Please select it again.');continue;}
+  if(chosen===self&&chosen){problems.push('You cannot select this member as their own '+role.toLowerCase()+'.');continue;}
+  out[role+' ID']=person?chosen:'';
+  out[role+' Name']=person?String(person.Name||''):String(field.value||'').trim();
+  if(role==='Spouse'&&person){
+    const partner=String(person['Spouse ID']||'').trim();
+    if(partner&&partner!==self)problems.push('This spouse is linked to another member ('+partner+'). Please verify before changing relationships.');
+  }
+ }
+ if(out['Father ID']&&out['Father ID']===out['Mother ID'])problems.push('Father and Mother cannot be the same Member ID.');
+ if(out['Spouse ID']&&[out['Father ID'],out['Mother ID']].includes(out['Spouse ID']))problems.push('Spouse cannot be the same registered member as a parent.');
 }
 
 function fieldHtml(key, f, value, editing, rec){
-  if(key==='members'&&(f.n==='Father Name'||f.n==='Mother Name'))return malParentOptionsHtml_(f.n.split(' ')[0],editing,rec);
+  if(key==='members'&&['Father Name','Mother Name','Spouse Name'].includes(f.n))return malRelationshipOptionsHtml_(f.n.split(' ')[0],rec);
   const id = 'f_' + f.n.replace(/[^a-z0-9]/gi, '_');
   if(editing && f.n === MODULES[key].idField && !f.auto){
     const ro = isAdmin() ? '' : 'readonly';
@@ -5977,7 +5994,7 @@ function wireForm(key, rec, editing){
   });
 
   if(key==='members'){
-    malWireParentChoices_(rec);
+    malWireRelationshipChoices_(rec);
     const status=document.getElementById('f_Residence_Status');
     const outside=['Current City','Current District','Current State','Current Country','Outside Address'];
     function toggle(){const isOutside=status && status.value && status.value!=='Living in Malipatana';
@@ -6454,7 +6471,7 @@ async function saveRecord(key, rec, editing, opts){
     if(f.req && !String(v).trim() && !(editing && (key==='families'||key==='members') && ['Given Name','Surname'].includes(f.n) && !String(rec['Given Name']||rec.Surname||'').trim())) problems.push(f.n + ' is required');
     out[f.n] = v;
   });
-  if(key==='members')malApplyParentLinks_(out,problems);
+  if(key==='members')malApplyRelationshipLinks_(out,problems);
   if(key==='families'||key==='members'){
     let given=String(out['Given Name']||'').trim(),surname=String(out.Surname||'').trim();
     if(malNameHasRepeatedSurname_(given,surname)){
@@ -10652,7 +10669,17 @@ function reviewRequest(id){
  const part=regNameParts(regFullName(r));
  const famList=(DB&&DB.families||[]).slice().sort((a,b)=>String(a['Family Head']||'').localeCompare(String(b['Family Head']||'')));
  const options='<option value="">Select existing family…</option>'+famList.map(f=>`<option value="${safe(f['Family ID'])}">${safe(f['Family Head'])} · ${safe(f['Family ID'])}${f['Village Locality']?' · '+safe(f['Village Locality']):''}</option>`).join('');
- const duplicates=(DB&&DB.members||[]).filter(m=>String(m.Name||'').trim().toLowerCase()===regFullName(r).toLowerCase());
+ const normalizeIdentity=n=>String(n||'').normalize('NFKC').toLocaleLowerCase('en-IN').replace(/[^a-z0-9\u0b00-\u0b7f]+/g,'');
+ const identityCandidates=fullName=>(DB&&DB.members||[]).filter(m=>{
+   const sameName=normalizeIdentity(m.Name)===normalizeIdentity(fullName);
+   const dob=r['Date of Birth']&&m['Date of Birth']&&String(r['Date of Birth']).slice(0,10)===String(m['Date of Birth']).slice(0,10);
+   const digits=v=>String(v||'').replace(/\D/g,'').slice(-10);
+   return sameName||(dob&&digits(r.Mobile).length===10&&digits(r.Mobile)===digits(m.Mobile));
+ });
+ const duplicates=identityCandidates(regFullName(r));
+ const spouseMentions=(DB&&DB.members||[]).filter(m=>
+   !String(m['Spouse ID']||'').trim() && normalizeIdentity(m['Spouse Name'])===normalizeIdentity(regFullName(r)));
+
  const parentChoices=(DB&&DB.members||[]).slice().sort((a,b)=>String(a.Name||'').localeCompare(String(b.Name||'')));
  const relationOptions='<option value="">Keep submitted name (not linked)</option>'+parentChoices.map(m=>
    '<option value="'+safe(m['Member ID'])+'">'+safe(m.Name||'')+' · '+safe(m['Member ID'])+'</option>').join('');
@@ -10671,7 +10698,8 @@ function reviewRequest(id){
  <b>Other household names:</b> ${safe(r['Other Household Members']||'—')}<br>
  <b>Submitted by:</b> ${safe(r['Submitted By']||'—')} · <b>Notes:</b> ${safe(r.Remarks||'—')}
  </div>
- ${duplicates.length?`<div class="reg-caution">⚠ ${duplicates.length} official Member record(s) already show this name. Check for a duplicate before approving.</div>`:''}
+ ${duplicates.length?`<div class="reg-caution">⚠ A person with the same name or matching DOB/mobile may already be registered. Do not create another Member ID without checking.</div>`:''}
+ ${spouseMentions.length?`<div class="reg-tip">This person is named as an unlinked spouse of ${spouseMentions.map(m=>safe(m.Name)+' ('+safe(m['Member ID'])+')').join(', ')}. That spouse text is not a separate Member record. After approval, verify and link the new Member ID in the original record if applicable.</div>`:''}
  ${r.Photo?`<div class="reg-photo"><button class="btn btn-sm" id="regShowPhoto">Show private photo thumbnail</button><div id="regPhotoPreview"></div></div>`:''}
  <div class="reg-fields"><label>Given Name(s) — verify<input id="regGiven" class="input" value="${safe(part.given)}" ${existing?'disabled':''}></label>
  <label>Approximate age (when DOB not known)<input id="regApproxAge" class="input" type="number" min="0" max="120" step="1" value="${safe(r['Approximate Age']??'')}" ${existing?'disabled':''} ${r['Date of Birth']?'disabled':''}></label>
@@ -10679,23 +10707,71 @@ function reviewRequest(id){
  <label class="reg-span">Father: select registered member (optional)<select id="regFatherLink" class="input" ${existing?'disabled':''}>${relationOptions}</select><small>Otherwise retain the submitted name. No second member is created.</small></label>
  <label class="reg-span">Mother: select registered member (optional)<select id="regMotherLink" class="input" ${existing?'disabled':''}>${relationOptions}</select><small>Choose only after verifying the correct person.</small></label>
  <label>Marital status<select id="regMarital" class="input" ${existing?'disabled':''}>${['','Unknown','Unmarried','Married','Widowed','Divorced','Separated'].map(n=>`<option value="${safe(n)}" ${n===String(r['Marital Status']||'')?'selected':''}>${safe(n||'Not reported')}</option>`).join('')}</select></label>
- <label id="regSpouseRow">Spouse name (if applicable)<input id="regSpouse" class="input" value="${safe(r['Spouse Name']||'')}" ${existing?'disabled':''}></label>
+ <label id="regSpouseRow">Spouse name (if applicable)<input id="regSpouse" class="input" autocomplete="off" value="${safe(r['Spouse Name']||'')}" ${existing?'disabled':''}><div id="regSpouseMatches" class="mal-rel-matches" hidden></div><small id="regSpouseHelp">Type two letters to search existing members, or leave as a new name.</small></label>
  <label>Residence — verified by Admin<select id="regResidence" class="input" ${existing?'disabled':''}>${['','Living in Malipatana','Outside temporarily','Shifted permanently'].map(n=>`<option value="${safe(n)}" ${n===String(r['Residence Status']||'')?'selected':''}>${safe(n||'Choose residence')}</option>`).join('')}</select></label>
  <label>Village Locality / Sahi<select id="regLocality" class="input" ${existing?'disabled':''}><option value="">— Select Sahi —</option>${malSahiChoices_(r['Village Locality'])}</select></label>
  <label>How to register this person<select id="regKind" class="input" ${existing?'disabled':''}>
  <option value="member">Member of an existing family</option><option value="family">Head of a new main family</option><option value="subfamily">Head of a new subfamily</option></select></label>
  <label class="reg-span" id="regFamilyRow">Existing family (or parent family)<select id="regFamily" class="input" ${existing?'disabled':''}>${options}</select></label>
  <label class="reg-span" id="regRelationRow">Relationship to family head<input id="regRelation" class="input" value="${safe(r['Relationship Hint']||'')}" ${existing?'disabled':''}></label>
- <label class="reg-span">Admin review notes<textarea id="regNote" class="input" rows="3" ${existing?'disabled':''}>${safe(r['Review Notes']||'')}</textarea></label></div>
+ <label class="reg-span">Admin review notes<textarea id="regNote" class="input" rows="3" ${existing?'disabled':''}>${safe(r['Review Notes']||'')}</textarea></label>
+ <div id="regIdentityBlock" class="reg-span" hidden style="padding:12px;background:#fff2d7;border:1px solid #ebc77b;border-radius:10px">
+ <strong>Possible duplicate — Admin must decide</strong><p class="small">Names alone cannot prove identity. Compare DOB, parents, spouse, and family before deciding.</p>
+ <label>How should this request be handled?<select id="regIdentityMode" class="input" ${existing?'disabled':''}>
+ <option value="">Choose after checking…</option><option value="existing">Already registered — link existing Member ID, do not create</option>
+ <option value="different">Verified a different person — create a new Member</option></select></label>
+ <label id="regExistingWrap" hidden>Existing Member (choose exact person)<select id="regExistingMember" class="input" ${existing?'disabled':''}><option value="">Select verified Member…</option></select></label>
+ <label id="regDifferentWrap" hidden><input id="regDifferentConfirm" type="checkbox" ${existing?'disabled':''}> I have verified this is a different person. I have explained why in Admin review notes (at least 12 characters).</label>
+ <div id="regCandidates" class="small muted"></div>
+ </div></div>
  ${existing?`<div class="reg-tip">This request is ${safe(r.Status)}. Official IDs: Family ${safe(r['Assigned Family ID']||'—')}, Member ${safe(r['Assigned Member ID']||'—')}.</div>`:''}
  <div id="regDecisionError" class="reg-caution" style="display:none"></div></div>
  <footer>${!existing?'<button class="btn" id="regHold">Save review note</button><button class="btn btn-danger" id="regReject">Reject</button><button class="btn btn-primary" id="regApprove">Approve & add to register</button>':''}</footer>`);
  const famEl=document.getElementById('regFamily'),kindEl=document.getElementById('regKind');
+ const identityBox=document.getElementById('regIdentityBlock'),identityMode=document.getElementById('regIdentityMode');
+ const existingWrap=document.getElementById('regExistingWrap'),existingSelect=document.getElementById('regExistingMember');
+ const differentWrap=document.getElementById('regDifferentWrap');
+ let currentIdentityMatches=[];
+ const updateIdentity=()=>{
+   const full=[document.getElementById('regGiven').value.trim(),document.getElementById('regSurname').value.trim()].filter(Boolean).join(' ');
+   currentIdentityMatches=identityCandidates(full);
+   identityBox.hidden=!currentIdentityMatches.length;
+   existingSelect.innerHTML='<option value="">Select verified Member…</option>'+currentIdentityMatches.map(m=>
+     '<option value="'+safe(m['Member ID'])+'">'+safe(m.Name)+' · '+safe(m['Member ID'])+
+     ' · '+safe(m['Family ID']||'Unknown family')+(m['Date of Birth']?' · DOB '+safe(String(m['Date of Birth']).slice(0,10)):'')+'</option>').join('');
+   document.getElementById('regCandidates').textContent=currentIdentityMatches.length+' possible existing Member record(s).';
+   identityMode.value='';existingWrap.hidden=true;differentWrap.hidden=true;
+   document.getElementById('regDifferentConfirm').checked=false;
+ };
+ identityMode.addEventListener('change',()=>{
+   existingWrap.hidden=identityMode.value!=='existing';differentWrap.hidden=identityMode.value!=='different';
+   const btn=document.getElementById('regApprove');if(btn)btn.textContent=identityMode.value==='existing'?'Approve — link existing Member':'Approve & add to register';
+ });
+ document.getElementById('regGiven').addEventListener('input',updateIdentity);
+ document.getElementById('regSurname').addEventListener('input',updateIdentity);
+ updateIdentity();
  if(familyGuess)famEl.value=familyGuess['Family ID'];
  const adjust=()=>{document.getElementById('regFamilyRow').style.display=kindEl.value==='family'?'none':'';document.getElementById('regRelationRow').style.display=kindEl.value==='member'?'':'none';};
  kindEl.onchange=adjust;adjust();
  const mr=document.getElementById('regMarital'),sr=document.getElementById('regSpouseRow');
  if(mr&&sr){const toggle=()=>{sr.hidden=!['Married','Widowed','Divorced','Separated'].includes(mr.value)&&!document.getElementById('regSpouse').value.trim()};mr.onchange=toggle;toggle();}
+ const spouseInput=document.getElementById('regSpouse'),spouseMatches=document.getElementById('regSpouseMatches');
+ if(spouseInput&&!existing){
+  spouseInput.dataset.memberId='';
+  const close=()=>{spouseMatches.replaceChildren();spouseMatches.hidden=true;};
+  const suggest=()=>{
+   close();const query=spouseInput.value.trim().toLocaleLowerCase('en-IN');if(query.length<2)return;
+   const found=parentChoices.filter(m=>String(m.Name||'').toLocaleLowerCase('en-IN').includes(query)).slice(0,8);
+   for(const m of found){const b=document.createElement('button');b.type='button';b.className='mal-rel-option';
+    b.textContent=m.Name+' · '+m['Member ID']+(m['Family ID']?' · '+m['Family ID']:'');
+    b.onclick=()=>{spouseInput.value=String(m.Name||'');spouseInput.dataset.memberId=String(m['Member ID']||'');
+     document.getElementById('regSpouseHelp').textContent='✓ Linked existing Member ID '+spouseInput.dataset.memberId+'.';close();};spouseMatches.append(b);
+   }spouseMatches.hidden=!found.length;
+  };
+  spouseInput.addEventListener('input',()=>{spouseInput.dataset.memberId='';suggest();});
+  spouseInput.addEventListener('focus',suggest);
+  spouseInput.addEventListener('blur',()=>setTimeout(close,160));
+ }
  if(r.Photo)document.getElementById('regShowPhoto').onclick=async()=>{
   const area=document.getElementById('regPhotoPreview');area.textContent='Loading private thumbnail…';
   try{const result=await api('registrationThumbnail',{id:r['Request ID']});
@@ -10710,17 +10786,34 @@ function reviewRequest(id){
    maritalStatus=document.getElementById('regMarital').value,spouseName=document.getElementById('regSpouse').value,
    residenceStatus=document.getElementById('regResidence').value,
    relation=document.getElementById('regRelation').value,note=document.getElementById('regNote').value,approxAge=document.getElementById('regApproxAge').value;
+  let confirmDistinct='',existingMemberId='',verifyExisting='';
+  if(!['reject','hold'].includes(kind)&&currentIdentityMatches.length){
+   if(identityMode.value==='existing'){
+    existingMemberId=existingSelect.value;
+    if(!existingMemberId){const e=document.getElementById('regDecisionError');e.style.display='block';e.textContent='Select the verified existing Member ID to link. No new record will be created.';return;}
+    kind='existing';verifyExisting='YES';
+   }else if(identityMode.value==='different'){
+    if(!document.getElementById('regDifferentConfirm').checked||note.trim().length<12){
+     const e=document.getElementById('regDecisionError');e.style.display='block';e.textContent='Confirm this is a different person and explain why in Admin notes (at least 12 characters).';return;
+    }
+    confirmDistinct='YES';
+   }else{
+    const e=document.getElementById('regDecisionError');e.style.display='block';e.textContent='A similar Member already exists. Choose Link Existing or Verified Different Person before approval.';return;
+   }
+  }
   if(!['reject','hold'].includes(kind)){
-   if(!residenceStatus){document.getElementById('regDecisionError').style.display='block';document.getElementById('regDecisionError').textContent='Confirm the residence status before approval to avoid incorrect village population counts.';return;}
+   if(kind!=='existing'&&!residenceStatus){document.getElementById('regDecisionError').style.display='block';document.getElementById('regDecisionError').textContent='Confirm the residence status before approval to avoid incorrect village population counts.';return;}
    if(!given||!surname){document.getElementById('regDecisionError').style.display='block';document.getElementById('regDecisionError').textContent='Verify both Given Name(s) and Surname.';return;}
    if((kind==='subfamily'||kind==='member')&&!familyId){document.getElementById('regDecisionError').style.display='block';document.getElementById('regDecisionError').textContent='Please select an existing family.';return;}
-   if(!confirm('Approve as '+(kind==='family'?'new main family':kind==='subfamily'?'new subfamily':'member of existing family')+'? The official register will change.'))return;
+   if(!confirm(kind==='existing'?'Link this registration to '+existingMemberId+' without creating another member?':
+     'Approve as '+(kind==='family'?'new main family':kind==='subfamily'?'new subfamily':'member of existing family')+'? The official register will change.'))return;
   }else if(kind==='reject'&&!confirm('Reject this request? It will not enter the official register.'))return;
   const buttons=Array.from(document.querySelectorAll('#modal footer button'));buttons.forEach(x=>x.disabled=true);
   const err=document.getElementById('regDecisionError');if(err){err.style.display='block';err.textContent='Checking and saving…';}
   try{
    const fatherId=document.getElementById('regFatherLink').value,motherId=document.getElementById('regMotherLink').value;
-   const result=await api('registrationDecide',{id,kind,given,surname,familyId,locality,relation,note,maritalStatus,spouseName,residenceStatus,approxAge,fatherId,motherId});
+   const spouseId=String(document.getElementById('regSpouse').dataset.memberId||'');
+   const result=await api('registrationDecide',{id,kind,given,surname,familyId,locality,relation,note,maritalStatus,spouseName,spouseId,residenceStatus,approxAge,fatherId,motherId,existingMemberId,verifyExisting,confirmDistinct});
    if(!result||!result.ok)throw Error(result&&result.error||'Review action failed');
    closeModal();toast(result.message||'Registration reviewed','good');
    // This refreshes the official registers from Google Sheets, not a local copy.
