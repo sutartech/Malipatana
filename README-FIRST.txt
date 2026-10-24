@@ -1,45 +1,30 @@
-MALIPATANA — SAFE SPOUSE / MEMBER REGISTRATION
-Frontend FE V3.5.33 — Backend BE V1.8.25 REQUIRED
+MALIPATANA PUBLIC REGISTRATION – FE V3.5.34
 
-INSTALL
-1. Back up the live repository files.
-2. FIRST replace the entire Code.gs in your existing Google Apps Script project
-   using the matching BE V1.8.25 ZIP. Save and Deploy > Manage deployments >
-   Edit > New version > Deploy. Keep the existing Apps Script project and URL.
-3. Extract this frontend ZIP. Upload index.html, entry.html, register.html and
-   public.html into the ROOT of the sutartech/Malipatana GitHub repository,
-   replacing the existing HTML files. Commit.
-4. Refresh and verify FE V3.5.33 / BE V1.8.25 on the dashboard.
+WHY THIS FIX
+The earlier public form could show "Sending details securely..." for a very long time because a no-cors POST could hang, and its separate status checks silently retried errors.
 
-WHY THIS CHANGE
-* Typing a name in Spouse Name creates no Member record at all.
-* When someone later registers, Admin approval now checks real Member records
-  in every family for matching name or matched DOB+mobile. If a potential match
-  exists, Admin must link the existing Member ID, OR explicitly confirm that
-  this is another person and explain why. The confirmation is checked again
-  on the server immediately before writing.
-* Choosing "link existing" approves the public request by referencing the
-  existing ID; it creates NO new Family or Member and does not move that person.
-* A shared-entry link with a possible name collision will NOT create an
-  unreviewed second Member ID. Ask Admin to verify the entry.
-* Admin gets a reminder when a new registrant is already named as someone's
-  spouse in a text-only field. After adding the person, Admin can edit the
-  first person's Spouse field to select/link the new Member ID.
-* Genuine different people with the same name can still be registered after
-  Admin review with a reason. Same-name matches alone are NOT merged.
+CHANGES
+- Confirm the receipt in parallel with submission; never treat an opaque POST as successful.
+- Server-confirmed receipt number is shown before optional photo upload.
+- Add another person (same Sahi) or Start blank form WITHOUT reloading the page.
+- Photo upload runs separately and does not delay the main receipt screen.
+- Connection/status checks use bounded timeouts and explicit errors.
+- On an uncertain result, retry the SAME submission key to avoid duplicated requests.
+- Public-registration records remain pending for Admin approval.
 
-Privacy: the public form does not expose Members data or candidate IDs.
-No new spreadsheet, sheet or setup function needed. Previous records stay intact.
+DEPLOY
+1. Back up existing frontend files.
+2. Extract this ZIP and upload the FOUR HTML files to the root of sutartech/Malipatana on GitHub, replacing existing ones.
+3. Commit and hard refresh the site / clear any stale cache.
+4. Verify FE V3.5.34 and BE V1.8.25 on the dashboard.
+5. Test public registration without a photo first, confirming its reference appears in Admin > Registration Requests.
+6. Test a small photo separately, and then Add another person.
 
-TEST IN YOUR LIVE DEPLOYMENT
-A. Spouse only typed as a name, no Member ID: public register > approve. One
-   real Member ID is created, and Admin then links it to the other spouse.
-B. Spouse already has a Member ID: submit again > Admin Registration Requests
-   > Review > Already registered > select ID > Approve. Member count unchanged.
-C. Same-name but genuinely different person: select Verified Different Person,
-   confirm and provide review notes. Ensure the correct Family is chosen.
-D. Shared member-entry link tries to add registered member: it must stop and
-   direct the user to Admin, without exposing existing personal information.
+BACKEND
+Continue using your existing BE V1.8.25. Do not upload Code.gs to public GitHub.
+No new Google Spreadsheet or backend migration needed.
 
-Checked locally: JavaScript syntax and mock approval/duplicate-prevention tests.
-LIVE spreadsheet/Drive tests have NOT been performed.
+IMPORTANT
+This update does NOT guarantee instant Google Apps Script processing. It prevents infinite loading and makes the Add Another option available as soon as the server confirms the new registration.
+If a backend submission is not confirmed, the form displays an error and uses the same idempotency key for a retry. Do not start an entirely new submission for the same person until its status is known.
+The live Apps Script deployment must be configured and tested separately.

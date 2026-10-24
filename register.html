@@ -17,10 +17,10 @@ h2{font-size:19px;margin:0 0 8px}.hint{margin:0 0 15px;color:#657b74;font-size:1
 .field>textarea{resize:vertical;min-height:75px}.field:focus-within{color:#146b60}.field small{display:block;font-size:11px;color:#758a81;font-weight:400;margin-top:4px}
 .tag{display:inline-block;font-size:11px;background:#e2f4e7;color:#216c50;border-radius:20px;padding:3px 9px;font-weight:700}.required{color:#c14430}.banner{background:#e9f6ef;border:1px solid #b6ddc8;border-radius:13px;padding:12px;color:#225b46;font-size:13px;margin-top:13px}
 button{border:0;border-radius:11px;min-height:48px;padding:11px 16px;font-size:15px;font-family:inherit;font-weight:750;cursor:pointer}
-button.primary{background:#106653;color:white;width:100%;font-size:17px}button.secondary{background:#e7f3ee;color:#135d48}button:disabled{opacity:.55;cursor:wait}
+button.primary{background:#106653;color:white;width:100%;font-size:17px}button.secondary{background:#e7f3ee;color:#135d48}button:disabled{opacity:.55;cursor:wait} #sendBtn{transition:opacity .15s} .next-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:13px} .next-actions button{flex:1 1 180px} #backgroundPhotoBanner{position:sticky;top:0;z-index:8;background:#fff8e8;border:1px solid #d9b469;padding:11px 15px;border-radius:9px;box-shadow:0 5px 18px #102f3c16;color:#63470f;font-size:13px}
 .photo{border:1px dashed #adcbb8;border-radius:13px;padding:15px;display:flex;gap:13px;align-items:center;background:#fafdfb}.photo img{width:74px;height:74px;border-radius:11px;object-fit:cover}.photo .picker{flex:1;min-width:0}.photo input{max-width:100%}
 #result{display:none;white-space:pre-wrap;border-radius:13px;padding:15px;margin-top:12px;font-size:14px;overflow-wrap:anywhere}#result.success{display:block;background:#e5f8ed;border:1px solid #a5d9b7}#result.error{display:block;background:#fff0ef;border:1px solid #f0c5c0}
-#publicSpouseField[hidden],#birthDateBlock[hidden],#birthAgeBlock[hidden],#publicSahiOtherRow[hidden]{display:none!important}#done{display:none}.consent{display:flex;gap:9px;align-items:flex-start;font-size:13px;line-height:1.5;color:#4e615a;margin-bottom:16px}.consent input{width:19px;height:19px;flex:none}
+#backgroundPhotoBanner[hidden],#publicSpouseField[hidden],#birthDateBlock[hidden],#birthAgeBlock[hidden],#publicSahiOtherRow[hidden]{display:none!important}#done{display:none}.consent{display:flex;gap:9px;align-items:flex-start;font-size:13px;line-height:1.5;color:#4e615a;margin-bottom:16px}.consent input{width:19px;height:19px;flex:none}
 .foot{text-align:center;margin-top:17px;color:#68796e;font-size:12px}a{color:#0c6657}
 .honeypot{position:absolute!important;left:-9000px!important;opacity:0;pointer-events:none}
 @media(max-width:600px){.grid{grid-template-columns:1fr;gap:0}.card{padding:17px}.head{padding:14px}header h1{font-size:19px}}
@@ -28,7 +28,7 @@ button.primary{background:#106653;color:white;width:100%;font-size:17px}button.s
 </head>
 <body><main>
 <header><img src="icon-180.png" alt="Village emblem"><div><h1>ମାଳିପାଟଣା • Malipatana</h1><p>Simple village details form • No login or Family ID needed</p></div></header>
-<div class="banner"><b>Just tell us about yourself or your household.</b> You do not need to decide if you belong to a main family, subfamily, or member record. The village administrator will organize the information after checking it.</div>
+<div id="backgroundPhotoBanner" hidden role="status"></div><div class="banner"><b>Just tell us about yourself or your household.</b> You do not need to decide if you belong to a main family, subfamily, or member record. The village administrator will organize the information after checking it.</div>
 <form id="registration" autocomplete="on">
 <section class="card">
 <h2>1. Your name and parents <span class="tag">Basic details</span></h2>
@@ -68,7 +68,7 @@ button.primary{background:#106653;color:white;width:100%;font-size:17px}button.s
 <div id="result" role="status" aria-live="polite"></div>
 <p class="hint" style="margin-top:12px">Submitting does <b>not</b> automatically add anyone to the official village register. Admin must first check and approve the details.</p>
 </section></form>
-<section class="card" id="done"><h2>Thank you! Details received</h2><p>Your information is safely in the Admin review queue. Your family relationship and register category will be decided later by Admin.</p><div class="banner" id="reference"></div><p id="photoStatus" class="hint"></p><button class="secondary" id="newForm">Submit details for another person</button></section>
+<section class="card" id="done"><h2>Thank you! Details received</h2><p>Your information is safely in the Admin review queue. Your family relationship and register category will be decided later by Admin.</p><div class="banner" id="reference"></div><p id="photoStatus" class="hint"></p><div class="next-actions"><button class="primary" type="button" id="newForm">+ Add another person (same Sahi)</button><button class="secondary" type="button" id="blankForm">Start blank form</button></div></section>
 <div class="foot"><a href="index.html">Malipatana dashboard</a> · Personal details are not shown on the public website.</div>
 </main>
 <script>
@@ -88,20 +88,28 @@ $('publicSahi').addEventListener('change',()=>{$('publicSahiOtherRow').hidden=$(
 void malLoadPublicSahis_();
 let submitting=false;
 function newSecret(){let a=new Uint8Array(32);crypto.getRandomValues(a);return Array.from(a,b=>b.toString(16).padStart(2,'0')).join('')}
-function api(action,params){return new Promise((resolve,reject)=>{
+function api(action,params,timeoutMs=6500){return new Promise((resolve,reject)=>{
  const callback='mr_'+Date.now()+'_'+Math.floor(Math.random()*1e7);
  const query=new URLSearchParams({...params,action,callback,_:Date.now()});
  const script=document.createElement('script');let finished=false;
+ let timer;
  const done=()=>{if(finished)return;finished=true;clearTimeout(timer);script.remove();try{delete window[callback]}catch(e){window[callback]=undefined}};
- const timer=setTimeout(()=>{done();reject(Error('Connection timed out. Check your connection.'))},26000);
+ timer=setTimeout(()=>{done();reject(Error('The registration service did not respond.'))},timeoutMs);
  window[callback]=result=>{done();resolve(result)};
- script.onerror=()=>{done();reject(Error('Could not contact village registration service.'))};
+ script.onerror=()=>{done();reject(Error('Could not contact the registration service.'))};
  script.referrerPolicy='no-referrer';script.src=API_URL+'?'+query.toString();document.body.appendChild(script);
  })}
 function show(text,ok){$('result').className=ok?'success':'error';$('result').textContent=text}
-async function sendPost(obj){const form=new FormData();for(const [key,value] of Object.entries(obj))form.append(key,value);
- // Apps Script cross-origin POST may return an opaque redirect. Check via a separate read-only receipt endpoint.
- await fetch(API_URL,{method:'POST',mode:'no-cors',body:form,referrerPolicy:'no-referrer'});
+function wait(ms){return new Promise(resolve=>setTimeout(resolve,ms))}
+async function sendPost(obj,timeoutMs=16000){
+ const form=new FormData();for(const [key,value] of Object.entries(obj))form.append(key,value);
+ // Google Apps Script POST uses a cross-origin redirect, so an opaque response
+ // cannot be treated as proof of success. The receipt is verified separately.
+ const controller=new AbortController();
+ const timer=setTimeout(()=>controller.abort(),timeoutMs);
+ try{
+  await fetch(API_URL,{method:'POST',mode:'no-cors',body:form,signal:controller.signal,referrerPolicy:'no-referrer',credentials:'omit'});
+ }finally{clearTimeout(timer)}
 }
 function readB64(file){return new Promise((resolve,reject)=>{const fr=new FileReader();fr.onload=()=>resolve(String(fr.result).split(',')[1]);fr.onerror=()=>reject(Error('Could not read photo'));fr.readAsDataURL(file)})}
 function makeThumb(file){return new Promise((resolve,reject)=>{
@@ -111,12 +119,52 @@ function makeThumb(file){return new Promise((resolve,reject)=>{
  const jpg=c.toDataURL('image/jpeg',.68).split(',')[1];URL.revokeObjectURL(objectURL);resolve(jpg);
  }catch(err){URL.revokeObjectURL(objectURL);reject(err)}};img.onerror=()=>{URL.revokeObjectURL(objectURL);reject(Error('This image could not be opened.'))};img.src=objectURL;
  })}
-async function confirm(key,kind){for(let i=0;i<13;i++){
- try{const r=await api('registrationStatus',{key});if(r&&r.ok&&r.received&&(kind==='record'||r.photoConfirmed))return r;
- if(r&&!r.ok)throw Error(r.error||'Registration check failed');
- if(r&&kind==='photo'&&r.photoError)throw Error(r.photoError);}catch(e){}
- await new Promise(ok=>setTimeout(ok,1200+i*250));
- }throw Error(kind==='photo'?'Photo upload not confirmed. Contact the Admin with your registration number.':'Could not confirm the submission. Please do not repeatedly submit; contact the Admin if you are unsure.');
+let currentAttempt=null,backgroundUploads=0;
+async function confirmReceipt(key,kind='record',limitMs=19000){
+ const end=Date.now()+limitMs;let lastError=null;
+ while(Date.now()<end){
+  try{
+   const r=await api('registrationStatus',{key},Math.min(6500,Math.max(1500,end-Date.now())));
+   if(r&&!r.ok){const err=Error(r.error||'Registration was rejected.');err.final=true;throw err;}
+   if(r&&r.ok&&r.received&&(kind==='record'||r.photoConfirmed))return r;
+   if(r&&kind==='photo'&&r.photoError){const err=Error(r.photoError);err.final=true;throw err;}
+  }catch(err){if(err.final)throw err;lastError=err;}
+  if(Date.now()<end)await wait(Math.min(1300,end-Date.now()));
+ }
+ const err=Error(kind==='photo'
+  ? 'Photo not confirmed. Your registration details remain saved if a reference number was shown.'
+  : 'No confirmation yet. Your request may still be processing. Choose “Check / retry this submission” to continue with the SAME reference key; do not start a fresh duplicate.');
+ err.unconfirmed=true;err.cause=lastError;throw err;
+}
+async function submitAndCheck(attempt){
+ // Poll receipt while the POST is being processed. Do not let an opaque POST
+ // response or an indefinitely waiting fetch hold up the user interface.
+ let postError=null;
+ const posting=sendPost({...attempt.values,key:attempt.key,action:'registrationSubmit'},16000)
+   .catch(err=>{postError=err;});
+ try{return await confirmReceipt(attempt.key,'record',20500)}catch(err){
+  if(postError&&!err.final)err.message+=' Network issue: '+postError.message;
+  throw err;
+ }finally{void posting}
+}
+async function uploadOptionalPhoto(photo,attempt,receipt){
+ if(!photo){$('photoStatus').textContent='No photo attached (optional).';return;}
+ backgroundUploads++;
+ const hint=$('backgroundPhotoBanner');
+ const updateHint=()=>{
+  hint.hidden=backgroundUploads===0;
+  hint.textContent=backgroundUploads>0?'Photo upload in progress ('+backgroundUploads+'). Keep this page open until the upload finishes.':'';
+ };
+ updateHint();
+ $('photoStatus').textContent='Your details are registered for review. Optional photo is uploading separately…';
+ try{
+  const data=await readB64(photo),thumbData=await makeThumb(photo);
+  if(thumbData.length>180000)throw Error('Photo thumbnail is too large. Please try a smaller photo.');
+  await sendPost({action:'registrationPhoto',key:attempt.key,id:receipt.id,mime:photo.type,data,thumbData},55000);
+  await confirmReceipt(attempt.key,'photo',25000);
+  $('photoStatus').textContent='✓ Optional photo received privately for Admin review.';
+ }catch(err){$('photoStatus').textContent='Personal details were received, but the photo was not confirmed: '+err.message+' Contact Admin with registration number '+receipt.id+'.';}
+ finally{backgroundUploads--;updateHint()}
 }
 $('photo').addEventListener('change',()=>{
  const f=$('photo').files[0];if(!f)return;
@@ -135,24 +183,60 @@ const publicMarital=$('publicMarital'),publicSpouse=$('publicSpouseField');
 if(publicMarital&&publicSpouse){const show=()=>{publicSpouse.hidden=!['Married','Widowed','Divorced','Separated'].includes(publicMarital.value)};publicMarital.onchange=show;show();}
 $('registration').addEventListener('submit',async event=>{
  event.preventDefault();if(submitting)return;
- const form=event.currentTarget;if(!form.reportValidity())return;
- const values=Object.fromEntries(new FormData(form));if(values.locality==='__other__')values.locality=String(values.localityOther||'').trim();delete values.localityOther;values.consent=$('consent').checked?'Yes':'No';
- const key=newSecret();const photo=$('photo').files[0];submitting=true;$('sendBtn').disabled=true;show('Sending details securely for Admin review…',true);
+ const form=event.currentTarget;
+ if(!currentAttempt&&!form.reportValidity())return;
+ if(!currentAttempt){
+  const values=Object.fromEntries(new FormData(form));
+  if(values.locality==='__other__')values.locality=String(values.localityOther||'').trim();
+  delete values.localityOther;
+  values.consent=$('consent').checked?'Yes':'No';
+  currentAttempt={key:newSecret(),values,photo:$('photo').files[0]||null,sahi:$('publicSahi').value,sahiOther:$('publicSahiOtherRow').querySelector('input').value};
+ }
+ const attempt=currentAttempt;
+ submitting=true;$('sendBtn').disabled=true;
+ $('sendBtn').textContent='Checking submission…';
+ show('Sending details and checking the Admin receipt…',true);
  try{
- await sendPost({...values,key,action:'registrationSubmit'});
- const receipt=await confirm(key,'record');
- $('reference').textContent='Registration number: '+receipt.id+' · Status: '+receipt.status;
- $('registration').style.display='none';$('done').style.display='block';$('done').scrollIntoView({behavior:'smooth',block:'start'});
- if(photo){try{
-  $('photoStatus').textContent='Attaching the optional private photo…';
-  const data=await readB64(photo),thumbData=await makeThumb(photo);
-  if(thumbData.length>180000)throw Error('Photo thumbnail was too large. Try a smaller photo.');
-  await sendPost({action:'registrationPhoto',key,id:receipt.id,mime:photo.type,data,thumbData});
-  await confirm(key,'photo');$('photoStatus').textContent='✓ Photo received privately for Admin review.';
- }catch(err){$('photoStatus').textContent='Your details were received. Photo not confirmed: '+err.message+' Please give your registration number to the Admin.';}}
- }catch(err){show(err.message||'Could not send details.',false)}
- finally{submitting=false;$('sendBtn').disabled=false}
+  const receipt=await submitAndCheck(attempt);
+  currentAttempt=null;
+  $('reference').textContent='Registration number: '+receipt.id+' · Status: '+receipt.status;
+  $('registration').style.display='none';$('done').style.display='block';
+  $('done').scrollIntoView({behavior:'smooth',block:'start'});
+  // The Add Another action is available IMMEDIATELY after the receipt is confirmed.
+  // Upload the optional photo without blocking the main success screen.
+  void uploadOptionalPhoto(attempt.photo,attempt,receipt);
+ }catch(err){
+  if(err.unconfirmed){
+   show(err.message,false);
+   $('sendBtn').textContent='Check / retry this submission';
+  }else{
+   currentAttempt=null; // A known rejection may need corrected form values.
+   show((err.message||'Submission could not be accepted.')+' Please correct the form and submit again.',false);
+   $('sendBtn').textContent='Send for Admin Review';
+  }
+ }finally{
+  submitting=false;$('sendBtn').disabled=false;
+  if(!currentAttempt)$('sendBtn').textContent='Send for Admin Review';
+ }
 });
-$('newForm').onclick=()=>{location.reload()};
+function resetForAnother(keepSahi){
+ if(submitting)return;
+ const lastSahi=keepSahi?$('publicSahi').value:'';
+ const lastOther=keepSahi?$('publicSahiOtherRow').querySelector('input').value:'';
+ const form=$('registration');
+ form.reset();currentAttempt=null;
+ $('sendBtn').textContent='Send for Admin Review';$('sendBtn').disabled=false;
+ $('result').className='';$('result').textContent='';
+ if(keepSahi&&Array.from($('publicSahi').options).some(o=>o.value===lastSahi))$('publicSahi').value=lastSahi;
+ if(keepSahi)$('publicSahiOtherRow').querySelector('input').value=lastOther;
+ $('publicSahiOtherRow').hidden=$('publicSahi').value!=='__other__';
+ $('photoPreview').src='icon-180.png';
+ setBirthMode();
+ if(publicMarital&&publicSpouse)publicSpouse.hidden=!['Married','Widowed','Divorced','Separated'].includes(publicMarital.value);
+ $('done').style.display='none';form.style.display='block';
+ window.scrollTo({top:0,behavior:'smooth'});
+}
+$('newForm').onclick=()=>resetForAnother(true);
+$('blankForm').onclick=()=>resetForAnother(false);
 </script>
 </body></html>
