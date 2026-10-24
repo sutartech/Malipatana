@@ -1,33 +1,36 @@
-MALIPATANA — DIRECT UPLOAD FRONTEND, FE V3.5.24
-Expected backend: BE V1.8.18 (NO backend change needed)
-
-UPLOAD
-1. Make a backup of existing index.html and entry.html from your GitHub repository.
-2. Open your GitHub Malipatana repository > Add file > Upload files.
-3. Upload index.html and entry.html from this ZIP, replacing existing files.
-4. Commit and refresh your dashboard; verify it reads FE V3.5.24 / BE V1.8.18.
-5. Open a family > Subfamilies and try View, Quick Edit, Members, More.
+MALIPATANA — DOB AND ESTIMATED AGE UPDATE
+Frontend: FE V3.5.27
+Backend:  BE V1.8.21
 
 WHAT CHANGED
-- Family profile: Village Locality (Sahi) and Surname both visible.
-- Subfamily cards: View, Quick Edit, Members; More > Change parent, Deactivate, Full edit.
-- Add subfamily: inherit parent Family ID, parent Sahi; prefill selected existing head name/surname.
-- Save & add members; Save & add another keeps only parent/surname/Sahi.
-- Whole household and family tree: replace House No display with Sahi.
-- Prevent invalid circular parent assignments.
-- Prevent deletion of families with child families, members or linked financial/welfare entries.
-- Preserve older House No and Address/Area fields in existing spreadsheet records. No data migration/deletion.
-- Existing member moves use ID and require matching head name; no automatic move from text alone.
+- Public register.html: choose exact DOB, estimated age, or neither.
+- Shared-entry entry.html: same options for members.
+- Main dashboard index.html: Members table includes DOB + Age; age estimates display (Est.).
+- Admin registration review can verify/correct approximate age before approval.
+- Backend stores Age As On and Age Source, never invents a DOB for an estimate.
+- Children aged zero are now included correctly in age-group counts.
+- Existing members, approved registrations, photos, locality, surnames and House No records are preserved.
 
-RECOMMENDED TESTS
-- Existing family's Sahi previously blank: edit and save Sahi.
-- Add a subfamily choosing a member already under the parent. Verify no duplicate Member ID.
-- Quick Edit a subfamily: verify name fields and Sahi. If renaming the head, separately verify Members record.
-- More > Change parent: verify family tree without a cycle.
-- More > Deactivate: does not delete any history.
-- Add and cancel a test flow before doing bulk updates.
+HOW TO UPDATE — KEEP FRONTEND AND BACKEND SEPARATE
+1. BACK UP your current frontend and complete Code.gs first.
+2. In existing Google Apps Script project, REPLACE entire Code.gs with Code.gs from
+   the BACKEND zip. Save. Do not upload Code.gs to public GitHub.
+3. In Apps Script editor, run setupAgeTracking() ONCE. Authorize if prompted.
+   It ONLY adds missing 'Age As On'/'Age Source' columns in the existing Members
+   sheet and 'Approximate Age'/'Age Recorded On' in Registration Requests.
+   Do not create a new spreadsheet.
+4. Apps Script: Deploy -> Manage deployments -> Edit existing deployment ->
+   New version -> Deploy (keep the same /exec URL).
+5. Extract the FRONTEND zip. Replace index.html, entry.html, and register.html
+   in the existing sutartech/Malipatana GitHub repository and commit.
+6. Refresh browser. Confirm FE V3.5.27 and BE V1.8.21 display in login.
+7. Test one new public registration with exact DOB and one with age-only;
+   check Admin -> Registration requests, approve a test record, and verify
+   Members shows DOB blank + Age (Est.) for age-only entries.
 
-NOTE
-Only index.html and entry.html belong in the public GitHub repository.
-Do not upload Code.gs or private spreadsheet data to public GitHub.
-The frontend uses the existing Apps Script and existing spreadsheet.
+IMPORTANT
+- Age can be unknown: do not fabricate a DOB.
+- Historical records are not retroactively converted or overwritten.
+- No external Drive or spreadsheet is created by this update.
+- Local syntax and age-validation tests passed; live Google permissions,
+  saving, and approval must be verified after deployment.

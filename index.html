@@ -1723,7 +1723,10 @@ body.modalOpen #stickyLayer{opacity:.12;pointer-events:none;filter:saturate(.4)}
 .mal-subform .span-all{grid-column:1/-1}
 .mal-subnote{border:1px solid #e9d7a3;background:#fffaf0;border-radius:9px;padding:11px;font-size:12px;line-height:1.5}
 @media(max-width:630px){.mal-subform{grid-template-columns:1fr}.mal-subactions>.btn,.mal-subactions>.mal-submore{flex:1}.mal-subactions>.mal-submore>summary{width:100%;text-align:center}.mal-subcard{padding:11px}}
+.reg-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:end;margin:14px 0}.reg-actions input{flex:1;min-width:190px}.reg-actions label{font-weight:700;font-size:13px}.reg-actions select{min-width:140px;margin-top:4px}
+.reg-item{display:flex;gap:12px;align-items:center;justify-content:space-between;border-bottom:1px solid #dde6df;padding:13px 5px}.reg-main{font-size:15px;font-weight:750;color:#173f37}.reg-state{font-size:11px;font-weight:700;border:1px solid #d9b96c;background:#fff5d8;color:#805616;border-radius:15px;padding:3px 8px}.reg-info{min-width:0}.reg-info .small{margin-top:3px}.reg-empty{padding:25px;color:#5c766c;text-align:center}.reg-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:15px}.reg-fields label{font-size:12.5px;font-weight:700;color:#3e6458}.reg-fields .input{margin-top:5px}.reg-span{grid-column:1/-1}.reg-tip{background:#eef8f1;border:1px solid #c5e3d0;border-radius:12px;padding:11px;font-size:13px}.reg-detail{font-size:13px;line-height:1.8;border:1px solid #e2e8e2;border-radius:11px;padding:12px;margin-top:12px;white-space:pre-wrap;overflow-wrap:anywhere}.reg-caution{background:#fff2dd;color:#784c14;padding:11px;border:1px solid #ead4a5;border-radius:10px;margin-top:10px;font-size:13px}.reg-photo{margin-top:12px}@media(max-width:620px){.reg-fields{grid-template-columns:1fr}.reg-span{grid-column:1}.reg-actions>*{flex:1}.reg-item .btn{flex:none}}
 </style>
+<style>#formGrid [hidden], .reg-fields [hidden] {display:none!important}</style>
 </head>
 <body>
 
@@ -1817,6 +1820,7 @@ body.modalOpen #stickyLayer{opacity:.12;pointer-events:none;filter:saturate(.4)}
       <button class="repair" id="repairBtn">↻ Repair cache / session</button>
       <div class="helpline">Trouble signing in? Ask the village admin to check your row in the Users sheet.</div>
         <a class="pubway" href="public.html">See the village account without signing in →</a>
+        <a class="pubway" href="register.html">Fill village family details — no login required →</a>
     </div>
 
   </div>
@@ -1922,8 +1926,8 @@ body.modalOpen #stickyLayer{opacity:.12;pointer-events:none;filter:saturate(.4)}
    ========================================================================= */
 const CONFIG = {
   API_URL: 'https://script.google.com/macros/s/AKfycbyfxff3MVt3Kw_CA_0aYD477nrAcWXshb9hex1LM_hl62tlrNiX5bGWgsf0Vw73sr-gbg/exec',
-  VERSION: 'FE V3.5.24',
-  EXPECTED_BACKEND: 'BE V1.8.18',
+  VERSION: 'FE V3.5.27',
+  EXPECTED_BACKEND: 'BE V1.8.21',
   IDLE_MINUTES: 30,
   /* Photo shown when no photo has been set in Settings.
      village.jpg sits in the same folder as this file on GitHub. */
@@ -3810,9 +3814,10 @@ const MODULES = {
       { n:'Gender', t:'select', opts:['Male','Female','Other'] },
       { n:'Father Name', t:'text' },
       { n:'Mother Name', t:'text' },
-      { n:'Spouse Name', t:'text' },
-      { n:'Date of Birth', t:'date' },
-      { n:'Age', t:'number', hint:'Filled automatically from date of birth' },
+      { n:'Marital Status', t:'select', opts:['Unknown','Unmarried','Married','Widowed','Divorced','Separated'], hint:'Marriage does not determine village population. Select current residence separately.' },
+      { n:'Spouse Name', t:'text', hint:'For married/widowed members, enter if known. Existing spouse details are retained.' },
+      { n:'Date of Birth', t:'date', hint:'Enter only when the exact birth date is known.' },
+      { n:'Age', t:'number', hint:'Calculated from DOB; otherwise enter approximate age (years). DOB remains blank if unknown.' },
       { n:'Education', t:'datalist', opts:['Illiterate','Primary','Class 10','Class 12','ITI/Diploma','Graduate','Post Graduate'] },
       { n:'Occupation', t:'datalist', opts:['Farmer','Daily Wage','Fisherman','Shop','Private Job','Government Job','Student','Homemaker','Unemployed','Retired'] },
       { n:'Earning Member', t:'select', opts:YESNO },
@@ -3834,7 +3839,7 @@ const MODULES = {
       { n:'Memorial Message', t:'textarea', hidden:true },
       { n:'Memorial Photo', t:'photo', hidden:true }
     ],
-    list: ['Photo','Member ID','Name','Surname','Family ID','Residence Status','Relation to Family Head','Gender','Age','Education','Occupation','Earning Member','Monthly Income','Mobile','Life Status']
+    list: ['Photo','Member ID','Name','Surname','Family ID','Relation to Family Head','Gender','Marital Status','Spouse Name','Residence Status','Date of Birth','Age','Education','Occupation','Earning Member','Monthly Income','Mobile','Life Status']
   },
   recurring: {
     sheet: 'Recurring Expenses', title: 'Recurring expenses', odia: 'ନିୟମିତ ଖର୍ଚ୍ଚ', idField: 'Recurring ID', prefix: 'REC',
@@ -4551,7 +4556,7 @@ function renderDashboard(){
   </div>
       <div class="ux-kpi-grid" aria-label="Village at a glance">
         <button type="button" class="ux-kpi ux-kpi-families" onclick="go('families')" ${canSee('families')?'':'disabled'}><span class="ux-kpi-icon" aria-hidden="true">⌂</span><span class="ux-kpi-label">Families</span><strong class="tnum">${num(s.families)}</strong><span class="ux-kpi-foot">View households →</span></button>
-        <button type="button" class="ux-kpi ux-kpi-members" onclick="go('members')" ${canSee('members')?'':'disabled'}><span class="ux-kpi-icon" aria-hidden="true">♧</span><span class="ux-kpi-label">Living members</span><strong class="tnum">${num(s.members)}</strong><span class="ux-kpi-foot">View members →</span></button>
+        <button type="button" class="ux-kpi ux-kpi-members" onclick="go('members')" ${canSee('members')?'':'disabled'}><span class="ux-kpi-icon" aria-hidden="true">♧</span><span class="ux-kpi-label">Living residents</span><strong class="tnum">${num(s.residentMembers)}</strong><span class="ux-kpi-foot">${num(s.members)} registered living relatives →</span></button>
         <button type="button" class="ux-kpi ux-kpi-work" onclick="document.getElementById('ux-work-anchor')?.scrollIntoView({behavior:'smooth',block:'start'})"><span class="ux-kpi-icon" aria-hidden="true">☷</span><span class="ux-kpi-label">Tasks to review</span><strong class="tnum">${visibleWork.length}</strong><span class="ux-kpi-foot">This month's work ↓</span></button>
       </div>
       <div class="ux-priority-grid ${quickPanel ? '' : 'ux-single'}" id="ux-work-anchor">
@@ -4565,7 +4570,11 @@ function renderDashboard(){
       <details class="ux-home-section ux-demographics"><summary><span class="ux-section-badge">♧</span><span class="ux-section-title">More village statistics<small>Earning members, children, elderly and coverage</small></span><span class="ux-expand-label">Details</span></summary><div class="ux-home-expanded">
   <div class="strip">
     <div><div class="k">Families</div><div class="v tnum">${num(s.families)}</div></div>
-    <div><div class="k">Members</div><div class="v tnum">${num(s.members)}</div></div>
+    <div><div class="k">In village</div><div class="v tnum">${num(s.residentMembers)}</div></div>
+    <div><div class="k">Temporarily away</div><div class="v tnum">${num(s.temporaryAway)}</div></div>
+    <div><div class="k">Settled outside</div><div class="v tnum">${num(s.shiftedAway)}</div></div>
+    <div><div class="k">Residence to verify</div><div class="v tnum">${num(s.residenceUnknown)}</div></div>
+    <div><div class="k">Living relatives registered</div><div class="v tnum">${num(s.members)}</div></div>
     <div><div class="k">Earning</div><div class="v tnum">${num(s.earningMembers)}</div></div>
     <div><div class="k">Children</div><div class="v tnum">${num(s.children)}</div></div>
     <div><div class="k">Elderly</div><div class="v tnum">${num(s.elderly)}</div></div>
@@ -4573,7 +4582,7 @@ function renderDashboard(){
     <div><div class="k">Insured</div><div class="v tnum">${num(s.insuranceCoverage)}%</div></div>
   </div>
 
-      </div></details>
+      <p class="small muted">Resident figures include only living persons marked “Living in Malipatana”. Marriage does not remove anyone from the ancestral family register. Blank residence needs verification. These are village-register figures, not certified Census counts.</p></div></details>
       <details class="ux-home-section ux-insights"><summary><span class="ux-section-badge">₹</span><span class="ux-section-title">Financial trends & insights<small>12-month chart, recurring bills and recent records</small></span><span class="ux-expand-label">Reports</span></summary>
         <div class="ux-home-expanded"><div class="cols"><div class="panel"><div class="panel-head"><h3>Money in and out, last 12 months</h3></div><div class="panel-body" style="padding-bottom:6px">${barChart()}</div><div class="legend"><span><i style="background:var(--green)"></i>In</span><span><i style="background:var(--brick)"></i>Out</span></div></div><div class="panel"><div class="panel-head"><h3>Latest entries</h3></div>${recentList()}</div></div><div class="ux-recurring-wrap">${recurringPanel()}</div></div>
       </details>
@@ -4881,6 +4890,14 @@ function cellHtml(key, row, col){
       ? '<span class="mal-surname-suggested" title="Suggested from the full name; not yet saved">'+esc(suggestion.surname)+'</span> <span class="mal-surname-tag">Not yet saved</span>'
       : '<span class="muted small">Not recorded</span>'};
   }
+  if(key==='members' && col==='Age'){
+    const rawAge=row.Age;
+    if(rawAge===''||rawAge===undefined||rawAge===null)return {cls:'num',html:'<span class="muted small">—</span>'};
+    const estimate=String(row['Age Source']||'').trim()==='Estimated';
+    const unverified=!row['Date of Birth']&&!estimate;
+    return {cls:'num',html:'<span class="tnum">'+esc(rawAge)+'</span>'+
+      (estimate?' <span class="muted small" title="Approximate age, not an exact birth date">(Est.)</span>':unverified?' <span class="muted small" title="Date of birth is not verified">(DOB unknown)</span>':'')};
+  }
   if(key==='members' && col==='Name')return {cls:'',html:esc(malDisplayFullName_(key,row))};
   const f = fieldDef(key, col);
   const raw = row[col];
@@ -4934,6 +4951,8 @@ function cellHtml(key, row, col){
     return { cls: 'num', html: '<span class="tnum">' + n + '</span>' +
       (stale ? ' <span class="muted small" title="The sheet says ' + typed + '">(' + typed + ')</span>' : '') };
   }
+  if(key==='members'&&col==='Marital Status'&&!String(raw||'').trim())return {cls:'',html:'<span class="muted small">Not recorded</span>'};
+  if(key==='members'&&col==='Residence Status'&&!String(raw||'').trim())return {cls:'',html:'<span class="pill warn">Not verified</span>'};
   if(col === 'Life Status'){
     const v = String(raw || '').trim();
     if(!v || v.toLowerCase() === 'alive') return { cls: '', html: '' };
@@ -4977,7 +4996,9 @@ function filterRows(key){
       return String(fam && fam['Village Locality'] || '').toLowerCase()===v.locality.toLowerCase();
     });
   if(key==='members'&&v.residence)
-    rows=rows.filter(r=>String(r['Residence Status']||'Living in Malipatana')===v.residence);
+    rows=rows.filter(r=>(String(r['Residence Status']||'')||'Not verified')===v.residence);
+  if(key==='members'&&v.marital)
+    rows=rows.filter(r=>(String(r['Marital Status']||'')||'Unknown')===v.marital);
   if(key==='members'&&v.life)
     rows=rows.filter(r=>v.life==='Alive' ? !isDeceased(r) : isDeceased(r));
   if(v.q){
@@ -5123,7 +5144,7 @@ function renderModule(key){
       <option value="">All families</option>
       ${(DB.families || []).map(f => `<option value="${esc(f['Family ID'])}" ${v.fam === String(f['Family ID']) ? 'selected' : ''}>${esc(f['Family ID'])} · ${esc(f['Family Head'])}</option>`).join('')}
     </select>` : ''}
-    ${['families','members'].includes(key)?`<select class="input" id="surnameFilter" aria-label="Filter by surname"><option value="">All surnames</option>${[...new Set(rowsOf(key).map(r=>String(r.Surname||'').trim()).filter(Boolean))].sort().map(n=>`<option value="${esc(n)}" ${v.surname===n?'selected':''}>${esc(n)}</option>`).join('')}</select><select class="input" id="sahiFilter" aria-label="Filter by village locality"><option value="">All village localities</option>${[...new Set((DB.families||[]).map(r=>String(r['Village Locality']||'').trim()).filter(Boolean))].sort().map(n=>`<option value="${esc(n)}" ${v.locality===n?'selected':''}>${esc(n)}</option>`).join('')}</select>${key==='members'?`<select class="input" id="residenceFilter" aria-label="Filter by residence"><option value="">All residences</option>${['Living in Malipatana','Outside temporarily','Shifted permanently'].map(n=>`<option ${v.residence===n?'selected':''}>${esc(n)}</option>`).join('')}</select><select class="input" id="lifeFilter" aria-label="Filter by life status"><option value="">All life statuses</option><option value="Alive" ${v.life==='Alive'?'selected':''}>Living only</option><option value="Deceased" ${v.life==='Deceased'?'selected':''}>In memory</option></select>`:''}`:''}
+    ${['families','members'].includes(key)?`<select class="input" id="surnameFilter" aria-label="Filter by surname"><option value="">All surnames</option>${[...new Set(rowsOf(key).map(r=>String(r.Surname||'').trim()).filter(Boolean))].sort().map(n=>`<option value="${esc(n)}" ${v.surname===n?'selected':''}>${esc(n)}</option>`).join('')}</select><select class="input" id="sahiFilter" aria-label="Filter by village locality"><option value="">All village localities</option>${[...new Set((DB.families||[]).map(r=>String(r['Village Locality']||'').trim()).filter(Boolean))].sort().map(n=>`<option value="${esc(n)}" ${v.locality===n?'selected':''}>${esc(n)}</option>`).join('')}</select>${key==='members'?`<select class="input" id="residenceFilter" aria-label="Filter by residence"><option value="">All residences</option>${['Living in Malipatana','Outside temporarily','Shifted permanently','Not verified'].map(n=>`<option ${v.residence===n?'selected':''}>${esc(n)}</option>`).join('')}</select><select class="input" id="maritalFilter" aria-label="Filter by marital status"><option value="">All marital statuses</option>${['Unknown','Unmarried','Married','Widowed','Divorced','Separated'].map(n=>`<option ${v.marital===n?'selected':''}>${esc(n)}</option>`).join('')}</select><select class="input" id="lifeFilter" aria-label="Filter by life status"><option value="">All life statuses</option><option value="Alive" ${v.life==='Alive'?'selected':''}>Living only</option><option value="Deceased" ${v.life==='Deceased'?'selected':''}>In memory</option></select>`:''}`:''}
     ${key === 'members' && canEdit() ? '<button class="btn btn-sm" data-act="heads">Add missing family heads</button>' : ''}    ${isAdmin() ? `<button class="btn btn-sm" data-act="cols">Columns</button>` : ''}
     ${key==='users' && isAdmin() ? '<button class="btn btn-sm btn-primary" data-act="loginopts">Login / OTP options</button>' : ''}
     ${isAdmin() && ['families','members'].includes(key) && all.some(r=>!malNameTidy_(r.Surname)) ? '<button class="btn btn-sm btn-primary" data-act="surnameReview">Review '+all.filter(r=>!malNameTidy_(r.Surname)).length+' missing surnames</button>' : ''}
@@ -5206,7 +5227,7 @@ function renderModule(key){
   }
   const ff = $('#famFilter');
   if(ff) ff.onchange = () => { v.fam = ff.value; renderModule(key); };
-  [['surnameFilter','surname'],['sahiFilter','locality'],['residenceFilter','residence'],['lifeFilter','life']].forEach(([id,prop])=>{
+  [['surnameFilter','surname'],['sahiFilter','locality'],['residenceFilter','residence'],['maritalFilter','marital'],['lifeFilter','life']].forEach(([id,prop])=>{
     const input=document.getElementById(id);if(input)input.onchange=()=>{v[prop]=input.value;renderModule(key);};
   });
   $('#main').querySelectorAll('th[data-sort]').forEach(th => th.onclick = (event) => {
@@ -5788,14 +5809,14 @@ function fieldHtml(key, f, value, editing, rec){
       input = `<input class="input" id="${id}" value="${esc(val)}" ${f.ro ? 'readonly' : ''}>`;
   }
   if(f.ro && f.t === 'money') input = `<input class="input tnum" id="${id}" value="${esc(val)}" readonly>`;
-  return `<div class="${wide}"><label class="lbl" for="${id}">${esc(visibleLabel)}${req}</label>${input}
+  return `<div class="${wide}" ${key==='members'&&f.n==='Spouse Name'?'data-marital-spouse-field="yes"':''}><label class="lbl" for="${id}">${esc(visibleLabel)}${req}</label>${input}
           ${f.hint ? `<div class="fieldnote">${esc(f.hint)}</div>` : ''}</div>`;
 }
 
 function fid(f){ return 'f_' + f.n.replace(/[^a-z0-9]/gi, '_'); }
 function readField(f){ const el = document.getElementById(fid(f)); return el ? el.value : ''; }
 
-function wireForm(key, rec){
+function wireForm(key, rec, editing){
   const m = MODULES[key];
   const famEl = $('#formGrid').querySelector('[data-role="family"]');
   const memEl = $('#formGrid').querySelector('[data-role="member"]');
@@ -5825,7 +5846,18 @@ function wireForm(key, rec){
     const outside=['Current City','Current District','Current State','Current Country','Outside Address'];
     function toggle(){const isOutside=status && status.value && status.value!=='Living in Malipatana';
       outside.forEach(name=>{const el=document.getElementById(fid({n:name}));if(el)el.closest('div').hidden=!isOutside;});}
-    if(status){if(!status.value)status.value='Living in Malipatana';status.addEventListener('change',toggle);toggle();}
+    if(status){if(!status.value&&!editing)status.value='Living in Malipatana';status.addEventListener('change',toggle);toggle();}
+    const marital=document.getElementById('f_Marital_Status');
+    const spouseRow=document.querySelector('#formGrid [data-marital-spouse-field="yes"]');
+    const spouse=document.getElementById('f_Spouse_Name');
+    if(marital&&spouseRow){
+      const adjustMarital=()=>{
+        const v=String(marital.value||'');
+        // Preserve legacy spouse information even when the status has not been verified.
+        spouseRow.hidden=!['Married','Widowed','Divorced','Separated'].includes(v)&&!(spouse&&spouse.value.trim());
+      };
+      marital.addEventListener('change',adjustMarital);adjustMarital();
+    }
   }
   wireFormKeys(key, rec);
 
@@ -5875,13 +5907,16 @@ function wireForm(key, rec){
   if(dobField){
     const dob = document.getElementById(fid(dobField));
     const ageEl = document.getElementById('f_Age');
-    if(dob && ageEl) dob.addEventListener('change', () => {
-      if(!dob.value) return;
-      const b = new Date(dob.value), n = new Date();
-      let a = n.getFullYear() - b.getFullYear();
-      if(n < new Date(n.getFullYear(), b.getMonth(), b.getDate())) a--;
-      if(a >= 0 && a < 130) ageEl.value = a;
-    });
+    if(dob && ageEl && key==='members'){
+      dob.max=today();
+      const notice=document.createElement('div');notice.className='fieldnote';notice.id='malAgeInfo';ageEl.parentNode.appendChild(notice);
+      const sync=()=>{
+        if(dob.value){const parts=dob.value.split('-').map(Number), now=new Date();let a=now.getFullYear()-parts[0];if(now.getMonth()+1<parts[1]||(now.getMonth()+1===parts[1]&&now.getDate()<parts[2]))a--;
+          ageEl.readOnly=true;ageEl.value=a>=0&&a<=120?a:'';notice.textContent='Calculated automatically from DOB.';
+        }else{ageEl.readOnly=false;notice.textContent='DOB unknown? Enter approximate age in years. It will be marked (Est.) and recorded with today’s date.';}
+      };
+      dob.addEventListener('change',sync);sync();
+    }
   }
 
   if(m.fields.some(f => f.calc)){
@@ -6593,6 +6628,11 @@ function openProfile(id){
                  (DB.medical || []).filter(x => String(x['Family ID']).trim() === String(id).trim()).reduce((a, r) => a + num(r['Assistance']), 0) +
                  (DB.education || []).filter(x => String(x['Family ID']).trim() === String(id).trim()).reduce((a, r) => a + num(r['Village Assistance']), 0);
   const given = give.reduce((a, r) => a + num(r['Amount']), 0);
+  const alive=mem.filter(m=>!isDeceased(m));
+  const livingHere=alive.filter(m=>String(m['Residence Status']||'')==='Living in Malipatana').length;
+  const awayTemp=alive.filter(m=>String(m['Residence Status']||'')==='Outside temporarily').length;
+  const settledAway=alive.filter(m=>String(m['Residence Status']||'')==='Shifted permanently').length;
+  const unknownHome=alive.length-livingHere-awayTemp-settledAway;
   const parentId = String(f['Parent Family ID'] || '').trim();
   const parent = parentId ? (DB.families || []).find(x => String(x['Family ID']).trim() === parentId) : null;
   const subs = (DB.families || []).filter(x => String(x['Parent Family ID'] || '').trim() === String(id).trim());
@@ -6607,13 +6647,14 @@ function openProfile(id){
     </header>
     <div class="body">
       <div class="strip" style="margin-top:0">
-        <div><div class="k">Members</div><div class="v tnum">${mem.length}</div></div>
+        <div><div class="k">Registered living</div><div class="v tnum">${alive.length}</div></div><div><div class="k">Living in village</div><div class="v tnum">${livingHere}</div></div>
         <div><div class="k">Contributed</div><div class="v tnum" style="font-size:17px">${money(given)}</div></div>
         <div><div class="k">Help received</div><div class="v tnum" style="font-size:17px">${money(helped)}</div></div>
         <div><div class="k">Cases</div><div class="v tnum">${cases.length}</div></div>
         <div><div class="k">Support</div><div class="v tnum">${sup.filter(x => String(x['Active']).toLowerCase() !== 'no').length}</div></div>
         <div><div class="k">Status</div><div class="v" style="font-size:15px">${esc(f['Family Status'] || 'Active')}</div></div>
       </div>
+      <div class="subnote">Living family connections: ${alive.length}. Currently in village: ${livingHere}; temporarily away: ${awayTemp}; settled outside: ${settledAway}; residence to verify: ${unknownHome}. Members remain linked to the family regardless of marriage.</div>
       ${parent ? `<div class="subnote">Subfamily of <button class="linkish" data-fam="${esc(parentId)}">${esc(parent['Family Head'] || parentId)}</button> · ${esc(parentId)}</div>` : ''}
       <div class="mal-subhead"><h4>Subfamilies <span class="muted small">${subs.length} · ${subMembers} members in all</span></h4>
         ${canEdit()?`<button class="btn btn-primary btn-sm" data-addsub="${esc(id)}">+ Add subfamily</button>`:''}</div>
@@ -6640,13 +6681,13 @@ function openProfile(id){
       <h4 style="font-family:var(--display);margin:20px 0 8px;font-size:16px;display:flex;align-items:center;gap:10px">Members
         ${canEdit() ? `<button class="btn btn-sm" data-roster="${esc(id)}" style="font-weight:600">${mem.length ? 'Edit the list' : '+ Add the household'}</button>` : ''}</h4>
       ${mem.length ? `<div class="tablewrap" style="max-height:none"><table class="grid">
-        <thead><tr><th></th><th>ID</th><th>Name</th><th>Relation</th><th class="num">Age</th><th>Occupation</th><th class="num">Income</th><th></th></tr></thead>
+        <thead><tr><th></th><th>ID</th><th>Name</th><th>Relation</th><th>Marital</th><th>Residence</th><th class="num">Age</th><th>Occupation</th><th class="num">Income</th><th></th></tr></thead>
         <tbody>${mem.map(x => `<tr><td data-label="" class="photocell">${
             String(x['Photo'] || '').trim()
               ? `<span class="cellav"><img data-srcs="${esc(photoSrcs(x['Photo'], 120).join('|'))}" alt="${esc(x['Name'] || '')}" loading="lazy"></span>`
               : `<span class="cellav none">${esc(initials(x['Name']))}</span>`
           }</td><td data-label="ID">${esc(x['Member ID'])}</td><td data-label="Name">${esc(x['Name'])}</td>
-          <td data-label="Relation">${esc(x['Relation to Family Head'])}</td><td class="num" data-label="Age">${esc(x['Age'])}</td>
+          <td data-label="Relation">${esc(x['Relation to Family Head'])}</td><td data-label="Marital">${esc(x['Marital Status']||'Unknown')}</td><td data-label="Residence">${esc(x['Residence Status']||'Not verified')}</td><td class="num" data-label="Age">${esc(x['Age'])}</td>
           <td data-label="Occupation">${esc(x['Occupation'])}</td><td class="num" data-label="Income">${x['Monthly Income'] ? money(x['Monthly Income']) : ''}</td>
           <td class="acts"><button class="btn btn-sm" data-member="${esc(x['Member ID'])}">View</button></td></tr>`).join('')}</tbody>
       </table></div>` : `<div class="subnote">No members recorded yet.${canEdit() ? ' Use <b>+ Add the household</b> above to put the whole family in at once — one line per person.' : ''}</div>`}
@@ -7339,7 +7380,7 @@ const isDeceased = r => String(r['Life Status'] || '').trim().toLowerCase() === 
 const COUNTED = {
   'Total Members': list => list.length,
   'Earning Members': list => list.filter(r => String(r['Earning Member'] || '').trim().toUpperCase() === 'YES').length,
-  'Children': list => list.filter(r => { const a = num(r['Age']); return a > 0 && a < 18; }).length,
+  'Children': list => list.filter(r => { const v=r['Age']; return v!=='' && v!=null && num(v)>=0 && num(v)<18; }).length,
   'Elderly': list => list.filter(r => num(r['Age']) >= 60).length
 };
 function familyCount(famId, col){
@@ -8087,6 +8128,12 @@ function openMember(id){
           <dl class="dlgrid">
             ${line('Relation', x['Relation to Family Head'])}
             ${line('Gender', x['Gender'])}
+            ${line('Father', x['Father Name'])}
+            ${line('Mother', x['Mother Name'])}
+            ${line('Marital status', x['Marital Status']||'Not recorded')}
+            ${line('Spouse name', x['Spouse Name'])}
+            ${line('Residence', x['Residence Status']||'Not verified')}
+            ${String(x['Residence Status']||'')!=='Living in Malipatana'?line('Current place', [x['Current City'],x['Current District'],x['Current State'],x['Current Country']].filter(Boolean).join(', ')):''}
             ${line('Age', x['Age'])}
             ${line('Date of birth', x['Date of Birth'] ? fmtDate(x['Date of Birth']) : '')}
             ${line('Education', x['Education'])}
@@ -8331,14 +8378,17 @@ function applyLiveAges(db){
   const s = db.summary;
   if(s){
     const lv = db.members.filter(r => !isDeceased(r));
-    s.children = lv.filter(r => String(r['Relation to Family Head'] || '').toLowerCase().includes('child') || (num(r['Age']) > 0 && num(r['Age']) < 18)).length;
+    s.children = lv.filter(r => r['Age']!=='' && r['Age']!=null && num(r['Age'])>=0 && num(r['Age'])<18).length;
     s.elderly = lv.filter(r => num(r['Age']) >= 60).length;
   }
   return db;
 }
 function stampAge(rec){
-  if(rec['Date of Birth']) rec['Age As On'] = '';
-  else rec['Age As On'] = (String(rec['Age'] ?? '') !== '' && !isDeceased(rec)) ? today() : '';
+  if(rec['Date of Birth']){
+    rec['Age As On']='';rec['Age Source']='DOB';
+  }else if(String(rec['Age']??'').trim()!==''&&!isDeceased(rec)){
+    rec['Age As On']=today();rec['Age Source']='Estimated';
+  }else{rec['Age As On']='';rec['Age Source']='';}
 }
 const _load = load;
 load = async function(){ const d = await _load(); applyLiveAges(DB); return d; };
@@ -8355,7 +8405,7 @@ const _ageField = MODULES.members.fields.find(f => f.n === 'Age');
 if(_ageField) _ageField.hint = 'Give the date of birth, or just the age. The age then grows by itself every year.';
 
 /* ---- family tree (FE V2.9) ---- */
-MODULES.members.fields.push({ n:'Father ID', t:'person' }, { n:'Mother ID', t:'person' }, { n:'Spouse ID', t:'person' }, { n:'Age As On', t:'date', hidden:true });
+MODULES.members.fields.push({ n:'Father ID', t:'person' }, { n:'Mother ID', t:'person' }, { n:'Spouse ID', t:'person' }, { n:'Age As On', t:'date', hidden:true }, { n:'Age Source', t:'text', hidden:true });
 const _fieldHtml = fieldHtml;
 fieldHtml = function(key, f, value, editing, rec){
   if(f.t !== 'person') return _fieldHtml(key, f, value, editing, rec);
@@ -10203,7 +10253,12 @@ function qualityScan(families,members){
     else if(!given||!surname)add('members',row,'member_name_split','review',!surname?'Surname not recorded':'Given name not separated',name?'Keep the existing full name; fill Given Name and Surname after reviewing.':'Complete the separate name fields.');
     else if(malNameHasRepeatedSurname_(given,surname))add('members',row,'name_repeated_surname','review','Surname appears twice','Given Name already ends with the Surname. Open Correct and remove the repeated surname.');
     if(qNorm(row['Life Status'])==='deceased'&&!qTrim(row['Date of Death']))add('members',row,'death_date_missing','optional','Date of death not entered','Add the date if it is known; do not guess.');
+    const marital=qNorm(row['Marital Status']);
+    if(!marital)add('members',row,'marital_unverified','optional','Marital status not recorded','Select Married, Unmarried, Widowed, Divorced, Separated or Unknown; do not guess.');
+    if(marital==='unmarried'&&qTrim(row['Spouse Name']))add('members',row,'spouse_conflict','review','Unmarried with spouse name saved','Check marital status and spouse information; no name has been erased.');
+    if(marital==='married'&&!qTrim(row['Spouse Name']))add('members',row,'spouse_missing','optional','Spouse name not entered','Enter if known; do not guess.');
     const outside=qNorm(row['Residence Status']);
+    if(!outside)add('members',row,'residence_unverified','review','Residence not verified','Confirm whether this person lives in Malipatana, is temporarily away, or has permanently shifted.');
     if((outside==='outside temporarily'||outside==='shifted permanently') && !qTrim(row['Current City'])&&!qTrim(row['Current State']))
       add('members',row,'outside_location_missing','optional','Outside location not recorded','City and state are optional, but help organise families currently outside the village.');
   }
@@ -10341,6 +10396,147 @@ render=function(){
   if(PAGE===QUALITY_PAGE){buildNav();buildTabs();document.querySelectorAll('.nav').forEach(b=>b.classList.toggle('active',b.dataset.page===QUALITY_PAGE));qualityView();return;}
   return oldQualityRender();
 };
+})();
+
+/* Malipatana simple registration review — Administrator only. */
+(function(){
+'use strict';
+const REG_PAGE='registrationQueue';
+let regRequests=[],regStatusFilter='Pending',regChosen=null;
+const safe=v=>esc(String(v==null?'':v));
+const regFullName=r=>String(r['Full Name']||'').trim();
+const regNameParts=s=>{const words=String(s||'').trim().split(/\s+/).filter(Boolean);return {given:words.slice(0,-1).join(' '),surname:words.length>1?words.at(-1):''};};
+const oldNav=buildNav;
+buildNav=function(){
+ oldNav();if(!isAdmin()||!USER||!USER.token)return;
+ const side=document.getElementById('sidebar');if(!side||side.querySelector('[data-page="'+REG_PAGE+'"]'))return;
+ const b=document.createElement('button');b.className='nav';b.type='button';b.dataset.page=REG_PAGE;
+ b.innerHTML='<span class="ic">☷</span> Registration requests <span class="count" id="regCount">'+regRequests.filter(r=>r.Status==='Pending').length+'</span>';
+ const near=side.querySelector('[data-page="families"]');if(near)near.insertAdjacentElement('afterend',b);else side.append(b);
+ b.onclick=()=>go(REG_PAGE);
+};
+const oldRender=render;
+render=function(){
+ if(PAGE===REG_PAGE){buildNav();buildTabs();document.querySelectorAll('.nav').forEach(b=>b.classList.toggle('active',b.dataset.page===REG_PAGE));renderRegistrations();return;}
+ return oldRender();
+};
+async function loadRegistrations(){
+ const r=await api('registrationList',{limit:250});if(!r||!r.ok)throw Error(r&&r.error||'Could not load registrations.');
+ regRequests=r.requests||[];const chip=document.getElementById('regCount');if(chip)chip.textContent=regRequests.filter(x=>x.Status==='Pending').length;
+}
+function renderRegistrations(){
+ const main=document.getElementById('main');if(!main)return;
+ if(!isAdmin()){main.innerHTML='<div class="empty">Admin access required.</div>';return;}
+ const url=new URL('register.html',location.href).href;
+ main.innerHTML=`<div class="pagehead"><div><h2>Villager Registration Requests</h2><div class="sub">Villagers fill a simple form. You classify and approve each person before the official register changes.</div></div></div>
+ <section class="panel" style="padding:18px"><h3>Share this form with villagers</h3>
+ <p class="muted small">No login, Family ID or Subfamily selection required. Father and mother names, household references and photo are optional.</p>
+ <div class="reg-actions"><input id="regPublicURL" class="input" readonly value="${safe(url)}"><button id="regCopy" class="btn btn-primary">Copy link</button><a class="btn" target="_blank" rel="noopener noreferrer" href="${safe(url)}">Open form</a></div>
+ <div class="reg-actions"><label>Status <select class="input" id="regStatus"><option>Pending</option><option>Approved</option><option>Rejected</option><option>All</option></select></label><button class="btn" id="regReload">↻ Reload requests</button><span class="small muted" id="regSummary">Loading…</span></div>
+ <div id="regError" class="muted small"></div><div id="regRows"></div></section>`;
+ document.getElementById('regStatus').value=regStatusFilter;
+ document.getElementById('regCopy').onclick=()=>navigator.clipboard.writeText(url).then(()=>toast('Public form link copied','good')).catch(()=>toast('Copy the link from the text box','bad'));
+ document.getElementById('regReload').onclick=reload;
+ document.getElementById('regStatus').onchange=e=>{regStatusFilter=e.target.value;paintRows();};
+ reload();
+}
+async function reload(){
+ const message=document.getElementById('regError');if(message)message.textContent='Reading pending requests securely…';
+ try{await loadRegistrations();if(PAGE===REG_PAGE){if(message)message.textContent='';paintRows();}}
+ catch(e){if(message)message.textContent=e.message;}
+}
+function paintRows(){
+ const host=document.getElementById('regRows'),summary=document.getElementById('regSummary');if(!host)return;
+ let items=regRequests.filter(x=>regStatusFilter==='All'||x.Status===regStatusFilter);
+ summary.textContent=regRequests.filter(x=>x.Status==='Pending').length+' pending · '+items.length+' displayed';
+ if(!items.length){host.innerHTML='<div class="reg-empty">No requests in this section.</div>';return;}
+ host.innerHTML=items.map((r,i)=>`<div class="reg-item" data-reg-id="${safe(r['Request ID'])}"><div class="reg-info">
+ <div class="reg-main">${safe(regFullName(r))} <span class="reg-state">${safe(r.Status)}</span></div>
+ <div class="small muted">${safe(r['Request ID'])} · ${safe(r['Submitted At'])}</div>
+ <div class="small">${r['Father Name']?'Father: '+safe(r['Father Name'])+' · ':''}${r['Mother Name']?'Mother: '+safe(r['Mother Name'])+' · ':''}${safe(r['Village Locality']||'Locality not entered')}</div>
+ ${r.Photo?'<div class="small">📷 Photo attached privately</div>':''}</div><button class="btn btn-primary btn-sm" data-reg-review="${safe(r['Request ID'])}">Review</button></div>`).join('');
+ host.querySelectorAll('[data-reg-review]').forEach(btn=>btn.onclick=()=>reviewRequest(btn.dataset.regReview));
+}
+function reviewRequest(id){
+ const r=regRequests.find(x=>String(x['Request ID'])===String(id));if(!r)return;
+ regChosen=r;
+ const part=regNameParts(regFullName(r));
+ const famList=(DB&&DB.families||[]).slice().sort((a,b)=>String(a['Family Head']||'').localeCompare(String(b['Family Head']||'')));
+ const options='<option value="">Select existing family…</option>'+famList.map(f=>`<option value="${safe(f['Family ID'])}">${safe(f['Family Head'])} · ${safe(f['Family ID'])}${f['Village Locality']?' · '+safe(f['Village Locality']):''}</option>`).join('');
+ const duplicates=(DB&&DB.members||[]).filter(m=>String(m.Name||'').trim().toLowerCase()===regFullName(r).toLowerCase());
+ const parent=String(r['Household Contact']||'');
+ const familyGuess=famList.find(f=>String(f['Family Head']||'').toLowerCase()===parent.toLowerCase());
+ const existing=r.Status!=='Pending';
+ openModal(`<header><h3>Review village registration · ${safe(r['Request ID'])}</h3><div class="sp"></div><button class="btn btn-sm" onclick="closeModal()">Close</button></header>
+ <div class="body"><p class="reg-tip">The villager did not choose a Family/Subfamily/Member category. <b>Admin makes the classification.</b> Original submission remains in the pending register for audit.</p>
+ <div class="reg-detail"><b>Submitted full name:</b> ${safe(regFullName(r))}<br>
+ <b>Father:</b> ${safe(r['Father Name']||'—')} · <b>Mother:</b> ${safe(r['Mother Name']||'—')}<br>
+ <b>Marital:</b> ${safe(r['Marital Status']||'Not reported')} · <b>Spouse:</b> ${safe(r['Spouse Name']||'—')} · <b>Gender:</b> ${safe(r.Gender||'—')} · <b>DOB:</b> ${safe(r['Date of Birth']||'—')} · <b>Approx. age:</b> ${safe(r['Approximate Age']!==''&&r['Approximate Age']!=null?r['Approximate Age']+' (Est.)':'—')}<br>
+ <b>Sahi:</b> ${safe(r['Village Locality']||'—')} · <b>Mobile:</b> ${safe(r.Mobile||'—')}<br>
+ <b>Household contact:</b> ${safe(r['Household Contact']||'—')} · <b>Relationship:</b> ${safe(r['Relationship Hint']||'—')}<br>
+ <b>Current residence:</b> ${safe(r['Residence Status']||'—')} ${safe(r['Current Place']||'')}<br>
+ <b>Education:</b> ${safe(r.Education||'—')} · <b>Occupation:</b> ${safe(r.Occupation||'—')}<br>
+ <b>Other household names:</b> ${safe(r['Other Household Members']||'—')}<br>
+ <b>Submitted by:</b> ${safe(r['Submitted By']||'—')} · <b>Notes:</b> ${safe(r.Remarks||'—')}
+ </div>
+ ${duplicates.length?`<div class="reg-caution">⚠ ${duplicates.length} official Member record(s) already show this name. Check for a duplicate before approving.</div>`:''}
+ ${r.Photo?`<div class="reg-photo"><button class="btn btn-sm" id="regShowPhoto">Show private photo thumbnail</button><div id="regPhotoPreview"></div></div>`:''}
+ <div class="reg-fields"><label>Given Name(s) — verify<input id="regGiven" class="input" value="${safe(part.given)}" ${existing?'disabled':''}></label>
+ <label>Approximate age (when DOB not known)<input id="regApproxAge" class="input" type="number" min="0" max="120" step="1" value="${safe(r['Approximate Age']??'')}" ${existing?'disabled':''} ${r['Date of Birth']?'disabled':''}></label>
+ <label>Surname — verify<input id="regSurname" class="input" value="${safe(part.surname)}" ${existing?'disabled':''}></label>
+ <label>Marital status<select id="regMarital" class="input" ${existing?'disabled':''}>${['','Unknown','Unmarried','Married','Widowed','Divorced','Separated'].map(n=>`<option value="${safe(n)}" ${n===String(r['Marital Status']||'')?'selected':''}>${safe(n||'Not reported')}</option>`).join('')}</select></label>
+ <label id="regSpouseRow">Spouse name (if applicable)<input id="regSpouse" class="input" value="${safe(r['Spouse Name']||'')}" ${existing?'disabled':''}></label>
+ <label>Residence — verified by Admin<select id="regResidence" class="input" ${existing?'disabled':''}>${['','Living in Malipatana','Outside temporarily','Shifted permanently'].map(n=>`<option value="${safe(n)}" ${n===String(r['Residence Status']||'')?'selected':''}>${safe(n||'Choose residence')}</option>`).join('')}</select></label>
+ <label>Village Locality / Sahi<input id="regLocality class="input" value="${safe(r['Village Locality']||'')}" ${existing?'disabled':''}></label>
+ <label>How to register this person<select id="regKind" class="input" ${existing?'disabled':''}>
+ <option value="member">Member of an existing family</option><option value="family">Head of a new main family</option><option value="subfamily">Head of a new subfamily</option></select></label>
+ <label class="reg-span" id="regFamilyRow">Existing family (or parent family)<select id="regFamily" class="input" ${existing?'disabled':''}>${options}</select></label>
+ <label class="reg-span" id="regRelationRow">Relationship to family head<input id="regRelation" class="input" value="${safe(r['Relationship Hint']||'')}" ${existing?'disabled':''}></label>
+ <label class="reg-span">Admin review notes<textarea id="regNote" class="input" rows="3" ${existing?'disabled':''}>${safe(r['Review Notes']||'')}</textarea></label></div>
+ ${existing?`<div class="reg-tip">This request is ${safe(r.Status)}. Official IDs: Family ${safe(r['Assigned Family ID']||'—')}, Member ${safe(r['Assigned Member ID']||'—')}.</div>`:''}
+ <div id="regDecisionError" class="reg-caution" style="display:none"></div></div>
+ <footer>${!existing?'<button class="btn" id="regHold">Save review note</button><button class="btn btn-danger" id="regReject">Reject</button><button class="btn btn-primary" id="regApprove">Approve & add to register</button>':''}</footer>`);
+ const famEl=document.getElementById('regFamily'),kindEl=document.getElementById('regKind');
+ if(familyGuess)famEl.value=familyGuess['Family ID'];
+ const adjust=()=>{document.getElementById('regFamilyRow').style.display=kindEl.value==='family'?'none':'';document.getElementById('regRelationRow').style.display=kindEl.value==='member'?'':'none';};
+ kindEl.onchange=adjust;adjust();
+ const mr=document.getElementById('regMarital'),sr=document.getElementById('regSpouseRow');
+ if(mr&&sr){const toggle=()=>{sr.hidden=!['Married','Widowed','Divorced','Separated'].includes(mr.value)&&!document.getElementById('regSpouse').value.trim()};mr.onchange=toggle;toggle();}
+ if(r.Photo)document.getElementById('regShowPhoto').onclick=async()=>{
+  const area=document.getElementById('regPhotoPreview');area.textContent='Loading private thumbnail…';
+  try{const result=await api('registrationThumbnail',{id:r['Request ID']});
+   if(!result||!result.ok)throw Error(result.error||'Could not load photo');
+   const pic=document.createElement('img');pic.src=result.data;pic.alt='Private registration photo';pic.style.cssText='max-width:210px;max-height:210px;object-fit:contain;border-radius:12px;margin-top:10px';area.replaceChildren(pic);
+  }catch(e){area.textContent=e.message;}
+ };
+ if(existing)return;
+ const decide=async kind=>{
+  const id=r['Request ID'],given=document.getElementById('regGiven').value.trim(),surname=document.getElementById('regSurname').value.trim(),
+   familyId=document.getElementById('regFamily').value,locality=document.getElementById('regLocality').value,
+   maritalStatus=document.getElementById('regMarital').value,spouseName=document.getElementById('regSpouse').value,
+   residenceStatus=document.getElementById('regResidence').value,
+   relation=document.getElementById('regRelation').value,note=document.getElementById('regNote').value,approxAge=document.getElementById('regApproxAge').value;
+  if(!['reject','hold'].includes(kind)){
+   if(!residenceStatus){document.getElementById('regDecisionError').style.display='block';document.getElementById('regDecisionError').textContent='Confirm the residence status before approval to avoid incorrect village population counts.';return;}
+   if(!given||!surname){document.getElementById('regDecisionError').style.display='block';document.getElementById('regDecisionError').textContent='Verify both Given Name(s) and Surname.';return;}
+   if((kind==='subfamily'||kind==='member')&&!familyId){document.getElementById('regDecisionError').style.display='block';document.getElementById('regDecisionError').textContent='Please select an existing family.';return;}
+   if(!confirm('Approve as '+(kind==='family'?'new main family':kind==='subfamily'?'new subfamily':'member of existing family')+'? The official register will change.'))return;
+  }else if(kind==='reject'&&!confirm('Reject this request? It will not enter the official register.'))return;
+  const buttons=Array.from(document.querySelectorAll('#modal footer button'));buttons.forEach(x=>x.disabled=true);
+  const err=document.getElementById('regDecisionError');if(err){err.style.display='block';err.textContent='Checking and saving…';}
+  try{
+   const result=await api('registrationDecide',{id,kind,given,surname,familyId,locality,relation,note,maritalStatus,spouseName,residenceStatus,approxAge});
+   if(!result||!result.ok)throw Error(result&&result.error||'Review action failed');
+   closeModal();toast(result.message||'Registration reviewed','good');
+   // This refreshes the official registers from Google Sheets, not a local copy.
+   await refresh(true);
+   if(PAGE===REG_PAGE)await reload();
+  }catch(e){if(err){err.textContent=e.message;err.style.display='block';}buttons.forEach(x=>x.disabled=false);}
+ };
+ document.getElementById('regHold').onclick=()=>decide('hold');
+ document.getElementById('regReject').onclick=()=>decide('reject');
+ document.getElementById('regApprove').onclick=()=>decide(document.getElementById('regKind').value);
+}
 })();
 
 </script>
