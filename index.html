@@ -1926,7 +1926,7 @@ body.modalOpen #stickyLayer{opacity:.12;pointer-events:none;filter:saturate(.4)}
    ========================================================================= */
 const CONFIG = {
   API_URL: 'https://script.google.com/macros/s/AKfycbyfxff3MVt3Kw_CA_0aYD477nrAcWXshb9hex1LM_hl62tlrNiX5bGWgsf0Vw73sr-gbg/exec',
-  VERSION: 'FE V3.5.27',
+  VERSION: 'FE V3.5.28',
   EXPECTED_BACKEND: 'BE V1.8.21',
   IDLE_MINUTES: 30,
   /* Photo shown when no photo has been set in Settings.
@@ -5595,6 +5595,7 @@ function openFormInner(key, id, prefill){
     if(m.prefix) rec[m.idField] = nextId(key);
   }
   if(prefill) Object.keys(prefill).forEach(k => { rec[k] = prefill[k]; });
+  const originalSaved=existing ? Object.assign({},existing) : null;
 
   if(key==='members' && !existing && prefill && prefill['Family ID']){
     const family=(DB.families||[]).find(f=>String(f['Family ID'])===String(prefill['Family ID']));
@@ -5603,6 +5604,7 @@ function openFormInner(key, id, prefill){
   const namePrefill=existing?malNamePrefillExisting_(key,rec):null;
   const nameFixApplicable=existing && (key==='families'||key==='members');
   const nameSuggestion=nameFixApplicable?malNameSuggestLegacy_(rec,key):null;
+  const suggestedNameParts=namePrefill&&namePrefill.level==='suggested'?{given:rec['Given Name'],surname:rec.Surname}:null;
   const needsParts=nameFixApplicable&&(!malNameTidy_(rec['Given Name'])||!malNameTidy_(rec.Surname)||
     malNameHasRepeatedSurname_(rec['Given Name'],rec.Surname));
   const legacyName=needsParts ?
@@ -5639,7 +5641,7 @@ function openFormInner(key, id, prefill){
       <div class="formgrid" id="formGrid">${body}</div>
     </div>
     <footer>
-      <span class="keyhint"><kbd>Enter</kbd> next field · <kbd>Ctrl</kbd>+<kbd>Enter</kbd> save</span>
+      <span id="malFormSaveStatus" role="alert" aria-live="assertive" style="font-size:12px;font-weight:700;color:#a8341e;max-width:320px;flex:1"></span>
       <button class="btn" onclick="closeModal()">Cancel</button>
       ${existing ? '' : '<button class="btn" id="saveMoreBtn">Save and add another</button>'}
       ${key==='families'&&!existing&&rec['Parent Family ID']?'<button class="btn" id="malSaveAddMembers">Save &amp; add members</button>':''}
@@ -5660,7 +5662,7 @@ function openFormInner(key, id, prefill){
   }
   malWireDuplicatePreview_(key, rec, !!existing);
   wirePhotoFallbacks(document.getElementById('modal') || document);
-  $('#saveBtn').onclick = () => saveRecord(key, rec, !!existing);
+  $('#saveBtn').onclick = () => saveRecord(key, rec, !!existing, {originalSaved,suggestedNameParts});
   const more = $('#saveMoreBtn');
   if(more) more.onclick = () => saveRecord(key, rec, false, { again: true });
   const withMembers=$('#malSaveAddMembers');
@@ -6287,6 +6289,15 @@ function malWireDuplicatePreview_(key,record,isEditing){
     },450);
   });
 }
+/* Keep errors beside the Save button, which remains visible even when the
+   long mobile/desktop edit form is scrolled to its bottom. Also keep the top
+   error for keyboard users. */
+function malMemberSaveError_(message){
+  const top=document.getElementById('formErr');
+  if(top){top.classList.remove('hide');top.textContent=String(message||'Could not save changes.');}
+  const footer=document.getElementById('malFormSaveStatus');
+  if(footer)footer.textContent=String(message||'Could not save changes.');
+}
 async function saveRecord(key, rec, editing, opts){
   const m = MODULES[key];
   const originalId = editing ? String(rec[m.idField] ?? '').trim() : '';
@@ -6295,6 +6306,9 @@ async function saveRecord(key, rec, editing, opts){
     const famId = String(rec['Family ID'] || '').trim();
     Object.keys(COUNTED).forEach(c => { if(famId) rec[c] = String(familyCount(famId, c)); });
   }
+  const status=document.getElementById('malFormSaveStatus');
+  if(status)status.textContent='Checking details…';
+  const oldError=document.getElementById('formErr');if(oldError)oldError.classList.add('hide');
   const out = Object.assign({}, rec);
   const problems = [];
   FIELDS.forEach(f => {
@@ -6313,10 +6327,24 @@ async function saveRecord(key, rec, editing, opts){
       if(corrected){given=corrected;out['Given Name']=given;}
     }
     const confirmation=document.getElementById('malSurnameConfirm');
-    if(confirmation && !confirmation.checked)problems.push('Verify the suggested surname and tick the confirmation box before saving.');
-    if((given&&!surname)||(!given&&surname)||(!editing&&(!given||!surname)))
+    let keepLegacyName=false;
+    if(confirmation && !confirmation.checked){
+      const proposed=opts&&opts.suggestedNameParts;
+      const saved=opts&&opts.originalSaved;
+      const same=(a,b)=>malNameTidy_(a).toLocaleLowerCase('en-IN')===malNameTidy_(b).toLocaleLowerCase('en-IN');
+      if(editing&&saved&&proposed&&same(given,proposed.given)&&same(surname,proposed.surname)){
+        // Other edits (such as Father/Mother Name) must NEVER silently approve
+        // a suggested surname. Omit those columns entirely from the write.
+        delete out['Given Name'];delete out.Surname;
+        out[key==='families'?'Family Head':'Name']=saved[key==='families'?'Family Head':'Name'];
+        given='';surname='';keepLegacyName=true;
+      }else{
+        problems.push('Check the suggested surname and tick the confirmation box before changing the name.');
+      }
+    }
+    if(!keepLegacyName && ((given&&!surname)||(!given&&surname)||(!editing&&(!given||!surname))))
       problems.push('Please enter both Given Name and Surname.');
-    if(given&&surname){out[key==='families'?'Family Head':'Name']=(given+' '+surname).replace(/\s+/g,' ').trim();}
+    if(!keepLegacyName&&given&&surname){out[key==='families'?'Family Head':'Name']=(given+' '+surname).replace(/\s+/g,' ').trim();}
     if(key==='families'){
       const famId=String(out['Family ID']||rec['Family ID']||'').trim();
       const pid=String(out['Parent Family ID']||'').trim();
@@ -6330,7 +6358,8 @@ async function saveRecord(key, rec, editing, opts){
           problems.push('Chosen existing member name must match the new subfamily head. Use the selected person or cancel and create a new head.');
       }
     }
-    else if(editing){out[key==='families'?'Family Head':'Name']=rec[key==='families'?'Family Head':'Name'];}
+    // Name is generated from the edited Given Name and Surname. Do not reset
+    // it to the previous value when editing a Member (the old code did this).
     if(key==='members'){
       out['Residence Status']=out['Residence Status']||rec['Residence Status']||'Living in Malipatana';
       if(out['Residence Status']==='Living in Malipatana')for(const n of ['Current City','Current District','Current State','Current Country','Outside Address'])out[n]='';
@@ -6340,35 +6369,34 @@ async function saveRecord(key, rec, editing, opts){
     const firstBad = FIELDS.find(f => problems.some(p => String(p).indexOf(f.n) === 0));
     const el0 = firstBad ? document.getElementById(fid(firstBad)) : null;
     if(el0){ el0.classList.add('bad'); try { el0.focus(); } catch(e){} }
-    const box = $('#formErr');
-    box.classList.remove('hide');
-    box.textContent = problems[0];
+    malMemberSaveError_(problems[0]);
     return;
   }
   if(key === 'users' && !editing && !String(out['Password'] || '').trim()){
-    const box = $('#formErr'); box.classList.remove('hide'); box.textContent = 'Set a password for the new user.';
+    malMemberSaveError_('Set a password for the new user.');
     return;
   }
   const newId = String(out[m.idField] ?? '').trim();
   const idChanged = editing && originalId && newId && newId !== originalId;
   if((!editing || idChanged) && rowsOf(key).some(r => String(r[m.idField]).trim() === newId)){
-    const box = $('#formErr'); box.classList.remove('hide');
-    box.textContent = m.idField + ' ' + newId + ' already exists. Change it and try again.';
+    malMemberSaveError_(m.idField + ' ' + newId + ' already exists. Change it and try again.');
     return;
   }
   if(key==='families'||key==='members'){
     const note=$('#formErr');
-    if(!navigator.onLine){note.classList.remove('hide');note.textContent='Connect to the internet to check for duplicate family/member records before saving.';return;}
+    if(!navigator.onLine){malMemberSaveError_('Connect to the internet to check for duplicate family/member records before saving.');return;}
     try{
-      const check=await api('duplicateCheck',{sheet:m.sheet,record:JSON.stringify(malDupCurrentForm_(key,out)),excludeId:editing?originalId:''});
+      const check=await api('duplicateCheck',{sheet:m.sheet,record:JSON.stringify(out),excludeId:editing?originalId:''});
       malShowDupWarning_(check);
       if(!check||!check.ok)throw new Error(check&&check.error||'Could not validate duplicates.');
       if(check.level==='block'){
-        note.classList.remove('hide');note.textContent=check.message;
+        malMemberSaveError_(check.message);
         return;
       }
-      if(check.level==='warning'&&!window.confirm('Possible duplicate found.\n\n'+check.message+'\n\nConfirm this is a DIFFERENT person or household before saving.'))return;
-    }catch(e){note.classList.remove('hide');note.textContent='Duplicate check could not finish: '+String(e.message||e)+'. Please retry when connected.';return;}
+      if(check.level==='warning'&&!window.confirm('Possible duplicate found.\n\n'+check.message+'\n\nConfirm this is a DIFFERENT person or household before saving.')){
+        malMemberSaveError_('Save cancelled — confirm this is a different person or household before continuing.');return;
+      }
+    }catch(e){malMemberSaveError_('Duplicate check could not finish: '+String(e.message||e)+'. Please retry when connected.');return;}
   }
   if(m.fields.some(f => f.n === 'Last Updated')) out['Last Updated'] = today();
   out['Entered By'] = String(USER && (USER.name || USER.username) || '');
@@ -6378,13 +6406,14 @@ async function saveRecord(key, rec, editing, opts){
   const again = !!(opts && opts.again);
   const btn = (again ? $('#saveMoreBtn') : $('#saveBtn')) || $('#saveBtn');
   const label = btn.textContent;
+  if(status)status.textContent='Saving to register…';
   btn.disabled = true; btn.textContent = 'Saving…';
   try {
     if(idChanged) await renameId(key, originalId, newId);
     const r = await saveThrough('save', { sheet: m.sheet, record: JSON.stringify(out) },
       m.title + ' · ' + (out[m.idField] || ''));
     if(!r || !r.ok) throw new Error((r && r.error) || 'The sheet refused the save.');
-    upsertLocal(key, out);
+    upsertLocal(key, Object.assign({}, (opts&&opts.originalSaved)||{}, out));
     const pending = PENDING_PHOTO, removing = REMOVE_PHOTO;
     if(again) reopenBlank(key, out); else closeModal();
     toast(r.queued ? 'Saved on this phone — it will reach the sheet when the signal returns'
@@ -6416,10 +6445,31 @@ async function saveRecord(key, rec, editing, opts){
       else if(!editing && !again && fid2) setTimeout(() => openRoster(fid2), 260);
     }
   } catch(e){
-    const box = $('#formErr'); box.classList.remove('hide'); box.textContent = e.message;
+    malMemberSaveError_(e && e.message || 'The save did not complete.');
     btn.disabled = false; btn.textContent = label;
   }
 }
+
+/* Prevent two parallel saves from double-clicking the Save button. */
+const malSaveRecordUnwrapped_ = saveRecord;
+saveRecord = async function(key, rec, editing, opts){
+  const active=document.getElementById('saveBtn');
+  if(active&&active.dataset.malSaving==='1')return;
+  const buttons=['saveBtn','saveMoreBtn','malSaveAddMembers']
+    .map(id=>document.getElementById(id)).filter(Boolean);
+  const initial=buttons.map(b=>({el:b,label:b.textContent,disabled:b.disabled}));
+  if(active)active.dataset.malSaving='1';
+  buttons.forEach(b=>{b.disabled=true;});
+  try{return await malSaveRecordUnwrapped_(key,rec,editing,opts);}
+  catch(e){
+    console.error('Malipatana: member/form save stopped unexpectedly',e);
+    malMemberSaveError_(e&&e.message||'Unexpected save error. Please try again.');
+  }
+  finally{
+    if(active)delete active.dataset.malSaving;
+    initial.forEach(({el,label,disabled})=>{el.disabled=disabled;el.textContent=label;});
+  }
+};
 
 /* "Save and add another": a fresh blank form that keeps the fields a person
    would otherwise retype — family, date, category. */
@@ -8405,7 +8455,11 @@ const _ageField = MODULES.members.fields.find(f => f.n === 'Age');
 if(_ageField) _ageField.hint = 'Give the date of birth, or just the age. The age then grows by itself every year.';
 
 /* ---- family tree (FE V2.9) ---- */
-MODULES.members.fields.push({ n:'Father ID', t:'person' }, { n:'Mother ID', t:'person' }, { n:'Spouse ID', t:'person' }, { n:'Age As On', t:'date', hidden:true }, { n:'Age Source', t:'text', hidden:true });
+/* Relationship IDs are internal references for the optional family-tree feature.
+   Public/editable Member forms already ask Father Name, Mother Name and Spouse
+   Name: never show a second set of person-ID dropdowns. Keep the existing IDs
+   in the record so editing other details never erases family-tree links. */
+MODULES.members.fields.push({ n:'Father ID', t:'person', hidden:true }, { n:'Mother ID', t:'person', hidden:true }, { n:'Spouse ID', t:'person', hidden:true }, { n:'Age As On', t:'date', hidden:true }, { n:'Age Source', t:'text', hidden:true });
 const _fieldHtml = fieldHtml;
 fieldHtml = function(key, f, value, editing, rec){
   if(f.t !== 'person') return _fieldHtml(key, f, value, editing, rec);

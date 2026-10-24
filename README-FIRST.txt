@@ -1,36 +1,31 @@
-MALIPATANA — DOB AND ESTIMATED AGE UPDATE
-Frontend: FE V3.5.27
-Backend:  BE V1.8.21
+MALIPATANA — MEMBER FORM & SAVE FIX
+Frontend FE V3.5.28 | Existing Backend BE V1.8.21
 
-WHAT CHANGED
-- Public register.html: choose exact DOB, estimated age, or neither.
-- Shared-entry entry.html: same options for members.
-- Main dashboard index.html: Members table includes DOB + Age; age estimates display (Est.).
-- Admin registration review can verify/correct approximate age before approval.
-- Backend stores Age As On and Age Source, never invents a DOB for an estimate.
-- Children aged zero are now included correctly in age-group counts.
-- Existing members, approved registrations, photos, locality, surnames and House No records are preserved.
+Upload these 3 files to the root of sutartech/Malipatana on GitHub:
+  index.html  (updated; replaces the old index.html)
+  entry.html  (unchanged, retained for compatibility)
+  register.html (unchanged, retained for compatibility)
 
-HOW TO UPDATE — KEEP FRONTEND AND BACKEND SEPARATE
-1. BACK UP your current frontend and complete Code.gs first.
-2. In existing Google Apps Script project, REPLACE entire Code.gs with Code.gs from
-   the BACKEND zip. Save. Do not upload Code.gs to public GitHub.
-3. In Apps Script editor, run setupAgeTracking() ONCE. Authorize if prompted.
-   It ONLY adds missing 'Age As On'/'Age Source' columns in the existing Members
-   sheet and 'Approximate Age'/'Age Recorded On' in Registration Requests.
-   Do not create a new spreadsheet.
-4. Apps Script: Deploy -> Manage deployments -> Edit existing deployment ->
-   New version -> Deploy (keep the same /exec URL).
-5. Extract the FRONTEND zip. Replace index.html, entry.html, and register.html
-   in the existing sutartech/Malipatana GitHub repository and commit.
-6. Refresh browser. Confirm FE V3.5.27 and BE V1.8.21 display in login.
-7. Test one new public registration with exact DOB and one with age-only;
-   check Admin -> Registration requests, approve a test record, and verify
-   Members shows DOB blank + Age (Est.) for age-only entries.
+Do NOT upload Code.gs to GitHub. BE V1.8.21 remains unchanged and does
+not need a redeploy if it is already live.
 
-IMPORTANT
-- Age can be unknown: do not fabricate a DOB.
-- Historical records are not retroactively converted or overwritten.
-- No external Drive or spreadsheet is created by this update.
-- Local syntax and age-validation tests passed; live Google permissions,
-  saving, and approval must be verified after deployment.
+FIXES
+- Father Name and Mother Name remain visible once each.
+- Father ID, Mother ID and Spouse ID are hidden internal family-tree links,
+  not extra form questions. Existing values are NOT erased.
+- Changes to Given Name + Surname update the saved Full Name correctly.
+- Edit of other fields on old records no longer forces confirmation of a
+  proposed surname split; proposed names are NOT silently adopted.
+- Meaningful error messages are visible beside Save in the form footer.
+- Save buttons prevent double submissions while checks/saving are active.
+- Uses same master spreadsheet; no new sheet, no migration.
+
+CHECK AFTER UPLOADING
+1. Login: confirm FE V3.5.28, BE V1.8.21.
+2. Open Members > Edit; verify no Father ID/Mother ID fields.
+3. Modify a test member's Mother Name and save; reopen and verify.
+4. On another test member change Given Name then Save; check Full Name.
+5. If an error appears in red near Save, capture the exact message.
+
+Local Node JavaScript syntax and isolated save-data tests passed.
+Live connected saving against your Apps Script deployment has NOT been tested.
