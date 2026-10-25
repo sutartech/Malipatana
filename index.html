@@ -1734,6 +1734,13 @@ body.modalOpen #stickyLayer{opacity:.12;pointer-events:none;filter:saturate(.4)}
 <style>#formGrid [hidden], .reg-fields [hidden] {display:none!important}</style>
 
 <style id="mal-notice-links-css">.ntc .mal-notice-link,.noticeboard .mal-notice-link{color:#075f70;text-decoration:underline;text-underline-offset:3px;font-weight:700;overflow-wrap:anywhere}.ntc .mal-notice-link:hover,.noticeboard .mal-notice-link:hover{color:#ad441f}</style>
+<style>
+/* Malipatana FE 3.5.37: direct mobile camera and separate gallery photo buttons */
+.mal-photo-file-hidden{position:absolute!important;width:1px!important;height:1px!important;overflow:hidden!important;clip-path:inset(50%)!important;opacity:0!important;pointer-events:none!important}
+.mal-photo-action-buttons{display:flex;gap:9px;flex-wrap:wrap;margin:8px 0}
+.mal-photo-action-buttons button{min-height:44px}
+@media(max-width:480px){.photopick-btns .btn{min-height:44px}.mal-photo-action-buttons button{flex:1 1 150px}}
+</style>
 </head>
 <body>
 
@@ -1933,7 +1940,7 @@ body.modalOpen #stickyLayer{opacity:.12;pointer-events:none;filter:saturate(.4)}
    ========================================================================= */
 const CONFIG = {
   API_URL: 'https://script.google.com/macros/s/AKfycbyccN1ErYm-NsqnZOlhV9GSLMBr9998Yk7yfi-foOpcLloDw0Mb9SLPMxDp58wWcXqEHA/exec',
-  VERSION: 'FE V3.5.36',
+  VERSION: 'FE V3.5.37',
   EXPECTED_BACKEND: 'BE V1.8.25',
   IDLE_MINUTES: 30,
   /* Photo shown when no photo has been set in Settings.
@@ -5905,7 +5912,8 @@ function fieldHtml(key, f, value, editing, rec){
           <div class="photopick-side">
             <input type="file" accept="image/*" id="${id}_file" class="hide">
             <div class="photopick-btns">
-              <button type="button" class="btn btn-sm" id="${id}_pick">Choose or take photo</button>
+              <button type="button" class="btn btn-sm btn-primary" id="${id}_camera">📷 Take Photo</button>
+              <button type="button" class="btn btn-sm" id="${id}_pick">🖼 Choose from Gallery</button>
               <button type="button" class="btn btn-sm btn-danger ${u ? '' : 'hide'}" id="${id}_clear">Remove</button>
             </div>
             <div class="fieldnote">Saved privately in the correct register folder in Google Drive; original up to 20 MB and separate small preview.</div>
@@ -6023,7 +6031,9 @@ function wireForm(key, rec, editing){
     const clear = document.getElementById(base + '_clear');
     const hidden = document.getElementById(base);
     const pick = document.getElementById(base + '_pick');
-    if(pick) pick.onclick = () => fileEl.click();
+    const camera = document.getElementById(base + '_camera');
+    if(pick) pick.onclick = () => {fileEl.removeAttribute('capture');fileEl.click();};
+    if(camera) camera.onclick = () => {fileEl.setAttribute('capture','environment');fileEl.click();};
     if(hidden) hidden.oninput = () => {
       const v = hidden.value.trim();
       PENDING_PHOTO = null; REMOVE_PHOTO = false;
@@ -9933,6 +9943,17 @@ async function showEntryList(){
    only after an authenticated request. This never writes Drive IDs into GitHub. */
 window.malWirePhotoLibrary_=function(target){
   const btn=target.querySelector('#malPhotoUpload'),status=target.querySelector('#malPhotoUploadStatus');
+  const fileEl=target.querySelector('#malPhotoFile');
+  const camera=target.querySelector('#malPhotoCamera');
+  const gallery=target.querySelector('#malPhotoGalleryChoose');
+  if(fileEl&&camera&&gallery){
+    camera.onclick=()=>{fileEl.setAttribute('capture','environment');fileEl.click();};
+    gallery.onclick=()=>{fileEl.removeAttribute('capture');fileEl.click();};
+    fileEl.addEventListener('change',()=>{
+      const label=target.querySelector('#malPhotoPicked');
+      if(label)label.textContent=fileEl.files&&fileEl.files[0]?'Selected: '+fileEl.files[0].name:'No image selected';
+    });
+  }
   async function refreshGallery(){
     const gallery=target.querySelector('#malPhotoGallery');if(!gallery)return;
     try{
@@ -10022,7 +10043,7 @@ window.malWirePhotoLibrary_=function(target){
       '<div class="formgrid"><label class="lbl">Category<select class="input" id="malPhotoCategory"><option>Village</option><option>Events</option><option>Members</option><option>Community</option><option>Documents</option></select></label>'+
       '<label class="lbl">Subfolder<input class="input" id="malPhotoSub" value="General" maxlength="80"></label>'+
       '<label class="lbl wide">Photo title<input class="input" id="malPhotoTitle" placeholder="e.g. Raja Parba 2026" maxlength="80"></label>'+
-      '<label class="lbl wide">Choose original image (JPEG, PNG or WebP)<input class="input" id="malPhotoFile" type="file" accept="image/jpeg,image/png,image/webp"></label></div>'+
+      '<div class="wide"><label class="lbl" for="malPhotoFile">Photo (JPEG, PNG or WebP)</label><input class="mal-photo-file-hidden" id="malPhotoFile" type="file" accept="image/jpeg,image/png,image/webp"><div class="mal-photo-action-buttons"><button class="btn btn-primary" type="button" id="malPhotoCamera">📷 Take Photo</button><button class="btn" type="button" id="malPhotoGalleryChoose">🖼 Choose from Gallery</button></div><div class="fieldnote" id="malPhotoPicked">No image selected</div></div></div>'+
       '<button class="btn btn-primary" id="malPhotoUpload">Upload original + thumbnail</button><p class="muted small" id="malPhotoUploadStatus"></p>'+
       '<h4 style="margin-top:18px">Recent gallery</h4><div class="mal-photo-gallery" id="malPhotoGallery">Loading…</div></div></section>';
     if(Array.isArray(r.folders)&&r.folders.length){

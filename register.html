@@ -20,6 +20,12 @@ button{border:0;border-radius:11px;min-height:48px;padding:11px 16px;font-size:1
 button.primary{background:#106653;color:white;width:100%;font-size:17px}button.secondary{background:#e7f3ee;color:#135d48}button:disabled{opacity:.55;cursor:wait} #sendBtn{transition:opacity .15s} .next-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:13px} .next-actions button{flex:1 1 180px} #backgroundPhotoBanner{position:sticky;top:0;z-index:8;background:#fff8e8;border:1px solid #d9b469;padding:11px 15px;border-radius:9px;box-shadow:0 5px 18px #102f3c16;color:#63470f;font-size:13px}
 .photo{border:1px dashed #adcbb8;border-radius:13px;padding:15px;display:flex;gap:13px;align-items:center;background:#fafdfb}.photo img{width:74px;height:74px;border-radius:11px;object-fit:cover}.photo .picker{flex:1;min-width:0}.photo input{max-width:100%}
 #result{display:none;white-space:pre-wrap;border-radius:13px;padding:15px;margin-top:12px;font-size:14px;overflow-wrap:anywhere}#result.success{display:block;background:#e5f8ed;border:1px solid #a5d9b7}#result.error{display:block;background:#fff0ef;border:1px solid #f0c5c0}
+.mal-camera-file{position:absolute!important;width:1px!important;height:1px!important;overflow:hidden!important;clip-path:inset(50%)!important;opacity:0!important;pointer-events:none!important}
+.mal-camera-actions{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.mal-camera-actions button{flex:1 1 144px;min-height:48px;display:flex;align-items:center;justify-content:center;gap:7px;border:1px solid #b7dace;background:#e7f6ef;color:#105f4b;line-height:1.25}
+.mal-camera-actions button.mal-take{background:#106653;color:white;border-color:#106653}
+@media(max-width:370px){.photo{flex-wrap:wrap}.mal-camera-actions button{flex:1 1 100%}}
+
 #backgroundPhotoBanner[hidden],#publicSpouseField[hidden],#birthDateBlock[hidden],#birthAgeBlock[hidden],#publicSahiOtherRow[hidden]{display:none!important}#done{display:none}.consent{display:flex;gap:9px;align-items:flex-start;font-size:13px;line-height:1.5;color:#4e615a;margin-bottom:16px}.consent input{width:19px;height:19px;flex:none}
 .foot{text-align:center;margin-top:17px;color:#68796e;font-size:12px}a{color:#0c6657}
 .honeypot{position:absolute!important;left:-9000px!important;opacity:0;pointer-events:none}
@@ -59,7 +65,7 @@ button.primary{background:#106653;color:white;width:100%;font-size:17px}button.s
 <label class="field">Occupation<input name="occupation" maxlength="100" placeholder="e.g. Farmer, Student"></label></div>
 <label class="field">Filled by (if on another person's behalf)<input name="submittedBy" maxlength="130" placeholder="Your name"></label>
 <label class="field">Anything else you want the administrator to know<textarea name="note" maxlength="700"></textarea></label>
-<div class="photo"><img id="photoPreview" src="icon-180.png" alt="Selected photo preview"><div class="picker"><label class="field" style="margin:0">Photo (optional)<input id="photo" type="file" accept="image/jpeg,image/png,image/webp"><small>JPEG, PNG or WebP; maximum 20 MB. Stored privately and reviewed by Admin.</small></label></div></div>
+<div class="photo"><img id="photoPreview" src="icon-180.png" alt="Selected photo preview"><div class="picker"><div class="field" style="margin:0"><label for="photo">Photo (optional)</label><input id="photo" class="mal-camera-file" type="file" accept="image/jpeg,image/png,image/webp" aria-label="Selected photo"><div class="mal-camera-actions"><button type="button" class="mal-take" id="takeRegistrationPhoto">📷 Take Photo</button><button type="button" id="chooseRegistrationPhoto">🖼 Choose from Gallery</button></div><small>JPEG, PNG or WebP; maximum 20 MB. Photo is optional. Stored privately and reviewed by Admin.</small></div></div></div>
 </section>
 <section class="card"><h2>4. Submit for review</h2>
 <div class="consent"><input id="consent" type="checkbox" required><label for="consent">I have permission to submit these details and understand they will be seen by authorised village administrators before being added to the official register.</label></div>
@@ -190,6 +196,10 @@ async function uploadOptionalPhoto(photo,attempt,receipt){
  }catch(err){$('photoStatus').textContent='Personal details were received, but the photo was not confirmed: '+err.message+' Contact Admin with registration number '+receipt.id+'.';}
  finally{backgroundUploads--;updateHint()}
 }
+// Mobile camera: capture hint opens the rear camera on supporting browsers.
+// Gallery uses the exact same input, preserving the existing preview and upload logic.
+$('takeRegistrationPhoto').addEventListener('click',()=>{const input=$('photo');input.setAttribute('capture','environment');input.click();});
+$('chooseRegistrationPhoto').addEventListener('click',()=>{const input=$('photo');input.removeAttribute('capture');input.click();});
 $('photo').addEventListener('change',()=>{
  const f=$('photo').files[0];if(!f)return;
  if(!['image/jpeg','image/png','image/webp'].includes(f.type)||f.size>20*1024*1024){$('photo').value='';show('Please choose a JPEG, PNG or WebP photo under 20 MB.',false);return;}
