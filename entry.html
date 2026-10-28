@@ -350,7 +350,9 @@ function renderFamilyChoices(){
  updateVillageSuggestions();
  const list=$('familySelect'),parent=$('parentFamily');
  const prevParent=parent.value;
- list.innerHTML='<option value="">'+(familyOptionsLoading?'Loading families…':'Choose family')+'</option>';
+ list.replaceChildren();
+ if(malPermissions_?.family?.add)list.add(new Option('＋ Add New Family','__add_family__'));
+ list.add(new Option(familyOptionsLoading?'Loading families…':'— Choose existing family —',''));
  malSharedLocalityOptions_($('guestMemberSahi'),true);
  const selectedSahi=$('guestMemberSahi').value;
  parent.innerHTML='<option value="">Main family / none</option>';
@@ -363,6 +365,7 @@ function renderFamilyChoices(){
  });
  // If someone typed a valid Family ID manually, do not discard it.
  if(currentFamily && allKnownFamilies().some(f=>f.id===currentFamily))list.value=currentFamily;
+ else list.value='';
  $('familyId').value=currentFamily;
  void malSharedLoadParents_();
  if(prevParent && allKnownFamilies().some(f=>f.id===prevParent))parent.value=prevParent;
@@ -445,6 +448,15 @@ function showTab(tab){
 }
 $('familyTab').onclick=()=>showTab('family');$('memberTab').onclick=()=>showTab('member');
 $('familySelect').onchange=e=>{
+ if(e.target.value==='__add_family__'){
+  e.target.value='';
+  if(malPermissions_?.family?.add){
+   const wizard=$('malMemberFirst');
+   if(wizard&&!wizard.classList.contains('hidden'))document.dispatchEvent(new Event('mal:open-family-creation'));
+   else showTab('family');
+  }
+  return;
+ }
  currentFamily=e.target.value;$('familyId').value=currentFamily;
  const f=allKnownFamilies().find(x=>x.id===currentFamily);
  if(f&&f.surname&&!$('memberForm').elements.surname.value)$('memberForm').elements.surname.value=f.surname;
@@ -753,13 +765,16 @@ $('malExistingProposal').addEventListener('submit',async e=>{
  }
  function fillFamilies(){
   const previous=family.value;
-  family.replaceChildren(new Option('— Choose correct family —',''));
+  family.replaceChildren();
+  if(permissions().family?.add)family.add(new Option('＋ Add New Family','__add_family__'));
+  family.add(new Option('— Choose existing family —',''));
   const all=availableFamilies();
   for(const f of all){
    const text=f.head+(f.locality?' · '+f.locality:'')+' · '+f.id;
    family.add(new Option(text,f.id));
   }
   if(previous&&all.some(f=>f.id===previous))family.value=previous;
+  else family.value='';
   $('malFirstFamilyHelp').textContent=all.length?'Similar surnames are shown first. Select by family head and Sahi, not surname alone.':'No registered families are available. Add your family first.';
   const options=$('malFirstSahis');options.replaceChildren();
   [...new Set([...malApprovedSahis_,...all.map(f=>f.locality).filter(Boolean)])].sort().forEach(name=>{
@@ -858,6 +873,13 @@ $('malExistingProposal').addEventListener('submit',async e=>{
   $('malFirstHeadSurname').value=surname.value.trim();
   create.scrollIntoView({behavior:'smooth',block:'nearest'});
  }
+ family.addEventListener('change',()=>{
+  if(family.value==='__add_family__'){
+   family.value='';
+   showCreate();
+  }
+ });
+ document.addEventListener('mal:open-family-creation',showCreate);
  $('malFirstNewFamily').onclick=showCreate;
  $('malFirstBack').onclick=()=>{show(create,false);show(next,true);};
  function fillOriginalMember(){
