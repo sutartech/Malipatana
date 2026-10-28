@@ -693,7 +693,7 @@ $('malExistingProposal').addEventListener('submit',async e=>{
   document.body.classList.add('mal-member-first');
   panel.classList.remove('hidden');
   step('');
-  void loadFamilyOptions().then(fillFamilies).catch(()=>{});
+  void Promise.resolve(loadFamilyOptions()).then(fillFamilies).catch(()=>{});
  }
  new MutationObserver(showWizard).observe($('content'),{attributes:true,attributeFilter:['class']});
  $('malFirstCheck').onclick=async()=>{
