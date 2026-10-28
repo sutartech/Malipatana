@@ -180,8 +180,46 @@ function malLinkIso_(value){
 }
 function malLinkUrl_(key){const link=new URL('entry.html',location.href);link.searchParams.set('key',key);return link.href;}
 async function malLinkCopy_(url){
- try{await navigator.clipboard.writeText(url);toast('Link copied','good')}
- catch(e){window.prompt('Copy this link:',url)}
+ const value=String(url||'');
+ if(!value)return false;
+ if(navigator.clipboard&&typeof navigator.clipboard.writeText==='function'&&window.isSecureContext){
+  try{await navigator.clipboard.writeText(value);toast('Link copied','good');return true;}catch(e){}
+ }
+ const input=document.createElement('textarea');
+ input.value=value;input.setAttribute('readonly','');
+ input.style.cssText='position:fixed;top:0;left:0;width:2px;height:2px;opacity:0;z-index:-1';
+ document.body.appendChild(input);
+ let copied=false;
+ try{input.focus();input.select();input.setSelectionRange(0,input.value.length);copied=!!document.execCommand('copy');}
+ catch(e){}
+ finally{input.remove();}
+ if(copied)toast('Link copied','good');
+ return copied;
+}
+function malRevealSharedUrl_(button,url){
+ const card=button.closest('.mal-saved-link');
+ if(!card)return;
+ let holder=card.querySelector('.mal-link-copy-reveal');
+ if(!holder){
+  holder=document.createElement('div');holder.className='mal-link-copy-reveal';
+  holder.style.cssText='margin:11px 0;padding:12px;border:1px solid #b8d9ca;border-radius:10px;background:#f2fbf5;';
+  const label=document.createElement('label');label.textContent='Your existing shareable URL — select and copy';
+  label.style.cssText='display:block;font-weight:700;margin-bottom:7px';
+  const field=document.createElement('input');
+  field.type='text';field.readOnly=true;field.setAttribute('aria-label','Existing shared entry URL');
+  field.autocomplete='off';field.spellcheck=false;
+  field.style.cssText='width:100%;box-sizing:border-box;padding:11px;border:1px solid #aec7c0;border-radius:8px;font-size:14px';
+  field.addEventListener('focus',()=>field.select());
+  const controls=document.createElement('div');controls.style.cssText='display:flex;gap:8px;flex-wrap:wrap;margin-top:9px';
+  const copy=document.createElement('button');copy.type='button';copy.className='btn btn-primary btn-sm';copy.textContent='Copy URL';
+  copy.onclick=async()=>{const ok=await malLinkCopy_(field.value);if(!ok){field.focus();field.select();toast('Select the URL and press Ctrl+C or Cmd+C','bad');}};
+  const visit=document.createElement('a');visit.className='btn btn-sm';visit.textContent='Open link';visit.target='_blank';visit.rel='noopener noreferrer';visit.style.textDecoration='none';
+  controls.append(copy,visit);holder.append(label,field,controls);
+  button.closest('.mal-saved-link').append(holder);
+ }
+ const field=holder.querySelector('input'),visit=holder.querySelector('a');
+ field.value=url;visit.href=url;field.focus();field.select();
+ return holder;
 }
 
 const MAL_CATS_=[['family','Family'],['member','Member'],['expense','Expense']];
@@ -310,7 +348,14 @@ async function showEntryList(){
     return malLinkUrl_(result.key);
   };
   host.querySelectorAll('[data-link-copy]').forEach(b=>b.onclick=async()=>{
-    b.disabled=true;try{await malLinkCopy_(await retrieveUrl(b.dataset.linkCopy))}catch(e){toast(e.message,'bad')}finally{b.disabled=false}
+    b.disabled=true;
+    try{
+      const url=await retrieveUrl(b.dataset.linkCopy);
+      malRevealSharedUrl_(b,url);
+      const copied=await malLinkCopy_(url);
+      if(!copied)toast('URL displayed below. Tap Copy URL or select it manually.','bad');
+    }catch(e){toast('Cannot retrieve existing link: '+e.message,'bad');}
+    finally{b.disabled=false}
   });
   host.querySelectorAll('[data-link-share]').forEach(b=>b.onclick=async()=>{
     b.disabled=true;try{const url=await retrieveUrl(b.dataset.linkShare);
