@@ -61,17 +61,17 @@ body{margin:0;background:linear-gradient(145deg,#e9f7f3 0%,#fbfaf5 50%,#edf4f8 1
 @media(max-width:520px){.mal-action-grid{gap:8px}.mal-action-grid button{font-size:14px;padding:10px;min-height:92px}}
 </style>
 <section id="malQuickActions" class="box hidden" aria-label="Quick village entry actions">
-<h2>What would you like to do?</h2><p class="sub">No login needed. Choose an administrator-enabled action.</p>
+<h2>Village Registration Drive</h2><p class="sub">Search first to prevent duplicate family registrations. Add a missing family or member, or suggest corrections. No login required while the link is active.</p>
 <div class="mal-action-grid">
-<button type="button" data-mal-task="family">＋ Add family<small>Register a household</small></button>
-<button type="button" data-mal-task="member">＋ Add member<small>Select family and add member</small></button>
+<button type="button" data-mal-task="family">＋ New Family<small>Register a household not listed</small></button>
+<button type="button" data-mal-task="member">＋ Add Member<small>Add a missing family member</small></button>
 <button type="button" data-mal-task="expense">₹ Add expense<small>Record village or event expense</small></button>
-<button type="button" data-mal-task="modify">✎ Find &amp; modify<small>Search and propose corrections</small></button>
+<button type="button" data-mal-task="modify">⌕ Find &amp; Correct<small>Find records and submit corrections</small></button>
 </div><p class="privacy">Existing record changes are submitted for administrator approval. The link may be disabled or expired by Admin.</p>
 </section>
 <section id="malExistingRecords" class="box hidden" aria-labelledby="malExistingTitle">
- <h2 id="malExistingTitle">🔎 Find an existing record</h2>
- <p class="sub">Only Admin-approved categories appear here. Searching shows basic identification details, not private contacts, birthdays, incomes, personal photographs or full addresses.</p>
+ <h2 id="malExistingTitle">🔎 Find a family, member or expense</h2>
+ <p class="sub">Search by name or ID before creating a duplicate. If a record exists, select it to propose corrections for admin approval. Private information stays hidden.</p>
  <div class="grid"><label class="field">Category<select id="malExistingCategory"><option value="family">Families</option><option value="member">Members</option><option value="expense">Expenses</option></select></label>
  <label class="field">Search by name or ID (3+ letters)<input id="malExistingQuery" type="search" minlength="3" maxlength="70" placeholder="Type name or record number"></label></div>
  <div class="buttons"><button id="malExistingSearch" class="secondary" type="button">Search records</button></div>
