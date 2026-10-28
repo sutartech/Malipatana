@@ -86,6 +86,15 @@ body.mal-member-first.mal-step-expense #expenseForm{display:block!important}
 #malMemberFirst [hidden]{display:none!important}
 #malMemberFirst .mal-wizard-back{border:0;background:transparent;color:#386960;text-decoration:underline;padding:7px 0}
 #malMemberFirst .mal-wizard-summary{background:#edf8f3;border-radius:12px;padding:12px;margin-top:10px}
+#malMemberFirst .mal-existing-inline{display:grid;gap:10px}
+#malMemberFirst .mal-existing-field{border:1px solid #dde9e4;border-radius:12px;padding:11px 13px}
+#malMemberFirst .mal-existing-current{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+#malMemberFirst .mal-existing-current button{border:0;background:transparent;color:#096b60;font-weight:700;text-decoration:underline;cursor:pointer}
+#malMemberFirst .mal-existing-value{font-weight:700;color:#264d48;overflow-wrap:anywhere}
+#malMemberFirst .mal-existing-field .field{margin:8px 0 0}
+#malMemberFirst .mal-inline-more{margin:12px 0;padding:11px;border:1px solid #d7e8df;border-radius:12px}
+#malMemberFirst .mal-inline-more>summary{cursor:pointer;font-weight:700}
+#malMemberFirst .mal-inline-more .mal-wizard-grid{margin-top:12px}
 @media(max-width:520px){#malMemberFirst{padding:16px 14px}#malMemberFirst .mal-wizard-grid{gap:9px}#malMemberFirst .mal-wizard-grid input{font-size:16px;padding:9px}#malMemberFirst .mal-wizard-title{font-size:21px}}
 </style>
 <section id="malMemberFirst" class="box hidden" aria-label="Simple village member registration">
@@ -100,7 +109,20 @@ body.mal-member-first.mal-step-expense #expenseForm{display:block!important}
   <h3>Possible existing records</h3>
   <p class="sub">Check the name and village locality. People can have the same name.</p>
   <div id="malFirstMatchList"></div>
-  <div class="mal-wizard-actions"><button id="malFirstNotListed" type="button" class="secondary">None of these is me — Add new</button></div>
+  <div class="mal-wizard-actions"><button id="malFirstNotListed" type="button" class="secondary">Not me — register as new member</button></div>
+ </section>
+ <section id="malFirstUpdate" class="mal-wizard-step" hidden aria-label="Review and update existing member">
+  <h3 id="malFirstUpdateTitle">Your registered details</h3>
+  <p class="sub" id="malFirstUpdateHint">Check the details. Fill any missing blanks or choose Change beside information that needs correcting.</p>
+  <div id="malFirstUpdateStatus" class="mal-wizard-status" role="status" aria-live="polite"></div>
+  <form id="malFirstUpdateForm">
+   <div id="malFirstUpdateFields" class="mal-existing-inline"></div>
+   <label class="field" id="malFirstUpdatedBy">Submitted by (optional)<input name="submittedBy" maxlength="100" autocomplete="name" placeholder="Your name"></label>
+   <div class="mal-wizard-actions">
+    <button type="submit" id="malFirstUpdateSave" class="primary">Submit updated details</button>
+    <button type="button" id="malFirstUpdateBack" class="secondary">Back to name matches</button>
+   </div>
+  </form>
  </section>
  <section id="malFirstNew" class="mal-wizard-step" hidden aria-label="New member details">
   <h3>Not registered yet — add your details</h3>
@@ -112,6 +134,16 @@ body.mal-member-first.mal-step-expense #expenseForm{display:block!important}
    <label class="field">Gender (optional)<select id="malFirstGender"><option value="">Not specified</option><option>Male</option><option>Female</option><option>Other</option></select></label>
   </div>
   <label class="field">Approximate age (optional)<input id="malFirstAge" type="number" min="0" max="120" inputmode="numeric" step="1" placeholder="Only if known"></label>
+  <details class="mal-inline-more" id="malFirstOptional"><summary>Additional details (optional)</summary>
+   <div class="mal-wizard-grid">
+    <label class="field">Father's name<input id="malFirstFather" maxlength="100" placeholder="If known"></label>
+    <label class="field">Mother's name<input id="malFirstMother" maxlength="100" placeholder="If known"></label>
+    <label class="field">Mobile number<input id="malFirstPhone" maxlength="10" type="tel" inputmode="numeric" pattern="[0-9]{10}" placeholder="Optional"></label>
+    <label class="field">Education<select id="malFirstEducation"><option value="">Select (optional)</option><option>Illiterate</option><option>Primary</option><option>Class 10</option><option>Class 12</option><option>ITI/Diploma</option><option>Graduate</option><option>Post Graduate</option><option>Other</option></select></label>
+    <label class="field">Occupation<select id="malFirstOccupation"><option value="">Select (optional)</option><option>Farmer</option><option>Daily Wage</option><option>Fisherman</option><option>Shop</option><option>Private Job</option><option>Government Job</option><option>Student</option><option>Homemaker</option><option>Unemployed</option><option>Retired</option><option>Other</option></select></label>
+    <label class="field">Residence<select id="malFirstResidence"><option>Living in Malipatana</option><option>Outside temporarily</option><option>Shifted permanently</option></select></label>
+   </div>
+  </details>
   <div class="mal-wizard-actions">
    <button type="button" id="malFirstSave" class="primary">Save member</button>
    <button type="button" id="malFirstNewFamily" class="secondary">My family is not listed</button>
@@ -135,7 +167,7 @@ body.mal-member-first.mal-step-expense #expenseForm{display:block!important}
   <div id="malFirstReceiptText" class="mal-wizard-summary" role="status"></div>
   <div class="mal-wizard-actions"><button id="malFirstAnother" type="button" class="primary">Register another member</button></div>
  </section>
- <div class="mal-wizard-actions"><button id="malFirstOther" type="button" class="mal-wizard-back">Other options: Expenses, full forms or corrections</button></div>
+ <div class="mal-wizard-actions" id="malFirstExpenseAction" hidden><button id="malFirstExpense" type="button" class="secondary">₹ Enter village expense</button></div>
 </section>
 <section id="malQuickActions" class="box hidden" aria-label="Quick village entry actions">
 <h2>Village Registration Drive</h2><p class="sub">Search first to prevent duplicate family registrations. Add a missing family or member, or suggest corrections. No login required while the link is active.</p>
@@ -746,6 +778,8 @@ $('malExistingProposal').addEventListener('submit',async e=>{
  const panel=$('malMemberFirst'),given=$('malFirstGiven'),surname=$('malFirstSurname');
  const status=$('malFirstStatus'),matches=$('malFirstMatches'),matchList=$('malFirstMatchList');
  const next=$('malFirstNew'),family=$('malFirstFamily'),create=$('malFirstCreateFamily');
+ const update=$('malFirstUpdate'),updateForm=$('malFirstUpdateForm'),updateFields=$('malFirstUpdateFields'),updateStatus=$('malFirstUpdateStatus');
+ let updateRecord=null,updateSequence=0;
  const receipt=$('malFirstReceipt'),receiptText=$('malFirstReceiptText');
  let timer=null,sequence=0,searchVerified=false,wizardStarted=false,creatingForMember=false,latestCandidates=[];
  const wizardSteps=['mal-step-member','mal-step-family','mal-step-correct','mal-step-expense'];
@@ -756,7 +790,7 @@ $('malExistingProposal').addEventListener('submit',async e=>{
  function allowed(){const p=permissions();return !!(p.member?.view||p.member?.add||p.family?.add);}
  function show(node,yes){node.hidden=!yes;}
  function setStatus(message){status.textContent=message;}
- function resetPanels(){show(matches,false);show(next,false);show(create,false);show(receipt,false);matchList.replaceChildren();step('');}
+ function resetPanels(){updateSequence++;updateRecord=null;show(update,false);show(matches,false);show(next,false);show(create,false);show(receipt,false);matchList.replaceChildren();step('');}
  function availableFamilies(){
   return allKnownFamilies().slice().sort((a,b)=>{
    const aMatch=normalized(a.surname)===normalized(surname.value),bMatch=normalized(b.surname)===normalized(surname.value);
@@ -797,6 +831,81 @@ $('malExistingProposal').addEventListener('submit',async e=>{
   }
  }
  new MutationObserver(boot).observe($('content'),{attributes:true,attributeFilter:['class']});
+ async function showExistingRecord(record){
+  const seq=++updateSequence;
+  updateRecord=null;updateFields.replaceChildren();
+  show(matches,false);show(next,false);show(create,false);show(update,true);
+  updateStatus.textContent='Loading your registered details…';
+  $('malFirstUpdateTitle').textContent=(record.label||'Existing member')+' — registered details';
+  updateForm.hidden=true;
+  try{
+   const response=await api('linkRecord',{mode:'member',id:record.id});
+   if(seq!==updateSequence)return;
+   if(!response||!response.ok)throw Error(response?.error||'Could not load the record');
+   const original=response.fields||{};
+   const editable=!!response.canEdit;
+   const keys=Object.keys(original).filter(k=>Object.prototype.hasOwnProperty.call(MAL_EXISTING_FIELD_LABELS,k));
+   updateRecord={id:record.id,original,editable};
+   let missing=0;
+   for(const k of keys){
+    const val=String(original[k]??''),empty=!val.trim();
+    const card=document.createElement('div');card.className='mal-existing-field';
+    const fieldLabel=MAL_EXISTING_FIELD_LABELS[k];
+    if(!empty){
+     const line=document.createElement('div');line.className='mal-existing-current';
+     const info=document.createElement('span');info.textContent=fieldLabel+': ';
+     const value=document.createElement('strong');value.className='mal-existing-value';value.textContent=val;
+     info.append(value);line.append(info);
+     if(editable){
+      const change=document.createElement('button');change.type='button';change.textContent='Change';
+      change.setAttribute('aria-label','Change '+fieldLabel);
+      change.onclick=()=>{change.hidden=true;editor.hidden=false;input.focus();};
+      line.append(change);
+     }
+     card.append(line);
+    }else{
+     missing++;
+     const label=document.createElement('div');label.textContent=fieldLabel+' (not recorded)';label.className='mal-wizard-help';card.append(label);
+    }
+    const editor=document.createElement('label');editor.className='field';
+    editor.textContent=empty?'Add '+fieldLabel:'New '+fieldLabel;
+    editor.hidden=!empty||!editable;
+    const input=(k==='note'||k==='what')?document.createElement('textarea'):document.createElement('input');
+    input.name=k;input.value=empty?'':val;input.maxLength=300;
+    if(k==='amount'){input.type='number';input.step='0.01';}
+    if(k==='date')input.type='date';
+    if(!editable)input.disabled=true;
+    editor.append(input);card.append(editor);updateFields.append(card);
+   }
+   if(!keys.length)updateStatus.textContent='The backend did not return any permitted details for this record.';
+   else updateStatus.textContent=editable?(missing?'Fill the missing fields, or choose Change for an existing value.':'Details already recorded. Choose Change beside anything that needs correcting.'):'This link permits viewing only. Ask Admin to enable correction proposals.';
+   $('malFirstUpdateSave').hidden=!editable;
+   $('malFirstUpdatedBy').hidden=!editable;
+   updateForm.hidden=false;
+  }catch(err){if(seq===updateSequence)updateStatus.textContent='Could not load details: '+err.message;}
+  update.scrollIntoView({behavior:'smooth',block:'nearest'});
+ }
+ updateForm.addEventListener('submit',async e=>{
+  e.preventDefault();
+  if(!updateRecord?.editable)return;
+  const data=new FormData(updateForm),changes={};
+  for(const [key,old] of Object.entries(updateRecord.original)){
+   const input=updateFields.querySelector('[name="'+key+'"]');
+   if(!input||input.disabled||input.closest('label')?.hidden)continue;
+   const value=String(data.get(key)??'').trim();
+   if(value!==String(old??'').trim())changes[key]=value;
+  }
+  if(!Object.keys(changes).length){updateStatus.textContent='Nothing changed. Fill a blank or choose Change beside an existing field.';return;}
+  if(!confirm('Send these updates for administrator approval? The official record will not change yet.'))return;
+  const btn=$('malFirstUpdateSave');btn.disabled=true;updateStatus.textContent='Submitting correction request…';
+  try{
+   const response=await api('linkPropose',{mode:'member',id:updateRecord.id,fields:JSON.stringify(changes),submittedBy:String(data.get('submittedBy')||'')});
+   if(!response?.ok)throw Error(response?.error||'Could not submit updates');
+   updateStatus.textContent='Correction request '+(response.requestId||'')+' sent for administrator approval. Existing records have not yet changed.';
+   updateForm.hidden=true;
+  }catch(err){updateStatus.textContent='Update failed: '+err.message;}finally{btn.disabled=false;}
+ });
+ $('malFirstUpdateBack').onclick=()=>{updateSequence++;show(update,false);show(matches,!!latestCandidates.length);updateRecord=null;};
  function presentCandidates(records){
   latestCandidates=records||[];
   matchList.replaceChildren();
@@ -805,22 +914,17 @@ $('malExistingProposal').addEventListener('submit',async e=>{
   const target=normalized(fullName());
   const exact=latestCandidates.filter(record=>normalized(record.label)===target);
   setStatus(exact.length===1?'One exact name found. Check the record and choose it if it is yours.':'Possible matches found. Please check carefully before adding a new entry.');
+  const onlyExact=exact.length===1&&latestCandidates.length===1;
   for(const record of latestCandidates){
    const btn=document.createElement('button');btn.type='button';btn.className='mal-wizard-candidate';
    const heading=document.createElement('span');heading.textContent=record.label||'Registered member';
    const meta=document.createElement('small');
    meta.textContent=[record.locality,record.familyHead,record.id].filter(Boolean).join(' · ');
    btn.append(heading,meta);
-   btn.onclick=()=>{
-    show(create,false);show(next,false);
-    step('correct');
-    const selector=$('malExistingCategory');
-    if([...selector.options].some(o=>o.value==='member'))selector.value='member';
-    void malOpenExisting_('member',record.id);
-    $('malExistingRecords').scrollIntoView({behavior:'smooth',block:'start'});
-   };
+   btn.onclick=()=>{void showExistingRecord(record);};
    matchList.append(btn);
   }
+  if(onlyExact){void showExistingRecord(exact[0]);}
  }
  function resetQuery(){
   sequence++;clearTimeout(timer);searchVerified=false;
@@ -897,6 +1001,13 @@ $('malExistingProposal').addEventListener('submit',async e=>{
   form.elements.surname.value=parts.surname;
   form.elements.relation.value=$('malFirstRelation').value;
   form.elements.gender.value=$('malFirstGender').value;
+  form.elements.fatherName.value=$('malFirstFather').value.trim();
+  form.elements.motherName.value=$('malFirstMother').value.trim();
+  form.elements.phone.value=$('malFirstPhone').value.trim();
+  form.elements.education.value=$('malFirstEducation').value;
+  form.elements.occupation.value=$('malFirstOccupation').value;
+  form.elements.residenceStatus.value=$('malFirstResidence').value;
+  $('guestResidence').dispatchEvent(new Event('change'));
   const age=$('malFirstAge').value;
   $('guestBirthMode').value=age?'age':'unknown';
   syncSharedBirth();
@@ -961,16 +1072,20 @@ $('malExistingProposal').addEventListener('submit',async e=>{
  $('malFirstAnother').onclick=()=>{
   const previous=family.value;
   given.value='';surname.value='';$('malFirstAge').value='';
+  for(const id of ['malFirstFather','malFirstMother','malFirstPhone'])$(id).value='';
+  for(const id of ['malFirstEducation','malFirstOccupation'])$(id).value='';
+  $('malFirstResidence').value='Living in Malipatana';
   $('malFirstGender').value='';$('malFirstRelation').value='Self';
   sequence++;searchVerified=false;resetPanels();
   if(previous)family.value=previous;
   setStatus('Enter the next member name. The family list is still available.');
   given.focus();
  };
- $('malFirstOther').onclick=()=>{
-  document.body.classList.remove('mal-member-first');panel.classList.add('hidden');
-  wizardStarted=false;
-  $('malQuickActions').scrollIntoView({behavior:'smooth'});
+ $('malFirstExpenseAction').hidden=!permissions().expense?.add;
+ $('malFirstExpense').onclick=()=>{
+  if(!permissions().expense?.add)return;
+  step('expense');
+  $('expenseForm').scrollIntoView({behavior:'smooth',block:'start'});
  };
  boot();
 })();
