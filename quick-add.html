@@ -126,7 +126,7 @@ body.mal-member-first.mal-step-expense #expenseForm{display:block!important}
    <label class="field">Gender (optional)<select id="malFirstGender"><option value="">Not specified</option><option>Male</option><option>Female</option><option>Other</option></select></label>
   </div>
   <label class="field">Approximate age (optional)<input id="malFirstAge" type="number" min="0" max="120" inputmode="numeric" step="1" placeholder="Only if known"></label>
-  <details class="mal-inline-more" id="malFirstOptional"><summary>Additional details (optional)</summary>
+  <details class="mal-inline-more" id="malFirstOptional" open><summary>Additional details (optional — leave blank if unknown)</summary>
    <div class="mal-wizard-grid">
     <label class="field">Father's name<input id="malFirstFather" maxlength="100" placeholder="If known"></label>
     <label class="field">Mother's name<input id="malFirstMother" maxlength="100" placeholder="If known"></label>
@@ -690,9 +690,7 @@ $('editForm').addEventListener('submit',async e=>{
 });
 
 let malPermissions_={};
-const MAL_EXISTING_FIELD_LABELS={givenName:'Given name',surname:'Surname',locality:'Village locality / Sahi',
-  residenceStatus:'Residence',currentCity:'Current city',education:'Education',occupation:'Occupation',
-  date:'Date',amount:'Amount (₹)',what:'Description',category:'Category',subcategory:'Subcategory',paidBy:'Paid by',note:'Remarks'};
+const MAL_EXISTING_FIELD_LABELS={givenName:'Given name',surname:'Surname',locality:'Village locality / Sahi',relation:'Relationship',gender:'Gender',dob:'Date of birth',approxAge:'Approximate age',fatherName:'Father',motherName:'Mother',maritalStatus:'Marital status',spouseName:'Spouse',residenceStatus:'Residence',currentCity:'Current city',currentDistrict:'Current district',currentState:'Current state',currentCountry:'Current country',outsideAddress:'Outside address',education:'Education',occupation:'Occupation',phone:'Mobile',date:'Date',amount:'Amount (₹)',what:'Description',category:'Category',subcategory:'Subcategory',paidBy:'Paid by',note:'Remarks'};
 let malExistingState=null;
 const malExistingMatches=$('malExistingMatches');
 $('malExistingCategory').onchange=()=>{malExistingMatches.replaceChildren();$('malExistingProposal').classList.add('hidden');malExistingState=null;};
@@ -847,11 +845,11 @@ $('malExistingProposal').addEventListener('submit',async e=>{
     const input=(k==='note'||k==='what')?document.createElement('textarea'):document.createElement('input');
     input.name=k;input.value=empty?'':val;input.maxLength=300;
     if(k==='amount'){input.type='number';input.step='0.01';}
-    if(k==='date')input.type='date';
+    if(k==='date'||k==='dob')input.type='date';
     if(!editable)input.disabled=true;
     editor.append(input);card.append(editor);updateFields.append(card);
    }
-   if(!keys.length)updateStatus.textContent='The backend did not return any permitted details for this record.';
+   if(!keys.length)updateStatus.textContent='The backend returned no editable details for this link. Ask Admin to enable Member View and Propose edit.';
    else updateStatus.textContent=editable?(missing?'Fill the missing fields, or choose Change for an existing value.':'Details already recorded. Choose Change beside anything that needs correcting.'):'This link permits viewing only. Ask Admin to enable correction proposals.';
    $('malFirstUpdateSave').hidden=!editable;
    $('malFirstUpdatedBy').hidden=!editable;
@@ -888,7 +886,7 @@ $('malExistingProposal').addEventListener('submit',async e=>{
   const target=normalized(fullName());
   const exact=latestCandidates.filter(record=>normalized(record.label)===target);
   setStatus(exact.length===1?'One exact name found. Check the record and choose it if it is yours.':'Possible matches found. Please check carefully before adding a new entry.');
-  const onlyExact=exact.length===1&&latestCandidates.length===1;
+  const onlyExact=exact.length===1;
   for(const record of latestCandidates){
    const btn=document.createElement('button');btn.type='button';btn.className='mal-wizard-candidate';
    const heading=document.createElement('span');heading.textContent=record.label||'Registered member';
