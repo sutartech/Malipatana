@@ -60,6 +60,30 @@ body{margin:0;background:linear-gradient(145deg,#e9f7f3 0%,#fbfaf5 50%,#edf4f8 1
 .mal-action-grid button[hidden]{display:none}
 @media(max-width:520px){.mal-action-grid{gap:8px}.mal-action-grid button{font-size:14px;padding:10px;min-height:92px}}
 </style>
+<style id="malMemberFirstStyle">
+body.mal-member-first #malQuickActions,body.mal-member-first #familyTabs,body.mal-member-first #familyForm,body.mal-member-first #memberForm,body.mal-member-first #malExistingRecords,body.mal-member-first #expenseForm{display:none!important}
+body.mal-member-first.mal-step-member #memberForm,body.mal-member-first.mal-step-family #familyForm,body.mal-member-first.mal-step-correct #malExistingRecords,body.mal-member-first.mal-step-expense #expenseForm{display:block!important}
+#malMemberFirst .mal-first-choices{display:grid;gap:9px;margin-top:12px}
+#malMemberFirst .mal-first-result button{display:block;width:100%;margin:8px 0;text-align:left;white-space:normal}
+#malMemberFirst .mal-first-name{font-size:18px;min-height:54px}
+#malMemberFirst .mal-first-buttons{display:flex;flex-wrap:wrap;gap:9px;margin-top:12px}
+#malMemberFirst button{min-height:44px}
+</style>
+<section id="malMemberFirst" class="box hidden" aria-label="Simple member registration">
+<h2>Enter your name</h2>
+<p class="sub">First check if your name is already registered. Then complete only the details needed. No login required.</p>
+<label class="field">Your full name <span class="required">*</span><input class="mal-first-name" id="malFirstName" autocomplete="name" maxlength="160" placeholder="e.g. Ramesh Sutar"></label>
+<div class="mal-first-buttons"><button type="button" class="primary" id="malFirstCheck">Find my name →</button></div>
+<div id="malFirstResult" class="mal-first-result" role="status" aria-live="polite"></div>
+<div id="malFirstNext" class="hidden">
+<p class="notice">If your record is listed, choose it to suggest corrections. Otherwise, select your family and finish registration.</p>
+<label class="field">Choose your family (if already registered)<select id="malFirstFamily"><option value="">Select existing family</option></select></label>
+<div class="mal-first-buttons">
+<button type="button" class="primary" id="malFirstContinue">Continue as new member →</button>
+<button type="button" class="secondary" id="malFirstNewFamily">My family is not listed</button>
+</div></div>
+<div class="mal-first-buttons"><button type="button" class="secondary" id="malFirstOther">Other options: family, expense, corrections</button></div>
+</section>
 <section id="malQuickActions" class="box hidden" aria-label="Quick village entry actions">
 <h2>Village Registration Drive</h2><p class="sub">Search first to prevent duplicate family registrations. Add a missing family or member, or suggest corrections. No login required while the link is active.</p>
 <div class="mal-action-grid">
@@ -649,6 +673,73 @@ $('malExistingProposal').addEventListener('submit',async e=>{
  });
  new MutationObserver(refresh).observe($('content'),{attributes:true,attributeFilter:['class']});
  refresh();
+})();
+
+(function malMemberFirstWizard(){
+ const panel=$('malMemberFirst'),name=$('malFirstName'),result=$('malFirstResult'),next=$('malFirstNext'),family=$('malFirstFamily');
+ if(!panel)return;
+ function step(which){
+  document.body.classList.remove('mal-step-member','mal-step-family','mal-step-correct','mal-step-expense');
+  if(which)document.body.classList.add('mal-step-'+which);
+ }
+ function permitted(){return !!(malPermissions_?.member?.add||malPermissions_?.family?.add||malPermissions_?.member?.view);}
+ function fillFamilies(){
+  const prior=family.value;family.replaceChildren(new Option('Select existing family',''));
+  for(const f of allKnownFamilies()){family.add(new Option(f.head+(f.locality?' · '+f.locality:''),f.id));}
+  if(prior)family.value=prior;
+ }
+ function showWizard(){
+  if($('content').classList.contains('hidden')||!permitted())return;
+  document.body.classList.add('mal-member-first');
+  panel.classList.remove('hidden');
+  step('');
+  void loadFamilyOptions().then(fillFamilies).catch(()=>{});
+ }
+ new MutationObserver(showWizard).observe($('content'),{attributes:true,attributeFilter:['class']});
+ $('malFirstCheck').onclick=async()=>{
+  const q=name.value.trim();result.replaceChildren();next.classList.add('hidden');
+  if(q.length<3){result.textContent='Please enter at least 3 letters of your name.';return;}
+  const btn=$('malFirstCheck');btn.disabled=true;result.textContent='Checking for matching members…';
+  try{
+   if(malPermissions_?.member?.view){
+    const r=await api('linkRecords',{mode:'member',q});
+    if(!r.ok)throw Error(r.error||'Search unavailable');
+    result.replaceChildren();
+    if((r.records||[]).length){
+     const heading=document.createElement('p');heading.textContent='Possible existing members — choose yours to review or correct:';result.append(heading);
+     for(const record of r.records){
+      const b=document.createElement('button');b.type='button';b.className='secondary';
+      b.textContent=(record.label||record.id)+(record.locality?' · '+record.locality:'');
+      b.onclick=()=>{step('correct');$('malExistingCategory').value='member';void malOpenExisting_('member',record.id);$('malExistingRecords').scrollIntoView({behavior:'smooth'});};
+      result.append(b);
+     }
+    } else result.textContent='No matching member found. Continue below to add yourself.';
+   }else result.textContent='Member search is disabled for this link. You can still add your details if permitted.';
+   fillFamilies();next.classList.remove('hidden');
+  }catch(err){result.textContent='Could not check existing names: '+err.message+'. Please retry before adding a duplicate.';}
+  finally{btn.disabled=false}
+ };
+ $('malFirstContinue').onclick=()=>{
+  if(!malPermissions_?.member?.add){result.textContent='Adding members is not permitted on this link.';return}
+  if(!family.value){result.textContent='Please select your family, or choose “My family is not listed”.';return}
+  showTab('member');currentFamily=family.value;$('familyId').value=currentFamily;
+  $('familySelect').value=currentFamily;$('familySelect').dispatchEvent(new Event('change'));
+  const parts=name.value.trim().split(/\s+/);const surname=parts.length>1?parts.pop():'';
+  $('memberForm').elements.givenName.value=parts.join(' ');if(surname)$('memberForm').elements.surname.value=surname;
+  updateMemberFullName();step('member');$('memberForm').scrollIntoView({behavior:'smooth'});
+ };
+ $('malFirstNewFamily').onclick=()=>{
+  if(!malPermissions_?.family?.add){result.textContent='Creating families is not enabled for this link.';return}
+  const parts=name.value.trim().split(/\s+/),surname=parts.length>1?parts.pop():'';
+  showTab('family');$('familyForm').elements.givenName.value=parts.join(' ');if(surname)$('familyForm').elements.surname.value=surname;
+  updateFamilyFullName();step('family');$('familyForm').scrollIntoView({behavior:'smooth'});
+ };
+ $('malFirstOther').onclick=()=>{
+  document.body.classList.remove('mal-member-first');
+  panel.classList.add('hidden');
+  $('malQuickActions').scrollIntoView({behavior:'smooth'});
+ };
+ showWizard();
 })();
 renderFamilyChoices();if(!key){if(malUrlParams.get('installed')==='1'){const saved=malSavedLinks();if(saved.length===1&&!malUrlParams.has('manage'))malSavedOpen(saved[0].key);else malHome();}else malHome();}else info();
 </script><script src="malipatana-connectivity.js?v=3.5.45"></script>
