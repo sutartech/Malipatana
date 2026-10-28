@@ -1,0 +1,16 @@
+/* FE V3.5.45 · Category-level share permissions and Admin correction review */
+.mal-perm-matrix{border:1px solid #d2e4db;background:#f6fbf8;border-radius:12px;overflow:hidden;margin:10px 0 15px}
+.mal-perm-row{display:grid;grid-template-columns:minmax(95px,1.7fr) repeat(3,minmax(50px,1fr));gap:5px;align-items:center;padding:10px 9px;border-bottom:1px solid #e3eee7;font-size:13px}
+.mal-perm-row:last-child{border-bottom:0}.mal-perm-row:nth-child(2n){background:#fff}
+.mal-perm-row label{text-align:center}.mal-perm-row input{width:19px;height:19px;accent-color:#007761;cursor:pointer}
+.mal-perm-header{background:#dceee5!important;color:#145a4c;text-align:center;font-size:11px;line-height:1.3}.mal-perm-header strong:first-child{text-align:left}
+.mal-approval-card summary{list-style:auto}.mal-approval-table{border-collapse:collapse;width:100%;margin:12px 0;font-size:13px}
+.mal-approval-table td,.mal-approval-table th{padding:10px;text-align:left;border-bottom:1px solid #e0eae5;overflow-wrap:anywhere;min-width:110px}
+@media(max-width:400px){.mal-perm-row{grid-template-columns:minmax(75px,1.3fr) repeat(3,minmax(42px,1fr));font-size:11px;padding:9px 4px}}
+
+.mal-change-counters{display:flex;gap:8px;flex-wrap:wrap}.mal-change-counter{display:flex;align-items:center;gap:7px;padding:10px 15px;border-radius:11px;background:#fff5e0;color:#9d6614}
+.mal-change-counter.approved{background:#e2f6e9;color:#166a4e}.mal-change-counter.rejected{background:#fbeaea;color:#a23b3e}.mal-change-counter strong{font-size:23px;font-variant-numeric:tabular-nums}
+.mal-change-counter span{font-size:12px;font-weight:750;text-transform:capitalize}
+.mal-review-list{display:grid;gap:9px;margin:15px 0}.mal-review-row{border:1px solid #dae7e0;border-radius:12px;background:#f8fbf9;padding:10px;display:grid;grid-template-columns:minmax(80px,.7fr) repeat(2,minmax(100px,1fr));gap:10px;align-items:center}
+.mal-review-row strong{color:#1b5148;overflow-wrap:anywhere}.mal-review-row span{display:block;color:#74837f;font-size:11px;font-weight:700}.mal-review-row p{margin:3px 0;font-size:13px;overflow-wrap:anywhere}.mal-review-row .proposed{background:#e5f6ed;padding:7px 9px;border-radius:9px;color:#13543d}
+@media(max-width:550px){.mal-review-row{grid-template-columns:1fr 1fr}.mal-review-row>strong{grid-column:1/-1}.mal-change-counter{flex:1;justify-content:center;padding:9px}}

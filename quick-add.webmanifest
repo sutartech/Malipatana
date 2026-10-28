@@ -1,0 +1,25 @@
+{
+  "id": "./quick-add.html",
+  "name": "Quick Add Malipatana",
+  "short_name": "Quick Add",
+  "description": "Open Admin-authorised village family, member and expense links without logging in",
+  "start_url": "./quick-add.html?installed=1",
+  "scope": "./quick-add.html",
+  "display": "standalone",
+  "background_color": "#e9f7f3",
+  "theme_color": "#103b46",
+  "icons": [
+    {
+      "src": "./shared-entry-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./shared-entry-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -31,12 +31,15 @@ button.primary{background:#106653;color:white;width:100%;font-size:17px}button.s
 .honeypot{position:absolute!important;left:-9000px!important;opacity:0;pointer-events:none}
 @media(max-width:600px){.grid{grid-template-columns:1fr;gap:0}.card{padding:17px}.head{padding:14px}header h1{font-size:19px}}
 </style>
+<link rel="stylesheet" href="malipatana-connectivity.css?v=3.5.45">
+<style>.mal-register-steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;padding:9px 1px 6px}.mal-register-steps[hidden]{display:none!important}.mal-register-steps a{display:flex;align-items:center;justify-content:center;text-align:center;min-width:0;padding:9px 3px;min-height:44px;border:1px solid #b8dccc;background:#e8f5ef;border-radius:11px;color:#125b48;font-size:clamp(10px,2.6vw,12px);font-weight:800;text-decoration:none;white-space:nowrap}.mal-register-steps a:focus-visible,.mal-register-steps a:hover{outline:2px solid #d6a341;outline-offset:2px}.mal-reg-count{font-size:12px;color:#4d7165;font-weight:700;margin-top:8px}section.card{scroll-margin-top:62px}</style>
 </head>
 <body><main>
 <header><img src="icon-180.png" alt="Village emblem"><div><h1>ମାଳିପାଟଣା • Malipatana</h1><p>Simple village details form • No login or Family ID needed</p></div></header>
 <div id="backgroundPhotoBanner" hidden role="status"></div><div class="banner"><b>Just tell us about yourself or your household.</b> You do not need to decide if you belong to a main family, subfamily, or member record. The village administrator will organize the information after checking it.</div>
+<nav class="mal-register-steps" id="malRegisterSteps" aria-label="Registration steps"><a href="#malRegBasic">1. Name</a><a href="#malRegHome">2. Household</a><a href="#malRegOther">3. Details</a><a href="#malRegSubmit">4. Submit</a></nav>
 <form id="registration" autocomplete="on">
-<section class="card">
+<section class="card" id="malRegBasic">
 <h2>1. Your name and parents <span class="tag">Basic details</span></h2>
 <p class="hint">You may also complete this form for a relative with their permission. If a parent is already registered, enter the same full name. The administrator can link the existing record during approval — do not submit the parent again.</p>
 <label class="field">Full name / ପୂରା ନାମ <span class="required">*</span><input name="fullName" required maxlength="180" placeholder="e.g. Dhruba Charan Sutar" autocomplete="name"></label>
@@ -50,7 +53,7 @@ button.primary{background:#106653;color:white;width:100%;font-size:17px}button.s
 <label class="field">Gender (optional)<select name="gender"><option value="">Select if comfortable</option><option>Male</option><option>Female</option><option>Other</option><option>Prefer not to say</option></select></label>
 <label class="field">Mobile number (optional)<input name="mobile" inputmode="numeric" type="tel" maxlength="10" pattern="[0-9]{10}" placeholder="10 digits"></label></div>
 </section>
-<section class="card"><h2>2. Your home and relatives</h2>
+<section class="card" id="malRegHome"><h2>2. Your home and relatives</h2>
 <p class="hint">No House Number or Family ID is required.</p>
 <div class="grid"><label class="field">Village locality / Sahi<select name="locality" id="publicSahi"><option value="">Loading Sahis…</option></select><small>Select the village area. The Admin maintains this list.</small></label>
 <label class="field" id="publicSahiOtherRow" hidden>Not in the list? Enter Sahi name<input name="localityOther" maxlength="110" placeholder="Enter your Sahi / landmark"><small>Admin will verify and classify it later.</small></label>
@@ -60,14 +63,14 @@ button.primary{background:#106653;color:white;width:100%;font-size:17px}button.s
 <label class="field">Current city / town (if living outside)<input name="currentPlace" maxlength="180" placeholder="e.g. Bengaluru, Karnataka"></label>
 <label class="field">Other household members you wish to mention (optional)<textarea name="otherMembers" maxlength="500" placeholder="Their names and relation to you, one per line. No ID or separate family type required."></textarea></label>
 </section>
-<section class="card"><h2>3. Other details (optional)</h2>
+<section class="card" id="malRegOther"><h2>3. Other details (optional)</h2>
 <div class="grid"><label class="field">Education<input name="education" maxlength="100" placeholder="e.g. Graduate, Class 12"></label>
 <label class="field">Occupation<input name="occupation" maxlength="100" placeholder="e.g. Farmer, Student"></label></div>
 <label class="field">Filled by (if on another person's behalf)<input name="submittedBy" maxlength="130" placeholder="Your name"></label>
 <label class="field">Anything else you want the administrator to know<textarea name="note" maxlength="700"></textarea></label>
 <div class="photo"><img id="photoPreview" src="icon-180.png" alt="Selected photo preview"><div class="picker"><div class="field" style="margin:0"><label for="photo">Photo (optional)</label><input id="photo" class="mal-camera-file" type="file" accept="image/jpeg,image/png,image/webp" aria-label="Selected photo"><div class="mal-camera-actions"><button type="button" class="mal-take" id="takeRegistrationPhoto">📷 Take Photo</button><button type="button" id="chooseRegistrationPhoto">🖼 Choose from Gallery</button></div><small>JPEG, PNG or WebP; maximum 20 MB. Photo is optional. Stored privately and reviewed by Admin.</small></div></div></div>
 </section>
-<section class="card"><h2>4. Submit for review</h2>
+<section class="card" id="malRegSubmit"><h2>4. Submit for review</h2>
 <div class="consent"><input id="consent" type="checkbox" required><label for="consent">I have permission to submit these details and understand they will be seen by authorised village administrators before being added to the official register.</label></div>
 <label class="honeypot" aria-hidden="true">Website<input name="website" tabindex="-1" autocomplete="off"></label>
 <button id="sendBtn" type="submit" class="primary">Send for Admin Review</button>
@@ -234,7 +237,7 @@ $('registration').addEventListener('submit',async event=>{
   const receipt=await submitAndCheck(attempt);
   currentAttempt=null;
   $('reference').textContent='Registration number: '+receipt.id+' · Status: '+receipt.status;
-  $('registration').style.display='none';$('done').style.display='block';
+  $('registration').style.display='none';$('done').style.display='block';$('malRegisterSteps').hidden=true;
   $('done').scrollIntoView({behavior:'smooth',block:'start'});
   // The Add Another action is available IMMEDIATELY after the receipt is confirmed.
   // Upload the optional photo without blocking the main success screen.
@@ -267,10 +270,11 @@ function resetForAnother(keepSahi){
  $('photoPreview').src='icon-180.png';
  setBirthMode();
  if(publicMarital&&publicSpouse)publicSpouse.hidden=!['Married','Widowed','Divorced','Separated'].includes(publicMarital.value);
- $('done').style.display='none';form.style.display='block';
+ $('done').style.display='none';form.style.display='block';$('malRegisterSteps').hidden=false;
  window.scrollTo({top:0,behavior:'smooth'});
 }
 $('newForm').onclick=()=>resetForAnother(true);
 $('blankForm').onclick=()=>resetForAnother(false);
 </script>
+<script src="malipatana-connectivity.js?v=3.5.45"></script>
 </body></html>

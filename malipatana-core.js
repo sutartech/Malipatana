@@ -1,0 +1,7428 @@
+
+/* =========================================================================
+   SELF-REPAIR — registered before anything else so it catches a crash in
+   the very first lines. A device that has used an older build can hold a
+   storage entry the current code chokes on; the page then dies with a blank
+   screen while incognito, whose storage is empty, opens perfectly. Rather
+   than asking a villager to clear browser data, the page clears its OWN keys
+   once and reloads. The sessionStorage flag stops a reload loop: if it fails
+   again in the same tab, the error is in the code and must be seen.
+   ========================================================================= */
+(function(){
+  var FLAG = 'mal_selfheal';
+  var START = Date.now();
+  var WINDOW = 12000;
+  /* Heal acts on POSITIVE evidence of corruption, never on the absence of a
+     network keyword. A storage reader that rejects a malformed entry records
+     the key here; until something does, a crash or a failed request clears
+     nothing — a weak rural line must never cost a villager their saved login
+     and offline cache, and guessing from an error message is unknowable. */
+  window.__malBadStore = null;
+  window.malNoteBadStore = function(key){
+    try { window.__malBadStore = String(key || 'stored data'); } catch(e){}
+  };
+  /* Armed only while the register is not yet on screen and we are inside the
+     startup window. One source of truth, so the loop guard can never be
+     released while heal can still fire. */
+  function armed(){
+    var app = document.getElementById('app');
+    if(app && !app.classList.contains('hide')) return false;  // register is up
+    return Date.now() - START <= WINDOW;
+  }
+  function heal(what){
+    if(!armed()) return;
+    if(!window.__malBadStore) return;   // nothing known to be wrong: leave it alone
+    try { if(sessionStorage.getItem(FLAG)) return; } catch(e){ return; }
+    try { sessionStorage.setItem(FLAG, '1'); } catch(e){}
+    try {
+      var kill = [];
+      for(var i = 0; i < localStorage.length; i++){
+        var k = localStorage.key(i);
+        /* The offline queue holds entries not yet in the sheet — clearing it
+           would lose a villager's work, so it is never touched. */
+        if(k && k.indexOf('mal_') === 0 && k.indexOf('queue') < 0) kill.push(k);
+      }
+      kill.forEach(function(k){ localStorage.removeItem(k); });
+    } catch(e){}
+    try { console.warn('Malipatana: ' + window.__malBadStore + ' was unreadable (' + what + '); cleared local data and reloading'); } catch(e){}
+    location.reload();
+  }
+  window.addEventListener('error', function(ev){
+    heal(ev && ev.message ? ev.message : 'startup error');
+  });
+  window.addEventListener('unhandledrejection', function(){
+    heal('failed startup request');
+  });
+  /* Released only once heal can no longer fire under any path. Waiting for the
+     whole window — rather than releasing as soon as the register appears —
+     also covers a log in then log out inside those 12s, which would otherwise
+     re-arm heal with no guard left. A visible login screen is never evidence
+     of health: a failed boot leaves it visible too, which is the symptom. */
+  var poll = setInterval(function(){
+    if(Date.now() - START <= WINDOW) return;
+    clearInterval(poll);
+    try { sessionStorage.removeItem(FLAG); } catch(e){}
+  }, 1000);
+})();
+/* =========================================================================
+   MALIPATANA VILLAGE WELFARE DASHBOARD — Frontend V3.4.4
+   Designed for backend BE V1.8.3. Keep Apps Script and GitHub deployments in sync.
+   Existing JSONP/GET authentication is not ideal for sensitive user credentials.
+   ========================================================================= */
+const CONFIG = {
+  API_URL: 'https://script.google.com/macros/s/AKfycbyccN1ErYm-NsqnZOlhV9GSLMBr9998Yk7yfi-foOpcLloDw0Mb9SLPMxDp58wWcXqEHA/exec',
+  VERSION: 'FE V3.5.45',
+  EXPECTED_BACKEND: 'BE V1.8.29',
+  IDLE_MINUTES: 30,
+  /* Photo shown when no photo has been set in Settings.
+     village.jpg sits in the same folder as this file on GitHub. */
+  DEFAULT_PHOTO: 'village.jpg'
+};
+
+let DB = null, USER = null, PAGE = 'dashboard';
+const VIEW = {};                 // per-module view state: search, sort, filter
+const mem = {};                  // fallback store when sessionStorage is blocked
+
+/* ---------- tiny helpers ---------- */
+const $ = s => document.querySelector(s);
+const esc = x => String(x ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+const num = v => { const n = Number(String(v ?? '').replace(/[₹,\s]/g, '')); return isNaN(n) ? 0 : n; };
+const money = v => { const n = Math.round(num(v)); return (n < 0 ? '−₹' : '₹') + Math.abs(n).toLocaleString('en-IN'); };
+/* toISOString() reports UTC. East of Greenwich that is a different calendar
+   day for the first 5.5 hours of every morning, and a local-midnight Date
+   always rolls back a day. Every date in this register is a calendar date,
+   never an instant, so they are all formatted from local parts. */
+function localISO(d){
+  const p = n => String(n).padStart(2, '0');
+  return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+}
+function localStamp(d){
+  const p = n => String(n).padStart(2, '0');
+  return localISO(d) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+}
+const today = () => localISO(new Date());
+const store = {
+  get(k){ try { return sessionStorage.getItem(k); } catch(e){ return mem[k] ?? null; } },
+  set(k,v){ try { sessionStorage.setItem(k,v); } catch(e){ mem[k]=v; } },
+  del(k){ try { sessionStorage.removeItem(k); } catch(e){ delete mem[k]; } }
+};
+const local = {
+  get(k){ try { return localStorage.getItem(k); } catch(e){ return mem['L' + k] ?? null; } },
+  set(k, v){ try { localStorage.setItem(k, v); } catch(e){ mem['L' + k] = v; } }
+};
+/* Turns a Google Drive share link into one an <img> tag can actually load. */
+function photoSrc(url){
+  const u = String(url || '').trim();
+  if(!u) return '';
+  const d = u.match(/drive\.google\.com\/file\/d\/([^/]+)/) || u.match(/[?&]id=([^&]+)/);
+  if(d && u.includes('drive.google.com')) return 'https://drive.google.com/thumbnail?id=' + d[1] + '&sz=w1600';
+  return u;
+}
+function photoOf(name){
+  const v = DB && DB.settings ? DB.settings[name] : '';
+  return photoSrc(v || CONFIG.DEFAULT_PHOTO);
+}
+function applyLoginPhoto(){
+  const img = document.getElementById('loginPhoto');
+  if(!img) return;
+  /* The markup already carries village.jpg and its own onerror, so the photo
+     stands up with no JavaScript at all. This only overrides it when the admin
+     has set a different picture — previously the src was set here alone, so any
+     error earlier in the script left an empty box showing its alt text. */
+  const saved = store.get('mal_login_photo');
+  if(!saved) return;
+  const url = photoSrc(saved);
+  if(!url || url === img.getAttribute('src')) return;
+  img.onerror = () => {
+    const frame = img.closest('.photoframe');
+    if(frame) frame.remove();
+    const cap = document.querySelector('.photocap');
+    if(cap) cap.remove();
+  };
+  img.src = url;
+}
+function fmtDate(v){
+  if(!v) return '';
+  const s = String(v);
+  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(!m) return s;
+  return m[3] + '/' + m[2] + '/' + m[1];
+}
+function toISO(v){
+  if(!v) return '';
+  const s = String(v).trim();
+  if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  const d = new Date(s);
+  return isNaN(d) ? '' : localISO(d);
+}
+function monthKey(v){ const i = toISO(v); return i ? i.slice(0,7) : ''; }
+function toast(text, kind){
+  const el = document.createElement('div');
+  el.className = 'toast ' + (kind || '');
+  el.textContent = text;
+  $('#toasts').appendChild(el);
+  setTimeout(() => el.remove(), 3200);
+}
+/* Shown once, before any data exists. Later refreshes keep the real page on
+   screen and only move the sync badge, so the reader never loses their place. */
+function skeleton(){
+  const line = (c) => '<div class="sk skline ' + (c || '') + '"></div>';
+  const card = (inner) => '<div class="skcardbig">' + inner + '</div>';
+  $('#main').innerHTML = '<div class="skwrap" aria-busy="true" aria-label="Loading the village register">' +
+    card(line('t') + line() + line('s')) +
+    '<div class="skgrid">' + card(line('xs') + line('t')) + card(line('xs') + line('t')) +
+      card(line('xs') + line('t')) + card(line('xs') + line('t')) + '</div>' +
+    card(line('xs') + '<div class="skrow"><div class="sk skdot"></div>' + line() + '</div>' +
+      '<div class="skrow"><div class="sk skdot"></div>' + line() + '</div>' +
+      '<div class="skrow"><div class="sk skdot"></div>' + line() + '</div>') +
+    '</div>';
+}
+
+function busy(on, label){
+  let el = $('#loading');
+  if(on){
+    if(!el){
+      el = document.createElement('div');
+      el.id = 'loading';
+      document.body.appendChild(el);
+    }
+    el.innerHTML = '<div style="text-align:center"><div class="spin"></div>' + esc(label || 'Working…') + '</div>';
+  } else if(el){ el.remove(); }
+}
+
+/* ---------- photos (Google Drive) ---------- */
+let PENDING_PHOTO = null, REMOVE_PHOTO = false;
+
+function initials(name){
+  const p = String(name || '').trim().split(/\s+/).filter(Boolean);
+  return (p.length ? (p[0][0] + (p.length > 1 ? p[p.length - 1][0] : '')) : '–').toUpperCase();
+}
+function driveId(u){ const m = String(u || '').match(/[-\w]{25,}/); return m ? m[0] : ''; }
+function thumbUrl(u, w){
+  const id = driveId(u);
+  return id ? 'https://drive.google.com/thumbnail?id=' + id + '&sz=w' + (w || 200) : String(u || '');
+}
+function photoSrcs(u, w){
+  const id = driveId(u);
+  if(!id) return [String(u || '')];
+  return [
+    'https://lh3.googleusercontent.com/d/' + id + '=w' + (w || 200),
+    'https://drive.google.com/thumbnail?id=' + id + '&sz=w' + (w || 200),
+    'https://drive.usercontent.google.com/download?id=' + id + '&export=view'
+  ];
+}
+/* <img data-srcs="a|b|c"> — step through the list on each error. */
+/* Load private thumbnail *only when visible*, after checking user access in Apps Script.
+   Legacy publicly available photos keep their earlier URL fallbacks. */
+const MAL_THUMB_PROMISES=new Map();
+let MAL_PHOTO_OBSERVER=null;
+function malPrivatePhotoLookup_(src){
+  if(!USER || !DB)return null;
+  const original=driveId(src);if(!original)return null;
+  const sources=[['members','Members','Member ID'],['families','Families','Family ID'],['notices','Notices','Notice ID']];
+  for(const [key,sheet,idField] of sources){
+    const list=DB[key]||[];
+    if(!Array.isArray(list))continue;
+    const record=list.find(r=>driveId(r['Photo'])===original&&r['Photo Thumbnail']);
+    if(record)return {sheet,id:String(record[idField]||'')};
+  }
+  return null;
+}
+function malGetThumbnail_(info){
+  const key=info.sheet+'|'+info.id;
+  if(!MAL_THUMB_PROMISES.has(key)){
+    MAL_THUMB_PROMISES.set(key,api('photoThumbnail',info).then(r=>{
+      if(!r || !r.ok || !/^data:image\/jpeg;base64,/.test(r.data||''))throw new Error('Thumbnail unavailable');
+      return r.data;
+    }).catch(err=>{MAL_THUMB_PROMISES.delete(key);throw err;}));
+  }
+  return MAL_THUMB_PROMISES.get(key);
+}
+function malLoadPrivateImage_(img,info){
+  if(img.dataset.thumbLoading)return;
+  img.dataset.thumbLoading='1';
+  malGetThumbnail_(info).then(data=>{if(img.isConnected){img.src=data;img.dataset.thumbReady='1';}})
+  .catch(()=>{if(img.isConnected){img.onerror=null;const host=img.closest('.photoav,.cellav,.photobox');if(host)host.classList.add('photofail');}});
+}
+function wirePhotoFallbacks(root){
+  (root||document).querySelectorAll('img[data-srcs]').forEach(img=>{
+    if(img.dataset.wired)return;
+    img.dataset.wired='1';
+    const list=img.dataset.srcs.split('|').filter(Boolean);
+    const privateInfo=malPrivatePhotoLookup_(list[0]);
+    if(privateInfo){
+      if(typeof IntersectionObserver==='function'){
+        if(!MAL_PHOTO_OBSERVER)MAL_PHOTO_OBSERVER=new IntersectionObserver(entries=>entries.forEach(e=>{
+          if(e.isIntersecting){MAL_PHOTO_OBSERVER.unobserve(e.target);const info=e.target._malPrivatePhoto;if(info)malLoadPrivateImage_(e.target,info);}
+        }),{rootMargin:'200px'});
+        img._malPrivatePhoto=privateInfo;MAL_PHOTO_OBSERVER.observe(img);
+      }else malLoadPrivateImage_(img,privateInfo);
+      return;
+    }
+    let i=0;
+    img.onerror=()=>{i++;if(i<list.length){img.src=list[i];return;}img.onerror=null;
+      const host=img.closest('.photoav,.cellav,.photobox');if(host)host.classList.add('photofail');};
+    img.src=list[0];
+  });
+}
+
+function fullUrl(u){
+  const id = driveId(u);
+  return id ? 'https://drive.google.com/file/d/' + id + '/view' : String(u || '');
+}
+
+/* Resize in the browser so a 5 MB phone photo becomes a ~100 KB upload. */
+function shrinkImage(file, maxSide, quality){
+  return new Promise((resolve, reject) => {
+    const fr = new FileReader();
+    fr.onerror = () => reject(new Error('read failed'));
+    fr.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('decode failed'));
+      img.onload = () => {
+        const scale = Math.min(1, maxSide / Math.max(img.width, img.height));
+        const w = Math.max(1, Math.round(img.width * scale)), hh = Math.max(1, Math.round(img.height * scale));
+        const c = document.createElement('canvas');
+        c.width = w; c.height = hh;
+        const ctx = c.getContext('2d');
+        ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, hh);
+        ctx.drawImage(img, 0, 0, w, hh);
+        resolve(c.toDataURL('image/jpeg', quality || 0.82));
+      };
+      img.src = fr.result;
+    };
+    fr.readAsDataURL(file);
+  });
+}
+
+/* POST is fire-and-forget (no-cors). The Apps Script writes the Drive link
+   into the sheet row itself, so we simply reload the records afterwards. */
+async function sendPhoto(key, rec, pending, removing){
+  PENDING_PHOTO = null; REMOVE_PHOTO = false;
+  const m = MODULES[key];
+  const body = new URLSearchParams({
+    action: removing && !pending ? 'removePhoto' : 'uploadPhoto',
+    sheet: m.sheet, idField: m.idField, id: String(rec[m.idField] || ''),
+    folder: String(rec['Family ID'] || 'Unassigned'),
+    name: String(rec['Name'] || rec[m.idField] || 'member'),
+    root: photoRoot(), token: (USER && USER.token) || '',
+    mime: pending ? pending.mime : '', data: pending ? pending.data : '',
+    thumbData: pending ? pending.thumbData : ''
+  });
+  const idVal = String(rec[m.idField] || '');
+  try {
+    toast(pending ? 'Uploading photo to Drive…' : 'Removing photo…');
+    await fetch(CONFIG.API_URL, { method: 'POST', mode: 'no-cors', body: body });
+  } catch(e){
+    toast('Photo did not reach Drive: ' + (e.message || e), 'bad');
+    return;
+  }
+  /* The POST answer is unreadable (no-cors), so confirm by re-reading the sheet. */
+  for(let i = 0; i < 14; i++){
+    await new Promise(r => setTimeout(r, 3500));
+    await refresh(true);
+    const row = (DB[key] || []).find(r => String(r[m.idField] || '') === idVal) || {};
+    const got = String(row[m.fields.find(f => f.t === 'photo')?.n || 'Photo'] || '').trim();
+    if(pending && got && got !== String(rec[m.fields.find(f => f.t === 'photo')?.n || 'Photo']||'')){ render(); toast('Original photo saved in Drive; thumbnail created', 'good'); return; }
+    if(!pending && !got){ render(); toast('Photo removed', 'good'); return; }
+  }
+  render();
+  toast(pending
+    ? 'Drive did not store the photo. The Apps Script photo add-on is probably not deployed — paste a photo link instead.'
+    : 'Could not clear the photo in the sheet.', 'bad');
+}
+
+function openPhoto(url, caption){
+  openModal('<header><div><h3>Photo</h3><div class="sub">' + esc(caption || '') + '</div></div><div class="sp"></div>' +
+    '<button class="btn btn-sm" onclick="closeModal()">Close</button></header>' +
+    '<div class="body photobox" style="text-align:center"><img class="photofull" data-srcs="' + esc(photoSrcs(url, 1000).join('|')) + '" alt="">' +
+    '<div class="photonote">The original photo is private. Only people with appropriate Drive access can open it. The dashboard uses a small thumbnail for quick viewing.</div></div>' +
+    '<footer><a class="btn" href="' + esc(fullUrl(url)) + '" target="_blank" rel="noreferrer">Open in Drive</a>' +
+    '<button class="btn btn-primary" onclick="closeModal()">Done</button></footer>');
+  wirePhotoFallbacks(document.getElementById('modal') || document);
+}
+
+
+/* =========================================================================
+   STICKY NOTES — targets and reminders that float above the dashboard
+   -------------------------------------------------------------------------
+   Admin only. Notes live in the Settings sheet as one JSON row, so every
+   committee device sees the same ones. Position is remembered per device,
+   because a good spot on a phone is a bad spot on a desktop.
+   ========================================================================= */
+const STICKY_KEY = 'Sticky Notes';
+const STICKY_POS = 'mal_sticky_pos';
+
+function stickyAll(){
+  try { const l = JSON.parse(setting(STICKY_KEY, '[]')); return Array.isArray(l) ? l : []; }
+  catch(e){ return []; }
+}
+async function stickySave(list){
+  const rec = { Setting: STICKY_KEY, Value: JSON.stringify(list) };
+  const r = await saveThrough('save', { sheet: 'Settings', record: JSON.stringify(rec) }, 'Sticky notes');
+  if(!r || !r.ok) throw new Error((r && r.error) || 'could not save the note');
+  DB.settings = DB.settings || {};
+  DB.settings[STICKY_KEY] = rec.Value;
+}
+function stickyPos(){
+  try { return JSON.parse(local.get(STICKY_POS) || '{}') || {}; } catch(e){ return {}; }
+}
+/* A position saved on a wide window must still be on screen on a narrow one —
+   phones rotate, laptops get resized, and the same localStorage is reused. */
+function stickyClamp(p, w, hgt){
+  const cw = w || 290, ch = hgt || 150;
+  return {
+    x: Math.min(Math.max(8, Math.round(p.x)), Math.max(8, window.innerWidth - cw - 8)),
+    y: Math.min(Math.max(8, Math.round(p.y)), Math.max(8, window.innerHeight - ch - 8))
+  };
+}
+function stickyPosSet(id, x, y){
+  const p = stickyPos(); p[id] = {x: x, y: y};
+  try { local.set(STICKY_POS, JSON.stringify(p)); } catch(e){}
+}
+
+function stickyDueLabel(n){
+  if(!n.due) return '';
+  const d = toISO(n.due), t = today();
+  if(d < t) return 'Overdue · ' + fmtDate(d);
+  if(d === t) return 'Due today';
+  const days = Math.round((new Date(d) - new Date(t)) / 864e5);
+  return days <= 7 ? 'Due in ' + days + ' day' + (days === 1 ? '' : 's') : 'Due ' + fmtDate(d);
+}
+
+/* A tab on the right edge, the way a notice board hangs on a wall — always
+   there, never in the way. */
+function buildStickyTab(){
+  if(document.getElementById('skTab')) return;
+  const t = document.createElement('button');
+  t.id = 'skTab';
+  t.className = 'sktab';
+  t.setAttribute('aria-label', 'Notes, targets and reminders');
+  t.onclick = () => toggleStickyDrawer();
+  document.body.appendChild(t);
+  stickyBadge();
+}
+
+function stickyBadge(){
+  const t = document.getElementById('skTab');
+  if(!t) return;
+  const open = stickyAll().filter(n => !n.done);
+  const late = open.filter(n => n.due && toISO(n.due) < today()).length;
+  t.innerHTML = '<span class="lbl">Notes &amp; targets</span>' +
+    (open.length ? '<span class="cnt">' + open.length + '</span>' : '');
+  t.classList.toggle('hasLate', late > 0);
+}
+
+function paintSticky(){
+  let layer = document.getElementById('stickyLayer');
+  if(!layer){
+    layer = document.createElement('div');
+    layer.id = 'stickyLayer';
+    document.body.appendChild(layer);
+  }
+  /* Only pinned notes float over the dashboard. Everything else lives in the
+     side panel, which is what keeps the board calm. */
+  const open = stickyAll().filter(n => !n.done && n.pin);
+  const pos = stickyPos();
+  const sizes = stickySizes();
+
+  /* Pass 1 — draw the cards. Un-placed ones are hidden until measured, so a
+     note is never briefly shown on top of another. */
+  layer.innerHTML = open.map(n => {
+    const raw = pos[n.id] || {};
+    const placed = raw.x != null && raw.y != null;
+    const p = placed ? stickyClamp(raw) : raw;
+    const label = stickyDueLabel(n);
+    const late = n.due && toISO(n.due) < today();
+    const sz = sizes[n.id];
+    return `<div class="sticky ${n.kind === 'reminder' ? 'rem' : 'tgt'} c-${esc(n.col || 'amber')}${late ? ' late' : ''}"
+                 data-sid="${esc(n.id)}"
+                 ${n.lock ? 'data-lock="1"' : ''}
+                 ${placed ? '' : 'data-unplaced="1"'}
+                 style="${placed ? 'left:' + p.x + 'px;top:' + p.y + 'px' : 'left:0;top:0;visibility:hidden'}${
+                   sz ? ';width:' + sz.w + 'px;height:' + sz.h + 'px' : ''}">
+      <div class="sticky-top" data-drag="${esc(n.id)}">
+        <span class="tag">${n.kind === 'reminder' ? 'REMINDER' : 'TARGET'}</span>
+        ${label ? `<span class="due">${esc(label)}</span>` : ''}
+        ${n.lock ? '<span class="lockpin" title="Kept pinned by the admin">📌 KEPT</span>' : ''}
+        ${n.pub ? '<span class="lockpin" title="Shown on the public page">🌐 PUBLIC</span>' : ''}
+        ${n.lock ? '' : `<button class="x" data-sclose="${esc(n.id)}" title="Hide until reload">×</button>`}
+      </div>
+      <div class="sticky-body">
+        <b>${esc(n.title || 'Note')}</b>
+        ${n.text ? `<p>${malNoticeLinkify_(n.text)}</p>` : ''}
+      </div>
+      <span class="sticky-grip" title="Drag to resize · double-click to reset"></span>
+      ${isAdmin() ? `<div class="sticky-acts">
+        <button class="btn btn-sm" data-sdone="${esc(n.id)}">✓ Completed</button>
+        <button class="btn btn-sm" data-sedit="${esc(n.id)}">Edit</button>
+        <button class="btn btn-sm btn-danger" data-sdel="${esc(n.id)}">Delete</button>
+      </div>` : ''}
+    </div>`;
+  }).join('');
+
+  layoutSticky(layer);
+  wireSticky(layer);
+}
+
+/* Pass 2 — measure what was actually rendered, then place notes only where
+   there is genuinely room.
+   The board has a fixed capacity: columns that fit between the sidebar and the
+   right edge, times the notes that fit down each column. Anything beyond that
+   is NOT free-floated — it is left to the Notes panel behind a "+N more" chip,
+   because clamping surplus notes to the same strip is what made them bury
+   each other. */
+function layoutSticky(layer){
+  /* A saved spot is kept while it still fits this window. If the window has
+     changed so much that the card no longer fits, the saved spot is dropped and
+     the note rejoins the flow column — squeezing it against the edge only made
+     it land on top of another note. */
+  const pos0 = stickyPos();
+  layer.querySelectorAll('.sticky:not([data-unplaced])').forEach(card => {
+    const r = card.getBoundingClientRect();
+    const saved = pos0[card.dataset.sid] || {x: r.left, y: r.top};
+    const fits = saved.x >= 0 && saved.y >= 0 &&
+                 saved.x + r.width <= window.innerWidth &&
+                 saved.y + r.height <= window.innerHeight;
+    if(!fits){
+      const p = stickyPos();
+      delete p[card.dataset.sid];
+      try { local.set(STICKY_POS, JSON.stringify(p)); } catch(e){}
+      card.setAttribute('data-unplaced', '1');
+      card.style.visibility = 'hidden';
+    }
+  });
+
+  const cards = [...layer.querySelectorAll('.sticky[data-unplaced]')];
+  const chip = document.getElementById('stickyMore');
+  if(chip) chip.remove();
+  if(!cards.length) return;
+
+  const gap = 14;
+  const w = Math.round(cards[0].getBoundingClientRect().width) || 290;
+  const narrow = window.innerWidth < 700;
+  const side = document.querySelector('.sidebar');
+  const leftBound = narrow || !side || getComputedStyle(side).display === 'none'
+    ? 8
+    : Math.round(side.getBoundingClientRect().right) + 12;
+
+  const topStart = 118;
+  const bottomLimit = window.innerHeight - 16;
+  /* room kept free at the foot of a column for the "+N more" chip */
+  const chipRoom = 52;
+  const maxCols = Math.max(1, Math.floor((window.innerWidth - leftBound - 24 + gap) / (w + gap)));
+
+  /* The flow must also avoid the notes the user has dragged somewhere — they
+     occupy real space on the board, so a flow slot that intersects one is not
+     a free slot. */
+  const blockers = [...layer.querySelectorAll('.sticky:not([data-unplaced])')]
+    .map(c => c.getBoundingClientRect());
+  const colX = c => Math.max(leftBound, window.innerWidth - w - 24 - c * (w + gap));
+  const hits = (x, y, hgt) => blockers.find(b =>
+    x < b.right && x + w > b.left && y < b.bottom && y + hgt > b.top);
+
+  let col = 0, y = topStart;
+  const hidden = [];
+
+  cards.forEach(card => {
+    const hgt = Math.ceil(card.getBoundingClientRect().height) || 150;
+    let placedHere = false;
+
+    while(col < maxCols){
+      const limit = bottomLimit - (cards.length > 1 ? chipRoom : 0);
+      if(y + hgt > limit){
+        if(y === topStart) break;          // taller than the column: try the next one
+        col++; y = topStart; continue;
+      }
+      const x = colX(col);
+      const clash = hits(x, y, hgt);
+      if(clash){ y = Math.ceil(clash.bottom) + gap; continue; }
+      card.style.left = x + 'px';
+      card.style.top = y + 'px';
+      card.style.visibility = 'visible';
+      y += hgt + gap;
+      placedHere = true;
+      break;
+    }
+
+    if(!placedHere){
+      if(col < maxCols){ col++; y = topStart; }
+      hidden.push(card);
+      card.remove();
+    }
+  });
+
+  if(hidden.length){
+    const b = document.createElement('button');
+    b.id = 'stickyMore';
+    b.className = 'stickymore';
+    b.textContent = '+' + hidden.length + ' more note' + (hidden.length === 1 ? '' : 's');
+    b.onclick = stickyPanel;
+    layer.appendChild(b);
+
+    /* Give the chip a real slot instead of floating it over the board: below
+       the last card if there is room, otherwise above the column, never on top
+       of anything. */
+    const cr = b.getBoundingClientRect();
+    const cw = Math.round(cr.width), chp = Math.ceil(cr.height);
+
+    /* test against every card actually on the board now — dragged and flowed */
+    const taken = [...layer.querySelectorAll('.sticky')].map(c => c.getBoundingClientRect());
+    const free = (x, yy) => !taken.some(t =>
+      x < t.right && x + cw > t.left && yy < t.bottom && yy + chp > t.top);
+
+    const right = window.innerWidth - 24 - cw;
+    const spots = [];
+    for(let c = 0; c < maxCols; c++){
+      const colRight = colX(c) + w - cw;
+      spots.push([colRight, window.innerHeight - chp - 12]);   // foot of each column
+      spots.push([colRight, topStart - chp - 12]);             // just above it
+    }
+    spots.push([right, window.innerHeight - chp - 12]);
+    spots.push([leftBound, window.innerHeight - chp - 12]);
+
+    const spot = spots.find(s => s[1] >= 8 && free(s[0], s[1])) ||
+                 [leftBound, window.innerHeight - chp - 12];
+    b.style.left = Math.max(8, Math.min(spot[0], window.innerWidth - cw - 8)) + 'px';
+    b.style.top = Math.max(8, spot[1]) + 'px';
+  }
+}
+
+/* A note's size is the villager's own choice, so it is kept per browser next to
+   its position rather than in the shared sheet — two people can read the same
+   note at the size that suits each of them. */
+const SK_SIZE = 'mal_sticky_size';
+function stickySizes(){ try { return JSON.parse(local.get(SK_SIZE) || '{}') || {}; } catch(e){ return {}; } }
+function stickySizeSet(id, w, hgt){
+  const all = stickySizes();
+  all[id] = { w: Math.round(w), h: Math.round(hgt) };
+  try { local.set(SK_SIZE, JSON.stringify(all)); } catch(e){}
+}
+function stickySizeClear(id){
+  const all = stickySizes();
+  if(id) delete all[id]; else Object.keys(all).forEach(k => delete all[k]);
+  try { local.set(SK_SIZE, JSON.stringify(all)); } catch(e){}
+}
+
+function wireSticky(layer){
+  /* the corner grip: drag to resize, double-click to go back to the natural size */
+  layer.querySelectorAll('.sticky-grip').forEach(grip => {
+    const card = grip.closest('.sticky');
+    const id = card.dataset.sid;
+    grip.addEventListener('dblclick', () => {
+      card.style.width = ''; card.style.height = '';
+      stickySizeClear(id);
+      toast('Note back to its normal size');
+    });
+    grip.addEventListener('pointerdown', ev => {
+      ev.preventDefault(); ev.stopPropagation();
+      const r = card.getBoundingClientRect();
+      const sx = ev.clientX, sy = ev.clientY;
+      card.classList.add('resizing');
+      try { grip.setPointerCapture(ev.pointerId); } catch(e){}
+      const move = e => {
+        const w = Math.max(180, Math.min(window.innerWidth - 16, r.width + (e.clientX - sx)));
+        const hh = Math.max(110, Math.min(window.innerHeight - 16, r.height + (e.clientY - sy)));
+        card.style.width = w + 'px';
+        card.style.height = hh + 'px';
+        card.style.left = Math.max(8, Math.min(r.left, window.innerWidth - w - 8)) + 'px';
+        card.style.top = Math.max(8, Math.min(r.top, window.innerHeight - hh - 8)) + 'px';
+      };
+      const up = () => {
+        card.classList.remove('resizing');
+        grip.removeEventListener('pointermove', move);
+        grip.removeEventListener('pointerup', up);
+        grip.removeEventListener('pointercancel', up);
+        const b = card.getBoundingClientRect();
+        stickySizeSet(id, b.width, b.height);
+        stickyPosSet(id, Math.round(b.left), Math.round(b.top));
+      };
+      grip.addEventListener('pointermove', move);
+      grip.addEventListener('pointerup', up);
+      grip.addEventListener('pointercancel', up);
+    });
+  });
+
+  /* The whole note is the handle — a villager should be able to push the paper
+     from wherever their thumb lands, not just a thin strip. Buttons, links and
+     text selection are left alone. */
+  layer.querySelectorAll('.sticky').forEach(card => {
+    card.addEventListener('pointerdown', ev => {
+      if(ev.button !== 0 && ev.pointerType === 'mouse') return;
+      if(ev.target.closest('button, a, input, textarea, select')) return;
+      const handle = card;
+      const id = card.dataset.sid;
+      const r = card.getBoundingClientRect();
+      const dx = ev.clientX - r.left, dy = ev.clientY - r.top;
+      let moved = false;
+      card.classList.add('dragging');
+      card.removeAttribute('data-unplaced');      // a dragged note keeps its spot
+      try { handle.setPointerCapture(ev.pointerId); } catch(e){}
+      const move = e => {
+        if(!moved && Math.abs(e.clientX - ev.clientX) + Math.abs(e.clientY - ev.clientY) < 3) return;
+        moved = true;
+        e.preventDefault();
+        const x = Math.max(4, Math.min(window.innerWidth - r.width - 4, e.clientX - dx));
+        const y = Math.max(4, Math.min(window.innerHeight - r.height - 4, e.clientY - dy));
+        card.style.left = x + 'px'; card.style.top = y + 'px';
+      };
+      const up = () => {
+        card.classList.remove('dragging');
+        handle.removeEventListener('pointermove', move);
+        handle.removeEventListener('pointerup', up);
+        handle.removeEventListener('pointercancel', up);
+        if(moved) stickyPosSet(id, parseInt(card.style.left, 10), parseInt(card.style.top, 10));
+      };
+      handle.addEventListener('pointermove', move);
+      handle.addEventListener('pointerup', up);
+      handle.addEventListener('pointercancel', up);
+    });
+  });
+
+  layer.querySelectorAll('[data-sclose]').forEach(b => {
+    b.onclick = () => b.closest('.sticky').remove();
+  });
+  layer.querySelectorAll('[data-sdone]').forEach(b => {
+    b.onclick = () => stickyComplete(b.dataset.sdone);
+  });
+  layer.querySelectorAll('[data-sedit]').forEach(b => {
+    b.onclick = () => stickyForm(b.dataset.sedit);
+  });
+  layer.querySelectorAll('[data-sdel]').forEach(b => {
+    b.onclick = async () => {
+      if(!isAdmin()){ toast('Only the village admin can delete a note', 'bad'); return; }
+      if(!confirm('Delete this note?')) return;
+      try { await stickySave(stickyAll().filter(n => n.id !== b.dataset.sdel)); paintSticky(); toast('Note deleted', 'good'); }
+      catch(e){ toast(e.message || String(e), 'bad'); }
+    };
+  });
+}
+
+async function stickyComplete(id){
+  /* Notes are admin-controlled: completing one writes into the shared history
+     with a name against it, so it cannot be open to every account. */
+  if(!isAdmin()){ toast('Only the village admin can change notes', 'bad'); return; }
+  const list = stickyAll();
+  const n = list.find(x => x.id === id);
+  if(!n) return;
+  n.done = true;
+  n.doneAt = localStamp(new Date());
+  n.doneBy = String(USER && (USER.name || USER.username) || '');
+  try { await stickySave(list); paintSticky(); toast('“' + (n.title || 'Note') + '” marked completed', 'good'); }
+  catch(e){ toast(e.message || String(e), 'bad'); }
+}
+
+function stickyForm(id){
+  if(!isAdmin()){ toast('Only the admin can add notes', 'bad'); return; }
+  const n = stickyAll().find(x => x.id === id) || { kind: 'target', title: '', text: '', due: '', col: 'amber' };
+  const COLS = [['amber','Amber'],['lime','Green'],['sky','Blue'],['rose','Pink'],['lilac','Lilac'],['stone','Grey']];
+  const cur = n.col || 'amber';
+  openModal(`
+    <header><div><h3>${id ? 'Edit note' : 'New sticky note'}</h3>
+      <div class="sub">Floats above the dashboard for every committee member</div></div>
+      <div class="sp"></div><button class="btn btn-sm" onclick="closeModal()">Close</button></header>
+    <div class="body">
+      <div class="skkind">
+        <label><input type="radio" name="sk" value="target" ${n.kind !== 'reminder' ? 'checked' : ''}> <span>Target</span></label>
+        <label><input type="radio" name="sk" value="reminder" ${n.kind === 'reminder' ? 'checked' : ''}> <span>Reminder</span></label>
+      </div>
+      <label class="lbl" for="skTitle">Heading</label>
+      <input class="input" id="skTitle" value="${esc(n.title || '')}" placeholder="e.g. Collect Raja chanda">
+      <label class="lbl" for="skText" style="margin-top:12px;display:block">Details</label>
+      <textarea class="input" id="skText" rows="3" placeholder="What has to be done">${esc(n.text || '')}</textarea>
+      <label class="lbl" for="skDue" style="margin-top:12px;display:block">By when (optional)</label>
+      <input class="input" type="date" id="skDue" value="${esc(toISO(n.due) || '')}">
+
+      <label class="lbl" style="margin-top:14px;display:block">Paper colour</label>
+      <div class="swatches">${COLS.map(([v, t]) => `
+        <input type="radio" name="skcol" id="skc_${v}" value="${v}" ${cur === v ? 'checked' : ''}>
+        <label for="skc_${v}" class="c-${v}" title="${t}"></label>`).join('')}</div>
+
+      <label class="colrow" style="gap:9px;margin-top:14px;align-items:flex-start">
+        <input type="checkbox" id="skLock" ${n.lock ? 'checked' : ''} style="margin-top:3px">
+        <span><b style="font-weight:600">Always keep this note pinned</b>
+        <span class="muted small" style="display:block">It stays on the dashboard for everyone and cannot be hidden — for a standing target the committee must not lose sight of.</span></span>
+      </label>
+      <label class="colrow" style="gap:9px;margin-top:10px;align-items:flex-start">
+        <input type="checkbox" id="skPub" ${n.pub ? 'checked' : ''} style="margin-top:3px">
+        <span><b style="font-weight:600">🌐 Show this note on the public page</b>
+        <span class="muted small" style="display:block">Only ticked notes go out to villagers without a login. Needs "Show pinned sticky notes on the public account page" turned on in Photos settings too.</span></span>
+      </label>
+      <div class="fieldnote">Overdue notes turn red whatever their colour. Completed ones move to the history list.</div>
+    </div>
+    <footer>
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" id="skSave">${id ? 'Save' : 'Add note'}</button>
+    </footer>`);
+
+  setTimeout(() => { const t = document.getElementById('skTitle'); if(t){ t.focus(); t.select(); } }, 50);
+  document.getElementById('skSave').onclick = async () => {
+    const btn = document.getElementById('skSave');
+    const title = document.getElementById('skTitle').value.trim();
+    if(!title){ toast('Write a heading', 'bad'); return; }
+    btn.disabled = true; btn.textContent = 'Saving…';
+    const list = stickyAll();
+    const rec = {
+      id: id || 's' + Date.now().toString(36),
+      kind: (document.querySelector('input[name="sk"]:checked') || {}).value || 'target',
+      title: title,
+      text: document.getElementById('skText').value.trim(),
+      due: document.getElementById('skDue').value || '',
+      col: (document.querySelector('input[name="skcol"]:checked') || {}).value || 'amber',
+      lock: !!document.getElementById('skLock').checked,
+      pub: !!document.getElementById('skPub').checked,
+      done: false,
+      by: String(USER && (USER.name || USER.username) || ''),
+      at: localStamp(new Date())
+    };
+    if(rec.lock) rec.pin = true;
+    const i = list.findIndex(x => x.id === rec.id);
+    if(i >= 0) list[i] = Object.assign({}, list[i], rec); else list.push(rec);
+    try {
+      await stickySave(list); closeModal(); paintSticky(); stickyBadge();
+      if(document.getElementById('skDrawer')) stickyDrawer();
+      toast('Note saved', 'good');
+    }
+    catch(e){ toast(e.message || String(e), 'bad'); btn.disabled = false; btn.textContent = id ? 'Save' : 'Add note'; }
+  };
+}
+
+function toggleStickyDrawer(force){
+  let d = document.getElementById('skDrawer');
+  const openNow = d && d.classList.contains('open');
+  const want = force === undefined ? !openNow : force;
+  if(!want){ if(d) d.classList.remove('open'); document.body.classList.remove('skOpen'); return; }
+  stickyDrawer();
+}
+
+/* The right utility panel: everything about notes in one place, so the
+   dashboard itself stays uncluttered. */
+function stickyDrawer(){
+  const all = stickyAll();
+  const open = all.filter(n => !n.done);
+  const done = all.filter(n => n.done);
+  const pinned = open.filter(n => n.pin).length;
+
+  let d = document.getElementById('skDrawer');
+  if(!d){
+    d = document.createElement('aside');
+    d.id = 'skDrawer';
+    d.className = 'skdrawer';
+    document.body.appendChild(d);
+  }
+
+  const card = n => {
+    const late = n.due && toISO(n.due) < today();
+    return `<div class="skcard ${n.kind === 'reminder' ? 'rem' : 'tgt'} c-${esc(n.col || 'amber')}${late ? ' late' : ''}">
+      <div class="skcard-top">
+        <span class="tag">${n.kind === 'reminder' ? 'REMINDER' : 'TARGET'}</span>
+        ${n.due ? `<span class="due">${esc(stickyDueLabel(n))}</span>` : ''}
+        ${n.lock ? '<span class="lockpin">📌 KEPT</span>' : ''}
+        ${n.pub ? '<span class="lockpin">🌐 PUBLIC</span>' : ''}
+      </div>
+      <b>${esc(n.title || 'Note')}</b>
+      ${n.text ? `<p>${malNoticeLinkify_(n.text)}</p>` : ''}
+      <div class="skcard-acts">
+        ${isAdmin() ? `<button class="btn btn-sm ${n.pin ? 'btn-primary' : ''}" data-dpin="${esc(n.id)}">${n.pin ? '📍 Pinned' : '📍 Pin'}</button>
+        <button class="btn btn-sm" data-ddone="${esc(n.id)}">✓ Completed</button>
+        <button class="btn btn-sm" data-dedit="${esc(n.id)}">Edit</button>
+        <button class="btn btn-sm btn-danger" data-ddel="${esc(n.id)}">Delete</button>` : ''}
+      </div>
+    </div>`;
+  };
+
+  d.innerHTML = `
+    <div class="skdrawer-head">
+      <div class="eyebrow">RIGHT UTILITY PANEL</div>
+      <h3>Notes &amp; targets</h3>
+      <p>Targets and reminders, without taking up dashboard space.</p>
+      <button class="skclose" aria-label="Close" data-dclose="1">×</button>
+    </div>
+    <div class="skdrawer-body">
+      <div class="skhead">
+        <div><div class="eyebrow">STICKY NOTES</div><b>Targets &amp; reminders</b></div>
+        <span class="muted small">${open.length} active</span>
+        ${isAdmin() ? '<button class="btn btn-sm btn-primary" data-dnew="1">+ Add sticky</button>' : ''}
+      </div>
+      <div class="skhint">📍 Pin a note to keep it floating above the dashboard. It can then be
+        dragged anywhere, and Completed and Delete stay available while pinned.${
+        pinned ? ' <b>' + pinned + ' pinned now.</b>' : ''}</div>
+
+      ${open.length ? open.map(card).join('') : '<div class="muted small" style="padding:6px 0">Nothing on the board yet.</div>'}
+
+      <div class="skhead" style="margin-top:26px">
+        <div><div class="eyebrow">STICKY NOTE DIARY</div><b>Completed history</b></div>
+        <span class="pill ok">${done.length} completed</span>
+      </div>
+      <div class="skhint">Completed notes are kept here so the village has a record of what was done.</div>
+      ${done.length ? done.slice().reverse().map(n => `<div class="skdone">
+        <span class="pill ok">✓</span>
+        <span><b>${esc(n.title)}</b><em>${esc(n.doneAt || '')}${n.doneBy ? ' · ' + esc(n.doneBy) : ''}${
+          n.due ? ' · was due ' + esc(fmtDate(n.due)) : ''}</em>${n.text ? '<em>' + esc(n.text) + '</em>' : ''}</span>
+        ${isAdmin() ? `<button class="btn btn-sm" data-dback="${esc(n.id)}">Put back</button>` : ''}
+      </div>`).join('') : '<div class="muted small" style="padding:6px 0">Nothing completed yet.</div>'}
+
+      ${pinned ? '<button class="btn btn-sm" data-dtidy="1" style="margin-top:22px">Tidy the pinned notes</button>' : ''}
+    </div>`;
+
+  requestAnimationFrame(() => { d.classList.add('open'); document.body.classList.add('skOpen'); });
+
+  const refresh = () => { stickyDrawer(); paintSticky(); stickyBadge(); };
+  d.querySelector('[data-dclose]').onclick = () => toggleStickyDrawer(false);
+  const nb = d.querySelector('[data-dnew]');
+  if(nb) nb.onclick = () => stickyForm();
+  d.querySelectorAll('[data-dpin]').forEach(b => b.onclick = async () => {
+    if(!isAdmin()){ toast('Only the village admin can pin a note', 'bad'); return; }
+    const list = stickyAll(); const n = list.find(x => x.id === b.dataset.dpin);
+    if(!n) return;
+    if(n.lock && n.pin){ toast('This note is set to always stay pinned — edit it to change that', 'bad'); return; }
+    n.pin = !n.pin;
+    try { await stickySave(list); refresh(); toast(n.pin ? 'Pinned to the dashboard' : 'Unpinned', 'good'); }
+    catch(e){ toast(e.message || String(e), 'bad'); }
+  });
+  d.querySelectorAll('[data-ddone]').forEach(b => b.onclick = async () => { await stickyComplete(b.dataset.ddone); refresh(); });
+  d.querySelectorAll('[data-dedit]').forEach(b => b.onclick = () => stickyForm(b.dataset.dedit));
+  d.querySelectorAll('[data-ddel]').forEach(b => b.onclick = async () => {
+    if(!isAdmin()){ toast('Only the village admin can delete a note', 'bad'); return; }
+    if(!confirm('Delete this note?')) return;
+    try { await stickySave(stickyAll().filter(n => n.id !== b.dataset.ddel)); refresh(); toast('Note deleted', 'good'); }
+    catch(e){ toast(e.message || String(e), 'bad'); }
+  });
+  d.querySelectorAll('[data-dback]').forEach(b => b.onclick = async () => {
+    if(!isAdmin()){ toast('Only the village admin can change notes', 'bad'); return; }
+    const list = stickyAll(); const n = list.find(x => x.id === b.dataset.dback);
+    if(n){ n.done = false; try { await stickySave(list); refresh(); } catch(e){ toast(e.message, 'bad'); } }
+  });
+  const tb = d.querySelector('[data-dtidy]');
+  if(tb) tb.onclick = () => {
+    try { local.set(STICKY_POS, '{}'); } catch(e){}
+    paintSticky();
+    toast('Pinned notes moved back to the right edge', 'good');
+  };
+}
+
+/* keep the old name working */
+function stickyPanel(){ stickyDrawer(); }
+
+/* =========================================================================
+   GUIDANCE — a family needing advice, and the villager assigned to give it
+   -------------------------------------------------------------------------
+   Money is never decided here. The committee decides that later; this page
+   only records who needs help, who is helping, and how far it has got.
+   ========================================================================= */
+const GUIDE_STAGES = ['Open','Advising','Sent to committee','Helped','Closed'];
+
+function guidanceRows(){
+  return (DB.families || []).filter(f => {
+    const need = String(f['Needs Guidance'] || '').trim();
+    return need && need.toLowerCase() !== 'no';
+  });
+}
+
+function renderGuidance(){
+  if(!canSee('families')){ $('#main').innerHTML = '<div class="empty"><b>Not available to your account</b></div>'; return; }
+  const rows = guidanceRows();
+  const byStage = s => rows.filter(r => String(r['Guidance Status'] || 'Open').trim() === s).length;
+  const unassigned = rows.filter(r => !String(r['Guide Member ID'] || '').trim());
+
+  $('#main').innerHTML = `
+    <div class="pagehead">
+      <div><h2>Guidance <span class="muted" style="font-size:16px">ପରାମର୍ଶ</span></h2>
+      <div class="sub">Families needing advice on education, work or health — and the villager helping them</div></div>
+      <div class="sp"></div>
+      ${canEdit() ? '<button class="btn btn-sm" data-act="needhelp">Mark a family as needing help</button>' : ''}
+    </div>
+
+    ${rows.length ? `<div class="strip">
+      <div><div class="k">Needing help</div><div class="v tnum">${rows.length}</div></div>
+      ${GUIDE_STAGES.map(s => `<div><div class="k">${esc(s)}</div><div class="v tnum">${byStage(s)}</div></div>`).join('')}
+    </div>` : ''}
+
+    ${unassigned.length ? `<div class="notice" style="margin-top:16px">
+      <b>${unassigned.length} famil${unassigned.length === 1 ? 'y has' : 'ies have'} nobody assigned</b>
+      Open the family and choose a villager in <b>Guide Member ID</b> — someone with the right
+      knowledge, such as a teacher for school matters.</div>` : ''}
+
+    ${rows.length ? `<div class="tablewrap" style="margin-top:16px"><table class="grid">
+      <thead><tr><th>Family</th><th>Needs help with</th><th>Assigned to</th><th>Stage</th><th>What is needed</th><th></th></tr></thead>
+      <tbody>${rows.map(f => {
+        const id = String(f['Family ID'] || '');
+        const guide = String(f['Guide Member ID'] || '').trim();
+        const stage = String(f['Guidance Status'] || 'Open').trim();
+        const tone = /helped|closed/i.test(stage) ? 'ok' : /committee/i.test(stage) ? 'warn' : '';
+        return `<tr>
+          <td data-label="Family"><button class="linkish" data-act="profile" data-id="${esc(id)}">${
+            esc(f['Family Head'] || id)}</button><span class="muted small"> ${esc(id)}</span></td>
+          <td data-label="Needs help with"><span class="pill warn">${esc(f['Needs Guidance'])}</span></td>
+          <td data-label="Assigned to">${guide
+            ? '<button class="linkish" data-act="profile2" data-id="' + esc(guide) + '">' + esc(memberName(guide) || guide) + '</button>'
+            : '<span class="muted small">nobody yet</span>'}</td>
+          <td data-label="Stage"><span class="pill ${tone}">${esc(stage)}</span></td>
+          <td data-label="What is needed" class="detailcell">${esc(f['Guidance Note'] || '')}</td>
+          <td class="acts">${canEdit() ? `<button class="btn btn-sm" data-act="edit2" data-id="${esc(id)}">Edit</button>` : ''}</td>
+        </tr>`;
+      }).join('')}</tbody></table></div>`
+    : `<div class="empty"><b>No family is marked as needing help</b>
+       Open a family, set <b>Needs Guidance</b> to what they need — child education, higher studies,
+       a job, health — and assign a villager to advise them.
+       ${canEdit() ? '<div style="margin-top:14px"><button class="btn btn-sm btn-primary" data-act="needhelp">Mark a family</button></div>' : ''}</div>`}`;
+
+  wireActions($('#main'));
+}
+
+/* =========================================================================
+   PUBLIC PAGE CONTROL (admin) — what villagers may see without signing in
+   ========================================================================= */
+/* Two audiences, one table. Scattering these across three pages meant the
+   admin could never answer "what does a villager actually see?" without
+   hunting. Rows are things; columns are who sees them. */
+const PUBLIC_SWITCHES = [
+  ['Public Show Fund', 'The balance in hand', 'The single big figure at the top.'],
+  ['Public Show Breakdown', 'Income and spending lines', 'Opening fund, contributions, expenditure, help paid.'],
+  ['Public Show Counts', 'Village counts', 'Families, members, people helped this year.'],
+  ['Public Show Major Expenses', 'Completed major expenses', 'Raja Parba and the like, with budget and spend.'],
+  ['Public Show Recent Spending', 'Recent spending list', 'Last ten entries. Never shows who received help.']
+];
+
+/* [label, note, sign-in setting or null, public setting or null, default] */
+const SHARED_SWITCHES = [
+  ['Sticky notes', 'Pinned notes the committee wants seen. Each note also has its own \u201cshow on the public page\u201d tick.',
+   'Sticky Notes Login', 'Sticky Notes Public', 'No'],
+  ['Remembrance days', 'A deceased member\u2019s anniversary, from a week before until the day itself.',
+   'Remembrance Login', 'Remembrance Public', 'Yes'],
+  ['Important days', 'Festivals, meetings and other dates on the committee\u2019s list.',
+   'Important Days Login', 'Important Days Public', 'Yes'],
+  ['Notice board', 'Photographs and writing from the Notice board page. Each post also has its own \u201cShow On\u201d choice.',
+   'Notices Login', 'Notices Public', 'Yes']
+];
+
+function renderPublicPage(){
+  if(!isAdmin()){ $('#main').innerHTML = '<div class="empty"><b>Admins only</b></div>'; return; }
+  const on = (k, d) => String(setting(k, d || 'Yes')).trim().toLowerCase() !== 'no';
+  const live = on('Public Page');
+  const spot = String(setting('Sticky Notes Spot', 'bottom-right') || 'bottom-right');
+  const box = (k, checked, dim) =>
+    `<input type="checkbox" data-pub="${esc(k)}" ${checked ? 'checked' : ''} ${dim ? 'disabled' : ''}>`;
+
+  $('#main').innerHTML = `
+    <div class="pagehead">
+      <div><h2>What people see</h2>
+      <div class="sub">Everything a villager can read without signing in, and what greets them on the sign-in screen</div></div>
+      <div class="sp"></div>
+      <a class="btn btn-sm" href="public.html" target="_blank" rel="noreferrer">Open the public page</a>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h3>${live ? 'The account is public' : 'The account is private'}</h3>
+        <span class="small">${live ? 'Anyone with the link can read it' : 'Visitors see only a short note'}</span></div>
+      <div class="panel-body">
+        <label class="switchrow" style="max-width:520px">
+          ${box('Public Page', live, false)}
+          <span><b>Publish the public page at all</b><em>When off, the two Public ticks below have no effect.</em></span>
+        </label>
+        <div class="langpick">
+          <span class="lbl">Language a visitor first sees</span>
+          <div class="segrow">
+            <button class="seg${setting('Public Page Language', 'English').toLowerCase().indexOf('od') === 0 ? '' : ' on'}" data-lang="English">English</button>
+            <button class="seg${setting('Public Page Language', 'English').toLowerCase().indexOf('od') === 0 ? ' on' : ''}" data-lang="Odia">ଓଡ଼ିଆ</button>
+          </div>
+          <div class="fieldnote">Either way the page carries a button to switch, and a visitor's own choice is remembered on their phone.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-top:16px">
+      <div class="panel-head"><h3>Who sees what</h3></div>
+      <div class="tablewrap" style="max-height:none">
+        <table class="grid vismatrix">
+          <thead><tr>
+            <th>Shown</th>
+            <th class="visc">Sign-in<br><span>before login</span></th>
+            <th class="visc">Public page<br><span>no login at all</span></th>
+          </tr></thead>
+          <tbody>
+            ${PUBLIC_SWITCHES.map(([k, name, note]) => `<tr>
+              <td data-label="Shown"><b>${esc(name)}</b><em>${esc(note)}</em></td>
+              <td class="visc" data-label="Sign-in"><span class="na">—</span></td>
+              <td class="visc${live ? '' : ' dim'}" data-label="Public">${box(k, on(k), !live)}</td>
+            </tr>`).join('')}
+            ${SHARED_SWITCHES.map(([name, note, lk, pk, def]) => `<tr>
+              <td data-label="Shown"><b>${esc(name)}</b><em>${esc(note)}</em></td>
+              <td class="visc" data-label="Sign-in">${box(lk, on(lk, def === 'No' ? 'Yes' : def), false)}</td>
+              <td class="visc${live ? '' : ' dim'}" data-label="Public">${box(pk, on(pk, def), !live)}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+      <div class="panel-body" style="border-top:1px solid var(--line-soft)">
+        <label class="lbl" for="stickySpot">Where sticky notes sit on the public page</label>
+        <select class="input" id="stickySpot" style="max-width:260px">
+          ${['top-left','top-centre','top-right','bottom-left','bottom-centre','bottom-right']
+            .map(v => `<option value="${v}" ${spot === v ? 'selected' : ''}>${v.replace('-', ' ')}</option>`).join('')}
+        </select>
+        <div class="fieldnote" style="margin-top:12px">Names of people who received help, mobile numbers,
+        incomes and member details are never sent outside the dashboard, whatever is ticked here.</div>
+      </div>
+      <div class="panel-body" style="border-top:1px solid var(--line-soft)">
+        <label class="lbl" for="pubIntro" style="display:block;margin-bottom:6px">A word from the committee</label>
+        <textarea class="input" id="pubIntro" rows="3" placeholder="e.g. Chanda for Raja Parba is being collected this month. Please pay to any committee member.">${esc(setting('Public Intro', ''))}</textarea>
+        <div class="fieldnote">Shown at the top of the public page, above the fund figure. Leave it empty and no message appears.</div>
+        <div style="margin-top:14px"><button class="btn btn-primary" id="pubSave">Save</button></div>
+      </div>
+    </div>`;
+
+  /* The picker is a pair of buttons, not a select, so the choice reads at a
+     glance; the pending value lives on the wrapper until Save runs. */
+  $('#main').querySelectorAll('[data-lang]').forEach(b => {
+    b.onclick = () => {
+      $('#main').querySelectorAll('[data-lang]').forEach(o => o.classList.toggle('on', o === b));
+    };
+  });
+
+  $('#pubSave').onclick = async () => {
+    const btn = $('#pubSave');
+    btn.disabled = true; btn.textContent = 'Saving…';
+    try {
+      for(const b of $('#main').querySelectorAll('[data-pub]')){
+        if(b.disabled) continue;
+        const rec = { Setting: b.dataset.pub, Value: b.checked ? 'Yes' : 'No' };
+        const r = await api('save', { sheet: 'Settings', record: JSON.stringify(rec) });
+        if(!r || !r.ok) throw new Error((r && r.error) || 'could not save ' + rec.Setting);
+        DB.settings[rec.Setting] = rec.Value;
+      }
+      const sp = $('#stickySpot').value;
+      const r2 = await api('save', { sheet: 'Settings', record: JSON.stringify({ Setting: 'Sticky Notes Spot', Value: sp }) });
+      if(!r2 || !r2.ok) throw new Error((r2 && r2.error) || 'could not save the note position');
+      DB.settings['Sticky Notes Spot'] = sp;
+      const lg = ($('#main').querySelector('[data-lang].on') || {}).dataset;
+      const lang = (lg && lg.lang) || 'English';
+      const r4 = await api('save', { sheet: 'Settings', record: JSON.stringify({ Setting: 'Public Page Language', Value: lang }) });
+      if(!r4 || !r4.ok) throw new Error((r4 && r4.error) || 'could not save the language');
+      DB.settings['Public Page Language'] = lang;
+      const intro = $('#pubIntro').value.trim();
+      const r3 = await api('save', { sheet: 'Settings', record: JSON.stringify({ Setting: 'Public Intro', Value: intro }) });
+      if(!r3 || !r3.ok) throw new Error((r3 && r3.error) || 'could not save the message');
+      DB.settings['Public Intro'] = intro;
+      toast('Saved', 'good');
+      renderPublicPage();
+    } catch(e){
+      toast(e.message || String(e), 'bad');
+      btn.disabled = false; btn.textContent = 'Save';
+    }
+  };
+}
+
+/* =========================================================================
+   CHANGE HISTORY (admin) — read-only view of the audit log
+   ========================================================================= */
+async function renderAudit(){
+  if(!isAdmin()){ $('#main').innerHTML = '<div class="empty"><b>Admins only</b></div>'; return; }
+  $('#main').innerHTML = `
+    <div class="pagehead">
+      <div><h2>Change history</h2>
+      <div class="sub">Every add, edit and delete, with who did it. This record cannot be changed from here.</div></div>
+    </div>
+    <div class="panel"><div class="panel-body"><div class="muted small">Reading the log…</div></div></div>`;
+  let rows = [];
+  try {
+    const r = await api('auditLog', { limit: 300 });
+    rows = (r && r.rows) || [];
+  } catch(e){
+    $('#main').innerHTML += '<div class="empty"><b>Could not read the log</b>' + esc(e.message || e) + '</div>';
+    return;
+  }
+  const tone = w => /DELETE/.test(w) ? 'bad' : /ADD|SIGN IN|BACKUP/.test(w) ? 'ok' : /FAILED/.test(w) ? 'warn' : '';
+  $('#main').innerHTML = `
+    <div class="pagehead">
+      <div><h2>Change history</h2>
+      <div class="sub">${rows.length} recent entries · newest first · this record cannot be changed from here</div></div>
+    </div>
+    ${rows.length ? `<div class="tablewrap"><table class="grid">
+      <thead><tr><th>When</th><th>Who</th><th>What</th><th>Where</th><th>Record</th><th>Detail</th></tr></thead>
+      <tbody>${rows.map(r => `<tr>
+        <td data-label="When" style="white-space:nowrap">${esc(r.when)}</td>
+        <td data-label="Who">${esc(r.who)}</td>
+        <td data-label="What"><span class="pill ${tone(r.what)}">${esc(r.what)}</span></td>
+        <td data-label="Where">${esc(r.sheet)}</td>
+        <td data-label="Record" style="font-weight:600">${esc(r.record)}</td>
+        <td data-label="Detail" class="detailcell">${esc(r.detail)}</td>
+      </tr>`).join('')}</tbody></table></div>`
+    : '<div class="empty"><b>Nothing logged yet</b>Changes made from now on will appear here.</div>'}`;
+}
+
+/* Unified ADMIN-ONLY history: no third-party analytics, no unseen GPS. */
+/* Access history: compact cards, never a clipped 7-column table. */
+async function renderAccessHistory(){
+  const host=$('#main');
+  if(!isAdmin()){
+    host.innerHTML='<div class="empty"><b>Administrators only</b></div>';
+    return;
+  }
+  const pageAtRequest=PAGE;
+  host.innerHTML=`<div class="pagehead mal-ah-heading"><div><div class="mal-ah-breadcrumb">Global Administrator / Security &amp; Access</div>
+    <h2>Access history</h2><div class="sub">Sign-ins, shared-link activity and village registration submissions</div></div></div>
+    <div class="mal-ah-loading" role="status" aria-live="polite">Loading access history…</div>`;
+  try{
+    const r=await api('activityOverview',{limit:120});
+    if(!r||!r.ok)throw Error(r&&r.error||'Could not load access history');
+    if(PAGE!==pageAtRequest || PAGE!=='accessHistory')return;
+    const events=Array.isArray(r.events)?r.events:[];
+    const summary=r.summary||{};
+    const n=v=>Math.max(0,Number(v)||0).toLocaleString('en-IN');
+    const str=v=>String(v==null?'':v).trim();
+    const classify=x=>{
+      const src=(str(x.source)+' '+str(x.action)).toLowerCase();
+      if(src.includes('login failed')||src.includes('sign in'))return 'signins';
+      if(src.includes('shared link ')||src.includes('link control'))return 'links';
+      if(src.includes('shared form'))return 'shared';
+      if(src.includes('public registration')||src.includes('registration submitted'))return 'registrations';
+      return 'other';
+    };
+    const tone=x=>{
+      const val=(str(x.status)+' '+str(x.action)).toLowerCase();
+      if(/fail|reject|denied|blocked/.test(val))return 'bad';
+      if(/pending|pause|expired|hold|review/.test(val))return 'warn';
+      if(/approved|saved|sign in|resum|enabled/.test(val))return 'good';
+      return 'neutral';
+    };
+    const icon=x=>({signins:'◉',shared:'↗',registrations:'▤',links:'◈',other:'•'})[classify(x)];
+    const niceType=x=>({signins:'Account sign-in',shared:'Shared entry',registrations:'Public registration',links:'Link administration',other:'Activity'})[classify(x)];
+    const hasValue=v=>!!str(v);
+    const attrs=x=>[
+      ['Account / reported by',x.by||'Not provided'],
+      ['Source',x.source||'—'],
+      ['Reference / link ID',x.reference||'Not available'],
+      ['Village locality (Sahi)',x.sahi||'Not provided'],
+      ['Device',x.device||'Not recorded'],
+      ['Status',x.status||'—'],
+      ['Date and time (IST)',x.when||'—']
+    ];
+    host.innerHTML=`<div class="pagehead mal-ah-heading"><div><div class="mal-ah-breadcrumb">Global Administrator / Security &amp; Access</div>
+        <h2>Access history</h2><div class="sub">Latest ${events.length} logged events · Administrator only</div></div>
+        <div class="sp"></div><button class="btn mal-ah-refresh" id="activityRefresh" type="button">↻ Refresh</button></div>
+      <section class="mal-ah-kpis" aria-label="Recent activity totals">
+        <div class="mal-ah-kpi mal-ah-kpi-teal"><span class="mal-ah-kpi-symbol" aria-hidden="true">◉</span><span class="mal-ah-kpi-number">${n(summary.signIns)}</span><span class="mal-ah-kpi-title">Recent sign-ins</span></div>
+        <div class="mal-ah-kpi mal-ah-kpi-blue"><span class="mal-ah-kpi-symbol" aria-hidden="true">↗</span><span class="mal-ah-kpi-number">${n(summary.sharedSubmissions)}</span><span class="mal-ah-kpi-title">Shared entries</span></div>
+        <div class="mal-ah-kpi mal-ah-kpi-amber"><span class="mal-ah-kpi-symbol" aria-hidden="true">▤</span><span class="mal-ah-kpi-number">${n(summary.publicRegistrations)}</span><span class="mal-ah-kpi-title">Public registrations</span></div>
+      </section>
+      <div class="mal-ah-privacy"><span aria-hidden="true">ⓘ</span><span>Names and Sahis entered on public forms are self-reported, not identity or location verification. Anonymous page visits are not tracked. No GPS or IP tracking.</span></div>
+      <section class="mal-ah-panel" aria-label="Filter activity">
+       <div class="mal-ah-controls">
+        <label class="mal-ah-field"><span>Search events</span><input class="input" id="malAhSearch" placeholder="Name, link ID, Sahi, event…" autocomplete="off" type="search"></label>
+        <label class="mal-ah-field"><span>Event type</span><select class="input" id="malAhKind">
+          <option value="all">All activity</option><option value="signins">Sign-ins</option><option value="shared">Shared entries</option><option value="registrations">Registrations</option><option value="links">Link changes</option><option value="other">Other</option>
+        </select></label>
+        <label class="mal-ah-field"><span>Status</span><select class="input" id="malAhStatus"><option value="all">All statuses</option><option value="good">Successful</option><option value="warn">Pending / paused</option><option value="bad">Failed / rejected</option><option value="neutral">Other status</option></select></label>
+       </div>
+       <div class="mal-ah-resultbar"><strong id="malAhResultCount">${events.length} events</strong><button id="malAhReset" class="mal-ah-clear" type="button">Clear filters</button></div>
+       <div id="malAhCards" class="mal-ah-cards" aria-live="polite"></div>
+      </section>`;
+    const cards=host.querySelector('#malAhCards');
+    const search=host.querySelector('#malAhSearch');
+    const kind=host.querySelector('#malAhKind');
+    const status=host.querySelector('#malAhStatus');
+    function repaint(){
+      const q=search.value.trim().toLowerCase();
+      const chosen=kind.value,flag=status.value;
+      const view=events.filter(x=>{
+        if(chosen!=='all'&&classify(x)!==chosen)return false;
+        if(flag!=='all'&&tone(x)!==flag)return false;
+        if(q&&![x.when,x.source,x.action,x.by,x.reference,x.sahi,x.device,x.status].some(v=>str(v).toLowerCase().includes(q)))return false;
+        return true;
+      });
+      host.querySelector('#malAhResultCount').textContent=`${view.length} of ${events.length} event${events.length===1?'':'s'}`;
+      cards.innerHTML=view.length ? view.map((x,i)=>{
+        const badge=tone(x),kindName=niceType(x),when=str(x.when)||'Time not available';
+        const short=str(x.by)||'Not provided';
+        const extra=[str(x.sahi),str(x.reference)].filter(Boolean).join(' · ');
+        return `<details class="mal-ah-card mal-ah-${badge}">
+          <summary><span class="mal-ah-event-icon" aria-hidden="true">${icon(x)}</span>
+            <span class="mal-ah-event-content"><span class="mal-ah-event-heading">${esc(x.action||kindName)}</span>
+              <span class="mal-ah-event-meta">${esc(when)} · ${esc(kindName)}</span>
+              <span class="mal-ah-event-sub">${esc(short)}${extra?' · '+esc(extra):''}</span></span>
+            <span class="mal-ah-event-side"><span class="mal-ah-status">${esc(x.status||'Logged')}</span><span class="mal-ah-arrow" aria-hidden="true">⌄</span></span>
+          </summary>
+          <div class="mal-ah-detail-grid">${attrs(x).map(([label,value])=>`<div class="mal-ah-detail"><span>${esc(label)}</span><strong>${esc(value)}</strong></div>`).join('')}</div>
+        </details>`;
+      }).join('') : `<div class="mal-ah-noresults"><strong>${events.length?'No matching activity':'No activity recorded yet'}</strong><p>${events.length?'Try a different search or clear the filters.':'Successful sign-ins and recorded submissions will appear here when available.'}</p></div>`;
+    }
+    [search,kind,status].forEach(el=>el.addEventListener(el===search?'input':'change',repaint));
+    host.querySelector('#malAhReset').onclick=()=>{search.value='';kind.value='all';status.value='all';repaint();search.focus();};
+    host.querySelector('#activityRefresh').onclick=()=>renderAccessHistory();
+    repaint();
+  }catch(err){
+    if(PAGE!=='accessHistory')return;
+    host.innerHTML=`<div class="pagehead"><div><div class="mal-ah-breadcrumb">Global Administrator / Security &amp; Access</div><h2>Access history</h2></div></div>
+      <div class="mal-ah-noresults" role="alert"><strong>Could not load access history</strong><p>${esc(err.message||err)}</p>
+      <button class="btn btn-primary" type="button" id="malAhTryAgain">Try again</button></div>`;
+    const again=host.querySelector('#malAhTryAgain');if(again)again.onclick=()=>renderAccessHistory();
+  }
+}
+
+/* =========================================================================
+   READING COMFORT — committee members are often 60+, reading in daylight
+   ========================================================================= */
+function applyComfort(){
+  const big = local.get('mal_bigtext') === '1';
+  const odia = local.get('mal_odia') === '1';
+  document.documentElement.classList.toggle('bigtext', big);
+  document.documentElement.classList.toggle('odia', odia);
+  const b = document.getElementById('bigBtn');
+  if(b) b.setAttribute('aria-pressed', big ? 'true' : 'false');
+  const o = document.getElementById('odiaBtn');
+  if(o){ o.setAttribute('aria-pressed', odia ? 'true' : 'false'); o.textContent = odia ? 'English' : 'ଓଡ଼ିଆ'; }
+}
+function toggleBig(){ local.set('mal_bigtext', local.get('mal_bigtext') === '1' ? '0' : '1'); applyComfort(); }
+function toggleOdia(){ local.set('mal_odia', local.get('mal_odia') === '1' ? '0' : '1'); applyComfort(); buildNav(); }
+
+/* A figure nobody can act on is decoration. Say what it means. */
+function fundMeaning(available){
+  const cases = (DB.emergency || []).map(r => num(r['Amount Sanctioned'] || r['Amount'])).filter(n => n > 0);
+  const avg = cases.length ? cases.reduce((a, b) => a + b, 0) / cases.length : 0;
+  const monthlyOut = recurringMonthly();
+  const bits = [];
+  if(avg > 0) bits.push('about ' + Math.floor(available / avg) + ' emergency cases at the usual ' + money(avg));
+  if(monthlyOut > 0) bits.push(Math.floor(available / monthlyOut) + ' months of regular bills');
+  if(!bits.length) return '';
+  return 'Enough for ' + bits.join(', or ');
+}
+
+/* =========================================================================
+   WHATSAPP RECEIPT — how a village actually confirms a payment
+   ========================================================================= */
+function waNumber(raw){
+  const d = String(raw || '').replace(/\D/g, '');
+  if(d.length === 10) return '91' + d;
+  if(d.length === 12 && d.indexOf('91') === 0) return d;
+  return d.length > 10 ? d : '';
+}
+function receiptText(rec){
+  const village = setting('Village Name', 'Malipatana');
+  const who = rec['Contributor'] || familyName(rec['Family ID']) || rec['Family ID'] || '';
+  return [
+    village + ' ଗାଁ ପାଣ୍ଠି · Village Fund',
+    '',
+    'Received ' + money(rec['Amount']),
+    who ? 'From: ' + who : '',
+    rec['Month'] ? 'For: ' + rec['Month'] : '',
+    rec['Date'] ? 'Date: ' + fmtDate(rec['Date']) : '',
+    rec['Contribution ID'] ? 'Receipt no: ' + rec['Contribution ID'] : '',
+    '',
+    'Thank you. ଧନ୍ୟବାଦ।'
+  ].filter(Boolean).join('\n');
+}
+function sendReceipt(rec){
+  const fam = (DB.families || []).find(f => String(f['Family ID']).trim() === String(rec['Family ID'] || '').trim());
+  const phone = waNumber(rec['Mobile'] || (fam && fam['Mobile']) || '');
+  const text = encodeURIComponent(receiptText(rec));
+  window.open(phone ? 'https://wa.me/' + phone + '?text=' + text : 'https://wa.me/?text=' + text, '_blank', 'noopener');
+}
+function offerReceipt(rec){
+  const fam = (DB.families || []).find(f => String(f['Family ID']).trim() === String(rec['Family ID'] || '').trim());
+  const phone = waNumber(rec['Mobile'] || (fam && fam['Mobile']) || '');
+  openModal(`
+    <header><div><h3>Contribution recorded</h3>
+      <div class="sub">${esc(money(rec['Amount']))} · ${esc(rec['Contribution ID'] || '')}</div></div>
+      <div class="sp"></div><button class="btn btn-sm" onclick="closeModal()">Close</button></header>
+    <div class="body">
+      <div class="receipt">${esc(receiptText(rec)).split('\n').map(l => l || '&nbsp;').join('<br>')}</div>
+      <div class="fieldnote">${phone ? 'Sends to ' + esc(phone.slice(2)) + ' on WhatsApp.'
+        : 'No mobile number saved for this family — WhatsApp will ask you to pick the contact.'}</div>
+    </div>
+    <footer>
+      <button class="btn" onclick="closeModal()">Not now</button>
+      <button class="btn btn-primary" id="waGo">Send on WhatsApp</button>
+    </footer>`);
+  const b = document.getElementById('waGo');
+  if(b) b.onclick = () => { sendReceipt(rec); closeModal(); };
+}
+
+/* =========================================================================
+   GLOBAL SEARCH — one box for a name, a mobile number or any record ID
+   ========================================================================= */
+const SEARCH_IN = ['families','members','contributions','income','expenditure','events','recurring',
+                   'emergency','regularSupport','medical','education','insurance'];
+function globalSearch(q){
+  const needle = String(q || '').trim().toLowerCase();
+  if(needle.length < 2) return [];
+  const hits = [];
+  SEARCH_IN.forEach(key => {
+    const m = MODULES[key];
+    if(!m || !canSee(key)) return;
+    (DB[key] || []).forEach(r => {
+      const hay = Object.keys(r).map(k => String(r[k] ?? '')).join(' ').toLowerCase();
+      if(hay.indexOf(needle) < 0) return;
+      const id = String(r[m.idField] || '');
+      const title = String(r['Name'] || r['Family Head'] || r['Event Name'] || r['Expense Name'] ||
+                           r['Description'] || r['Contributor'] || r['Source'] || id);
+      const bits = [id];
+      if(r['Family ID']) bits.push(String(r['Family ID']));
+      if(r['Mobile']) bits.push(String(r['Mobile']));
+      if(r['Amount']) bits.push(money(r['Amount']));
+      if(r['Date']) bits.push(fmtDate(r['Date']));
+      hits.push({ key, id, title, sub: bits.filter(Boolean).join(' · '), where: m.title });
+    });
+  });
+  return hits.slice(0, 40);
+}
+
+function openSearch(){
+  openModal(`
+    <header>
+      <div style="flex:1">
+        <input class="input" id="gsq" placeholder="Search a name, mobile number or record ID…" autocomplete="off"
+               style="font-size:16px;min-height:48px">
+      </div>
+      <button class="btn btn-sm" onclick="closeModal()">Close</button>
+    </header>
+    <div class="body" id="gsout">
+      <div class="muted small">Type at least two letters. Everything in the register is searched at once.</div>
+    </div>`);
+  const box = document.getElementById('gsq');
+  const out = document.getElementById('gsout');
+  const run = () => {
+    const hits = globalSearch(box.value);
+    if(box.value.trim().length < 2){
+      out.innerHTML = '<div class="muted small">Type at least two letters. Everything in the register is searched at once.</div>';
+      return;
+    }
+    if(!hits.length){
+      out.innerHTML = '<div class="empty"><b>Nothing found</b>No record matches “' + esc(box.value.trim()) + '”.</div>';
+      return;
+    }
+    out.innerHTML = hits.map(hit => `
+      <button class="gshit" data-gs="${esc(hit.key)}" data-gsid="${esc(hit.id)}">
+        <span class="w">${esc(hit.where)}</span>
+        <span class="t">${esc(hit.title)}</span>
+        <span class="s">${esc(hit.sub)}</span>
+      </button>`).join('');
+    out.querySelectorAll('[data-gs]').forEach(b => {
+      b.onclick = () => {
+        const k = b.dataset.gs, id = b.dataset.gsid;
+        closeModal();
+        if(k === 'members') return openMember(id);
+        if(k === 'families') return openProfile(id);
+        if(k === 'events') return openEvent(id);
+        go(k);
+        setTimeout(() => { const v = VIEW[k] || (VIEW[k] = {}); v.q = id; renderModule(k); }, 60);
+      };
+    });
+  };
+  box.addEventListener('input', () => { clearTimeout(window.__gsT); window.__gsT = setTimeout(run, 120); });
+  setTimeout(() => box.focus(), 60);
+}
+document.addEventListener('keydown', e => {
+  if((e.ctrlKey || e.metaKey) && e.key === 'k' && USER){ e.preventDefault(); openSearch(); }
+});
+
+/* =========================================================================
+   OFFLINE QUEUE
+   -------------------------------------------------------------------------
+   The village network drops mid-entry. A save that cannot reach the sheet is
+   kept here, shown in the topbar, and sent the moment the signal returns —
+   so nothing a person typed is ever lost.
+   ========================================================================= */
+const QKEY = 'mal_queue';
+function queueRead(){ try { return JSON.parse(store.get(QKEY) || '[]') || []; } catch(e){ return []; } }
+function queueWrite(list){ try { store.set(QKEY, JSON.stringify(list)); } catch(e){} paintQueue(); }
+function queueAdd(action, params, label){
+  const list = queueRead();
+  list.push({ id: 'q' + Date.now() + Math.random().toString(36).slice(2, 6), action, params, label, at: Date.now() });
+  queueWrite(list);
+}
+function paintQueue(){
+  const n = queueRead().length;
+  let b = document.getElementById('queueChip');
+  if(!n){ if(b) b.remove(); return; }
+  if(!b){
+    b = document.createElement('button');
+    b.id = 'queueChip';
+    b.className = 'queuechip';
+    b.onclick = () => flushQueue(true);
+    const host = document.querySelector('.topbar .sp');
+    if(host && host.parentNode) host.parentNode.insertBefore(b, host.nextSibling);
+    else return;
+  }
+  b.innerHTML = '<span class="qdot"></span>' + n + ' waiting' + (navigator.onLine ? '' : ' · offline');
+  b.title = queueRead().map(q => q.label).join('\n');
+}
+let FLUSHING = false;
+async function flushQueue(manual){
+  if(FLUSHING) return;
+  const list = queueRead();
+  if(!list.length){ if(manual) toast('Nothing waiting to send', 'good'); return; }
+  if(!navigator.onLine){ if(manual) toast('Still offline — it will send by itself', 'bad'); return; }
+  FLUSHING = true;
+  let sent = 0, failed = [];
+  for(const item of list){
+    try {
+      const r = await api(item.action, item.params);
+      if(r && r.ok) sent++; else failed.push(item);
+    } catch(e){ failed.push(item); }
+  }
+  FLUSHING = false;
+  queueWrite(failed);
+  if(sent){ toast(sent + ' saved entr' + (sent === 1 ? 'y' : 'ies') + ' sent to the sheet', 'good'); await refresh(true); render(); }
+  else if(manual) toast('Could not reach the sheet yet', 'bad');
+}
+let stickyRT;
+window.addEventListener('resize', () => {
+  clearTimeout(stickyRT);
+  stickyRT = setTimeout(() => { try { paintSticky(); } catch(e){} }, 200);
+});
+window.addEventListener('online', () => { paintQueue(); flushQueue(); });
+window.addEventListener('offline', paintQueue);
+setInterval(() => { if(queueRead().length) flushQueue(); }, 45000);
+
+/* Every write goes through here: straight to the sheet when online, into the
+   queue when not. Callers get {ok:true, queued:true} so the UI still advances. */
+async function saveThrough(action, params, label){
+  if(!navigator.onLine){ queueAdd(action, params, label); return { ok: true, queued: true }; }
+  try {
+    const r = await api(action, params);
+    if(r && r.ok) return r;
+    throw new Error((r && r.error) || 'The sheet refused the save.');
+  } catch(e){
+    // If the browser *knows* it is offline, a local queue is appropriate.
+    // If a request timed out while apparently online, the backend may have
+    // ALREADY written it. Auto-replaying that uncertain write can create a
+    // duplicate payment or registration; leave the form open for verification.
+    if(navigator.onLine===false){
+      queueAdd(action, params, label);
+      return { ok: true, queued: true };
+    }
+    if(/reach|time|network|Failed to fetch|did not answer|Could not contact/i.test(e.message || '')){
+      throw new Error('Save not confirmed. The sheet may already have received it. Check the register or refresh before submitting again. Details remain in this form.');
+    }
+    throw e;
+  }
+}
+
+/* ---------- API (JSONP — avoids Apps Script CORS problems) ---------- */
+function api(action, params){
+  params = params || {};
+  if(USER && USER.token && action !== 'login') params = Object.assign({}, params, {token:USER.token});
+  return new Promise((resolve, reject) => {
+    const cb = 'mcb_' + Date.now() + '_' + Math.floor(Math.random() * 1e6);
+    const q = new URLSearchParams(Object.assign({ action: action }, params, { callback: cb, _: Date.now() }));
+    const url = CONFIG.API_URL + '?' + q.toString();
+    if(url.length > 7500){
+      reject(new Error('This record is too long to send. Shorten the remarks or description and try again.'));
+      return;
+    }
+    const s = document.createElement('script');
+    const timer = setTimeout(() => { done(); reject(new Error('The sheet did not answer in time. Check your internet and try again.')); }, 28000);
+    function done(){ clearTimeout(timer); try { delete window[cb]; } catch(e){ window[cb] = undefined; } s.remove(); }
+    window[cb] = d => { done(); resolve(d); };
+    s.onerror = () => { done(); reject(new Error('Could not reach the sheet. Check the web app URL and that access is set to Anyone.')); };
+    s.referrerPolicy = 'no-referrer';
+    s.src = url;
+    document.body.appendChild(s);
+  });
+}
+
+/* Optional account recovery. The sender verifies the configured email/phone.
+   Never save OTP values or verification challenges in browser storage. */
+let malOtpChallenge='',malOtpPurpose='login',malResetTicket='';
+function malOtpStatus(text,bad){
+  const el=document.getElementById('malOtpMessage');if(!el)return;
+  el.className='msg '+(bad?'err':'info');el.textContent=text;
+}
+async function malReadOtpOptions(){
+  try{
+    const r=await api('loginOptions');if(!r||!r.ok)return;
+    if(!r.otpEmail)malOtpStatus('Email OTP is not enabled. Contact the village admin.',true);
+  }catch(err){malOtpStatus('Could not check OTP availability. Try again later.',true);}
+}
+function malSecureReceipt(){
+  const bytes=new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join('');
+}
+function malInitOtp(){
+  const toggle=document.getElementById('forgotLoginBtn');if(!toggle)return;
+  const resetLaunch=document.getElementById('malResetLaunch');
+  const container=toggle.closest('.formbox');
+  const panel=document.getElementById('malOtpPanel');
+  function start(mode){
+    malOtpPurpose=mode;malOtpChallenge='';malResetTicket='';
+    panel.hidden=false;
+    if(container)container.classList.add('mal-otp-mode');
+    document.getElementById('malOtpCodeRow').hidden=true;
+    document.getElementById('malResetFields').hidden=true;
+    document.getElementById('malOtpContact').value=document.getElementById('u').value.trim();
+    document.getElementById('malOtpCode').value='';
+    document.querySelector('#malOtpPanel .mal-otp-title').textContent=
+      mode==='reset'?'Reset your password using OTP':'Sign in with a verification code';
+    document.getElementById('malVerifyOtp').textContent=mode==='reset'?'Verify & reset password':'Verify & sign in';
+    malOtpStatus(mode==='reset'?'Only a self-verified email can reset a password. The code expires in 5 minutes.':'',false);
+    document.getElementById('malOtpContact').focus();malReadOtpOptions();
+  }
+  toggle.onclick=()=>start('login');
+  if(resetLaunch)resetLaunch.onclick=()=>start('reset');
+  function back(){
+    panel.hidden=true;malOtpChallenge='';malResetTicket='';
+    document.getElementById('malOtpCodeRow').hidden=true;
+    document.getElementById('malResetFields').hidden=true;
+    document.getElementById('malOtpCode').value='';
+    document.getElementById('malNewPassword').value='';
+    document.getElementById('malConfirmPassword').value='';
+    if(container)container.classList.remove('mal-otp-mode');
+    document.getElementById('u').focus();
+  }
+  document.getElementById('malOtpBack').onclick=back;
+  document.getElementById('malSendOtp').onclick=async()=>{
+    const btn=document.getElementById('malSendOtp'),id=document.getElementById('malOtpContact').value.trim();
+    const channel='email';
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(id)){malOtpStatus('Enter your registered verified email address.',true);return;}
+    btn.disabled=true;malOtpChallenge='';malResetTicket='';
+    document.getElementById('malOtpCodeRow').hidden=true;
+    document.getElementById('malResetFields').hidden=true;
+    malOtpStatus('Requesting code…',false);
+    try{
+      const r=await api('requestOtp',{identifier:id,channel});
+      if(!r||!r.ok)throw new Error((r&&r.error)||'Could not request code.');
+      malOtpChallenge=r.challenge;
+      document.getElementById('malOtpCodeRow').hidden=false;
+      malOtpStatus(r.message||'If the contact is verified, a code has been sent.',false);
+      document.getElementById('malOtpCode').focus();
+    }catch(err){malOtpStatus(err.message||'Could not request code.',true);}
+    finally{btn.disabled=false;}
+  };
+  document.getElementById('malVerifyOtp').onclick=async()=>{
+    const btn=document.getElementById('malVerifyOtp'),code=document.getElementById('malOtpCode').value.trim();
+    if(!malOtpChallenge||!/^[0-9]{6}$/.test(code)){malOtpStatus('Enter your 6-digit code.',true);return;}
+    btn.disabled=true;malOtpStatus('Verifying code…',false);
+    try{
+      const reset=malOtpPurpose==='reset';
+      const r=await api(reset?'verifyPasswordResetOtp':'verifyOtp',{challenge:malOtpChallenge,code});
+      if(!r||!r.ok)throw new Error((r&&r.error)||'Invalid or expired code.');
+      malOtpChallenge='';document.getElementById('malOtpCode').value='';
+      if(reset){
+        malResetTicket=r.resetTicket;
+        document.getElementById('malOtpCodeRow').hidden=true;
+        document.getElementById('malResetFields').hidden=false;
+        malOtpStatus(r.message||'Verified. Set your new password.',false);
+        document.getElementById('malNewPassword').focus();
+      }else{
+        USER=r.user;store.set('mal_user',JSON.stringify(USER));
+        malOtpStatus('Verified. Loading your village records…',false);
+        await load();enterApp();
+      }
+    }catch(err){malOtpStatus(err.message||'Verification failed.',true);}
+    finally{btn.disabled=false;}
+  };
+  document.getElementById('malSaveReset').onclick=async()=>{
+    const btn=document.getElementById('malSaveReset');
+    const one=document.getElementById('malNewPassword'),two=document.getElementById('malConfirmPassword');
+    if(!malResetTicket){malOtpStatus('Verify a fresh OTP first.',true);return;}
+    if(one.value.length<12||one.value.length>128||/\s/.test(one.value)){malOtpStatus('Use 12–128 characters without spaces.',true);return;}
+    if(one.value!==two.value){malOtpStatus('Passwords do not match.',true);return;}
+    btn.disabled=true;malOtpStatus('Saving your new password securely…',false);
+    const receipt=malSecureReceipt();
+    const body=new URLSearchParams({action:'resetPassword',ticket:malResetTicket,receipt,newPassword:one.value});
+    // Password is submitted in a POST body, never a URL or JSONP request.
+    one.value='';two.value='';
+    try{
+      try{await fetch(CONFIG.API_URL,{method:'POST',mode:'no-cors',credentials:'omit',cache:'no-store',redirect:'follow',
+        headers:{'Content-Type':'application/x-www-form-urlencoded'},body,referrerPolicy:'no-referrer'});}catch(_ignored){}
+      let outcome=null;
+      for(let n=0;n<13;n++){
+        await new Promise(resolve=>setTimeout(resolve,1500));
+        try{const r=await api('passwordResetStatus',{receipt});if(r&&r.state&&r.state!=='pending'){outcome=r;break;}}
+        catch(_ignored){}
+      }
+      malResetTicket='';
+      if(!outcome)throw new Error('No confirmation from backend. Do not assume the password was changed. Check your sign-in or ask admin.');
+      if(outcome.state!=='complete')throw new Error(outcome.message||'Password reset was unsuccessful. Request another OTP.');
+      back();
+      const msg=document.getElementById('loginMsg');msg.className='msg info';msg.textContent='Password updated. Sign in with your new password.';
+      document.getElementById('p').focus();
+    }catch(err){malOtpStatus(err.message||'Could not complete password reset.',true);}
+    finally{btn.disabled=false;}
+  };
+  document.getElementById('malOtpCode').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('malVerifyOtp').click();});
+}
+/* Admin controls: global methods under Settings, per-user contacts under Users. */
+function openLoginOptions(){
+  if(!isAdmin())return;
+  const defs=[['Login By Email','Verified email + password'],['Login By Mobile','Registered mobile + password (no SMS)'],
+    ['OTP Email Enabled','Direct email OTP sign-in and password recovery'],
+    ['Contact Email Verification','User self-verification of email by OTP']];
+  openModal('<header><h3>Login & account recovery</h3><button class="btn btn-sm" onclick="closeModal()">Close</button></header>'+
+    '<div class="body"><p class="muted">Existing username/password always works. Verify contact details in Users before enabling alternatives.</p>'+
+    defs.map(([key,label],i)=>'<label style="display:flex;gap:9px;align-items:center;padding:9px 0"><input type="checkbox" id="malLoginOpt'+i+'" '+
+     (/^(yes|true)$/i.test(String(setting(key,'Yes')))?'checked':'')+'>'+esc(label)+'</label>').join('')+
+    '<p class="muted small">Email is the only OTP channel. The mobile number is an ordinary contact and, if enabled, can be used with a password; it cannot receive verification or reset codes.</p>'+
+    '<button type="button" class="btn btn-primary" id="malSaveLoginOpts">Save options</button><div id="malLoginOptMsg" class="small"></div></div>');
+  document.getElementById('malSaveLoginOpts').onclick=async()=>{
+    const btn=document.getElementById('malSaveLoginOpts'),msg=document.getElementById('malLoginOptMsg');btn.disabled=true;
+    try{
+      for(let i=0;i<defs.length;i++){
+        const rec={Setting:defs[i][0],Value:document.getElementById('malLoginOpt'+i).checked?'Yes':'No'};
+        const r=await api('save',{sheet:'Settings',record:JSON.stringify(rec)});
+        if(!r||!r.ok)throw new Error((r&&r.error)||'Could not save option: '+defs[i][0]);
+        DB.settings=DB.settings||{};DB.settings[rec.Setting]=rec.Value;
+      }
+      msg.textContent='Saved. New rules apply to future sign-ins.';toast('Login options saved','good');
+    }catch(err){msg.textContent=err.message||'Could not save settings.';}
+    finally{btn.disabled=false;}
+  };
+}
+
+/* ---------- auth ---------- */
+async function doLogin(){
+  const btn = $('#loginBtn'), msg = $('#loginMsg');
+  const username = $('#u').value.trim(), password = $('#p').value;
+  if(!username || !password){ msg.className = 'msg err'; msg.textContent = 'Enter your username and password.'; return; }
+  btn.disabled = true;
+  msg.className = 'msg info'; msg.textContent = 'Checking with the sheet…';
+  try {
+    const r = await api('login', { username, password });
+    if(!r || !r.ok) throw new Error((r && r.error) || 'Sign in failed.');
+    USER = r.user;
+    store.set('mal_user', JSON.stringify(USER));
+    if($('#rememberMe') && $('#rememberMe').checked) local.set('mal_saved_user', username);
+    else { try { localStorage.removeItem('mal_saved_user'); } catch(e){} }
+    msg.textContent = 'Loading village records…';
+    await load();
+    enterApp();
+  } catch(e){
+    msg.className = 'msg err';
+    msg.textContent = e.message;
+  } finally { btn.disabled = false; }
+}
+function doLogout(){ store.del('mal_user'); location.reload(); }
+const isAdmin = () => String(USER && USER.role || '').toLowerCase() === 'admin';
+
+/* ---------- who may see and do what ----------
+   Stored as one Settings row per user: Setting "Access <username>",
+   Value '{"pages":["dashboard","families"],"edit":true,"del":false}'.
+   No row means "whatever the role allows", so nothing changes until an admin
+   sets something. */
+const ALL_PAGES = [
+  ['dashboard', 'Dashboard'], ['families', 'Families'], ['members', 'Members'],
+  ['contributions', 'Contributions'], ['income', 'Income'], ['expenditure', 'Expenditure'],
+  ['events', 'Major expenses'], ['recurring', 'Recurring expenses'],
+  ['emergency', 'Emergency cases'], ['regularSupport', 'Regular support'], ['grievances', 'Grievances'],
+  ['importantDays', 'Important days'], ['notices', 'Notice board']
+];
+function accessKey(username){ return 'Access ' + String(username || '').trim(); }
+function accessOf(username){
+  try {
+    const raw = setting(accessKey(username), '');
+    if(!raw) return null;
+    const o = JSON.parse(raw);
+    return o && typeof o === 'object' ? o : null;
+  } catch(e){ return null; }
+}
+function myAccess(){
+  const u = USER && (USER.username || USER.Username || USER.name);
+  return isAdmin() ? null : accessOf(u);
+}
+const roleCanEdit = () => ['admin','editor'].includes(String(USER && USER.role || '').toLowerCase());
+function canEdit(){
+  const a = myAccess();
+  return a && a.edit !== undefined ? !!a.edit : roleCanEdit();
+}
+function canDelete(){
+  const a = myAccess();
+  if(a && a.del !== undefined) return !!a.del;
+  return isAdmin();
+}
+function canSee(page){
+  if(isAdmin()) return true;
+  const a = myAccess();
+  if(!a || !Array.isArray(a.pages) || !a.pages.length) return true;
+  return page === 'dashboard' || a.pages.includes(page);
+}
+
+let idleTimer = null;
+function resetIdle(){
+  clearTimeout(idleTimer);
+  idleTimer = setTimeout(() => { toast('Signed out after ' + CONFIG.IDLE_MINUTES + ' idle minutes'); setTimeout(doLogout, 900); }, CONFIG.IDLE_MINUTES * 60000);
+}
+
+/* ---------- data ---------- */
+/* Sheets the backend may not return yet (the bootstrap line has to be added by
+   hand in Apps Script). Without this, a record saved here would be wiped by the
+   next reload and appear to vanish. */
+const OPTIONAL_SHEETS = ['events', 'recurring'];
+let SERVER_SHEETS = [];
+function cacheKey(k){ return 'mal_local_' + k; }
+function stashLocal(k){
+  try { store.set(cacheKey(k), JSON.stringify(DB[k] || [])); } catch(e){}
+}
+function restoreLocal(k){
+  try { return JSON.parse(store.get(cacheKey(k)) || '[]') || []; } catch(e){ return []; }
+}
+
+
+/* PRIVATE-DATA MIGRATION. Prior versions persisted whole registers in localStorage.
+   Remove those copies once; retain only harmless UI preferences and remembered username.
+   The in-progress offline queue (if any) is copied into sessionStorage for this tab. */
+(function clearLegacyPrivateStorage(){
+  try {
+    const keepQueue=localStorage.getItem('mal_queue');
+    if(keepQueue&&!sessionStorage.getItem('mal_queue')) sessionStorage.setItem('mal_queue',keepQueue);
+    for(const k of Object.keys(localStorage)){
+      if(k==='mal_db_cache'||k==='mal_queue'||k==='mal_login_photo'||k.startsWith('mal_local_'))localStorage.removeItem(k);
+    }
+  } catch(e){}
+})();
+
+const DBCACHE = 'mal_db_cache';
+function cacheDb(){ try { store.set(DBCACHE, JSON.stringify(DB)); } catch(e){} }
+/* A cache written by an older build can be valid JSON yet the wrong shape,
+   which passes JSON.parse and then crashes the first render — the reason a
+   phone with history fails where incognito, with empty storage, works. So
+   the shape is checked here, not just the syntax. */
+function cachedDb(){
+  var bad = function(why){ if(window.malNoteBadStore) window.malNoteBadStore('the offline copy of the register'); return null; };
+  try {
+    const d = JSON.parse(store.get(DBCACHE) || 'null');
+    if(d === null) return null;                       // simply absent, not broken
+    if(typeof d !== 'object') return bad();
+    if(!d.settings || typeof d.settings !== 'object') return bad();
+    if(!Array.isArray(d.families) || !Array.isArray(d.members)) return bad();
+    return d;
+  } catch(e){ return bad(); }
+}
+
+let MISSING_WARNED = false;
+async function load(){
+  const r = await api('bootstrap');
+  if(!r || !r.ok) throw new Error((r && r.error) || 'Could not read the village sheet.');
+  SERVER_SHEETS = OPTIONAL_SHEETS.filter(k => Array.isArray(r[k]));
+  const keptLocal = {};
+  OPTIONAL_SHEETS.forEach(k => {
+    if(!Array.isArray(r[k])) keptLocal[k] = (DB && DB[k] && DB[k].length) ? DB[k] : restoreLocal(k);
+  });
+  DB = r;
+  // Session-only diagnostic metadata. No member data or credentials are exported.
+  window.malLastSuccessfulSync = new Date().toISOString();
+  const missing = [];
+  Object.keys(keptLocal).forEach(k => {
+    DB[k] = keptLocal[k];
+    missing.push(MODULES[k] ? MODULES[k].sheet : k);
+  });
+  OPTIONAL_SHEETS.forEach(k => { if(Array.isArray(DB[k])) stashLocal(k); });
+  if(missing.length && !MISSING_WARNED){
+    MISSING_WARNED = true;
+    setTimeout(() => toast(missing.join(' and ') + ' saved on this device only', 'bad'), 1200);
+  }
+  cacheDb();
+  return DB;
+}
+async function refresh(silent){
+  try {
+    if(!silent) busy(true, 'Reloading…');
+    await load();
+    render();
+    if(!silent) toast('Records reloaded', 'good');
+  } catch(e){ toast(e.message, 'bad'); }
+  finally { if(!silent) busy(false); }
+}
+
+function enterApp(){
+  if(!DB){ const c = cachedDb(); if(c){ DB = c; } }
+  /* No cache on this device yet, so there is nothing to paint — show the shape
+     of the page rather than a blank panel while the sheet answers. */
+  if(!DB) skeleton();
+  setTimeout(() => {
+    if(document.getElementById('gsBtn')) return;
+    const host = document.querySelector('.topbar .sp');
+    if(!host || !host.parentNode) return;
+    const b = document.createElement('button');
+    b.id = 'gsBtn';
+    b.className = 'searchchip';
+    b.innerHTML = '<span>⌕</span> Search <kbd>Ctrl K</kbd>';
+    b.onclick = openSearch;
+    host.parentNode.insertBefore(b, host.nextSibling);
+
+    const big = document.createElement('button');
+    big.id = 'bigBtn'; big.className = 'iconbtn'; big.title = 'Bigger text';
+    big.setAttribute('aria-label', 'Bigger text'); big.textContent = 'A';
+    big.style.fontWeight = '700'; big.onclick = toggleBig;
+    const od = document.createElement('button');
+    od.id = 'odiaBtn'; od.className = 'langbtn'; od.title = 'Odia labels';
+    od.setAttribute('aria-label', 'Switch language'); od.textContent = 'ଓଡ଼ିଆ';
+    od.onclick = toggleOdia;
+    host.parentNode.insertBefore(big, host.nextSibling);
+    host.parentNode.insertBefore(od, host.nextSibling);
+    /* Keep clock immediately LEFT of Odia selector after dynamic controls load. */
+    const clock = document.getElementById('malLiveDateBar');
+    if(clock && od.parentNode) od.parentNode.insertBefore(clock, od);
+
+    buildStickyTab();
+    applyComfort();
+    paintSticky();
+    stickyBadge();
+  }, 200);
+  setTimeout(paintQueue, 300);
+  setTimeout(() => { if(queueRead().length) flushQueue(); }, 2500);
+  store.set('mal_login_photo', String(setting('Login Photo', CONFIG.DEFAULT_PHOTO)));
+  $('#login').classList.add('hide');
+  $('#app').classList.remove('hide');
+  $('#whoName').textContent = USER.name || USER.username;
+  malRefreshVerificationChip();
+  $('#whoRole').textContent = USER.role || 'Viewer';
+  $('#avatar').textContent = String(USER.name || USER.username || '?').trim().charAt(0).toUpperCase();
+  $('#brandSub').textContent = (DB.settings && DB.settings['Village Name'] ? String(DB.settings['Village Name']).toUpperCase() : 'MALIPATANA')
+    + ' · ' + CONFIG.VERSION + ' · ' + (DB.version || '');
+  if(DB.settings && DB.settings['Auto Logout']){
+    const m = parseInt(String(DB.settings['Auto Logout']), 10);
+    if(m > 0) CONFIG.IDLE_MINUTES = m;
+  }
+  buildNav();
+  go('dashboard');
+  ['click','keydown','touchstart'].forEach(ev => document.addEventListener(ev, resetIdle, { passive: true }));
+  resetIdle();
+}
+
+/* ---------- navigation ---------- */
+const TABS = [
+  ['dashboard', '\u25a6', 'Home', null],
+  ['families', '\u2302', 'Families', 'families'],
+  ['contributions', '\u25c8', 'Money', 'contributions'],
+  ['memorial', '\u2740', 'Memory', 'members']
+];
+function buildTabs(){
+  const bar = $('#tabbar');
+  if(!bar) return;
+  const items = TABS.filter(t => !t[3] || canSee(t[3]));
+  bar.innerHTML = items.map(([page, ic, label]) =>
+      '<button data-tab="' + page + '" class="' + (PAGE === page ? 'on' : '') + '">' +
+      '<span class="ic">' + ic + '</span><span class="lb">' + label + '</span></button>').join('') +
+    '<button data-tab="__more" class="' + (items.every(i => i[0] !== PAGE) ? 'on' : '') + '">' +
+    '<span class="ic">\u2261</span><span class="lb">More</span></button>';
+  bar.querySelectorAll('[data-tab]').forEach(b => {
+    b.onclick = () => {
+      const t = b.dataset.tab;
+      if(t === '__more'){ openDrawer(); return; }
+      closeDrawer();
+      go(t);
+    };
+  });
+}
+
+function buildNav(){
+  const groups = [
+    ['', [['dashboard', '▦', 'Dashboard', null]]],
+    ['PEOPLE', [['families', '⌂', 'Families', 'families'], ['members', '☗', 'Members', 'members'], ['memorial', '✝', 'In memory', 'members', 'members'], ['guidance', '✥', 'Guidance', null, 'families']]],
+    ['MONEY', [['contributions', '◈', 'Contributions', 'contributions'], ['income', '↑', 'Income', 'income'],
+               ['expenditure', '↓', 'Expenditure', 'expenditure'], ['events', '❋', 'Major expenses', 'events'],
+               ['recurring', '↻', 'Recurring expenses', 'recurring']]],
+    ['WELFARE', [['emergency', '✚', 'Emergency cases', 'emergency'], ['regularSupport', '❤', 'Regular support', 'regularSupport']]],
+    ['VILLAGERS', [['grievances', '⚑', 'Grievances', 'grievances'], ['importantDays', '❀', 'Important days', 'importantDays'],
+                   ['notices', '▦', 'Notice board', 'notices']]]
+  ];
+  /* Fifth element is the PERMISSION key, when it differs from the page key.
+     In memory and Guidance are views of other sheets, so they are not in
+     ALL_PAGES and can never be ticked in Access — checking the page key alone
+     hid them from everyone with a custom access list. Each now declares the
+     permission its own render function enforces. */
+  groups.forEach(g => { g[1] = g[1].filter(it => canSee(it[4] || it[0])); });
+  if(local.get('mal_odia') === '1'){
+    groups.forEach(g => g[1].forEach(it => {
+      const m = MODULES[it[0]];
+      if(m && m.odia) it[2] = m.odia;
+    }));
+  }
+  if(isAdmin()) groups.push(['GLOBAL ADMINISTRATOR', [['users', '☺', 'Users', 'users'],
+                                       ['publicPage', '◉', 'What people see', null],
+                                       ['auditLog', '☶', 'Change history', null],
+                                       ['accessHistory', '◷', 'Access & submissions', null],
+                                       ['photos', '❏', 'Photos', null],
+                                       ['settingsList', '⚙', 'Settings', 'settingsList']]]);
+  let html = '';
+  groups.forEach(([title, items]) => {
+    if(!items.length) return;   // a heading with nothing under it is just noise
+    if(title) html += '<div class="navgroup">' + title + '</div>';
+    html += items.map(([key, ic, label, dataKey]) => {
+      /* In memory is a view of Members, so it is gated on 'members' — the same
+         key the page itself enforces — but its badge must count the deceased,
+         not repeat the Members total. Keyed on the page, not the permission. */
+      const n = key === 'memorial' ? (DB.members || []).filter(isDeceased).length
+        : dataKey ? (rowsOf(dataKey) || []).length : '';
+      return '<button class="nav" data-page="' + key + '"><span class="ic">' + ic + '</span>' + esc(label) +
+             (n !== '' ? '<span class="count">' + n + '</span>' : '') + '</button>';
+    }).join('');
+  });
+  $('#sidebar').innerHTML = html;
+  $('#sidebar').querySelectorAll('.nav').forEach(b => b.onclick = () => go(b.dataset.page));
+}
+function go(page){
+  PAGE = page;
+  document.querySelectorAll('.nav').forEach(b => b.classList.toggle('active', b.dataset.page === page));
+  closeDrawer();
+  render();
+  window.scrollTo({ top: 0 });
+}
+function render(){
+  buildNav();
+  buildTabs();
+  setTimeout(() => { try { stickyBadge(); paintSticky(); } catch(e){} }, 0);
+  document.querySelectorAll('.nav').forEach(b => b.classList.toggle('active', b.dataset.page === PAGE));
+  if(PAGE === 'guidance') return renderGuidance();
+  if(PAGE === 'household') return renderHousehold();
+  if(PAGE === 'memorial') return renderMemorial();
+  if(PAGE === 'publicPage') return renderPublicPage();
+  if(PAGE === 'auditLog') return renderAudit();
+  if(PAGE === 'accessHistory') return renderAccessHistory();
+  if(PAGE === 'dashboard') renderDashboard();
+  else if(PAGE === 'photos') renderPhotos();
+  else renderModule(PAGE);
+}
+function openDrawer(){ $('#sidebar').classList.add('open'); $('#scrim').classList.add('show'); }
+function closeDrawer(){ $('#sidebar').classList.remove('open'); $('#scrim').classList.remove('show'); }
+
+/* =========================================================================
+   MODULE SCHEMA — one entry per sheet. `fields` must list every sheet column
+   in sheet order, because the backend rewrites the whole row on save.
+   ========================================================================= */
+const YESNO = ['Yes', 'No'];
+const PAYMODES = ['Cash', 'UPI', 'Bank Transfer', 'Cheque'];
+
+const MODULES = {
+  notices: {
+    sheet: 'Notices', title: 'Notice board', odia: 'ସୂଚନା ପଟ୍ଟ', idField: 'Notice ID', prefix: 'NTC',
+    blurb: 'Photographs and writing shown on the sign-in and public pages',
+    fields: [
+      { n:'Notice ID', t:'text', auto:true },
+      { n:'Title', t:'text', req:true, hint:'A short heading — Raja Parba 2026, New tube well…' },
+      { n:'Text', t:'textarea', hint:'Paste full https:// or www. links; they become clickable on the Notice Board and public page.' },
+      { n:'Photo', t:'photo', hint:'Original saved privately (up to 20 MB) in Drive; dashboard uses a small thumbnail' },
+      { n:'Credit', t:'text', hint:'Whose photo or writing this is, if it should be named' },
+      { n:'Date', t:'date', def:'today' },
+      { n:'Until', t:'date', hint:'Leave empty to keep it up. After this date it retires itself.' },
+      { n:'Order', t:'number', def:0, hint:'Higher numbers sit at the top' },
+      { n:'Show On', t:'select', opts:['Both pages','Sign-in only','Public only','Nowhere'], def:'Both pages' }
+    ],
+    list: ['Notice ID','Photo','Title','Text','Credit','Date','Until','Order','Show On']
+  },
+  importantDays: {
+    sheet: 'Important Days', title: 'Important days', odia: 'ଗୁରୁତ୍ଵପୂର୍ଣ୍ଣ ଦିନ', idField: 'Day ID', prefix: 'DAY',
+    blurb: 'Festivals, meetings and anniversaries announced on the sign-in and public pages',
+    fields: [
+      { n:'Day ID', t:'text', auto:true },
+      { n:'Title', t:'text', req:true, hint:'Raja Parba, Annual meeting, Ratha Jatra…' },
+      { n:'Date', t:'date', req:true },
+      { n:'Note', t:'textarea', hint:'One line villagers should know — time, place, what to bring' },
+      { n:'Photo', t:'photo', hint:'Optional — a poster or picture shown with the announcement' },
+      { n:'Repeats Yearly', t:'select', opts:['Yes','No'], def:'Yes' },
+      { n:'Show Days Before', t:'number', def:7, hint:'How many days ahead it starts appearing' },
+      { n:'Show On', t:'select', opts:['Both pages','Sign-in only','Public only','Nowhere'], def:'Both pages' }
+    ],
+    list: ['Day ID','Photo','Title','Date','Repeats Yearly','Show Days Before','Show On','Note']
+  },
+  grievances: {
+    sheet: 'Grievances', title: 'Grievances', odia: 'ଅଭିଯୋଗ', idField: 'Grievance ID', prefix: 'GRV',
+    blurb: 'Complaints and requests raised by villagers through the public page',
+    fields: [
+      { n:'Grievance ID', t:'text', auto:true },
+      { n:'Date', t:'date', def:'today' },
+      { n:'Name', t:'text', req:true },
+      { n:'Mobile', t:'text' },
+      { n:'Family ID', t:'family' },
+      { n:'Category', t:'datalist', opts:['Water','Road','Electricity','Sanitation','Fund misuse','Welfare benefit','Family record error','Other'] },
+      { n:'Description', t:'textarea', req:true },
+      { n:'Status', t:'select', opts:['Received','Under Review','Action Taken','Resolved','Rejected'] },
+      { n:'Assigned To', t:'datalist' },
+      { n:'Committee Remark', t:'textarea' },
+      { n:'Resolved Date', t:'date' }
+    ],
+    list: ['Grievance ID','Date','Name','Category','Description','Status','Assigned To']
+  },
+  families: {
+    sheet: 'Families', title: 'Families', singular: 'family', odia: 'ପରିବାର', idField: 'Family ID', prefix: 'FAM',
+    blurb: 'Every household in the village register',
+    fields: [
+      { n:'Family ID', t:'text', auto:true },
+      { n:'Given Name', t:'text', req:true, hint:'Enter one or more given names, without the surname. Full Name is automatic.' },
+      { n:'Surname', t:'datalist', req:true, hint:'Choose or enter the family surname' },
+      { n:'Family Head', t:'text', hidden:true },
+      { n:'Parent Family ID', t:'family', hint:'Leave empty for a main family. Set it to make this a subfamily of a bigger household.' },
+      { n:'Village Locality', t:'datalist', hint:'Sahi / neighbourhood within Malipatana; independent of surname' },
+      { n:'House No', t:'text', hidden:true },
+      { n:'Address/Area', t:'datalist', hidden:true },
+      { n:'Mobile', t:'tel' },
+      { n:'Total Members', t:'counted', hint:'Counted from the living members of this family' },
+      { n:'Earning Members', t:'counted' },
+      { n:'Children', t:'counted', hint:'Under 18' },
+      { n:'Elderly', t:'counted', hint:'60 and above' },
+      { n:'Vulnerable Status', t:'select', opts:['Normal','Vulnerable','Highly Vulnerable'] },
+      { n:'Needs Guidance', t:'select',
+        opts:['No','Child education','Higher studies','Job or skill','Health','Money matters','Legal or papers','Other'],
+        hint:'What this family needs advice or help with' },
+      { n:'Guide Member ID', t:'guide', hint:'The villager assigned to advise them' },
+      { n:'Guidance Note', t:'textarea', hint:'What is needed, in plain words. The committee decides money later.' },
+      { n:'Guidance Status', t:'select', opts:['','Open','Advising','Sent to committee','Helped','Closed'] },
+      { n:'Family Status', t:'select', opts:['Active','Inactive','Shifted'] },
+      { n:'Remarks', t:'textarea' },
+      { n:'Photo', t:'photo', hint:'Optional household photo; original in private Drive, small preview in dashboard.' },
+      { n:'Created Date', t:'date', hidden:true },
+      { n:'Last Updated', t:'date', hidden:true }
+    ],
+    list: ['Family ID','Family Head','Surname','Village Locality','Parent Family ID','Mobile','Total Members','Earning Members','Vulnerable Status','Needs Guidance','Guide Member ID','Guidance Status','Family Status']
+  },
+  members: {
+    sheet: 'Members', title: 'Members', odia: 'ସଦସ୍ୟ', idField: 'Member ID', prefix: 'MEM',
+    blurb: 'People inside each family',
+    fields: [
+      { n:'Member ID', t:'text', auto:true },
+      { n:'Family ID', t:'family', req:true },
+      { n:'Given Name', t:'text', req:true, hint:'Enter one or more given names, without the surname. Full Name is automatic.' },
+      { n:'Surname', t:'datalist', req:true, hint:'Choose or enter surname; may differ from family head surname' },
+      { n:'Name', t:'text', hidden:true },
+      { n:'Relation to Family Head', t:'datalist', opts:['Self','Wife','Husband','Son','Daughter','Father','Mother','Brother','Sister','Daughter-in-law','Son-in-law','Grandson','Granddaughter','Other'] },
+      { n:'Gender', t:'select', opts:['Male','Female','Other'] },
+      { n:'Father Name', t:'text' },
+      { n:'Mother Name', t:'text' },
+      { n:'Marital Status', t:'select', opts:['Unknown','Unmarried','Married','Widowed','Divorced','Separated'], hint:'Marriage does not determine village population. Select current residence separately.' },
+      { n:'Spouse Name', t:'text', hint:'For married/widowed members, enter if known. Existing spouse details are retained.' },
+      { n:'Date of Birth', t:'date', hint:'Optional. Enter only when the exact date is known; otherwise leave empty.' },
+      { n:'Age', t:'number', hint:'Optional. Calculated from DOB; otherwise enter approximate age if known. Leave blank if unknown.' },
+      { n:'Education', t:'datalist', opts:['Illiterate','Primary','Class 10','Class 12','ITI/Diploma','Graduate','Post Graduate'] },
+      { n:'Occupation', t:'datalist', opts:['Farmer','Daily Wage','Fisherman','Shop','Private Job','Government Job','Student','Homemaker','Unemployed','Retired'] },
+      { n:'Earning Member', t:'select', opts:YESNO },
+      { n:'Monthly Income', t:'money' },
+      { n:'Mobile', t:'tel' },
+      { n:'Residence Status', t:'select', opts:['Living in Malipatana','Outside temporarily','Shifted permanently'], hint:'For counting current residents, without changing ancestral Family ID' },
+      { n:'Current City', t:'text' },
+      { n:'Current District', t:'text' },
+      { n:'Current State', t:'text' },
+      { n:'Current Country', t:'text' },
+      { n:'Outside Address', t:'textarea', hint:'Optional private address for members who live outside Malipatana' },
+      { n:'Disability', t:'select', opts:['No','Yes'] },
+      { n:'Insurance', t:'select', opts:YESNO },
+      { n:'Remarks', t:'textarea' },
+      { n:'Photo', t:'photo', hint:'Original saved privately (up to 20 MB) in Drive; dashboard uses a small thumbnail' },
+      { n:'Life Status', t:'select', opts:['Alive','Deceased'], hidden:true },
+      { n:'Date of Death', t:'date', hidden:true },
+      { n:'Cause of Death', t:'text', hidden:true },
+      { n:'Memorial Message', t:'textarea', hidden:true },
+      { n:'Memorial Photo', t:'photo', hidden:true }
+    ],
+    list: ['Photo','Member ID','Name','Surname','Family ID','Relation to Family Head','Gender','Marital Status','Spouse Name','Residence Status','Date of Birth','Age','Education','Occupation','Earning Member','Monthly Income','Mobile','Life Status']
+  },
+  recurring: {
+    sheet: 'Recurring Expenses', title: 'Recurring expenses', odia: 'ନିୟମିତ ଖର୍ଚ୍ଚ', idField: 'Recurring ID', prefix: 'REC',
+    blurb: 'Bills the village pays again and again — electricity, priest, sweeper, temple upkeep',
+    fields: [
+      { n:'Recurring ID', t:'text', auto:true },
+      { n:'Expense Name', t:'text', req:true },
+      { n:'Category', t:'datalist', opts:['Administration','Temple','Electricity','Water','Salary','Rent','Maintenance','Welfare','Other'] },
+      { n:'Amount', t:'money', req:true },
+      { n:'Frequency', t:'select', opts:['Monthly','Quarterly','Half Yearly','Yearly'] },
+      { n:'Paid To', t:'text' },
+      { n:'Start Date', t:'date', def:'today' },
+      { n:'Next Due', t:'date', def:'today' },
+      { n:'Last Paid', t:'date' },
+      { n:'Active', t:'select', opts:YESNO },
+      { n:'Remarks', t:'textarea' }
+    ],
+    list: ['Recurring ID','Expense Name','Category','Amount','Frequency','Next Due','Last Paid','Paid To','Active']
+  },
+  events: {
+    sheet: 'Events', title: 'Major expenses', odia: 'ବଡ଼ ଖର୍ଚ୍ଚ', idField: 'Event ID', prefix: 'EVT',
+    blurb: 'Raja, Ratha Jatra, temple festivals and other big one-off village spending',
+    fields: [
+      { n:'Event ID', t:'text', auto:true },
+      { n:'Event Name', t:'text', req:true, hint:'e.g. Raja Parba 2026, temple roof repair' },
+      { n:'Type', t:'datalist', opts:['Raja Parba','Ratha Jatra','Durga Puja','Kartika Purnima','Temple Festival','Annual Meeting','Cleaning Drive','Sports','Other'] },
+      { n:'Year', t:'number', def:'thisYear' },
+      { n:'Start Date', t:'date', def:'today' },
+      { n:'End Date', t:'date' },
+      { n:'In Charge', t:'datalist' },
+      { n:'Budget', t:'money' },
+      { n:'Status', t:'select', opts:['Planned','Ongoing','Completed'] },
+      { n:'Remarks', t:'textarea' }
+    ],
+    list: ['Event ID','Event Name','Type','Year','Start Date','In Charge','Budget','Status']
+  },
+  contributions: {
+    sheet: 'Contributions', title: 'Contributions', odia: 'ଚାନ୍ଦା', idField: 'Contribution ID', prefix: 'CTR',
+    blurb: 'Monthly collection from families',
+    fields: [
+      { n:'Contribution ID', t:'text', auto:true },
+      { n:'Date', t:'date', req:true, def:'today' },
+      { n:'Family ID', t:'family', req:true },
+      { n:'Member ID', t:'member' },
+      { n:'Contributor', t:'text' },
+      { n:'Month', t:'month', def:'thisMonth' },
+      { n:'Amount', t:'money', req:true, def:'monthlyContribution' },
+      { n:'Payment Mode', t:'datalist', opts:PAYMODES },
+      { n:'Receipt No', t:'text' },
+      { n:'Remarks', t:'textarea' }
+    ],
+    list: ['Contribution ID','Date','Month','Family ID','Contributor','Amount','Payment Mode','Receipt No']
+  },
+  income: {
+    sheet: 'Income', title: 'Income', odia: 'ଆୟ', idField: 'Income ID', prefix: 'INC',
+    blurb: 'Money coming into the village fund',
+    fields: [
+      { n:'Income ID', t:'text', auto:true },
+      { n:'Date', t:'date', req:true, def:'today' },
+      { n:'Family ID', t:'family' },
+      { n:'Member ID', t:'member' },
+      { n:'Event ID', t:'event', hint:'Use this for donations collected for a major expense' },
+      { n:'Income Type', t:'datalist', opts:['Donation','Grant','Interest','Rent','Fine','Sale','Other'] },
+      { n:'Source', t:'datalist' },
+      { n:'Amount', t:'money', req:true },
+      { n:'Received By', t:'datalist' },
+      { n:'Payment Mode', t:'datalist', opts:PAYMODES },
+      { n:'Remarks', t:'textarea' }
+    ],
+    list: ['Income ID','Date','Income Type','Source','Family ID','Amount','Received By','Payment Mode']
+  },
+  expenditure: {
+    sheet: 'Expenditure', title: 'Expenditure', odia: 'ଖର୍ଚ୍ଚ', idField: 'Expense ID', prefix: 'EXP',
+    blurb: 'Money paid out of the village fund',
+    fields: [
+      { n:'Expense ID', t:'text', auto:true },
+      { n:'Date', t:'date', req:true, def:'today' },
+      { n:'Category', t:'datalist', opts:['Welfare','Medical','Education','Emergency','Administration','Festival','Infrastructure','Other'] },
+      { n:'Subcategory', t:'datalist' },
+      { n:'Event ID', t:'event', hint:'Attach this bill to a major expense such as Raja Parba' },
+      { n:'Family ID', t:'family' },
+      { n:'Description', t:'text' },
+      { n:'Amount', t:'money', req:true },
+      { n:'Paid To', t:'text' },
+      { n:'Payment Mode', t:'datalist', opts:PAYMODES },
+      { n:'Paid By', t:'text' },
+      { n:'Entered By', t:'text' },
+      { n:'Bill/Receipt', t:'photo', hint:'Original receipt stays private in Drive, with a small dashboard thumbnail.' },
+      { n:'Approved By', t:'datalist' },
+      { n:'Remarks', t:'textarea' }
+    ],
+    list: ['Expense ID','Date','Category','Event ID','Description','Family ID','Amount','Paid To','Payment Mode','Bill/Receipt','Approved By']
+  },
+  emergency: {
+    sheet: 'Emergency Cases', title: 'Emergency cases', odia: 'ଜରୁରୀ', idField: 'Case ID', prefix: 'CASE',
+    blurb: 'Help sanctioned after a death, accident or disaster',
+    fields: [
+      { n:'Case ID', t:'text', auto:true },
+      { n:'Family ID', t:'family', req:true },
+      { n:'Affected Person', t:'text', req:true },
+      { n:'Case Type', t:'datalist', opts:['Death','Accident','Serious Illness','Fire','Flood','Cyclone','Crop Loss','Other'] },
+      { n:'Event Date', t:'date', def:'today' },
+      { n:'Earning Member', t:'select', opts:YESNO },
+      { n:'Immediate Assistance', t:'money' },
+      { n:'Monthly Support', t:'money' },
+      { n:'Support Months', t:'number' },
+      { n:'Education Assistance', t:'money' },
+      { n:'Medical Assistance', t:'money' },
+      { n:'Other Assistance', t:'money' },
+      { n:'Total Approved', t:'money', ro:true, calc:'approved', hint:'Immediate + (monthly × months) + education + medical + other' },
+      { n:'Total Paid', t:'money' },
+      { n:'Balance', t:'money', ro:true, calc:'balance', hint:'Approved minus paid' },
+      { n:'Status', t:'select', opts:['Open','Ongoing','Closed'] },
+      { n:'Remarks', t:'textarea' }
+    ],
+    list: ['Case ID','Family ID','Affected Person','Case Type','Event Date','Total Approved','Total Paid','Balance','Status']
+  },
+  regularSupport: {
+    sheet: 'Regular Support', title: 'Regular support', odia: 'ନିୟମିତ ସହାୟତା', idField: 'Support ID', prefix: 'SUP',
+    blurb: 'Standing help such as widow or old-age support',
+    fields: [
+      { n:'Support ID', t:'text', auto:true },
+      { n:'Family ID', t:'family', req:true },
+      { n:'Beneficiary', t:'text', req:true },
+      { n:'Support Type', t:'datalist', opts:['Widow Support','Old Age','Disability','Education','Medical','Ration','Other'] },
+      { n:'Amount', t:'money' },
+      { n:'Frequency', t:'select', opts:['Monthly','Quarterly','Half Yearly','Yearly','One Time'] },
+      { n:'Start Date', t:'date', def:'today' },
+      { n:'End Date', t:'date' },
+      { n:'Active', t:'select', opts:YESNO },
+      { n:'Reason', t:'text' },
+      { n:'Remarks', t:'textarea' }
+    ],
+    list: ['Support ID','Family ID','Beneficiary','Support Type','Amount','Frequency','Start Date','End Date','Active']
+  },
+  medical: {
+    sheet: 'Medical', title: 'Medical', odia: 'ଚିକିତ୍ସା', idField: 'Medical ID', prefix: 'MED',
+    blurb: 'Treatment costs and village assistance',
+    fields: [
+      { n:'Medical ID', t:'text', auto:true },
+      { n:'Family ID', t:'family', req:true },
+      { n:'Member ID', t:'member' },
+      { n:'Patient', t:'text', req:true },
+      { n:'Date', t:'date', def:'today' },
+      { n:'Medical Issue', t:'datalist' },
+      { n:'Hospital', t:'datalist' },
+      { n:'Estimated Cost', t:'money' },
+      { n:'Assistance', t:'money' },
+      { n:'Paid', t:'money' },
+      { n:'Status', t:'select', opts:['Ongoing','Completed','Referred'] },
+      { n:'Remarks', t:'textarea' }
+    ],
+    list: ['Medical ID','Date','Patient','Family ID','Medical Issue','Hospital','Estimated Cost','Assistance','Paid','Status']
+  },
+  education: {
+    sheet: 'Education', title: 'Education', odia: 'ଶିକ୍ଷା', idField: 'Education ID', prefix: 'EDU',
+    blurb: 'Students and the fees the village helps with',
+    fields: [
+      { n:'Education ID', t:'text', auto:true },
+      { n:'Family ID', t:'family', req:true },
+      { n:'Member ID', t:'member' },
+      { n:'Student Name', t:'text', req:true },
+      { n:'School/College', t:'datalist' },
+      { n:'Class/Course', t:'datalist' },
+      { n:'Scholarship', t:'select', opts:YESNO },
+      { n:'Annual Fee', t:'money' },
+      { n:'Village Assistance', t:'money' },
+      { n:'Remarks', t:'textarea' }
+    ],
+    list: ['Education ID','Student Name','Family ID','School/College','Class/Course','Scholarship','Annual Fee','Village Assistance']
+  },
+  insurance: {
+    sheet: 'Insurance', title: 'Insurance', odia: 'ବୀମା', idField: 'Insurance ID', prefix: 'INS',
+    blurb: 'Policies held by villagers and their renewal dates',
+    fields: [
+      { n:'Insurance ID', t:'text', auto:true },
+      { n:'Family ID', t:'family', req:true },
+      { n:'Member ID', t:'member' },
+      { n:'Name', t:'text', req:true },
+      { n:'Insurance Type', t:'datalist', opts:['Life','Health','Accident','Crop','Vehicle','PMJJBY','PMSBY','Other'] },
+      { n:'Provider', t:'datalist', opts:['LIC','SBI Life','New India','Star Health','Other'] },
+      { n:'Policy No', t:'text' },
+      { n:'Sum Insured', t:'money' },
+      { n:'Premium', t:'money' },
+      { n:'Renewal Date', t:'date' },
+      { n:'Status', t:'select', opts:['Active','Lapsed','Claimed'] },
+      { n:'Remarks', t:'textarea' }
+    ],
+    list: ['Insurance ID','Name','Family ID','Insurance Type','Provider','Policy No','Sum Insured','Premium','Renewal Date','Status']
+  },
+  settingsList: {
+    sheet: 'Settings', title: 'Settings', odia: 'ସେଟିଂ', idField: 'Setting', blurb: 'Village name, targets and fund opening balance',
+    fields: [{ n:'Setting', t:'text', req:true }, { n:'Value', t:'text' }],
+    list: ['Setting','Value'], adminOnly: true
+  },
+  users: {
+    sheet: 'Users', title: 'Users', odia: 'ବ୍ୟବହାରକାରୀ', idField: 'Username', blurb: 'Manage sign-in, self-verified contacts, and enable or disable accounts',
+    fields: [
+      { n:'Username', t:'text', req:true },
+      { n:'Password', t:'text', hint:'Leave blank when editing to keep the current password' },
+      { n:'Role', t:'select', opts:['Admin','Editor','Viewer'] },
+      { n:'Active', t:'select', opts:['YES','NO'] }, { n:'Name', t:'text' },
+      { n:'Email', t:'text', hint:'Only admin enters or changes recovery contacts.' },
+      { n:'Mobile', t:'tel', hint:'Indian mobile number. Unique to this account.' },
+      // Verified flags are server-owned. No administrator can self-award badges from this form.
+      { n:'OTP Allowed', t:'select', opts:['Yes','No'], hint:'Allow this account to sign in by verified-email OTP.' }
+    ],
+    list: ['Username','Name','Role','Active','Email','Email Verified','Mobile','OTP Allowed'], adminOnly: true
+  }
+};
+
+function rowsOf(key){
+  if(!DB) return [];
+  if(key === 'settingsList') return Object.keys(DB.settings || {}).filter(k=>!['OTP SMS Enabled','Contact SMS Verification'].includes(k)).map(k => ({ Setting: k, Value: DB.settings[k] }));
+  if(key === 'users') return DB.users || [];
+  return DB[key] || [];
+}
+function setting(name, fallback){
+  const v = DB && DB.settings ? DB.settings[name] : undefined;
+  return (v === undefined || v === '') ? fallback : v;
+}
+
+/* ADMIN · Manage village localities (Sahis) centrally from the existing Settings row. */
+function malConfiguredSahis_(){
+  return [...new Set(String(setting('Village Localities','')).split(/[,;|\n\r]+/)
+    .map(x=>x.trim().replace(/\s+/g,' ')).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+}
+function malSahiChoices_(chosen){
+  const v=String(chosen||'').trim();
+  const names=malConfiguredSahis_();
+  if(v && !names.some(n=>n.toLocaleLowerCase('en-IN')===v.toLocaleLowerCase('en-IN'))) names.push(v);
+  return names.sort((a,b)=>a.localeCompare(b)).map(n=>`<option value="${esc(n)}" ${n===v?'selected':''}>${esc(n)}</option>`).join('');
+}
+function malManageSahis_(){
+  if(!isAdmin())return toast('Admin only.','bad');
+  const previous=malConfiguredSahis_().join('\n');
+  openModal(`<header><h3>📍 Village Localities (Sahi)</h3><div class="sp"></div><button class="btn btn-sm" id="malSahiClose">Close</button></header>
+    <div class="body"><p class="fieldnote">Enter one Sahi per line. Add, rename or remove names here. Only the list changes; previously saved Family and Member records are never deleted or renamed automatically.</p>
+    <label class="lbl" for="malSahiNew">Add locality</label><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><input class="input" id="malSahiNew" maxlength="100" placeholder="e.g. Uttar Sahi" style="flex:1;min-width:170px"><button class="btn" id="malSahiAdd">+ Add</button></div>
+    <label class="lbl" for="malSahiNames" style="margin-top:16px;display:block">Approved Sahis (one per line)</label><textarea class="input" id="malSahiNames" rows="10" style="min-height:185px" placeholder="Enter the approved Sahi names, one per line">${esc(previous)}</textarea>
+    <div class="fieldnote">Dropdowns appear on public registration and trusted shared-entry pages after saving and redeploying the matching backend. Historical Sahi values remain as they are.</div>
+    <div class="errline hide" id="malSahiError" role="alert"></div></div>
+    <footer><button class="btn" id="malSahiCancel">Cancel</button><button class="btn btn-primary" id="malSahiSave">Save Sahi List</button></footer>`);
+  document.getElementById('malSahiClose').onclick=closeModal;
+  document.getElementById('malSahiCancel').onclick=closeModal;
+  document.getElementById('malSahiAdd').onclick=()=>{
+    const input=document.getElementById('malSahiNew'),field=document.getElementById('malSahiNames');
+    const name=input.value.trim().replace(/\s+/g,' ');
+    if(!name)return input.focus();
+    const parts=field.value.split(/[\n\r;,|]+/).map(v=>v.trim()).filter(Boolean);
+    if(!parts.some(x=>x.toLocaleLowerCase('en-IN')===name.toLocaleLowerCase('en-IN'))) parts.push(name);
+    field.value=parts.join('\n');input.value='';input.focus();
+  };
+  document.getElementById('malSahiSave').onclick=async()=>{
+    const btn=document.getElementById('malSahiSave'),error=document.getElementById('malSahiError'),names=document.getElementById('malSahiNames').value;
+    error.classList.add('hide');btn.disabled=true;btn.textContent='Saving…';
+    try{
+      const r=await api('saveVillageLocalities',{names});
+      if(!r || !r.ok)throw new Error(r&&r.error||'Could not save Sahi list');
+      DB.settings=DB.settings||{}; DB.settings['Village Localities']=(r.localities||[]).join('\n');
+      toast((r.count||0)+' approved Sahis saved','good');closeModal();renderModule(PAGE);
+    }catch(e){error.textContent=String(e.message||e);error.classList.remove('hide');}
+    finally{if(btn&&document.getElementById('malSahiSave')){btn.disabled=false;btn.textContent='Save Sahi List';}}
+  };
+}
+function familyName(id){
+  if(!id) return '';
+  const f = (DB.families || []).find(x => String(x['Family ID']).trim() === String(id).trim());
+  return f ? f['Family Head'] : '';
+}
+function memberName(id){
+  if(!id) return '';
+  const m = (DB.members || []).find(x => String(x['Member ID']).trim() === String(id).trim());
+  return m ? m['Name'] : '';
+}
+
+/* =========================================================================
+   DASHBOARD
+   ========================================================================= */
+/* =========================================================================
+   REMEMBRANCE — a deceased member's death anniversary, shown for the week
+   before it and on the day itself, every year.
+   ========================================================================= */
+function remembranceLocal(windowDays){
+  const win = windowDays === undefined ? 7 : windowDays;
+  const now = new Date();
+  const mid = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const DAY = 86400000;
+  const out = [];
+  (DB.members || []).forEach(m => {
+    if(!isDeceased(m)) return;
+    const iso = toISO(m['Date of Death']);
+    if(!iso) return;
+    const dod = new Date(iso + 'T00:00:00');
+    if(isNaN(dod.getTime())) return;
+    [0, 1].forEach(off => {
+      const anniv = new Date(mid.getFullYear() + off, dod.getMonth(), dod.getDate());
+      const away = Math.round((anniv - mid) / DAY);
+      if(away < 0 || away > win) return;
+      out.push({
+        id: String(m['Member ID'] || '').trim(),
+        family: String(m['Family ID'] || '').trim(),
+        name: m['Name'] || '', photo: m['Photo'] || '',
+        memPhoto: m['Memorial Photo'] || '', message: m['Memorial Message'] || '',
+        dob: toISO(m['Date of Birth']) || '', dod: iso,
+        anniv: localISO(anniv), daysAway: away,
+        years: anniv.getFullYear() - dod.getFullYear()
+      });
+    });
+  });
+  /* A person whose anniversary falls inside both this year's and next year's
+     window would otherwise be listed twice on a full-year view. */
+  const seen = new Set();
+  return out.sort((a, b) => a.daysAway - b.daysAway)
+            .filter(p => { const k = p.id + p.anniv.slice(5); if(seen.has(k)) return false; seen.add(k); return true; });
+}
+
+/* The band only appears in the seven days before an anniversary. A committee
+   that wants to arrange a puja needs to look further ahead than that, so the
+   whole year is one click away. */
+function openRemembranceCalendar(){
+  const people = remembranceLocal(366);
+  const MON = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const byMonth = {};
+  people.forEach(p => {
+    const k = p.anniv.slice(0, 7);
+    (byMonth[k] = byMonth[k] || []).push(p);
+  });
+  const keys = Object.keys(byMonth).sort();
+
+  const line = p => {
+    const when = p.daysAway === 0 ? 'today' : p.daysAway === 1 ? 'tomorrow' : 'in ' + p.daysAway + ' days';
+    const d = new Date(p.anniv + 'T00:00:00');
+    return `<tr${p.daysAway <= 7 ? ' class="soon"' : ''}>
+      <td class="num tnum cday" data-label="Day">${d.getDate()}</td>
+      <td data-label="Name"><b>${esc(p.name)}</b>${p.family ? `<span class="muted small"> · ${esc(p.family)}</span>` : ''}</td>
+      <td class="tnum cyrs" data-label="Years">${p.dob ? new Date(p.dob).getFullYear() + ' \u2013 ' : ''}${new Date(p.dod).getFullYear()}</td>
+      <td class="num tnum csince" data-label="Since">${p.years ? p.years + (p.years === 1 ? ' yr' : ' yrs') : ''}</td>
+      <td class="num cwhen${p.daysAway <= 7 ? ' soonwhen' : ''}" data-label="When">${when}</td>
+    </tr>`;
+  };
+
+  const months = keys.map(k => {
+    const [y, m] = k.split('-');
+    return `<h4 class="msec">${MON[+m - 1]} ${y}</h4>
+      <div class="tablewrap" style="max-height:none"><table class="grid remcal"><tbody>
+        ${byMonth[k].map(line).join('')}
+      </tbody></table></div>`;
+  }).join('');
+
+  const total = (DB.members || []).filter(m => isDeceased(m) && toISO(m['Date of Death'])).length;
+  const missing = (DB.members || []).filter(m => isDeceased(m) && !toISO(m['Date of Death'])).length;
+
+  openModal(`
+    <header>
+      <div><h3>\u0B38\u0B4D\u0B2E\u0B43\u0B24\u0B3F \u00b7 Remembrance calendar</h3>
+      <div class="sub">The year ahead \u00b7 ${people.length} ${people.length === 1 ? 'anniversary' : 'anniversaries'}</div></div>
+      <div class="sp"></div><button class="btn btn-sm" onclick="closeModal()">Close</button>
+    </header>
+    <div class="body">
+      ${people.length ? months : `<div class="empty"><b>No anniversaries recorded</b>
+        <div class="muted small" style="margin-top:6px">A date appears here once a member is marked deceased with a date of death.</div></div>`}
+      ${missing ? `<div class="fieldnote" style="margin-top:16px">${missing} deceased ${missing === 1 ? 'member has' : 'members have'} no date of death recorded, so ${missing === 1 ? 'that anniversary' : 'those anniversaries'} cannot be shown. Open the member and fill in the date.</div>` : ''}
+    </div>
+    <footer>
+      <span class="muted small">${total} deceased ${total === 1 ? 'member' : 'members'} on the register</span>
+      <div class="sp"></div>
+      <button class="btn" onclick="closeModal();window.print()">Print</button>
+    </footer>`);
+}
+
+function remembranceHtml(people, withBtn){
+  if(!people || !people.length){
+    /* Still give the committee its way in, or the calendar would be reachable
+       only in the very week it is least useful for preparing. */
+    return withBtn ? `<div class="remem slim"><div class="rhead">
+      <b>\u0B38\u0B4D\u0B2E\u0B43\u0B24\u0B3F \u00b7 In remembrance</b>
+      <span>no anniversary this week</span><i class="rrule"></i>
+      <button class="btn btn-sm rcal" data-remcal="1">Calendar</button></div></div>` : '';
+  }
+  const card = p => {
+    const when = p.daysAway === 0 ? 'Remembrance day is today'
+      : p.daysAway === 1 ? 'Tomorrow · ' + fmtDate(p.anniv)
+      : 'In ' + p.daysAway + ' days · ' + fmtDate(p.anniv);
+    const yrs = (p.dob ? new Date(p.dob).getFullYear() + ' – ' : '') + new Date(p.dod).getFullYear();
+    /* A portrait chosen for the memorial beats the register mugshot. */
+    const src = p.memPhoto || p.photo;
+    const img = src
+      ? '<img class="rimg" data-srcs="' + esc(photoSrcs(src, 200).join('|')) + '" alt="' + esc(p.name) + '" loading="lazy">'
+      : '<span class="rno">◦</span>';
+    return '<div class="rperson' + (p.daysAway === 0 ? ' today' : '') + (p.message ? ' hasmsg' : '') + '">' +
+      '<div class="rtop">' + img +
+      '<div class="rtx"><b>' + esc(p.name) + '</b>' +
+      '<div class="ryr">' + esc(yrs) + (p.years ? ' · ' + p.years + (p.years === 1 ? ' year' : ' years') : '') + '</div>' +
+      '<div class="rday">' + esc(when) + '</div></div></div>' +
+      (p.message ? '<p class="rmsg">' + esc(p.message) + '</p>' : '') +
+      '</div>';
+  };
+  return '<div class="remem"><div class="rhead"><b>\u0B38\u0B4D\u0B2E\u0B43\u0B24\u0B3F \u00b7 In remembrance</b>' +
+    '<span>' + people.length + '</span><i class="rrule"></i>' +
+    (withBtn ? '<button class="btn btn-sm rcal" data-remcal="1">Calendar</button>' : '') +
+    '</div>' +
+    '<div class="rlist">' + people.map(card).join('') + '</div></div>';
+}
+
+function paintLoginRemembrance(){
+  api('publicRemembrance').then(r => {
+    if(!r || !r.ok || r.showOnLogin === false || !(r.people || []).length) return;
+    const host = document.querySelector('#login .formside') || document.querySelector('#login');
+    if(!host) return;
+    const box = document.createElement('div');
+    box.innerHTML = remembranceHtml(r.people);
+    if(box.firstChild){ host.appendChild(box.firstChild); wirePhotoFallbacks(host); }
+  }).catch(() => {});
+}
+
+/* Computed locally on the dashboard from the register, so the band paints
+   with the rest of the page instead of waiting on another round trip. */
+function daysLocal(){
+  const now = new Date();
+  const mid = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const DAY = 86400000;
+  const out = [];
+  (DB.importantDays || []).forEach(r => {
+    if(String(r['Show On'] || 'Both pages').trim() === 'Nowhere') return;
+    const iso = toISO(r['Date']);
+    if(!iso) return;
+    const d = new Date(iso + 'T00:00:00');
+    if(isNaN(d.getTime())) return;
+    const lead = Math.max(0, parseInt(r['Show Days Before'], 10) || 7);
+    const yearly = String(r['Repeats Yearly'] || 'Yes').trim().toLowerCase() !== 'no';
+    const cands = yearly
+      ? [0, 1].map(o => new Date(mid.getFullYear() + o, d.getMonth(), d.getDate()))
+      : [d];
+    cands.forEach(when => {
+      const away = Math.round((when - mid) / DAY);
+      if(away < 0 || away > lead) return;
+      out.push({ title: r['Title'] || '', note: r['Note'] || '', photo: r['Photo'] || '',
+        date: localISO(when), daysAway: away });
+    });
+  });
+  return out.sort((a, b) => a.daysAway - b.daysAway);
+}
+
+function daysHtml(days){
+  if(!days || !days.length) return '';
+  const card = d => {
+    const when = d.daysAway === 0 ? 'Today' : d.daysAway === 1 ? 'Tomorrow' : 'In ' + d.daysAway + ' days';
+    return '<div class="dcard' + (d.daysAway === 0 ? ' today' : '') + (d.photo ? ' haspic' : '') + '">' +
+      (d.photo ? '<img class="dimg" data-srcs="' + esc(photoSrcs(d.photo, 480).join('|')) + '" alt="" loading="lazy">' : '') +
+      '<div class="dbody">' +
+      '<div class="dwhen">' + esc(when) + '</div>' +
+      '<b>' + esc(d.title) + '</b>' +
+      '<div class="ddate">' + esc(fmtDate(d.date)) + '</div>' +
+      (d.note ? '<p>' + esc(d.note) + '</p>' : '') + '</div></div>';
+  };
+  return '<div class="daysband"><div class="dhead"><b>ଆସୁଥିବା ଦିନ · Coming up</b>' +
+    '<span>' + days.length + '</span><i class="drule"></i></div>' +
+    '<div class="dlist">' + days.map(card).join('') + '</div></div>';
+}
+
+function paintLoginDays(){
+  /* loginDays, not publicDays — each day carries its own “Show On” choice, and
+     asking the public endpoint showed the wrong set on the sign-in screen. */
+  api('loginDays').then(r => {
+    if(!r || !r.ok || !(r.days || []).length) return;
+    const host = document.querySelector('#login .formside') || document.querySelector('#login');
+    if(!host) return;
+    const box = document.createElement('div');
+    box.innerHTML = daysHtml(r.days);
+    if(box.firstChild) host.appendChild(box.firstChild);
+  }).catch(() => {});
+}
+
+/* =========================================================================
+   NOTICE BOARD — the committee's photographs and writing. Rendered the same
+   way on the dashboard, the sign-in screen and the public page, so a post
+   the admin approves looks the same wherever a villager meets it.
+   ========================================================================= */
+function noticesLocal(){
+  const t = today();
+  return (DB.notices || [])
+    .filter(n => {
+      const where = String(n['Show On'] || 'Both pages').trim();
+      if(where === 'Nowhere') return false;
+      const until = toISO(n['Until']);
+      if(until && until < t) return false;
+      return String(n['Title'] || '').trim() || String(n['Text'] || '').trim() || String(n['Photo'] || '').trim();
+    })
+    .map(n => ({
+      id: n['Notice ID'] || '', title: n['Title'] || '', text: n['Text'] || '',
+      photo: n['Photo'] || '', by: n['Credit'] || '', date: toISO(n['Date']) || '',
+      order: num(n['Order'])
+    }))
+    .sort((a, b) => (b.order - a.order) || String(b.date).localeCompare(String(a.date)));
+}
+
+
+function malToggleTicker(btn){
+  const banner=btn.closest('.mal-notice-ticker');
+  if(!banner)return;
+  const paused=banner.classList.toggle('is-paused');
+  btn.textContent=paused?'▶':'Ⅱ';
+  btn.setAttribute('aria-label', paused?'Resume scrolling notices':'Pause scrolling notices');
+  btn.setAttribute('title', paused?'Resume notices':'Pause notices');
+  btn.setAttribute('aria-pressed', String(paused));
+}
+
+
+/* Notice text remains plain text in Sheets. Only safe web addresses render as links. */
+function malNoticeLinkify_(input){
+  const raw=String(input==null?'':input);
+  const pattern=/(?:https?:\/\/|www\.)[^\s<>'"`]+/gi;
+  let rendered='',start=0,match;
+  while((match=pattern.exec(raw))!==null){
+    rendered+=esc(raw.slice(start,match.index));
+    let urlText=match[0];
+    const punctuation=(urlText.match(/[.,;!?)\]}]+$/)||[''])[0];
+    urlText=urlText.slice(0,urlText.length-punctuation.length);
+    let target=urlText;
+    if(/^www\./i.test(target))target='https://'+target;
+    try{
+      const url=new URL(target);
+      if(!['https:','http:'].includes(url.protocol)||!url.hostname)throw Error('Invalid URL');
+      rendered+='<a class="mal-notice-link" href="'+esc(url.href)+'" target="_blank" rel="noopener noreferrer nofollow">'+esc(urlText)+'</a>';
+    }catch(e){rendered+=esc(urlText);}
+    rendered+=esc(punctuation);
+    start=match.index+match[0].length;
+  }
+  return rendered+esc(raw.slice(start)).replace(/\r?\n/g,'<br>');
+}
+
+function noticesHtml(list){
+  if(!list || !list.length) return '';
+  /* Order remains controlled by the existing Notice Board 'Order' field.
+     Include short messages in the ticker; keep the complete notice/photo below. */
+  const tickerItems=list.slice(0,5).map(n=> {
+    const heading=String(n.title||'Village notice').trim();
+    const text=String(n.text||'').trim();
+    const short=text.length>100?text.slice(0,100).trim()+'…':text;
+    return `<span class="mal-notice-item"><span class="mal-notice-sep" aria-hidden="true">✦</span>${esc(heading)}${short?' — '+malNoticeLinkify_(short):''}</span>`;
+  });
+  const announce=list.slice(0,5).map(n=>[n.title,n.text].filter(Boolean).join(' — ')).join(' • ');
+  const duration=Math.min(85,Math.max(25,Math.round(announce.length/8)));
+  const card=n => `<article class="ntc">
+    ${n.photo ? `<img class="nimg" src="${esc(thumbUrl(n.photo, 640))}" alt="${esc(n.title)}" loading="lazy">` : ''}
+    <div class="nbody"><h4>${esc(n.title)}</h4>
+      ${n.text ? `<p>${malNoticeLinkify_(n.text)}</p>` : ''}
+      ${n.by || n.date ? `<div class="nmeta">${esc(n.by)}${n.by && n.date?' · ':''}${n.date?esc(fmtDate(n.date)):''}</div>` : ''}
+    </div>
+  </article>`;
+  return `<section class="noticeboard" aria-label="Village Notice Board">
+    <div class="mal-notice-ticker" role="group" aria-label="Village announcements">
+      <span class="mal-notice-label">ସୂଚନା · NOTICE</span>
+      <div class="mal-notice-lane" aria-hidden="true"><div class="mal-notice-track" style="--mal-notice-duration:${duration}s"><span class="mal-notice-set">${tickerItems.join('')}</span><span class="mal-notice-set">${tickerItems.join('')}</span></div></div>
+      <span class="mal-notice-screen-reader">${esc(announce)}</span>
+      <button type="button" class="mal-notice-pause" onclick="malToggleTicker(this)" aria-label="Pause scrolling notices" aria-pressed="false" title="Pause notices">Ⅱ</button>
+    </div>
+    <details class="mal-notice-detail"><summary>Read full notices and photos (${list.length})</summary>
+      <div class="ntcs">${list.map(card).join('')}</div>
+    </details>
+  </section>`;
+}
+
+function paintLoginNotices(){
+  api('loginNotices').then(r => {
+    if(!r || !r.ok || !(r.notices || []).length) return;
+    const host = document.querySelector('#login .formside') || document.querySelector('#login');
+    if(!host) return;
+    const box = document.createElement('div');
+    box.innerHTML = noticesHtml(r.notices);
+    if(box.firstChild){ host.appendChild(box.firstChild); wirePhotoFallbacks(host); }
+  }).catch(() => {});
+}
+
+/* =========================================================================
+   THIS MONTH'S WORK — the standing jobs, counted from the register itself.
+   A dashboard that only reports is a filing cabinet; this one asks.
+   ========================================================================= */
+function monthWork(){
+  const t = today();
+  const mk = t.slice(0, 7);
+  const jobs = [];
+
+  /* 1. Families who have not paid this month. Keyed on Month when present,
+        Date otherwise — the same rule the twelve-month chart uses. */
+  const paid = new Set();
+  (DB.contributions || []).forEach(r => {
+    if(monthKey(r['Month'] || r['Date']) !== mk) return;
+    const f = String(r['Family ID'] || '').trim();
+    if(f) paid.add(f);
+  });
+  const owing = (DB.families || []).filter(f => !paid.has(String(f['Family ID'] || '').trim()));
+  if((DB.families || []).length && owing.length) jobs.push({
+    tone: owing.length > (DB.families || []).length / 2 ? 'late' : 'warn',
+    what: owing.length + ' ' + (owing.length === 1 ? 'family has' : 'families have') + ' not paid this month',
+    who: owing.slice(0, 3).map(f => f['Family Head'] || f['Family ID']).join(', ') +
+         (owing.length > 3 ? ' and ' + (owing.length - 3) + ' more' : ''),
+    go: 'contributions', label: 'Collect'
+  });
+
+  /* 2. Grievances a villager is waiting on. */
+  const openGrv = (DB.grievances || []).filter(r => {
+    const s = String(r['Status'] || 'Received').trim().toLowerCase();
+    return s !== 'resolved' && s !== 'rejected';
+  });
+  if(openGrv.length) jobs.push({
+    tone: openGrv.some(r => String(r['Status'] || 'Received').toLowerCase() === 'received') ? 'late' : 'warn',
+    what: openGrv.length + ' ' + (openGrv.length === 1 ? 'grievance is' : 'grievances are') + ' still open',
+    who: openGrv.slice(0, 2).map(r => String(r['Name'] || '') + (r['Category'] ? ' \u00b7 ' + r['Category'] : '')).join('; '),
+    go: 'grievances', label: 'Open'
+  });
+
+  /* 3. Emergency cases awaiting a decision. */
+  const openCase = (DB.emergency || []).filter(r => {
+    const s = String(r['Status'] || r['Stage'] || '').trim().toLowerCase();
+    return s && !/helped|closed|paid|done|reject/.test(s);
+  });
+  if(openCase.length) jobs.push({
+    tone: 'late',
+    what: openCase.length + ' emergency ' + (openCase.length === 1 ? 'case is' : 'cases are') + ' waiting on the committee',
+    who: openCase.slice(0, 2).map(r => familyName(r['Family ID']) || r['Family ID'] || '').filter(Boolean).join(', '),
+    go: 'emergency', label: 'Decide'
+  });
+
+  /* 4. Major expenses that ran but were never closed — the commonest way a
+        village register drifts out of step with what actually happened. */
+  const openEvent = (DB.events || []).filter(e => {
+    if(String(e['Status'] || 'Planned').trim().toLowerCase() === 'completed') return false;
+    const end = toISO(e['End Date']) || toISO(e['Start Date']);
+    return end && end < t;
+  });
+  if(openEvent.length) jobs.push({
+    tone: 'warn',
+    what: openEvent.length + ' major ' + (openEvent.length === 1 ? 'expense has' : 'expenses have') + ' finished but not been closed',
+    who: openEvent.slice(0, 2).map(e => e['Event Name'] || e['Event ID']).join(', '),
+    go: 'events', label: 'Close'
+  });
+
+  /* 5. Recurring bills already overdue. */
+  const lateBills = (DB.recurring || []).filter(r => {
+    if(String(r['Active'] || 'YES').toUpperCase() === 'NO') return false;
+    const d = toISO(r['Next Due']);
+    return d && d < t;
+  });
+  if(lateBills.length) jobs.push({
+    tone: 'late',
+    what: lateBills.length + ' recurring ' + (lateBills.length === 1 ? 'bill is' : 'bills are') + ' overdue',
+    who: lateBills.slice(0, 2).map(r => r['Expense Name']).join(', '),
+    go: 'recurring', label: 'Pay'
+  });
+
+  /* 6. A death with no date is a gap that quietly breaks the remembrance
+        calendar, so it is worth naming rather than leaving to be noticed. */
+  const noDate = (DB.members || []).filter(m => isDeceased(m) && !toISO(m['Date of Death']));
+  if(noDate.length) jobs.push({
+    tone: 'note',
+    what: noDate.length + ' ' + (noDate.length === 1 ? 'death has' : 'deaths have') + ' no date recorded',
+    who: noDate.slice(0, 3).map(m => m['Name']).join(', '),
+    go: 'memorial', label: 'Fix'
+  });
+
+  return jobs;
+}
+
+function monthWorkHtml(){
+  /* The empty state is decided on the UNFILTERED list. Claiming everything is
+     up to date because a restricted account cannot see the open cases would be
+     a lie a committee member might act on. */
+  const all = monthWork();
+  const jobs = all.filter(j => canSee(j.go) !== false);
+  const monthName = new Date().toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
+  const urgent = jobs.filter(j => j.tone === 'late').length;
+
+  if(!jobs.length){
+    if(all.length) return '';   // work exists, just not this account's — say nothing
+    return `<div class="panel work">
+      <div class="panel-head"><h3>This month's work</h3>
+        <span class="muted small">${esc(monthName)}</span></div>
+      <div class="alert"><span class="dot" style="background:var(--green)"></span>
+        <span><b>Nothing is waiting on the committee</b>
+        <span class="muted">Contributions, cases, grievances and bills are all up to date.</span></span></div>
+    </div>`;
+  }
+
+  const dot = { late: 'var(--brick)', warn: 'var(--turmeric)', note: 'var(--indigo-2)' };
+  return `<div class="panel work">
+    <div class="panel-head"><h3>This month's work</h3>
+      <span class="muted small">${esc(monthName)} · ${jobs.length} ${jobs.length === 1 ? 'job' : 'jobs'}${urgent ? ', ' + urgent + ' pressing' : ''}</span>
+    </div>
+    ${jobs.map(j => `<div class="alert">
+      <span class="dot" style="background:${dot[j.tone]}"></span>
+      <span><b>${esc(j.what)}</b>${j.who ? `<span class="muted">${esc(j.who)}</span>` : ''}</span>
+      <button class="btn btn-sm${j.tone === 'late' ? ' btn-primary' : ''}" data-work="${esc(j.go)}"
+        style="margin-left:auto;white-space:nowrap">${esc(j.label)}</button>
+    </div>`).join('')}
+  </div>`;
+}
+
+function renderDashboard(){
+  const s = DB.summary || {};
+  const opening = num(setting('Opening Fund', 0));
+  const target = num(setting('Emergency Fund Target', 0));
+  const available = num(s.availableFund);
+  const pct = target ? Math.max(0, Math.min(100, Math.round(available / target * 100))) : 0;
+
+  const ledger = [
+    ['in', 'Opening fund', 'Balance carried into the register', opening],
+    ['in', 'Contributions collected', (DB.contributions || []).length + ' entries', num(s.contributions)],
+    ['in', 'Other income', 'Donations, grants, interest', num(s.income)],
+    ['out', 'Expenditure', (DB.expenditure || []).length + ' entries', -num(s.expenditure)],
+    ['out', 'Emergency help paid', s.emergencyCases + ' cases recorded', -num(s.emergencyPaid)],
+    ['out', 'Regular support committed', 'Active standing support per cycle', -num(s.regularSupport)]
+  ];
+
+  const banner = photoOf('Dashboard Photo');
+  const entries = (DB.contributions || []).length + (DB.income || []).length + (DB.expenditure || []).length;
+  const fresh = entries === 0 && !(DB.families || []).length && !(DB.members || []).length;
+  const visibleWork = monthWork().filter(j => canSee(j.go) !== false);
+  const upcomingDays = daysLocal();
+  const remembranceDays = remembranceLocal();
+  const upcomingCount = upcomingDays.length + remembranceDays.length;
+  const importantToday = upcomingDays.some(x => x.daysAway === 0) || remembranceDays.some(x => x.daysAway === 0);
+  const quickPanel = canEdit() ? `<div class="panel ux-quick-panel"><div class="panel-head"><h3>Quick entry</h3></div><div class="panel-body ux-quick-buttons"><button class="btn btn-primary" onclick="openForm('expenditure')">+ Expense</button><button class="btn" onclick="openForm('contributions')">+ Contribution</button></div></div>` : '';
+  const html = `
+    <div class="ux-home" aria-label="Village dashboard overview">
+      ${noticesHtml(noticesLocal())}
+      ${fresh ? startPanel() : ''}
+  ${banner ? `<div class="hero">
+      <img src="${esc(banner)}" alt="${esc(setting('Village Name','Malipatana'))}" onerror="this.remove()">
+      <div class="veil"></div>
+      <div class="txt">
+        <div>
+          <h2>${esc(setting('Village Name','Malipatana'))} village fund</h2>
+          <div class="sub">Village code ${esc(setting('Village Code','V001'))} · ${esc(setting('Village Area','Jagatsinghpur, Odisha'))}</div>
+        </div>
+        <div class="sp"></div>
+        <button class="btn btn-sm" data-act="print">Print</button>
+      </div>
+    </div>`
+  : `<div class="pagehead">
+      <div><h2>${esc(setting('Village Name','Malipatana'))} village fund</h2>
+      <div class="sub">Village code ${esc(setting('Village Code','V001'))}</div></div>
+      <div class="sp"></div><button class="btn btn-sm" onclick="window.print()">Print</button>
+    </div>`}
+
+      <div class="ux-home-identity"><div><strong>Village overview</strong><span>Key information and today's priorities</span></div></div>
+  <div class="ledger">
+    <div class="ledger-top">
+      <div>
+        <div class="cap">Fund available today</div>
+        <div class="big tnum">${money(available)}</div>
+        ${fundMeaning(available) ? `<div class="meaning">${esc(fundMeaning(available))}</div>` : ''}
+      </div>
+      <div style="min-width:230px;flex:1;max-width:360px">
+        <div class="small muted">Emergency fund target ${money(target)}</div>
+        <div class="meter"><i style="width:${pct}%"></i></div>
+        <div class="small muted" style="margin-top:6px">${pct}% of the target is in hand</div>
+      </div>
+    </div>
+    <details class="ux-home-details ux-ledger"><summary><span>View fund breakdown</span><span class="ux-detail-hint">Income, expenses and support · 6 lines</span></summary><div class="ledger-rows">
+      ${(() => {
+        const live = ledger.filter(l => num(l[3]) !== 0);
+        const zeros = ledger.filter(l => num(l[3]) === 0);
+        return live.map(([kind, name, note, amt]) => `
+          <div class="lrow ${kind}">
+            <div class="nm">${esc(name)}<em>${esc(note)}</em></div>
+            <div class="amt tnum">${amt < 0 ? '−' : '+'} ${money(Math.abs(amt))}</div>
+          </div>`).join('') +
+          (zeros.length ? `<div class="lrow zero"><div class="nm">Nothing recorded yet<em>${
+            zeros.length} line${zeros.length === 1 ? '' : 's'} waiting: ${
+            zeros.slice(0, 3).map(z => esc(z[1].toLowerCase())).join(', ')}${
+            zeros.length > 3 ? ' and ' + (zeros.length - 3) + ' more' : ''}</em></div>
+            <div class="amt tnum">${money(0)}</div></div>` : '');
+      })()}
+      <div class="lrow total">
+        <div class="nm">Balance in hand</div>
+        <div class="amt tnum">${money(available)}</div>
+      </div>
+    </div>
+    </details>
+  </div>
+      <div class="ux-kpi-grid" aria-label="Village at a glance">
+        <button type="button" class="ux-kpi ux-kpi-families" onclick="go('families')" ${canSee('families')?'':'disabled'}><span class="ux-kpi-icon" aria-hidden="true">⌂</span><span class="ux-kpi-label">Families</span><strong class="tnum">${num(s.families)}</strong><span class="ux-kpi-foot">View households →</span></button>
+        <button type="button" class="ux-kpi ux-kpi-members" onclick="go('members')" ${canSee('members')?'':'disabled'}><span class="ux-kpi-icon" aria-hidden="true">♧</span><span class="ux-kpi-label">Living residents</span><strong class="tnum">${num(s.residentMembers)}</strong><span class="ux-kpi-foot">${num(s.members)} registered living relatives →</span></button>
+        <button type="button" class="ux-kpi ux-kpi-work" onclick="document.getElementById('ux-work-anchor')?.scrollIntoView({behavior:'smooth',block:'start'})"><span class="ux-kpi-icon" aria-hidden="true">☷</span><span class="ux-kpi-label">Tasks to review</span><strong class="tnum">${visibleWork.length}</strong><span class="ux-kpi-foot">This month's work ↓</span></button>
+      </div>
+      <div class="ux-priority-grid ${quickPanel ? '' : 'ux-single'}" id="ux-work-anchor">
+        <div class="ux-home-work">${fresh ? '' : monthWorkHtml()}</div>
+        ${quickPanel}
+      </div>
+      <details class="ux-home-section ux-upcoming" ${importantToday?'open':''}>
+        <summary><span class="ux-section-badge">◷</span><span class="ux-section-title">Coming up & remembrance<small>${upcomingCount ? upcomingCount + ' upcoming item' + (upcomingCount===1?'':'s') : 'Dates, festivals and the remembrance calendar'}</small></span><span class="ux-expand-label">Details</span></summary>
+        <div class="ux-home-expanded">${daysHtml(upcomingDays)}${remembranceHtml(remembranceDays, true)}</div>
+      </details>
+      <details class="ux-home-section ux-demographics"><summary><span class="ux-section-badge">♧</span><span class="ux-section-title">More village statistics<small>Earning members, children, elderly and coverage</small></span><span class="ux-expand-label">Details</span></summary><div class="ux-home-expanded">
+  <div class="strip">
+    <div><div class="k">Families</div><div class="v tnum">${num(s.families)}</div></div>
+    <div><div class="k">In village</div><div class="v tnum">${num(s.residentMembers)}</div></div>
+    <div><div class="k">Temporarily away</div><div class="v tnum">${num(s.temporaryAway)}</div></div>
+    <div><div class="k">Settled outside</div><div class="v tnum">${num(s.shiftedAway)}</div></div>
+    <div><div class="k">Residence to verify</div><div class="v tnum">${num(s.residenceUnknown)}</div></div>
+    <div><div class="k">Living relatives registered</div><div class="v tnum">${num(s.members)}</div></div>
+    <div><div class="k">Earning</div><div class="v tnum">${num(s.earningMembers)}</div></div>
+    <div><div class="k">Children</div><div class="v tnum">${num(s.children)}</div></div>
+    <div><div class="k">Elderly</div><div class="v tnum">${num(s.elderly)}</div></div>
+    ${deathsThisYear() ? `<div><div class="k">Deaths ${new Date().getFullYear()}</div><div class="v tnum">${deathsThisYear()}</div></div>` : ''}
+    <div><div class="k">Insured</div><div class="v tnum">${num(s.insuranceCoverage)}%</div></div>
+  </div>
+
+      <p class="small muted">Resident figures include only living persons marked “Living in Malipatana”. Marriage does not remove anyone from the ancestral family register. Blank residence needs verification. These are village-register figures, not certified Census counts.</p></div></details>
+      <details class="ux-home-section ux-insights"><summary><span class="ux-section-badge">₹</span><span class="ux-section-title">Financial trends & insights<small>12-month chart, recurring bills and recent records</small></span><span class="ux-expand-label">Reports</span></summary>
+        <div class="ux-home-expanded"><div class="cols"><div class="panel"><div class="panel-head"><h3>Money in and out, last 12 months</h3></div><div class="panel-body" style="padding-bottom:6px">${barChart()}</div><div class="legend"><span><i style="background:var(--green)"></i>In</span><span><i style="background:var(--brick)"></i>Out</span></div></div><div class="panel"><div class="panel-head"><h3>Latest entries</h3></div>${recentList()}</div></div><div class="ux-recurring-wrap">${recurringPanel()}</div></div>
+      </details>
+      <details class="ux-home-section ux-attention"><summary><span class="ux-section-badge">!</span><span class="ux-section-title">Data checks & needs attention<small>Missing entries and register checks</small></span><span class="ux-expand-label">View</span></summary><div class="ux-home-expanded"><div class="panel"><div class="panel-head"><h3>Needs attention</h3></div>${attentionList()}</div></div></details>
+    </div>`;
+  $('#main').innerHTML = html;
+  wireActions($('#main'));
+  wirePhotoFallbacks($('#main'));
+  $('#main').querySelectorAll('[data-remcal]').forEach(b => { b.onclick = openRemembranceCalendar; });
+  wireStartSteps();
+}
+
+/* Repaints only the panel, so tapping a marker does not rebuild the whole
+   dashboard and lose the reader's scroll position. Re-binds by reading each
+   button's own data-step — binding the fresh buttons to the old handler would
+   send every marker to whichever step was last tapped. */
+function wireStartSteps(){
+  const host = $('#main');
+  if(!host) return;
+  host.querySelectorAll('.startnext [data-step]').forEach(b => {
+    b.onclick = () => {
+      START_STEP = Number(b.dataset.step);
+      const panel = host.querySelector('.panel.start');
+      if(!panel) return;
+      const box = document.createElement('div');
+      box.innerHTML = startPanel();
+      panel.replaceWith(box.firstElementChild);
+      wireStartSteps();
+    };
+  });
+}
+
+/* An empty register should read as "here is what to do first", not as a page
+   full of zeros. Shown only until the first entry exists. */
+/* One number, asked for plainly, instead of a settings table. */
+function openOpeningFund(){
+  if(!isAdmin()){ go('settingsList'); return; }
+  const current = num(setting('Opening Fund', 0));
+  openModal(`
+    <header><div><h3>Opening fund</h3>
+      <div class="sub">What the village fund already held before this register began</div></div>
+      <div class="sp"></div><button class="btn btn-sm" onclick="closeModal()">Close</button></header>
+    <div class="body">
+      <label class="lbl" for="ofAmt">Amount in hand</label>
+      <input class="input tnum" id="ofAmt" type="number" min="0" step="1" value="${current || ''}"
+             placeholder="e.g. 25000" style="font-size:20px;min-height:56px">
+      <div class="fieldnote">Every figure on the dashboard starts from this number. Leave it 0 if the fund is starting fresh.</div>
+    </div>
+    <footer>
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" id="ofSave">Save</button>
+    </footer>`);
+  const box = document.getElementById('ofAmt');
+  const btn = document.getElementById('ofSave');
+  setTimeout(() => { box.focus(); box.select(); }, 50);
+  box.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); btn.click(); } });
+  btn.onclick = async () => {
+    btn.disabled = true; btn.textContent = 'Saving…';
+    const rec = { Setting: 'Opening Fund', Value: String(num(box.value)) };
+    try {
+      const r = await saveThrough('save', { sheet: 'Settings', record: JSON.stringify(rec) }, 'Opening fund');
+      if(!r || !r.ok) throw new Error((r && r.error) || 'could not save');
+      DB.settings = DB.settings || {};
+      DB.settings['Opening Fund'] = rec.Value;
+      closeModal(); render();
+      toast('Opening fund set to ' + money(rec.Value), 'good');
+    } catch(e){
+      toast(e.message || String(e), 'bad');
+      btn.disabled = false; btn.textContent = 'Save';
+    }
+  };
+}
+
+/* Which start step the phone card is showing. null means "the first unfinished
+   one", so it follows the register until the reader taps a marker themselves. */
+let START_STEP = null;
+
+function startPanel(){
+  const fams = (DB.families || []).length;
+  const mems = (DB.members || []).length;
+  const opening = num(setting('Opening Fund', 0));
+  const cons = (DB.contributions || []).length;
+  const steps = [
+    { started: fams > 0, n: 'Add the families', d: fams ? fams + (fams === 1 ? ' family' : ' families') + ' in the register so far' : 'Every household in the village',
+      act: "openForm('families')", go: 'families', cta: fams ? 'Add another family' : 'Add the first family' },
+    { started: mems > 0, n: 'Add the members', d: mems ? mems + (mems === 1 ? ' person' : ' people') + ' recorded so far' : 'Each person in those households',
+      act: "openForm('members')", go: 'members', cta: 'Add a member' },
+    { started: opening > 0, n: 'Set the opening fund', d: opening ? money(opening) + ' carried in' : 'What the fund already holds',
+      act: "openOpeningFund()", go: 'settingsList', cta: opening ? 'Change the amount' : 'Set the amount', once: true },
+    { started: cons > 0,
+      n: "Record this month's ଚାନ୍ଦା",
+      d: cons ? cons + (cons === 1 ? ' contribution' : ' contributions') + ' recorded so far' : 'Contributions from each family',
+      act: "openForm('contributions')", go: 'contributions', cta: 'Add a contribution' }
+  ];
+  const notStarted = steps.filter(s => !s.started).length;
+  /* On a phone the steps are strictly sequential — no chanda before families
+     exist — so the card opens on the step they are actually on. But a villager
+     may want to jump ahead or back to one already done, so the four markers at
+     the top are real buttons, not decoration. */
+  const nextIdx = steps.findIndex(s => !s.started);
+  const openIdx = START_STEP != null && steps[START_STEP] ? START_STEP
+    : (nextIdx < 0 ? steps.length - 1 : nextIdx);
+  const cur = steps[openIdx];
+  const trail = steps.map((s, i) =>
+    `<button class="dot${s.started ? ' going' : ''}${i === openIdx ? ' now' : ''}" data-step="${i}"
+       aria-label="Step ${i + 1}: ${esc(s.n)}${s.started ? ' (started)' : ' (not started yet)'}">${i + 1}</button>`).join('');
+  const notYet = steps.filter((s, i) => i !== openIdx && !s.started).map(s => s.n);
+
+  return `<div class="panel start">
+    <div class="panel-head">
+      <h3>Start the register</h3>
+      <span class="small">${notStarted ? notStarted + ' of ' + steps.length + ' not begun yet' : 'all four under way — keep adding as the village grows'}</span>
+    </div>
+    ${cur ? `<div class="startnext">
+      <div class="trail">${trail}</div>
+      <div class="sofar">Step ${openIdx + 1} of ${steps.length}${cur.started ? '' : ' · not begun'}</div>
+      <b>${cur.n}</b>
+      <span class="d">${esc(cur.d)}</span>
+      <button class="btn ${cur.started && cur.once ? '' : 'btn-primary'}" onclick="${cur.act}">${esc(cur.cta)}</button>
+      <div class="stepnav">
+        ${openIdx > 0 ? `<button class="btn btn-sm" data-step="${openIdx - 1}">← ${esc(steps[openIdx - 1].n)}</button>` : '<span></span>'}
+        ${openIdx < steps.length - 1 ? `<button class="btn btn-sm" data-step="${openIdx + 1}">${esc(steps[openIdx + 1].n)} →</button>` : '<span></span>'}
+      </div>
+      ${notYet.length ? `<div class="after"><span class="then">Not begun yet: ${notYet.map(esc).join(' \u00b7 ')}</span></div>` : ''}
+    </div>` : ''}
+    <div class="startgrid">
+      ${steps.map((s, i) => `
+        <div class="startcard${s.started ? ' going' : ''}">
+          <div class="top"><span class="num">${i + 1}</span>
+          <b>${s.n}</b></div>
+          <span class="d">${esc(s.d)}</span>
+          <button class="btn btn-sm ${s.started && s.once ? '' : 'btn-primary'}" onclick="${s.act}">${esc(s.cta)}</button>
+        </div>`).join('')}
+    </div>
+  </div>`;
+}
+
+function lastMonths(n){
+  const out = [], d = new Date();
+  d.setDate(1);
+  for(let i = n - 1; i >= 0; i--){
+    const x = new Date(d.getFullYear(), d.getMonth() - i, 1);
+    out.push(localISO(x).slice(0, 7));
+  }
+  return out;
+}
+function barChart(){
+  const months = lastMonths(12);
+  const inM = {}, outM = {};
+  months.forEach(m => { inM[m] = 0; outM[m] = 0; });
+  (DB.contributions || []).forEach(r => { const m = monthKey(r['Month'] || r['Date']); if(m in inM) inM[m] += num(r['Amount']); });
+  (DB.income || []).forEach(r => { const m = monthKey(r['Date']); if(m in inM) inM[m] += num(r['Amount']); });
+  (DB.expenditure || []).forEach(r => { const m = monthKey(r['Date']); if(m in outM) outM[m] += num(r['Amount']); });
+  const max = Math.max(1, ...months.map(m => Math.max(inM[m], outM[m])));
+  const W = 720, H = 190, pad = 26, bw = (W - pad * 2) / months.length;
+  let bars = '', labels = '';
+  months.forEach((m, i) => {
+    const x = pad + i * bw;
+    const hi = Math.round((inM[m] / max) * (H - 52));
+    const ho = Math.round((outM[m] / max) * (H - 52));
+    bars += `<rect x="${x + bw * .12}" y="${H - 28 - hi}" width="${bw * .34}" height="${hi}" rx="2" fill="var(--green)"><title>${m} in ${money(inM[m])}</title></rect>`;
+    bars += `<rect x="${x + bw * .52}" y="${H - 28 - ho}" width="${bw * .34}" height="${ho}" rx="2" fill="var(--brick)"><title>${m} out ${money(outM[m])}</title></rect>`;
+    labels += `<text x="${x + bw / 2}" y="${H - 10}" text-anchor="middle" font-size="10" fill="#5c6b62">${m.slice(5)}/${m.slice(2,4)}</text>`;
+  });
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto" role="img" aria-label="Monthly money in and out">
+    <line x1="${pad}" y1="${H-28}" x2="${W-pad}" y2="${H-28}" stroke="#dbe2db"/>
+    <text x="${pad}" y="16" font-size="11" fill="#5c6b62">peak ${money(max)}</text>
+    ${bars}${labels}</svg>`;
+}
+
+function attentionList(){
+  const items = [];
+  const now = new Date(), in30 = new Date(Date.now() + 30 * 864e5);
+  const renew = (DB.insurance || []).filter(r => {
+    const d = toISO(r['Renewal Date']); if(!d) return false;
+    const dt = new Date(d); return dt >= new Date(now.toDateString()) && dt <= in30;
+  });
+  if(renew.length) items.push(['d-yellow', renew.length + ' insurance renewal' + (renew.length > 1 ? 's' : '') + ' due within 30 days', renew.slice(0,3).map(r => r['Name']).join(', '), 'insurance']);
+
+  const open = (DB.emergency || []).filter(r => String(r['Status'] || '').toLowerCase() !== 'closed');
+  if(open.length) items.push(['d-red', open.length + ' emergency case' + (open.length > 1 ? 's' : '') + ' still open', 'Pending balance ' + money(open.reduce((a, r) => a + num(r['Balance']), 0)), 'emergency']);
+
+  const thisMonth = today().slice(0, 7);
+  const paid = new Set((DB.contributions || []).filter(r => monthKey(r['Month'] || r['Date']) === thisMonth).map(r => String(r['Family ID']).trim()));
+  const activeFams = (DB.families || []).filter(f => String(f['Family Status'] || 'Active').toLowerCase() !== 'inactive');
+  const pending = activeFams.filter(f => !paid.has(String(f['Family ID']).trim()));
+  if(pending.length) items.push(['d-blue', pending.length + ' families have not paid this month', 'Expected ' + money(pending.length * num(setting('Monthly Contribution', 0))), 'contributions']);
+
+  const noMembers = (DB.families || []).filter(f => !(DB.members || []).some(m => String(m['Family ID']).trim() === String(f['Family ID']).trim()));
+  if(noMembers.length) items.push(['d-yellow', noMembers.length + ' families have no members listed', noMembers.slice(0,3).map(f => f['Family Head']).join(', '), 'members']);
+
+  const needG = guidanceRows().filter(f => !String(f['Guide Member ID'] || '').trim());
+  if(needG.length) items.push(['d-yellow', needG.length + ' families need a guide assigned',
+    needG.slice(0, 3).map(f => f['Family Head']).join(', '), 'guidance']);
+
+  const vuln = (DB.families || []).filter(f => String(f['Vulnerable Status'] || '').toLowerCase().includes('vulnerable'));
+  if(vuln.length) items.push(['d-red', vuln.length + ' families marked vulnerable', 'Review support arrangements', 'families']);
+
+  if(!items.length) return '<div class="empty"><b>All clear</b>Nothing is overdue or unfinished right now.</div>';
+  return items.map(([dot, title, note, page]) => `
+    <div class="alert"><span class="dot ${dot}"></span>
+      <div><b>${esc(title)}</b><span class="muted small">${esc(note)}</span></div>
+      <button class="go" onclick="go('${page}')">Open</button>
+    </div>`).join('');
+}
+
+function recentList(){
+  const rows = [];
+  (DB.contributions || []).forEach(r => rows.push([toISO(r['Date']), 'Contribution', (r['Contributor'] || familyName(r['Family ID']) || r['Family ID']), num(r['Amount']), 1]));
+  (DB.income || []).forEach(r => rows.push([toISO(r['Date']), 'Income', (r['Source'] || r['Income Type'] || ''), num(r['Amount']), 1]));
+  (DB.expenditure || []).forEach(r => rows.push([toISO(r['Date']), 'Expenditure', (r['Description'] || r['Category'] || ''), num(r['Amount']), -1]));
+  rows.sort((a, b) => String(b[0]).localeCompare(String(a[0])));
+  const top = rows.slice(0, 7);
+  if(!top.length) return '<div class="empty"><b>No entries yet</b>Add a contribution or an expense to start the register.</div>';
+  return top.map(([d, kind, what, amt, sign]) => `
+    <div class="alert">
+      <div style="min-width:74px" class="muted small tnum">${esc(fmtDate(d))}</div>
+      <div><b>${esc(what || kind)}</b><span class="muted small">${esc(kind)}</span></div>
+      <div style="margin-left:auto;font-weight:700;color:${sign > 0 ? 'var(--green)' : 'var(--brick)'}" class="tnum">${sign > 0 ? '+' : '−'} ${money(amt)}</div>
+    </div>`).join('');
+}
+
+/* =========================================================================
+   LIST PAGES
+   ========================================================================= */
+/* ---------- photo settings (Settings sheet) ---------- */
+const yes = v => !['no','off','false','0'].includes(String(v).trim().toLowerCase());
+const photosOn = () => yes(setting('Member Photos', 'Yes'));
+const photoMaxPx = () => Math.min(2000, Math.max(320, num(setting('Photo Max Size', 900)) || 900));
+const photoRoot = () => String(setting('Photo Folder', 'Malipatana Photos')).trim() || 'Malipatana Photos';
+const photoColumns = () => yes(setting('Show Photo In Tables', 'Yes'));
+function listCols(key){
+  const hidden = (() => { try { return JSON.parse(setting('Hidden ' + MODULES[key].sheet, '[]')) || []; } catch(e){ return []; } })();
+  const customHidden = customCols(key).filter(c => c.hidden).map(c => c.n);
+  const l = (MODULES[key].list || []).concat(customCols(key).filter(c => !c.hidden).map(c => c.n)).filter(c => !hidden.includes(c) && !customHidden.includes(c) && !(key==='families' && (c==='House No'||c==='Address/Area')));
+  if(photosOn() && photoColumns()) return l;
+  return l.filter(c => fieldDef(key, c).t !== 'photo');
+}
+
+/* ---------- custom columns (admin) ----------
+   The column list is stored as one Settings row per module, e.g.
+   Setting "Columns Members" / Value '[{"n":"Aadhaar","t":"text"}]'.
+   Sheet headers are created by the Apps Script add-on. */
+const COL_TYPES = ['text','number','money','date','tel','select','datalist','textarea'];
+function colKey(key){ return 'Columns ' + MODULES[key].sheet; }
+function customCols(key){
+  try {
+    const raw = setting(colKey(key), '');
+    const list = raw ? JSON.parse(raw) : [];
+    return Array.isArray(list) ? list.filter(c => c && c.n) : [];
+  } catch(e){ return []; }
+}
+function allFields(key){
+  const m = MODULES[key];
+  const extra = customCols(key).map(c => ({ n: c.n, t: COL_TYPES.includes(c.t) ? c.t : 'text', opts: c.opts, custom: true }));
+  return m.fields.concat(extra.filter(e => !m.fields.some(f => f.n === e.n) && !(key==='users' && /^Mobile Verified(?: At| By)?$/i.test(e.n))));
+}
+async function saveCols(key, list){
+  const rec = { Setting: colKey(key), Value: JSON.stringify(list) };
+  const r = await api('save', { sheet: MODULES.settingsList.sheet, record: JSON.stringify(rec) });
+  if(!r || !r.ok) throw new Error((r && r.error) || 'Could not save the column list');
+  DB.settings = DB.settings || {};
+  DB.settings[colKey(key)] = rec.Value;
+}
+/* header changes need the add-on; POST answers are unreadable, so we confirm by reload */
+async function sheetColumn(action, key, col, to){
+  const body = new URLSearchParams({ action: action, sheet: MODULES[key].sheet, column: col, to: to || '', token: (USER && USER.token) || '' });
+  await fetch(CONFIG.API_URL, { method: 'POST', mode: 'no-cors', body: body });
+}
+
+/* "Families" must not become "familie" — a module may name its own singular. */
+function singularOf(m){
+  return String(m.singular || m.title.replace(/s$/, '')).toLowerCase();
+}
+
+function fieldDef(key, col){ return allFields(key).find(f => f.n === col) || { n: col, t: 'text' }; }
+
+const GRV_TONE = { Received:'', 'Under Review':'warn', 'Action Taken':'warn', Resolved:'good', Rejected:'bad' };
+/* One authoritative display name. The sheet keeps the existing Family Head/Name
+   column for compatibility; Given Name + Surname are editable source fields. */
+function malDisplayFullName_(key,row){
+  const field=key==='families'?'Family Head':'Name';
+  const given=malNameTidy_(row['Given Name']);
+  const surname=malNameTidy_(row.Surname);
+  if(given&&surname){
+    const first=malNameStripSuffix_(given,surname);
+    if(first)return malNameTidy_(first+' '+surname);
+  }
+  return malNameTidy_(row[field]||given||surname);
+}
+
+function cellHtml(key, row, col){
+  if(key==='users' && col==='Email Verified'){
+    const ch='Email';
+    const yesSelf=String(row[ch+' Verified']||'').toLowerCase()==='yes' &&
+      String(row[ch+' Verified By']||'')==='Self OTP' && !!String(row[ch+' Verified At']||'');
+    return {cls:'',html:yesSelf?'<span class="verify-pill done" title="Self-verified with OTP on '+esc(String(row[ch+' Verified At']))+'">✓ Verified</span>':
+      '<span class="verify-pill pending" title="The concerned user has not completed OTP verification">Not verified</span>'};
+  }
+  if((key==='families'||key==='members') && col==='Surname'){
+    const saved=malNameTidy_(row.Surname);
+    if(saved)return {cls:'',html:'<strong>'+esc(saved)+'</strong>'};
+    const suggestion=malSurnameProposal_(key,row);
+    return {cls:'',html:suggestion
+      ? '<span class="mal-surname-suggested" title="Suggested from the full name; not yet saved">'+esc(suggestion.surname)+'</span> <span class="mal-surname-tag">Not yet saved</span>'
+      : '<span class="muted small">Not recorded</span>'};
+  }
+  if(key==='notices' && col==='Text')return {cls:'',html:malNoticeLinkify_(row.Text||'')};
+  if(key==='members' && col==='Age'){
+    const rawAge=row.Age;
+    if(rawAge===''||rawAge===undefined||rawAge===null)return {cls:'num',html:'<span class="muted small">—</span>'};
+    const estimate=String(row['Age Source']||'').trim()==='Estimated';
+    const unverified=!row['Date of Birth']&&!estimate;
+    return {cls:'num',html:'<span class="tnum">'+esc(rawAge)+'</span>'+
+      (estimate?' <span class="muted small" title="Approximate age, not an exact birth date">(Est.)</span>':unverified?' <span class="muted small" title="Date of birth is not verified">(DOB unknown)</span>':'')};
+  }
+  if(key==='members' && col==='Name')return {cls:'',html:esc(malDisplayFullName_(key,row))};
+  const f = fieldDef(key, col);
+  const raw = row[col];
+  if(key === 'grievances' && col === 'Status'){
+    const v = String(raw || 'Received');
+    return { cls: '', html: '<span class="pill ' + (GRV_TONE[v] || '') + '">' + esc(v) + '</span>' };
+  }
+  /* A family's head reads better with its own subfamily count beside it than
+     as a bare parent id the reader has to look up. */
+  if(key === 'families' && col === 'Family Head'){
+    const fid = String(row['Family ID'] || '').trim();
+    const subs = (DB.families || []).filter(x => String(x['Parent Family ID'] || '').trim() === fid).length;
+    const isSub = String(row['Parent Family ID'] || '').trim() !== '';
+    return { cls: '', html: esc(malDisplayFullName_(key,row)) +
+      (subs ? '<span class="subtag">' + subs + (subs === 1 ? ' SUBFAMILY' : ' SUBFAMILIES') + '</span>' : '') +
+      (isSub ? '<span class="subtag">SUBFAMILY</span>' : '') };
+  }
+  if(f.t === 'photo'){
+    const u = String(raw == null ? '' : raw).trim();
+    const nm = String(row['Name'] || row[MODULES[key].idField] || '?').trim();
+    return { cls: 'photocell', html: u
+      ? '<button class="cellav" data-photo="' + esc(u) + '" title="View photo"><img data-srcs="' + esc(photoSrcs(u, 160).join('|')) + '" alt="' + esc(nm) + '" loading="lazy"></button>'
+      : '<span class="cellav none">' + esc(initials(nm)) + '</span>' };
+  }
+  if(f.t === 'guide'){
+    const v = String(raw == null ? '' : raw).trim();
+    if(!v) return { cls: '', html: '<span class="muted small">—</span>' };
+    return { cls: '', html: '<button class="linkish" data-act="profile2" data-id="' + esc(v) + '">' +
+      esc(memberName(v) || v) + '</button>' };
+  }
+  if(f.t === 'event'){
+    const v = String(raw == null ? '' : raw).trim();
+    return { cls: '', html: v ? '<button class="linkish" data-event="' + esc(v) + '">' + esc(eventName(v) || v) + '</button>' : '' };
+  }
+  if(f.t === 'money'){ return { cls: 'num', html: raw === '' || raw == null ? '' : '<span class="tnum">' + money(raw) + '</span>' }; }
+  if(f.t === 'number'){ return { cls: 'num', html: '<span class="tnum">' + esc(raw) + '</span>' }; }
+  if(f.t === 'date'){ return { cls: 'tnum', html: esc(fmtDate(raw)) }; }
+  if(f.t === 'family'){
+    const nm = familyName(raw);
+    return { cls: '', html: esc(raw) + (nm ? ' <span class="muted small">' + esc(nm) + '</span>' : '') };
+  }
+  if(f.t === 'member'){
+    const nm = memberName(raw);
+    return { cls: '', html: esc(raw) + (nm ? ' <span class="muted small">' + esc(nm) + '</span>' : '') };
+  }
+  if(f.t === 'counted'){
+    const famId = String(row['Family ID'] || '').trim();
+    const n = familyCount(famId, col);
+    const typed = num(raw);
+    const stale = raw !== '' && raw != null && typed !== n;
+    return { cls: 'num', html: '<span class="tnum">' + n + '</span>' +
+      (stale ? ' <span class="muted small" title="The sheet says ' + typed + '">(' + typed + ')</span>' : '') };
+  }
+  if(key==='members'&&col==='Marital Status'&&!String(raw||'').trim())return {cls:'',html:'<span class="muted small">Not recorded</span>'};
+  if(key==='members'&&col==='Residence Status'&&!String(raw||'').trim())return {cls:'',html:'<span class="pill warn">Not verified</span>'};
+  if(col === 'Life Status'){
+    const v = String(raw || '').trim();
+    if(!v || v.toLowerCase() === 'alive') return { cls: '', html: '' };
+    const d = toISO(row['Date of Death']);
+    return { cls: '', html: '<span class="pill gone">Deceased</span>' + (d ? ' <span class="muted small">' + esc(fmtDate(d)) + '</span>' : '') };
+  }
+  if(col === 'Needs Guidance'){
+    const v = String(raw || '').trim();
+    if(!v || v.toLowerCase() === 'no') return { cls: '', html: '' };
+    return { cls: '', html: '<span class="pill warn">' + esc(v) + '</span>' };
+  }
+  if(col === 'Guidance Status'){
+    const v = String(raw || '').trim();
+    if(!v) return { cls: '', html: '' };
+    const t = /helped|closed/i.test(v) ? 'ok' : /committee/i.test(v) ? 'warn' : '';
+    return { cls: '', html: '<span class="pill ' + t + '">' + esc(v) + '</span>' };
+  }
+  if(col === 'Status' || col === 'Active' || col === 'Family Status' || col === 'Vulnerable Status' || col === 'Earning Member' || col === 'Scholarship'){
+    const v = String(raw || '').trim();
+    if(!v) return { cls: '', html: '' };
+    const low = v.toLowerCase();
+    let tone = '';
+    if(['active','closed','completed','yes','normal'].includes(low)) tone = 'ok';
+    if(['ongoing','open','referred','lapsed','shifted'].includes(low)) tone = 'warn';
+    if(['inactive','no','claimed'].includes(low) || low.includes('vulnerable')) tone = 'bad';
+    return { cls: '', html: '<span class="pill ' + tone + '">' + esc(v) + '</span>' };
+  }
+  if(col === MODULES[key].idField) return { cls: 'idcell', html: esc(raw) };
+  return { cls: '', html: esc(raw) };
+}
+
+function filterRows(key){
+  const m = MODULES[key], v = VIEW[key] || (VIEW[key] = { q: '', sort: '', dir: 1, fam: '' });
+  let rows = rowsOf(key).slice();
+  if(v.fam) rows = rows.filter(r => String(r['Family ID'] || '').trim() === v.fam);
+  if((key==='families'||key==='members')&&v.surname)
+    rows=rows.filter(r=>String(r.Surname||'').toLowerCase()===v.surname.toLowerCase());
+  if((key==='families'||key==='members')&&v.locality)
+    rows=rows.filter(r=>{
+      const fam=key==='families'?r:(DB.families||[]).find(f=>String(f['Family ID'])===String(r['Family ID']));
+      return String(fam && fam['Village Locality'] || '').toLowerCase()===v.locality.toLowerCase();
+    });
+  if(key==='members'&&v.residence)
+    rows=rows.filter(r=>(String(r['Residence Status']||'')||'Not verified')===v.residence);
+  if(key==='members'&&v.marital)
+    rows=rows.filter(r=>(String(r['Marital Status']||'')||'Unknown')===v.marital);
+  if(key==='members'&&v.life)
+    rows=rows.filter(r=>v.life==='Alive' ? !isDeceased(r) : isDeceased(r));
+  if(v.q){
+    const q = v.q.toLowerCase();
+    rows = rows.filter(r => m.fields.some(f => String(r[f.n] ?? '').toLowerCase().includes(q)) ||
+                            String(familyName(r['Family ID']) || '').toLowerCase().includes(q));
+  }
+  if(v.sort){
+    const f = fieldDef(key, v.sort);
+    const numeric = ['money', 'number'].includes(f.t);
+    rows.sort((a, b) => {
+      const x = a[v.sort], y = b[v.sort];
+      const r = numeric ? num(x) - num(y) : String(x ?? '').localeCompare(String(y ?? ''), 'en', { numeric: true });
+      return r * v.dir;
+    });
+  }
+  return rows;
+}
+
+/* REGISTER USABILITY v3.5.16 — only UI preferences go in browser storage.
+   No names, records, IDs, sessions or private financial data are persisted. */
+const MAL_REG_WIDTH_PREFIX='malipatana_ui_columns_v1_';
+function malReadColumnWidths(key){
+  if(key!=='families' && key!=='members')return {};
+  try{
+    const parsed=JSON.parse(localStorage.getItem(MAL_REG_WIDTH_PREFIX+key)||'{}');
+    return parsed && typeof parsed==='object'&&!Array.isArray(parsed)?parsed:{};
+  }catch(e){return {};}
+}
+function malDefaultColumnWidth(col){
+  if(/Photo|Image/i.test(col))return 80;
+  if(/^(Family Head|Name|Full Name|Father Name|Mother Name|Spouse Name)$/i.test(col))return 210;
+  if(/Address|Locality|Remark|Occupation|Education|Guidance/i.test(col))return 205;
+  if(/Mobile|Email/i.test(col))return 175;
+  if(/Date|DOB/i.test(col))return 145;
+  if(/Family ID|Member ID/i.test(col))return 136;
+  return 155;
+}
+function malSafeColumnWidth(value,fallback){
+  const n=Number(value);
+  return Number.isFinite(n)&&n>=85&&n<=500?Math.round(n):fallback;
+}
+function malStoreColumnWidth(key,col,width){
+  try{
+    const w=malReadColumnWidths(key);
+    w[col]=malSafeColumnWidth(width,malDefaultColumnWidth(col));
+    localStorage.setItem(MAL_REG_WIDTH_PREFIX+key,JSON.stringify(w));
+  }catch(e){ /* Storage may be disabled; resizing still works until reload. */ }
+}
+function malBindRegisterWidths(key){
+  if(!['families','members'].includes(key))return;
+  const table=document.querySelector('#main table.mal-people-register[data-register="'+key+'"]');
+  if(!table)return;
+  const gridWidth=()=>{
+    const total=Array.from(table.querySelectorAll('colgroup col')).reduce((sum,col)=>sum+(parseFloat(col.style.width)||0),0);
+    table.style.width='max(100%, '+total+'px)';
+    table.style.minWidth=total+'px';
+  };
+  gridWidth();
+  table.querySelectorAll('.mal-col-resizer').forEach(handle=>{
+    const name=handle.getAttribute('data-width-col');
+    const col=Array.from(table.querySelectorAll('colgroup col')).find(c=>c.getAttribute('data-width-name')===name);
+    if(!col)return;
+    const apply=(value,save)=>{
+      const width=Math.max(85,Math.min(500,Math.round(value)));
+      col.style.width=width+'px';gridWidth();
+      if(save)malStoreColumnWidth(key,name,width);
+    };
+    handle.addEventListener('click',e=>{e.stopPropagation();e.preventDefault();});
+    handle.addEventListener('pointerdown',e=>{
+      if(e.button!==0)return;
+      e.preventDefault();e.stopPropagation();
+      const initial=parseFloat(col.style.width)||malDefaultColumnWidth(name),startX=e.clientX;
+      handle.setPointerCapture(e.pointerId);
+      table.classList.add('mal-resizing');
+      const move=ev=>{if(ev.pointerId===e.pointerId)apply(initial+ev.clientX-startX,false);};
+      const stop=ev=>{
+        if(ev.pointerId!==e.pointerId)return;
+        handle.removeEventListener('pointermove',move);
+        handle.removeEventListener('pointerup',stop);
+        handle.removeEventListener('pointercancel',stop);
+        table.classList.remove('mal-resizing');
+        apply(parseFloat(col.style.width)||initial,true);
+        try{handle.releasePointerCapture(e.pointerId);}catch(ex){}
+      };
+      handle.addEventListener('pointermove',move);
+      handle.addEventListener('pointerup',stop);
+      handle.addEventListener('pointercancel',stop);
+    });
+    handle.addEventListener('dblclick',e=>{
+      e.stopPropagation();e.preventDefault();apply(malDefaultColumnWidth(name),true);
+    });
+    handle.addEventListener('keydown',e=>{
+      if(e.key!=='ArrowLeft'&&e.key!=='ArrowRight')return;
+      e.preventDefault();e.stopPropagation();
+      apply((parseFloat(col.style.width)||malDefaultColumnWidth(name))+(e.key==='ArrowRight'?16:-16),true);
+    });
+  });
+}
+/* v3.5.18: No click-to-open listener on whole table rows.
+   Open a record only via its explicit View button or linked name, so people
+   can scroll sideways, select text and use right-hand Edit/Delete safely. */
+
+function renderModule(key){
+  const m = MODULES[key];
+  if(!m){ $('#main').innerHTML = '<div class="empty"><b>Page not found</b>That link is not part of the dashboard. ' +
+    '<button class="btn btn-sm" onclick="go(\'dashboard\')" style="margin-top:12px">Back to dashboard</button></div>'; return; }
+  if(m.adminOnly && !isAdmin()){ $('#main').innerHTML = '<div class="empty"><b>Admins only</b>Ask the village admin for access.</div>'; return; }
+  if(!canSee(key)){ $('#main').innerHTML = '<div class="empty"><b>Not available to your account</b>The village admin decides which pages you can open.</div>'; return; }
+  if(key === 'users' && !DB.users){
+    $('#main').innerHTML = '<div class="pagehead"><h2>Users</h2></div><div class="panel"><div class="empty"><b>Not available yet</b>' +
+      'The backend does not send the user list. Add users directly in the Users sheet, or apply the optional backend update.</div></div>';
+    return;
+  }
+  const v = VIEW[key] || (VIEW[key] = { q: '', sort: '', dir: 1, fam: '' });
+  const rows = filterRows(key);
+  const all = rowsOf(key);
+  const cols = listCols(key);
+  ROWCACHE[key] = rows;
+  const moneyCols = cols.filter(c => fieldDef(key, c).t === 'money');
+  const totals = moneyCols.map(c => c + ' ' + money(rows.reduce((a, r) => a + num(r[c]), 0)));
+  const hasFamily = m.fields.some(f => f.t === 'family');
+  const malPeople = key==='families'||key==='members';
+  const malWidthPrefs=malPeople?malReadColumnWidths(key):{};
+  const malWidths=malPeople?cols.map(c=>malSafeColumnWidth(malWidthPrefs[c],malDefaultColumnWidth(c))):[];
+  const malTotalWidth=malPeople?94+malWidths.reduce((a,b)=>a+b,0)+355:0;
+
+
+  $('#main').innerHTML = `
+  <div class="pagehead">
+    <div>
+      <h2>${esc(m.title)} <span class="muted" style="font-size:16px">${esc(m.odia || '')}</span></h2>
+      <div class="sub">${esc(m.blurb || '')}</div>
+    </div>
+    <div class="sp"></div>
+    ${canEdit() ? `<button class="btn btn-primary" data-act="add">+ Add ${esc(singularOf(m))}</button>` : ''}
+  </div>
+
+  <div class="toolbar${malPeople?' mal-register-toolbar'+(v.toolsOpen?' mal-filters-open':''):''}">
+    <input class="input grow" id="q" placeholder="Search ${esc(m.title.toLowerCase())}…" value="${esc(v.q)}">
+    ${malPeople?`<button type="button" class="btn btn-sm mal-toggle-filters" aria-expanded="${v.toolsOpen?'true':'false'}">☷ Filters & tools</button>`:''}
+    ${hasFamily ? `<select class="input" id="famFilter" style="max-width:230px">
+      <option value="">All families</option>
+      ${(DB.families || []).map(f => `<option value="${esc(f['Family ID'])}" ${v.fam === String(f['Family ID']) ? 'selected' : ''}>${esc(f['Family ID'])} · ${esc(f['Family Head'])}</option>`).join('')}
+    </select>` : ''}
+    ${['families','members'].includes(key)?`<select class="input" id="surnameFilter" aria-label="Filter by surname"><option value="">All surnames</option>${[...new Set(rowsOf(key).map(r=>String(r.Surname||'').trim()).filter(Boolean))].sort().map(n=>`<option value="${esc(n)}" ${v.surname===n?'selected':''}>${esc(n)}</option>`).join('')}</select><select class="input" id="sahiFilter" aria-label="Filter by village locality"><option value="">All village localities</option>${[...new Set([...malConfiguredSahis_(),...(DB.families||[]).map(r=>String(r['Village Locality']||'').trim()).filter(Boolean)])].sort().map(n=>`<option value="${esc(n)}" ${v.locality===n?'selected':''}>${esc(n)}</option>`).join('')}</select>${key==='members'?`<select class="input" id="residenceFilter" aria-label="Filter by residence"><option value="">All residences</option>${['Living in Malipatana','Outside temporarily','Shifted permanently','Not verified'].map(n=>`<option ${v.residence===n?'selected':''}>${esc(n)}</option>`).join('')}</select><select class="input" id="maritalFilter" aria-label="Filter by marital status"><option value="">All marital statuses</option>${['Unknown','Unmarried','Married','Widowed','Divorced','Separated'].map(n=>`<option ${v.marital===n?'selected':''}>${esc(n)}</option>`).join('')}</select><select class="input" id="lifeFilter" aria-label="Filter by life status"><option value="">All life statuses</option><option value="Alive" ${v.life==='Alive'?'selected':''}>Living only</option><option value="Deceased" ${v.life==='Deceased'?'selected':''}>In memory</option></select>`:''}`:''}
+    ${key === 'members' && canEdit() ? '<button class="btn btn-sm" data-act="heads">Add missing family heads</button>' : ''}    ${isAdmin() ? `<button class="btn btn-sm" data-act="cols">Columns</button>` : ''}
+    ${isAdmin() && ['families','members','settingsList'].includes(key) ? '<button class="btn btn-sm btn-primary" data-act="localities">📍 Manage Sahis</button>' : ''}
+    ${key==='users' && isAdmin() ? '<button class="btn btn-sm btn-primary" data-act="loginopts">Login / OTP options</button>' : ''}
+    ${isAdmin() && ['families','members'].includes(key) && all.some(r=>!malNameTidy_(r.Surname)) ? '<button class="btn btn-sm btn-primary" data-act="surnameReview">Review '+all.filter(r=>!malNameTidy_(r.Surname)).length+' missing surnames</button>' : ''}
+    ${isAdmin() && ['families','members'].includes(key) ? `<button class="btn btn-sm ${VIEW[key] && VIEW[key].quick ? 'btn-primary' : ''}" data-act="quick">${VIEW[key] && VIEW[key].quick ? 'Done editing' : 'Quick edit'}</button>` : ''}
+    ${malPeople ? '<button type="button" class="btn btn-sm mal-reset-cols" title="Restore default column widths on this device">↔ Reset widths</button>' : ''}
+    <button class="btn btn-sm" data-act="csv">Export CSV</button>
+    <button class="btn btn-sm" data-act="print">Print</button>
+    <span class="muted small" style="margin-left:auto">${rows.length} of ${all.length} records</span>
+  </div>
+
+  ${['families','members'].includes(key)?`<div class="fieldnote" style="margin:3px 0 12px">Saved grouping: ${new Set(all.map(r=>String(r.Surname||'').trim()).filter(Boolean)).size} surname(s) · ${all.filter(r=>!String(r.Surname||'').trim()).length} older record(s) need review. Yellow surname labels are suggestions only, until saved. ${key==='families'?new Set(all.map(r=>String(r['Village Locality']||'').trim()).filter(Boolean)).size+' village localities.':'Use Sahi and current residence filters above.'}</div>`:''}
+  ${malPeople ? `<div class="mal-register-tip">💡 To open details, select <b>View</b> or click the name. Clicks on other cells will not open the record. Scroll sideways to reach <b>View, Edit or Delete</b> on the right. On PC, drag the column-header edge to resize.</div><div class="mal-register-nav" role="group" aria-label="Navigate wide Family and Member registers"><span class="muted small">Wide register — move horizontally:</span><button type="button" class="btn btn-sm" data-mal-scroll="start" aria-label="Scroll to names and first columns">← Names</button><button type="button" class="btn btn-sm" data-mal-scroll="end" aria-label="Scroll to View, Edit and Delete actions">Actions →</button></div>` : ''}
+  ${OPTIONAL_SHEETS.includes(key) && !SERVER_SHEETS.includes(key) ? `<div class="notice">
+    <b>These records stay on this device</b>
+    The sheet is not sending ${esc(MODULES[key].sheet)} yet. Ask the admin to add
+    <code>${esc(key)}: read_('${esc(MODULES[key].sheet)}'),</code> to the bootstrap function in Apps Script and redeploy,
+    so everyone can see them.</div>` : ''}
+  ${key === 'expenditure' ? functionsPanel() : ''}
+
+  <div class="tablewrap">
+    ${rows.length ? `
+    <table class="grid${malPeople?' mal-people-register':''}" ${malPeople?'data-register="'+key+'" style="table-layout:fixed;width:max(100%, '+malTotalWidth+'px);min-width:'+malTotalWidth+'px"':''}>
+      ${malPeople ? `<colgroup><col style="width:94px">${cols.map((c,i)=>`<col data-width-name="${esc(c)}" style="width:${malWidths[i]}px">`).join('')}<col style="width:355px"></colgroup>` : ''}
+      <thead><tr>
+        ${malPeople?'<th class="mal-open-sticky" scope="col">Open</th>':''}
+        ${cols.map(c => {
+          const f = fieldDef(key, c), cls = ['money', 'number'].includes(f.t) ? 'num' : '';
+          const ar = v.sort === c ? (v.dir > 0 ? ' ▲' : ' ▼') : '';
+          return `<th class="${cls}" data-sort="${esc(c)}"><span class="mal-th-text">${esc(c)}</span><span class="ar">${ar}</span>${malPeople?`<span class="mal-col-resizer" role="separator" tabindex="0" data-width-col="${esc(c)}" aria-label="Resize ${esc(c)} column" title="Drag to resize; double-click to reset; arrow keys adjust"></span>`:''}</th>`;
+        }).join('')}
+        <th style="text-align:right">Actions</th>
+      </tr></thead>
+      <tbody>
+        ${rows.map(r => {
+          const id = esc(r[m.idField]);
+          const quick = v.quick && isAdmin();
+          const gone = key === 'members' && isDeceased(r);
+          const displayName=malDisplayFullName_(key,r)||String(r[m.idField]||'');
+          return '<tr' + (quick ? ' data-row="' + id + '"' : '') + '' + (gone ? ' class="gonerow"' : '') + '>' +
+            (malPeople ? `<td class="mal-open-sticky mal-view-cell" data-label=""><button class="mal-view-btn" type="button" data-act="profile" data-id="${id}" title="Open ${esc(displayName)}">◉ <span>View</span></button></td>` : '') + cols.map(c => {
+            const f = fieldDef(key, c);
+            if(quick && malPeople && ['Given Name','Surname','Family Head','Name'].includes(c)){
+              const preview=cellHtml(key,r,c);
+              return `<td data-label="${esc(c)}">${preview.html} <button class="btn btn-sm" data-act="edit" data-id="${id}" type="button">${c==='Surname'&&!malNameTidy_(r.Surname)?'Review':'Edit name'}</button></td>`;
+            }
+            if(quick && c !== m.idField && f.t !== 'photo' && f.t !== 'counted'){
+              const val = r[c] == null ? '' : String(r[c]);
+              const type = f.t === 'money' || f.t === 'number' ? 'number' : f.t === 'date' ? 'date' : 'text';
+              return `<td class="${['money','number'].includes(f.t) ? 'num' : ''}" data-label="${esc(c)}">
+                <input class="cellinput${['money','number'].includes(f.t) ? ' tnum' : ''}" type="${type}"
+                       data-col="${esc(c)}" value="${esc(f.t === 'date' ? toISO(val) : val)}"></td>`;
+            }
+            const cell = cellHtml(key, r, c);
+            const nameField=(key==='families'&&c==='Family Head')||(key==='members'&&c==='Name');
+            const content=nameField&&malPeople?`<button class="mal-name-view" type="button" data-act="profile" data-id="${id}" title="Open details">${cell.html}</button>`:cell.html;
+            return `<td class="${cell.cls}" data-label="${esc(c)}">${content}</td>`;
+          }).join('') + `<td class="acts" data-label="">
+            ${quick ? `<button class="btn btn-sm btn-primary" data-act="rowsave" data-id="${id}">Save</button> ` : ''}
+            ${key === 'recurring' && canEdit() ? `<button class="btn btn-sm" data-pay="${id}">Mark paid</button> ` : ''}
+            ${key==='events' ? `<button class="btn btn-sm" data-act="profile" data-id="${id}">View</button> ` : ''}
+            ${malPeople ? `<button class="btn btn-sm mal-end-view" type="button" data-act="profile" data-id="${id}">View</button> ` : ''}
+            ${key === 'families' && isHousehold(r) ? `<button class="btn btn-sm" data-act="household" data-id="${id}">Household</button> ` : ''}
+            ${key === 'users' && isAdmin() ? `<button class="btn btn-sm" type="button" data-toggle-user="${id}" data-enabled="${String(r.Active||'YES').toUpperCase()==='YES'?'NO':'YES'}">${String(r.Active||'YES').toUpperCase()==='YES'?'Disable':'Enable'}</button> <button class="btn btn-sm" data-act="access" data-id="${id}">Access</button> <button class="btn btn-sm" type="button" data-verify-reset="${id}">Reset email verification</button> ` : ''}
+            ${key === 'contributions' ? `<button class="btn btn-sm" data-act="receipt" data-id="${id}">Receipt</button> ` : ''}
+            ${canEdit() ? `<button class="btn btn-sm" data-act="edit" data-id="${id}">Edit</button>` : ''}
+            ${canDelete() ? `<button class="btn btn-sm btn-danger" data-act="del" data-id="${id}">Delete</button>` : ''}
+          </td></tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+    <div class="tfoot"><span>${rows.length} rows shown</span>${totals.map(t => `<span class="tnum"><b>${esc(t)}</b></span>`).join('')}</div>`
+    : `<div class="empty"><b>${all.length ? 'Nothing matches that search' : 'No ' + esc(m.title.toLowerCase()) + ' yet'}</b>
+        ${all.length ? 'Clear the search or the family filter to see all records.' : (canEdit() ? 'Add the first record to start this register.' : 'Records will appear here once they are added.')}
+       </div>`}
+  </div>`;
+
+  const q = $('#q');
+  if(q){
+    q.oninput = debounce(() => { v.q = q.value.trim(); const pos = q.selectionStart; renderModule(key); const nq = $('#q'); if(nq){ nq.focus(); nq.setSelectionRange(pos, pos); } }, 220);
+  }
+  const ff = $('#famFilter');
+  if(ff) ff.onchange = () => { v.fam = ff.value; renderModule(key); };
+  [['surnameFilter','surname'],['sahiFilter','locality'],['residenceFilter','residence'],['maritalFilter','marital'],['lifeFilter','life']].forEach(([id,prop])=>{
+    const input=document.getElementById(id);if(input)input.onchange=()=>{v[prop]=input.value;renderModule(key);};
+  });
+  $('#main').querySelectorAll('th[data-sort]').forEach(th => th.onclick = (event) => {
+    if(event.target.closest('.mal-col-resizer'))return;
+    const c = th.dataset.sort;
+    if(v.sort === c) v.dir *= -1; else { v.sort = c; v.dir = 1; }
+    renderModule(key);
+  });
+  if(key==='users') document.querySelectorAll('#main [data-toggle-user]').forEach(btn=>btn.addEventListener('click',async()=>{
+    if(!isAdmin())return;
+    const username=btn.dataset.toggleUser,enabled=btn.dataset.enabled;
+    const verb=enabled==='NO'?'disable':'enable';
+    if(!window.confirm('Do you want to '+verb+' '+username+'?'+(enabled==='NO'?' Their existing sessions will be revoked.':'')))return;
+    btn.disabled=true;
+    try{
+      const r=await api('setUserActive',{username,enabled});
+      if(!r||!r.ok)throw new Error(r&&r.error||'Could not update account.');
+      await refresh(true);toast(r.message||'Account updated','good');
+    }catch(err){toast(err.message||'Could not update account','bad');btn.disabled=false;}
+  }));
+  if(key==='users') document.querySelectorAll('#main [data-verify-reset]').forEach(btn=>btn.addEventListener('click',async()=>{
+    const who=btn.dataset.verifyReset;
+    if(!window.confirm('Revoke EMAIL verification for '+who+'?'))return;
+    btn.disabled=true;
+    try{const r=await api('revokeContactVerification',{username:who,channel:'email'});
+      if(!r||!r.ok)throw new Error(r&&r.error||'Could not revoke verification.');
+      await refresh(true);toast('Verification revoked','good');
+    }catch(e){toast(e.message||'Could not revoke','bad');btn.disabled=false;}
+  }));
+  if(malPeople){
+    malBindRegisterWidths(key);
+    const nav=$('#main').querySelector('.mal-register-nav');
+    if(nav){
+      const wrap=$('#main').querySelector('.tablewrap');
+      nav.querySelectorAll('[data-mal-scroll]').forEach(button=>button.addEventListener('click',()=>{
+        if(!wrap)return;
+        const end=button.dataset.malScroll==='end';
+        const left=end?Math.max(0,wrap.scrollWidth-wrap.clientWidth):0;
+        if(typeof wrap.scrollTo==='function')wrap.scrollTo({left,behavior:'smooth'});
+        else wrap.scrollLeft=left;
+      }));
+    }
+    const toggle=$('#main').querySelector('.mal-toggle-filters');
+    if(toggle)toggle.onclick=()=>{
+      v.toolsOpen=!v.toolsOpen;
+      const toolbar=toggle.closest('.mal-register-toolbar');
+      toolbar.classList.toggle('mal-filters-open',!!v.toolsOpen);
+      toggle.setAttribute('aria-expanded',v.toolsOpen?'true':'false');
+    };
+    const reset=$('#main').querySelector('.mal-reset-cols');
+    if(reset)reset.onclick=()=>{
+      try{localStorage.removeItem(MAL_REG_WIDTH_PREFIX+key)}catch(e){}
+      renderModule(key);
+      toast('Default column widths restored','good');
+    };
+  }
+  wirePhotoFallbacks($('#main'));
+  wireActions($('#main'));
+}
+
+/* ---------- one delegated listener per container ----------
+   #main survives innerHTML replacement, so wiring individual buttons would
+   either go stale or (worse) double up with this. Delegation only. */
+function wireActions(root){
+  root.querySelectorAll('[data-act],[data-pay],[data-event],[data-photo],[data-work]').forEach(b => { b.type = 'button'; });
+  if(root.dataset.delegated) return root;
+  root.dataset.delegated = '1';
+  root.addEventListener('click', ev => {
+    const b = ev.target.closest('[data-act],[data-pay],[data-event],[data-photo],[data-work]');
+    if(!b || !root.contains(b)) return;
+    const k = PAGE, id = b.dataset.id;
+    try {
+      if(b.dataset.work) return go(b.dataset.work);
+      if(b.dataset.photo) return openPhoto(b.dataset.photo, b.querySelector('img') ? b.querySelector('img').alt : '');
+      if(b.dataset.event) return openEvent(b.dataset.event);
+      if(b.dataset.pay) return payRecurring(b.dataset.pay, b);
+      switch(b.dataset.act){
+        case 'add': return openForm(k);
+        case 'edit': return openForm(k, id);
+        case 'del': return askDelete(k, id);
+        case 'surnameReview': return malReviewSurnames_(k);
+        case 'heads': return addMissingHeads();
+        case 'cols': return openColumns(k);
+        case 'localities': return malManageSahis_();
+        case 'access': return openAccess(id);
+        case 'loginopts': return openLoginOptions();
+        case 'death': return markDeceased(id);
+        case 'profile2': return openMember(id);
+        case 'edit2': return openForm('families', id);
+        case 'needhelp': return go('families');
+        case 'receipt': {
+          const rec = (DB.contributions || []).find(r => String(r['Contribution ID']).trim() === String(id).trim());
+          return rec ? offerReceipt(rec) : null;
+        }
+        case 'rowsave': return saveRow(k, id, b);
+        case 'quick': { const vq = VIEW[k] || (VIEW[k] = {}); vq.quick = !vq.quick; return renderModule(k); }
+        case 'print': return isAdmin() ? openPrint(k, currentRows(k)) : window.print();
+        case 'csv': return exportCsv(k, currentRows(k));
+        case 'profile': return k === 'members' ? openMember(id) : k === 'events' ? openEvent(id) : openProfile(id);
+        case 'household': return openHousehold(id);
+      }
+    } catch(e){ console.error('action failed', b.dataset, e); toast('That did not work: ' + (e.message || e), 'bad'); }
+  });
+  return root;
+}
+
+const ROWCACHE = {};
+function currentRows(key){ return ROWCACHE[key] || rowsOf(key); }
+
+let debTimer;
+function debounce(fn, ms){ return function(){ clearTimeout(debTimer); debTimer = setTimeout(fn, ms); }; }
+
+function exportCsv(key, rows){
+  const m = MODULES[key];
+  const cols = m.fields.map(f => f.n);
+  const lines = [cols.join(',')].concat(rows.map(r => cols.map(c => {
+    const v = String(r[c] ?? '');
+    return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
+  }).join(',')));
+  const blob = new Blob(['\ufeff' + lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'malipatana-' + key + '-' + today() + '.csv';
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+  toast('CSV downloaded', 'good');
+}
+
+/* =========================================================================
+   MODAL
+   ========================================================================= */
+function openModal(html){
+  $('#modalRoot').innerHTML = '<div class="overlay" id="overlay"><div class="modal" role="dialog" aria-modal="true">' + html + '</div></div>';
+  document.body.classList.add('modalOpen');
+  $('#overlay').onclick = e => { if(e.target.id === 'overlay') closeModal(); };
+  document.addEventListener('keydown', escClose);
+}
+let MAL_KEEP_PENDING_HEAD_ON_CLOSE=false;
+function closeModal(){
+  if(!MAL_KEEP_PENDING_HEAD_ON_CLOSE && typeof PENDING_HEAD !== 'undefined')PENDING_HEAD=null;
+  $('#modalRoot').innerHTML = '';
+  document.body.classList.remove('modalOpen');
+  document.removeEventListener('keydown', escClose);
+}
+function escClose(e){ if(e.key === 'Escape') closeModal(); }
+
+/* =========================================================================
+   ADD / EDIT
+   ========================================================================= */
+function nextId(key){
+  const m = MODULES[key];
+  if(!m.prefix) return '';
+  const rows = rowsOf(key);
+  let max = 0, prefix = m.prefix, width = 3;
+  rows.forEach(r => {
+    const s = String(r[m.idField] ?? '').trim();
+    const mm = s.match(/^([^\d]*)(\d+)$/);
+    if(mm){
+      const n = parseInt(mm[2], 10);
+      if(n >= max){ max = n; if(mm[1]) prefix = mm[1]; width = Math.max(3, mm[2].length); }
+    }
+  });
+  return prefix + String(max + 1).padStart(width, '0');
+}
+function distinct(key, col){
+  const set = new Set();
+  rowsOf(key).forEach(r => { const v = String(r[col] ?? '').trim(); if(v) set.add(v); });
+  return [...set].sort();
+}
+function defaultFor(f){
+  if(f.def === 'today') return today();
+  if(f.def === 'thisMonth') return today().slice(0, 7);
+  if(f.def === 'thisYear') return new Date().getFullYear();
+  if(f.def === 'monthlyContribution') return num(setting('Monthly Contribution', 0)) || '';
+  return '';
+}
+
+/* Name separation: never infer a surname silently from legacy full names. */
+function malNameTidy_(value){return String(value==null?'':value).trim().replace(/\s+/g,' ');}
+function malNameHasRepeatedSurname_(given,surname){
+  const g=malNameTidy_(given).toLocaleLowerCase('en-IN');
+  const sn=malNameTidy_(surname).toLocaleLowerCase('en-IN');
+  return !!(g&&sn&&g.endsWith(' '+sn));
+}
+function malNameSuggestLegacy_(record,key){
+  const full=malNameTidy_(record[key==='families'?'Family Head':'Name']);
+  const given=malNameTidy_(record['Given Name']);
+  const surname=malNameTidy_(record.Surname);
+  if(given&&surname&&!malNameHasRepeatedSurname_(given,surname))return null;
+  if(surname){
+    const candidate=given||full;
+    if(malNameHasRepeatedSurname_(candidate,surname))return {given:candidate.slice(0,-surname.length).trim(),surname};
+    return null;
+  }
+  // Historical combined names have no reliable separator; this is a SUGGESTION only.
+  const source=given.includes(' ')?given:full;
+  const bits=source.split(' ').filter(Boolean);
+  return bits.length>=2?{given:bits.slice(0,-1).join(' '),surname:bits[bits.length-1]}:null;
+}
+/* MALIPATANA SURNAME FIELD V3.5.21: prefill old records in the visible Surname box. */
+function malNameStripSuffix_(given,surname){
+  let first=malNameTidy_(given), last=malNameTidy_(surname);
+  if(!first||!last)return first;
+  while(first.toLocaleLowerCase('en-IN').endsWith(' '+last.toLocaleLowerCase('en-IN'))){
+    const reduced=first.slice(0,-last.length).trim();
+    if(!reduced)return first;
+    first=reduced;
+  }
+  return first;
+}
+function malNamePrefillExisting_(key,rec){
+  if(key!=='families'&&key!=='members')return null;
+  const full=malNameTidy_(rec[key==='families'?'Family Head':'Name']);
+  const given=malNameTidy_(rec['Given Name']);
+  const saved=malNameTidy_(rec.Surname);
+  if(saved){
+    if(given){
+      const corrected=malNameStripSuffix_(given,saved);
+      if(corrected!==given){
+        rec['Given Name']=corrected;
+        return {level:'saved',message:'Saved surname is shown separately. The repeated surname was removed from Given Name(s) in this form; save to confirm.'};
+      }
+      return null;
+    }
+    // Never invent a Given Name if the sheet has a conflicting full name.
+    if(full&&full.toLocaleLowerCase('en-IN').endsWith(' '+saved.toLocaleLowerCase('en-IN'))){
+      rec['Given Name']=malNameStripSuffix_(full,saved);
+      return {level:'saved',message:'Saved surname is already filled. Given Name(s) was recovered from the stored full name.'};
+    }
+    return {level:'attention',message:'The saved surname and original full name do not agree. Check both fields before saving.'};
+  }
+  // Only propose: no changes to the saved record occur until the user confirms and saves.
+  const proposal=malSurnameProposal_(key,rec);
+  if(!proposal)return {level:'attention',message:'Surname is not separately recorded. Enter Given Name(s) and Surname after checking the original full name.'};
+  rec['Given Name']=proposal.given;
+  rec.Surname=proposal.surname;
+  return {level:'suggested',message:'Existing full name split into two visible fields for review. The suggested surname is NOT saved until you confirm and save.'};
+}
+/* END MALIPATANA SURNAME FIELD V3.5.21 */
+/* V3.5.22: visible-but-unverified legacy surnames and safe one-time review.
+   No data is modified by displaying a suggestion. Only explicitly checked rows
+   are saved to the existing Google Sheet via the existing authenticated API. */
+function malSurnameProposal_(key,row){
+  if(key!=='families' && key!=='members')return null;
+  const saved=malNameTidy_(row.Surname);
+  if(saved)return {surname:saved,given:malNameTidy_(row['Given Name']),saved:true};
+  const full=malNameTidy_(row[key==='families'?'Family Head':'Name']);
+  const given=malNameTidy_(row['Given Name']);
+  let source=full||given;
+  if(!source||source.split(' ').length<2)return null;
+  let surname='', first='';
+  if(given&&full.toLocaleLowerCase('en-IN').startsWith(given.toLocaleLowerCase('en-IN')+' ')){
+    surname=full.slice(given.length).trim(); first=given;
+  } else {
+    const known=[];
+    if(key==='members'){
+      const family=(DB&&DB.families||[]).find(f=>String(f['Family ID']||'').trim()===String(row['Family ID']||'').trim());
+      if(family&&family.Surname)known.push(malNameTidy_(family.Surname));
+    }
+    for(const k of ['families','members']) for(const other of (DB&&DB[k]||[])){
+      if(other.Surname)known.push(malNameTidy_(other.Surname));
+    }
+    const candidate=[...new Set(known.filter(Boolean))].sort((a,b)=>b.length-a.length)
+      .find(sn=>source.toLocaleLowerCase('en-IN').endsWith(' '+sn.toLocaleLowerCase('en-IN')));
+    surname=candidate||source.split(' ').at(-1);
+    first=malNameStripSuffix_(source,surname);
+  }
+  if(!first||!surname||first.toLocaleLowerCase('en-IN')===source.toLocaleLowerCase('en-IN'))return null;
+  return {given:first,surname:surname,saved:false,full:full||source};
+}
+function malReviewSurnames_(key){
+  if((key!=='families'&&key!=='members')||!isAdmin())return;
+  const mod=MODULES[key];
+  const idField=mod.idField;
+  const fullField=key==='families'?'Family Head':'Name';
+  const pending=rowsOf(key).filter(r=>!malNameTidy_(r.Surname));
+  if(!pending.length){toast('All surnames are already saved.','good');return;}
+  const rows=pending.map(r=>({row:r,part:malSurnameProposal_(key,r)}));
+  openModal(`<header><div><h3>Review ${esc(mod.title)} surnames</h3><div class="sub">${pending.length} older record(s) have no saved surname</div></div><div class="sp"></div><button type="button" class="btn btn-sm" id="malCloseReview">Close</button></header>
+  <div class="body">
+    <div class="mal-review-guide">Given Name(s) and Surname are separated below. Compare every suggestion with its original full name, then tick only the rows you personally verified. No bulk auto-approval. Saves to the existing <b>${esc(mod.sheet)}</b> sheet.</div>
+    <div id="malSurnameReviewList">${rows.map(({row,part},i)=>`<div class="mal-review-item" data-review-index="${i}">
+      <div class="mal-review-person"><b>${esc(row[idField]||'')}</b> · ${esc(row[fullField]||'')} ${part?'':'<span class="mal-review-warning">No reliable suggestion</span>'}</div>
+      <div class="mal-review-fields"><label>Given Name(s)<input class="input" data-review-given value="${esc(part?part.given:'')}"></label><label>Surname<input class="input" data-review-surname value="${esc(part?part.surname:'')}"></label></div>
+      <label class="mal-review-verify"><input type="checkbox" data-review-checked> I individually checked this name and approve saving its two parts.</label>
+      <div class="mal-review-status" data-review-status aria-live="polite"></div>
+    </div>`).join('')}</div>
+    <div id="malReviewResult" class="fieldnote" role="status" aria-live="polite"></div>
+  </div>
+  <footer><button class="btn" type="button" id="malReviewCancel">Cancel</button><button class="btn btn-primary" type="button" id="malReviewSave">Save checked names</button></footer>`);
+  const root=document.getElementById('modalRoot');
+  root.querySelector('#malCloseReview').onclick=closeModal;
+  root.querySelector('#malReviewCancel').onclick=closeModal;
+  root.querySelectorAll('.mal-review-item').forEach(item=>{
+    item.querySelectorAll('[data-review-given],[data-review-surname]').forEach(input=>input.addEventListener('input',()=>{
+      item.querySelector('[data-review-checked]').checked=false;
+      item.querySelector('[data-review-status]').textContent='Name changed — check this row again before saving.';
+    }));
+  });
+  root.querySelector('#malReviewSave').onclick=async()=>{
+    if(!navigator.onLine){root.querySelector('#malReviewResult').textContent='You must be online to save surnames.';return;}
+    const selected=[...root.querySelectorAll('.mal-review-item')].filter(el=>el.querySelector('[data-review-checked]').checked);
+    if(!selected.length){root.querySelector('#malReviewResult').textContent='Please review and check at least one row.';return;}
+    const updates=[];
+    for(const el of selected){
+      const idx=Number(el.dataset.reviewIndex),record=rows[idx].row;
+      const given=malNameTidy_(el.querySelector('[data-review-given]').value);
+      const surname=malNameTidy_(el.querySelector('[data-review-surname]').value);
+      const original=malNameTidy_(record[fullField]);
+      if(!given||!surname||malNameHasRepeatedSurname_(given,surname)){
+        root.querySelector('#malReviewResult').textContent='Please check the two name fields for '+record[idField]+'.';return;
+      }
+      // This one-time cleanup separates only the original full name.
+      // Any actual name correction must be made with the normal Edit form.
+      if(malNameTidy_(given+' '+surname).toLocaleLowerCase('en-IN')!==original.toLocaleLowerCase('en-IN')){
+        root.querySelector('#malReviewResult').textContent='The parts for '+record[idField]+' do not match its original full name. Use Edit to change an existing name.';
+        return;
+      }
+      updates.push({record, given, surname, el});
+    }
+    if(!window.confirm('Save '+updates.length+' verified surname(s) to the existing '+mod.sheet+' sheet?'))return;
+    const saveButton=root.querySelector('#malReviewSave'), message=root.querySelector('#malReviewResult');
+    saveButton.disabled=true;
+    let success=0,fail=0;
+    for(const [i,u] of updates.entries()){
+      message.textContent='Saving '+(i+1)+' of '+updates.length+'…';
+      const status=u.el.querySelector('[data-review-status]');
+      try{
+        const payload={
+          [idField]:String(u.record[idField]),
+          'Given Name':u.given, Surname:u.surname,
+          [fullField]:malNameTidy_(u.given+' '+u.surname),
+          'Entered By':String(USER && (USER.name||USER.username)||'')
+        };
+        if(key==='members')payload['Family ID']=u.record['Family ID'];
+        const response=await api('save',{sheet:mod.sheet,record:JSON.stringify(payload)});
+        if(!response||!response.ok)throw new Error(response&&response.error||'Save failed');
+        upsertLocal(key,Object.assign({},u.record,payload));
+        status.textContent='✓ Saved';status.style.color='#20643b';
+        u.el.querySelector('[data-review-checked]').disabled=true;
+        u.el.querySelector('[data-review-checked]').checked=false;
+        success++;
+      }catch(e){status.textContent='Could not save: '+String(e.message||e);status.style.color='#a83225';fail++;}
+    }
+    message.textContent=success+' saved, '+fail+' not saved. '+(fail?'Review failed rows and retry.':'Verified surnames are saved and ready for filtering.');
+    saveButton.disabled=false;
+    // Refresh the register after all updates; keep modal open to show any failures.
+    if(fail===0){closeModal();renderModule(key);toast(success+' surname(s) saved in '+mod.sheet+'.','good');}
+    else{saveButton.textContent='Retry remaining';}
+  };
+}
+/* END V3.5.22 SURNAME REGISTER REVIEW */
+
+
+function openForm(key, id, prefill){
+  try { return openFormInner(key, id, prefill); }
+  catch(e){ console.error('openForm failed', e); toast('Could not open the form: ' + (e.message || e), 'bad'); }
+}
+function openFormInner(key, id, prefill){
+  if(!canEdit()) { toast('Your account cannot change records', 'bad'); return; }
+  const m = MODULES[key];
+  const existing = id ? rowsOf(key).find(r => String(r[m.idField]).trim() === String(id).trim()) : null;
+  const rec = existing ? Object.assign({}, existing) : {};
+  if(!existing){
+    m.fields.forEach(f => { const d = defaultFor(f); if(d !== '') rec[f.n] = d; });
+    if(m.prefix) rec[m.idField] = nextId(key);
+  }
+  if(prefill) Object.keys(prefill).forEach(k => { rec[k] = prefill[k]; });
+  const originalSaved=existing ? Object.assign({},existing) : null;
+
+  if(key==='members' && !existing && prefill && prefill['Family ID']){
+    const family=(DB.families||[]).find(f=>String(f['Family ID'])===String(prefill['Family ID']));
+    if(family && family.Surname && !rec.Surname)rec.Surname=family.Surname;
+  }
+  const namePrefill=existing?malNamePrefillExisting_(key,rec):null;
+  const nameFixApplicable=existing && (key==='families'||key==='members');
+  const nameSuggestion=nameFixApplicable?malNameSuggestLegacy_(rec,key):null;
+  const suggestedNameParts=namePrefill&&namePrefill.level==='suggested'?{given:rec['Given Name'],surname:rec.Surname}:null;
+  const needsParts=nameFixApplicable&&(!malNameTidy_(rec['Given Name'])||!malNameTidy_(rec.Surname)||
+    malNameHasRepeatedSurname_(rec['Given Name'],rec.Surname));
+  const legacyName=needsParts ?
+    '<div class="fieldnote" style="grid-column:1/-1;background:#fff5db;border-radius:9px;padding:12px">'+
+    '<b>Review existing name:</b> '+esc(rec[key==='families'?'Family Head':'Name']||'')+
+    '. The Given Name and Surname columns need separate values. Existing records will not be split automatically.'+
+    (nameSuggestion?'<div style="margin-top:7px">Suggested: <b>'+esc(nameSuggestion.given)+'</b> / <b>'+esc(nameSuggestion.surname)+'</b> '+
+      '<button class="btn btn-sm" type="button" id="malApplySuggestedName">Use suggestion, then review</button></div>':'')+'</div>' : '';
+  const namePreview = key==='families'||key==='members';
+  const nameNotice=namePrefill ?
+    '<div class="fieldnote" style="grid-column:1/-1;background:'+
+    (namePrefill.level==='saved'?'#e8f5ed':'#fff5db')+
+    ';border:1px solid '+(namePrefill.level==='saved'?'#bedbc7':'#ebc779')+
+    ';border-radius:9px;padding:12px" role="status">'+
+    (namePrefill.level==='saved'?'✓ ':'⚠ ')+esc(namePrefill.message)+
+    (namePrefill.level==='suggested'?'<label style="display:block;margin-top:9px"><input type="checkbox" id="malSurnameConfirm" style="width:auto;margin-right:6px">I have checked the Given Name(s) and Surname against the original name.</label>':'')+
+    '</div>' : '';
+  const body = nameNotice + legacyName + allFields(key).filter(f => !f.hidden && !(f.t === 'photo' && !photosOn())).map(f =>
+    fieldHtml(key, f, rec[f.n], !!existing, rec) + (namePreview && f.n==='Surname' ?
+      '<div class="mal-live-name" id="malFullNamePreview" role="status" aria-live="polite"><strong>Full name (automatic):</strong> <span id="malFullNameValue">Enter first name and surname</span><div class="fieldnote">Saved as one full name for display and search; surname remains separate for filtering.</div></div>' : '')
+  ).join('');
+  openModal(`
+    <header>
+      <div>
+        <h3>${existing ? 'Edit' : 'Add'} ${esc(singularOf(m))}</h3>
+        <div class="sub">${existing ? esc(m.idField) + ' ' + esc(id) : 'Saves straight into the ' + esc(m.sheet) + ' sheet'}</div>
+      </div>
+      <div class="sp"></div>
+      <button class="btn btn-sm" onclick="closeModal()">Close</button>
+    </header>
+    <div class="body">
+      <div id="formErr" class="errline hide"></div>
+      ${key==='families'||key==='members'?'<div id="malDuplicateWarning" class="mal-dup-note" hidden role="status" aria-live="polite"></div>':''}
+      <div class="formgrid" id="formGrid">${body}</div>
+    </div>
+    <footer>
+      <span id="malFormSaveStatus" role="alert" aria-live="assertive" style="font-size:12px;font-weight:700;color:#a8341e;max-width:320px;flex:1"></span>
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      ${existing ? '' : '<button class="btn" id="saveMoreBtn">Save and add another</button>'}
+      ${key==='families'&&!existing&&rec['Parent Family ID']?'<button class="btn" id="malSaveAddMembers">Save &amp; add members</button>':''}
+      <button class="btn btn-primary" id="saveBtn">${existing ? 'Save changes' : 'Add record'}</button>
+    </footer>`);
+
+  wireForm(key, rec, !!existing);
+  malWireFullNamePreview_(key, rec);
+  if(nameSuggestion){
+    const apply=document.getElementById('malApplySuggestedName');
+    if(apply)apply.onclick=()=>{
+      document.getElementById('f_Given_Name').value=nameSuggestion.given;
+      document.getElementById('f_Surname').value=nameSuggestion.surname;
+      document.getElementById('f_Given_Name').dispatchEvent(new Event('input',{bubbles:true}));
+      document.getElementById('f_Surname').dispatchEvent(new Event('change',{bubbles:true}));
+      toast('Suggested name parts filled. Check them before saving.','good');
+    };
+  }
+  malWireDuplicatePreview_(key, rec, !!existing);
+  wirePhotoFallbacks(document.getElementById('modal') || document);
+  $('#saveBtn').onclick = () => saveRecord(key, rec, !!existing, {originalSaved,suggestedNameParts});
+  const more = $('#saveMoreBtn');
+  if(more) more.onclick = () => saveRecord(key, rec, false, { again: true });
+  const withMembers=$('#malSaveAddMembers');
+  if(withMembers)withMembers.onclick=()=>saveRecord(key,rec,false,{openMembers:true});
+}
+
+function malWireFullNamePreview_(key, rec){
+  if(key!=='families' && key!=='members')return;
+  const first=document.getElementById('f_Given_Name');
+  const surname=document.getElementById('f_Surname');
+  const label=document.getElementById('malFullNameValue');
+  const host=document.getElementById('malFullNamePreview');
+  if(!first||!surname||!label||!host)return;
+  const legacy=String(rec && rec[key==='families'?'Family Head':'Name']||'').trim();
+  const tidy=s=>String(s||'').trim().replace(/\s+/g,' ');
+  const help=document.createElement('div');
+  help.className='fieldnote';help.style.color='#A83225';help.hidden=true;
+  help.innerHTML='Surname already appears at the end of Given Name. Keep it only in Surname. '+
+    '<button type="button" class="btn btn-sm" id="malRemoveNameRepeat">Remove repeated surname</button>';
+  host.appendChild(help);
+  help.querySelector('button').onclick=()=>{
+    const a=tidy(first.value),b=tidy(surname.value);
+    if(malNameHasRepeatedSurname_(a,b)){
+      first.value=a.slice(0,-b.length).trim();
+      first.dispatchEvent(new Event('input',{bubbles:true}));
+    }
+  };
+  const update=()=>{
+    const a=tidy(first.value),b=tidy(surname.value);
+    const repeat=malNameHasRepeatedSurname_(a,b);
+    help.hidden=!repeat;
+    if(repeat){label.textContent=a+' (surname repeated — correct before saving)';host.classList.remove('ready');}
+    else if(a&&b){label.textContent=a+' '+b;host.classList.add('ready');}
+    else if(!a&&!b&&legacy){label.textContent=legacy+' (existing record)';host.classList.remove('ready');}
+    else{label.textContent='Enter Given Name and Surname separately';host.classList.remove('ready');}
+  };
+  first.addEventListener('blur',()=>{
+    if(!surname.value.trim())return;
+    const fixed=malNameStripSuffix_(first.value,surname.value);
+    if(fixed && fixed!==malNameTidy_(first.value)){
+      first.value=fixed;
+      first.dispatchEvent(new Event('input',{bubbles:true}));
+    }
+  });
+  first.addEventListener('input',update);
+  surname.addEventListener('input',update);
+  surname.addEventListener('change',update);
+  document.getElementById('formGrid').addEventListener('change',event=>{
+    if(event.target&&event.target.matches('[data-role="family"]'))update();
+  });
+  update();
+}
+
+
+/* Shared, safe autocomplete for registered relatives. It NEVER creates a person record.
+   The saved link is an existing Member ID only when the operator explicitly selects a suggestion. */
+function malRelationshipOptionsHtml_(role,rec){
+  const id='f_'+role+'_Name';
+  return '<div class="mal-parent-choice"'+(role==='Spouse'?' data-marital-spouse-field="yes"':'')+'>'+ 
+    '<label class="lbl" for="'+id+'">'+role+' Name</label>'+ 
+    '<input class="input" autocomplete="off" id="'+id+'" maxlength="140" value="'+esc(rec[role+' Name']||'')+'" placeholder="Type at least 2 letters to find registered '+role.toLowerCase()+'">'+
+    '<div id="malRelMatches'+role+'" class="mal-rel-matches" role="listbox" hidden></div>'+
+    '<div class="fieldnote" id="malRelHelp'+role+'">Select a matching member to link. Otherwise, type the name and save it as text.</div></div>';
+}
+function malWireRelationshipChoices_(rec){
+ const currentId=String(rec['Member ID']||'').trim();
+ const normalized=s=>String(s||'').trim().replace(/\s+/g,' ').toLocaleLowerCase('en-IN');
+ const registered=(DB.members||[]).filter(x=>String(x['Member ID']||'').trim()!==currentId);
+ for(const role of ['Father','Mother','Spouse']){
+  const input=document.getElementById('f_'+role+'_Name');
+  const panel=document.getElementById('malRelMatches'+role);
+  const help=document.getElementById('malRelHelp'+role);
+  if(!input||!panel)continue;
+  let linkedId=String(rec[role+' ID']||'').trim();
+  let existing=registered.find(m=>String(m['Member ID'])===linkedId);
+  if(existing){input.value=String(existing.Name||'');help.textContent='✓ Linked to existing member '+linkedId+' (not duplicated).';}
+  else if(linkedId){linkedId='';help.textContent='Previous linked ID is unavailable. Name text is preserved.';}
+  input.dataset.memberId=linkedId;
+  const close=()=>{panel.replaceChildren();panel.hidden=true;};
+  const show=()=>{
+   const q=normalized(input.value);close();
+   if(input.dataset.memberId)return;
+   if(q.length<2){help.textContent='Type 2 or more letters; select a suggestion, or keep a new name as text.';return;}
+   const matches=registered.filter(m=>normalized(m.Name).includes(q)).slice(0,8);
+   if(!matches.length){help.textContent='Not listed — this name will be saved as text. No new member will be created.';return;}
+   for(const m of matches){
+    const item=document.createElement('button');item.type='button';item.className='mal-rel-option';item.setAttribute('role','option');
+    item.textContent=String(m.Name||'')+' · '+String(m['Member ID']||'')+(m['Family ID']?' · '+m['Family ID']:'');
+    item.onclick=()=>{
+     input.value=String(m.Name||'');input.dataset.memberId=String(m['Member ID']||'');
+     help.textContent='✓ Existing member linked ('+input.dataset.memberId+'). No duplicate will be created.';close();
+     input.dispatchEvent(new Event('change',{bubbles:true}));
+    };
+    panel.append(item);
+   }
+   panel.hidden=false;help.textContent='Select the correct person (check Member ID). Two people may have the same name.';
+  };
+  input.addEventListener('input',()=>{input.dataset.memberId='';show();});
+  input.addEventListener('focus',show);
+  input.addEventListener('keydown',e=>{if(e.key==='Escape')close();});
+  input.addEventListener('blur',()=>{setTimeout(close,160);});
+ }
+}
+function malApplyRelationshipLinks_(out,problems){
+ const self=String(out['Member ID']||'').trim();
+ for(const role of ['Father','Mother','Spouse']){
+  const field=document.getElementById('f_'+role+'_Name');if(!field)continue;
+  const chosen=String(field.dataset.memberId||'');
+  const person=(DB.members||[]).find(m=>String(m['Member ID'])===chosen);
+  if(chosen&&!person){problems.push(role+' record was not found. Please select it again.');continue;}
+  if(chosen===self&&chosen){problems.push('You cannot select this member as their own '+role.toLowerCase()+'.');continue;}
+  out[role+' ID']=person?chosen:'';
+  out[role+' Name']=person?String(person.Name||''):String(field.value||'').trim();
+  if(role==='Spouse'&&person){
+    const partner=String(person['Spouse ID']||'').trim();
+    if(partner&&partner!==self)problems.push('This spouse is linked to another member ('+partner+'). Please verify before changing relationships.');
+  }
+ }
+ if(out['Father ID']&&out['Father ID']===out['Mother ID'])problems.push('Father and Mother cannot be the same Member ID.');
+ if(out['Spouse ID']&&[out['Father ID'],out['Mother ID']].includes(out['Spouse ID']))problems.push('Spouse cannot be the same registered member as a parent.');
+}
+
+function fieldHtml(key, f, value, editing, rec){
+  if(key==='members'&&['Father Name','Mother Name','Spouse Name'].includes(f.n))return malRelationshipOptionsHtml_(f.n.split(' ')[0],rec);
+  const id = 'f_' + f.n.replace(/[^a-z0-9]/gi, '_');
+  if(editing && f.n === MODULES[key].idField && !f.auto){
+    const ro = isAdmin() ? '' : 'readonly';
+    return `<div><label class="lbl" for="${id}">${esc(f.n)}</label>
+            <input class="input" id="${id}" value="${esc(value == null ? '' : String(value))}" ${ro}>
+            <div class="fieldnote">${isAdmin()
+              ? 'Admins may change this. The old row is replaced by a new one with the new ID.'
+              : 'Only an admin can change an ID.'}</div></div>`;
+  }
+  const req = f.req ? ' <span class="reqmark">*</span>' : '';
+  const visibleLabel=(key==='families'||key==='members')&&f.n==='Given Name'?'Given Name(s)':f.n;
+  const wide = ['textarea'].includes(f.t) ? ' wide' : '';
+  const val = value == null ? '' : String(value);
+  let input;
+
+  if(f.auto){
+    const lock = editing && !isAdmin() ? 'readonly' : '';
+    input = `<input class="input" id="${id}" value="${esc(val)}" ${lock}>`;
+    return `<div class="${wide}"><label class="lbl" for="${id}">${esc(f.n)}</label>${input}
+            <div class="fieldnote">${editing
+              ? (isAdmin() ? 'Admins may change this. The old row is replaced by a new one with the new ID.' : 'Only an admin can change an ID.')
+              : 'Suggested automatically — change it if your village uses a different code.'}</div></div>`;
+  }
+  switch(f.t){
+    case 'counted': {
+      const famId = String((rec || {})['Family ID'] || '').trim();
+      const n = famId ? familyCount(famId, f.n) : 0;
+      return `<div><label class="lbl">${esc(f.n)}</label>
+        <div class="counted"><b class="tnum">${n}</b><span>${famId ? 'counted from the member register' : 'counted once members are added'}</span></div>
+        <input type="hidden" id="${id}" value="${n}">
+        ${f.hint ? `<div class="fieldnote">${esc(f.hint)}</div>` : ''}</div>`;
+    }
+    case 'photo': {
+      const u = val.trim();
+      return `<div class="wide"><label class="lbl">${esc(f.n)}</label>
+        <div class="photopick">
+          <div class="photoav" id="${id}_prev">${u ? `<img data-srcs="${esc(photoSrcs(u, 320).join('|'))}" alt="">` : '<span>No photo</span>'}</div>
+          <div class="photopick-side">
+            <input type="file" accept="image/*" id="${id}_file" class="hide">
+            <div class="photopick-btns">
+              <button type="button" class="btn btn-sm btn-primary" id="${id}_camera">📷 Take Photo</button>
+              <button type="button" class="btn btn-sm" id="${id}_pick">🖼 Choose from Gallery</button>
+              <button type="button" class="btn btn-sm btn-danger ${u ? '' : 'hide'}" id="${id}_clear">Remove</button>
+            </div>
+            <div class="fieldnote">Saved privately in the correct register folder in Google Drive; original up to 20 MB and separate small preview.</div>
+            <label class="lbl" for="${id}" style="margin-top:12px;display:block">Or paste a photo link</label>
+            <input class="input" id="${id}" value="${esc(u)}" placeholder="https://drive.google.com/file/d/…/view">
+            <div class="fieldnote">Any Drive link shared as <b>Anyone with the link · Viewer</b>, or a normal image URL. Saved with the record — no add-on needed.</div>
+          </div>
+        </div></div>`;
+    }
+    case 'textarea':
+      input = `<textarea class="input" id="${id}">${esc(val)}</textarea>`; break;
+    case 'select':
+      input = `<select class="input" id="${id}"><option value=""></option>` +
+        (f.opts || []).map(o => `<option ${String(val) === o ? 'selected' : ''}>${esc(o)}</option>`).join('') +
+        (val && !(f.opts || []).includes(val) ? `<option selected>${esc(val)}</option>` : '') + `</select>`; break;
+    case 'datalist': {
+      if(f.n==='Village Locality' && malConfiguredSahis_().length){
+        input=`<select class="input" id="${id}"><option value="">— Choose village locality (Sahi) —</option>${malSahiChoices_(val)}</select>`;
+        return `<div class="${wide}"><label class="lbl" for="${id}">${esc(f.n)}</label>${input}<div class="fieldnote">Admin manages this dropdown under Settings → Manage Sahis.</div></div>`;
+      }
+      const opts=[...new Set([...(f.opts||[]),...distinct(key,f.n)])];
+      input = `<input class="input" id="${id}" list="${id}_dl" value="${esc(val)}" autocomplete="off"><datalist id="${id}_dl">${opts.map(o=>`<option value="${esc(o)}"></option>`).join('')}</datalist>`;break;
+    }
+    case 'family':
+      input = `<select class="input" id="${id}" data-role="family"><option value=""></option>` +
+        (DB.families || []).map(x => `<option value="${esc(x['Family ID'])}" ${String(val) === String(x['Family ID']) ? 'selected' : ''}>${esc(x['Family ID'])} · ${esc(x['Family Head'])}</option>`).join('') + `</select>`; break;
+    case 'member':
+      input = `<select class="input" id="${id}" data-role="member"></select>`; break;
+    case 'guide': {
+      const list = (DB.members || []).filter(x => String(x['Life Status'] || '').toLowerCase() !== 'deceased');
+      input = `<select class="input" id="${id}"><option value="">— nobody assigned yet —</option>` +
+        list.map(x => `<option value="${esc(x['Member ID'])}" ${String(val) === String(x['Member ID']) ? 'selected' : ''}>${
+          esc(x['Name'])}${x['Occupation'] ? ' · ' + esc(x['Occupation']) : ''} (${esc(x['Family ID'] || '')})</option>`).join('') +
+        '</select>';
+      return `<div class="${wide}"><label class="lbl" for="${id}">${esc(f.n)}</label>${input}
+        ${f.hint ? `<div class="fieldnote">${esc(f.hint)}</div>` : ''}</div>`;
+    }
+    case 'event':
+      input = `<select class="input" id="${id}" data-role="event"><option value="">— not part of a major expense —</option>` +
+        (DB.events || []).map(x => `<option value="${esc(x['Event ID'])}" ${String(val) === String(x['Event ID']) ? 'selected' : ''}>${esc(x['Event Name'])} ${x['Year'] ? '· ' + esc(x['Year']) : ''}</option>`).join('') +
+        '</select>'; break;
+    case 'money':
+      input = `<input class="input tnum" id="${id}" type="number" inputmode="decimal" min="0" step="1" value="${esc(val)}">`; break;
+    case 'number':
+      input = `<input class="input tnum" id="${id}" type="number" inputmode="numeric" step="1" value="${esc(val)}" ${f.ro ? 'readonly' : ''}>`; break;
+    case 'date':
+      input = `<input class="input" id="${id}" type="date" value="${esc(toISO(val))}">`; break;
+    case 'month':
+      input = `<input class="input" id="${id}" type="month" value="${esc(String(val).slice(0, 7))}">`; break;
+    case 'tel':
+      input = `<input class="input tnum" id="${id}" type="tel" inputmode="numeric" maxlength="10" value="${esc(val)}">`; break;
+    default:
+      input = `<input class="input" id="${id}" value="${esc(val)}" ${f.ro ? 'readonly' : ''}>`;
+  }
+  if(f.ro && f.t === 'money') input = `<input class="input tnum" id="${id}" value="${esc(val)}" readonly>`;
+  return `<div class="${wide}" ${key==='members'&&f.n==='Spouse Name'?'data-marital-spouse-field="yes"':''}><label class="lbl" for="${id}">${esc(visibleLabel)}${req}</label>${input}
+          ${f.hint ? `<div class="fieldnote">${esc(f.hint)}</div>` : ''}</div>`;
+}
+
+function fid(f){ return 'f_' + f.n.replace(/[^a-z0-9]/gi, '_'); }
+function readField(f){ const el = document.getElementById(fid(f)); return el ? el.value : ''; }
+
+function wireForm(key, rec, editing){
+  const m = MODULES[key];
+  const famEl = $('#formGrid').querySelector('[data-role="family"]');
+  const memEl = $('#formGrid').querySelector('[data-role="member"]');
+  const memField = m.fields.find(f => f.t === 'member');
+
+  function fillMembers(){
+    if(!memEl) return;
+    const famId = famEl ? famEl.value : '';
+    const list = (DB.members || []).filter(x => !famId || String(x['Family ID']).trim() === String(famId).trim());
+    const current = memField ? String(rec[memField.n] ?? '') : '';
+    memEl.innerHTML = '<option value=""></option>' + list.map(x =>
+      `<option value="${esc(x['Member ID'])}" ${current === String(x['Member ID']) ? 'selected' : ''}>${esc(x['Member ID'])} · ${esc(x['Name'])}</option>`).join('');
+    if(current && !list.some(x => String(x['Member ID']) === current)) memEl.innerHTML += `<option value="${esc(current)}" selected>${esc(current)}</option>`;
+  }
+  fillMembers();
+  if(famEl) famEl.addEventListener('change', () => {
+    fillMembers(); autoFillFromFamily(key);
+    if(key==='members'){
+      const selected=(DB.families||[]).find(f=>String(f['Family ID'])===String(famEl.value));
+      const surname=document.getElementById('f_Surname');
+      if(selected&&surname&&!surname.value)surname.value=selected.Surname||'';
+    }
+  });
+
+  if(key==='members'){
+    malWireRelationshipChoices_(rec);
+    const status=document.getElementById('f_Residence_Status');
+    const outside=['Current City','Current District','Current State','Current Country','Outside Address'];
+    function toggle(){const isOutside=status && status.value && status.value!=='Living in Malipatana';
+      outside.forEach(name=>{const el=document.getElementById(fid({n:name}));if(el)el.closest('div').hidden=!isOutside;});}
+    if(status){if(!status.value&&!editing)status.value='Living in Malipatana';status.addEventListener('change',toggle);toggle();}
+    const marital=document.getElementById('f_Marital_Status');
+    const spouseRow=document.querySelector('#formGrid [data-marital-spouse-field="yes"]');
+    const spouse=document.getElementById('f_Spouse_Name');
+    if(marital&&spouseRow){
+      const adjustMarital=()=>{
+        const v=String(marital.value||'');
+        // Preserve legacy spouse information even when the status has not been verified.
+        spouseRow.hidden=!['Married','Widowed','Divorced','Separated'].includes(v)&&!(spouse&&spouse.value.trim());
+      };
+      marital.addEventListener('change',adjustMarital);adjustMarital();
+    }
+  }
+  wireFormKeys(key, rec);
+
+  PENDING_PHOTO = null; REMOVE_PHOTO = false;
+  const photoField = allFields(key).find(f => f.t === 'photo' && document.getElementById(fid(f)));
+  if(photoField){
+    const base = fid(photoField);
+    const fileEl = document.getElementById(base + '_file');
+    const prev = document.getElementById(base + '_prev');
+    const clear = document.getElementById(base + '_clear');
+    const hidden = document.getElementById(base);
+    const pick = document.getElementById(base + '_pick');
+    const camera = document.getElementById(base + '_camera');
+    if(pick) pick.onclick = () => {fileEl.removeAttribute('capture');fileEl.click();};
+    if(camera) camera.onclick = () => {fileEl.setAttribute('capture','environment');fileEl.click();};
+    if(hidden) hidden.oninput = () => {
+      const v = hidden.value.trim();
+      PENDING_PHOTO = null; REMOVE_PHOTO = false;
+      prev.classList.remove('photofail');
+      prev.innerHTML = v ? '<img data-srcs="' + esc(photoSrcs(v, 320).join('|')) + '" alt="">' : '<span>No photo</span>';
+      wirePhotoFallbacks(prev);
+      if(clear) clear.classList.toggle('hide', !v);
+    };
+    if(clear) clear.onclick = () => {
+      PENDING_PHOTO = null; REMOVE_PHOTO = !!hidden.value; hidden.value = '';
+      prev.innerHTML = '<span>No photo</span>'; clear.classList.add('hide');
+    };
+    if(fileEl) fileEl.onchange = async () => {
+      const file = fileEl.files && fileEl.files[0];
+      if(!file) return;
+      if(!['image/jpeg','image/png','image/webp'].includes(file.type)){ toast('Choose a JPEG, PNG or WebP photo', 'bad'); return; }
+      if(file.size > 20*1024*1024){toast('Original photo must be 20 MB or smaller', 'bad');return;}
+      prev.innerHTML = '<span>Reading…</span>';
+      try {
+        const d = await shrinkImage(file, 320, 0.70);
+        const raw=await new Promise((resolve,reject)=>{const rd=new FileReader();rd.onload=()=>resolve(rd.result);rd.onerror=()=>reject(Error('Cannot read original'));rd.readAsDataURL(file);});
+        PENDING_PHOTO = { data: String(raw).split(',')[1], mime: file.type, thumbData:d.split(',')[1] };
+        REMOVE_PHOTO = false;
+        prev.innerHTML = '<img src="' + d + '" alt="Thumbnail preview">' + '<div class="fieldnote">Original preserved: '+(file.size/1048576).toFixed(2)+' MB; the dashboard loads the lightweight preview.</div>';
+        prev.classList.remove('photofail');
+        if(hidden && !hidden.value.trim()) hidden.placeholder = 'Uploading to Drive on save…';
+        if(clear) clear.classList.remove('hide');
+      } catch(e){ prev.innerHTML = '<span>No photo</span>'; toast('Could not read that image', 'bad'); }
+      fileEl.value = '';
+    };
+  }
+
+  const dobField = m.fields.find(f => f.n === 'Date of Birth');
+  if(dobField){
+    const dob = document.getElementById(fid(dobField));
+    const ageEl = document.getElementById('f_Age');
+    if(dob && ageEl && key==='members'){
+      dob.max=today();
+      const notice=document.createElement('div');notice.className='fieldnote';notice.id='malAgeInfo';ageEl.parentNode.appendChild(notice);
+      const sync=()=>{
+        if(dob.value){const parts=dob.value.split('-').map(Number), now=new Date();let a=now.getFullYear()-parts[0];if(now.getMonth()+1<parts[1]||(now.getMonth()+1===parts[1]&&now.getDate()<parts[2]))a--;
+          ageEl.readOnly=true;ageEl.value=a>=0&&a<=120?a:'';notice.textContent='Calculated automatically from DOB.';
+        }else{ageEl.readOnly=false;notice.textContent='DOB unknown? Enter approximate age in years. It will be marked (Est.) and recorded with today’s date.';}
+      };
+      dob.addEventListener('change',sync);sync();
+    }
+  }
+
+  if(m.fields.some(f => f.calc)){
+    const recalc = () => {
+      const g = n => num(readField({ n }));
+      const approved = g('Immediate Assistance') + g('Monthly Support') * g('Support Months') +
+                       g('Education Assistance') + g('Medical Assistance') + g('Other Assistance');
+      const ta = document.getElementById('f_Total_Approved'), bal = document.getElementById('f_Balance');
+      if(ta) ta.value = approved;
+      if(bal) bal.value = approved - g('Total Paid');
+    };
+    $('#formGrid').addEventListener('input', recalc);
+    recalc();
+  }
+}
+
+/* ---------- data entry that feels like paper, not a web form ----------
+   Enter walks down the fields, Ctrl/Cmd+Enter saves, a required field says so
+   the moment you leave it, and nothing is lost by a stray Escape. */
+function wireFormKeys(key, rec){
+  const grid = $('#formGrid');
+  if(!grid) return;
+  const fields = allFields(key);
+  const inputs = [...grid.querySelectorAll('.input:not([readonly]):not([type=hidden])')];
+  const saveBtn = $('#saveBtn');
+
+  /* first real field, not the ID */
+  const first = inputs.find(el => el.id !== 'f_' + String(MODULES[key].idField).replace(/[^a-z0-9]/gi, '_'));
+  if(first) setTimeout(() => { try { first.focus({ preventScroll: true }); if(first.select) first.select(); } catch(e){} }, 40);
+
+  const defOf = el => fields.find(f => fid(f) === el.id) || { n: '', t: 'text' };
+  const checkOne = el => {
+    const f = defOf(el);
+    const v = String(el.value || '').trim();
+    const holder = el.closest('div');
+    const old = holder ? holder.querySelector('.fielderr') : null;
+    if(old) old.remove();
+    el.classList.remove('bad');
+    let msg = '';
+    if(f.req && !v) msg = f.n + ' is needed';
+    else if(v && f.t === 'tel' && !/^\d{10}$/.test(v.replace(/[\s\-+]/g, ''))) msg = 'Needs 10 digits';
+    else if(v && (f.t === 'money' || f.t === 'number') && isNaN(Number(v))) msg = 'Numbers only';
+    else if(v && f.t === 'date' && toISO(v) === '') msg = 'Check the date';
+    if(msg && holder){
+      el.classList.add('bad');
+      const d = document.createElement('div');
+      d.className = 'fielderr';
+      d.textContent = msg;
+      holder.appendChild(d);
+    }
+    return !msg;
+  };
+  inputs.forEach(el => {
+    el.addEventListener('blur', () => checkOne(el));
+    el.addEventListener('input', () => {
+      if(el.classList.contains('bad')) checkOne(el);
+      grid.dataset.dirty = '1';
+      if(saveBtn) saveBtn.classList.add('armed');
+    });
+  });
+
+  grid.addEventListener('keydown', ev => {
+    const el = ev.target;
+    if(!el.classList || !el.classList.contains('input')) return;
+    if(ev.key === 'Enter' && (ev.ctrlKey || ev.metaKey)){ ev.preventDefault(); if(saveBtn) saveBtn.click(); return; }
+    if(ev.key === 'Enter' && el.tagName !== 'TEXTAREA'){
+      ev.preventDefault();
+      checkOne(el);
+      const i = inputs.indexOf(el);
+      const next = inputs[i + 1];
+      if(next){ next.focus(); if(next.select) next.select(); }
+      else if(saveBtn) saveBtn.click();
+    }
+  });
+}
+
+function autoFillFromFamily(key){
+  const famEl = $('#formGrid').querySelector('[data-role="family"]');
+  if(!famEl || !famEl.value) return;
+  const f = (DB.families || []).find(x => String(x['Family ID']) === famEl.value);
+  if(!f) return;
+  const contributor = document.getElementById('f_Contributor');
+  if(contributor && !contributor.value) contributor.value = f['Family Head'] || '';
+  const benef = document.getElementById('f_Beneficiary');
+  if(benef && !benef.value) benef.value = f['Family Head'] || '';
+}
+
+/* A new family always has at least one member: the head. Create that row
+   automatically with Relation = Self so nobody types the name twice. */
+async function addHeadAsMember(fam, quiet){
+  const head = String(fam['Family Head'] || '').trim();
+  const famId = String(fam['Family ID'] || '').trim();
+  if(!head || !famId) return;
+  if(headMemberOf(famId, head)) return;
+
+  /* The admin picked this person from the parent's member list, so there is
+     nothing to guess: move that exact record. */
+  if(PENDING_HEAD && PENDING_HEAD.memberId){
+    const picked = (DB.members || []).find(x =>
+      String(x['Member ID'] || '').trim() === PENDING_HEAD.memberId);
+    const fromId = PENDING_HEAD.from;
+    PENDING_HEAD = null;
+    if(picked){
+      /* Belt and braces: if this person heads the family being split from,
+         moving them would leave that family's head field pointing at a
+         non-member. Refuse rather than corrupt two families at once. */
+      const src = (DB.families || []).find(x => String(x['Family ID']).trim() === String(fromId).trim());
+      const srcHead = String(src ? (src['Family Head'] || '') : '').trim().toLowerCase();
+      if(srcHead && String(picked['Name'] || '').trim().toLowerCase() === srcHead){
+        toast('That is the head of ' + fromId + ' — pick someone else, or change that family\u2019s head first', 'bad');
+        return;
+      }
+      return movePerson(picked, famId);
+    }
+  }
+
+  /* A subfamily head is nearly always someone already on the register — a
+     married son inside his father's household. Creating a second row for him
+     would duplicate the person, so move the existing record instead. */
+  const existing = findPersonElsewhere(head, famId);
+  if(existing){
+    if(quiet){
+      /* No one to ask in a bulk run, and a bare name match is not proof of
+         identity — villages are full of repeated names. Move only in the
+         case this was built for: the family declares a parent, and the
+         person is sitting in exactly that parent family today. */
+      const parent = String(fam['Parent Family ID'] || '').trim();
+      if(parent && String(existing['Family ID'] || '').trim() === parent)
+        return movePerson(existing, famId);
+      const e = new Error('SAME_NAME');
+      e.sameName = { name: head, family: famId, other: String(existing['Family ID'] || '').trim() };
+      throw e;
+    }
+    const moved = await confirmMove(head, existing, String(existing['Family ID'] || '').trim(), famId);
+    if(moved) return moved;
+    if(moved === null) return;   // cancelled — leave both records alone
+  }
+
+  /* Only fill the columns that exist, and never send blanks — some sheets
+     reject a full-width blank row, which is why this used to fail silently. */
+  const rec = {
+    'Member ID': freeMemberId(),
+    'Family ID': famId,
+    'Name': head,
+    ...(fam['Given Name']&&fam.Surname?{'Given Name':fam['Given Name'],'Surname':fam.Surname}:{}),
+    'Residence Status':'Living in Malipatana',
+    'Relation to Family Head': 'Self',
+    'Gender': String(fam['Head Gender'] || '').trim(),
+    'Mobile': String(fam['Mobile'] || '').trim(),
+    'Earning Member': 'YES',
+    'Remarks': 'Family head (added automatically)'
+  };
+  Object.keys(rec).forEach(k => { if(rec[k] === '') delete rec[k]; });
+
+  try {
+    const r = await api('save', { sheet: MODULES.members.sheet, record: JSON.stringify(rec) });
+    if(!r || !r.ok) throw new Error((r && r.error) || 'the sheet refused the row');
+    upsertLocal('members', rec);
+    if(!quiet){ toast(head + ' added as member ' + rec['Member ID'], 'good'); render(); }
+    return rec;
+  } catch(e){
+    console.error('addHeadAsMember failed', e, rec);
+    if(quiet) throw e;
+    toast('Head not added as member: ' + (e.message || e), 'bad');
+  }
+}
+
+/* The same living person, recorded under a different family. */
+function findPersonElsewhere(name, exceptFamId){
+  const n = String(name).trim().toLowerCase();
+  if(!n) return null;
+  return (DB.members || []).find(x =>
+    !isDeceased(x) &&
+    String(x['Name'] || '').trim().toLowerCase() === n &&
+    String(x['Family ID'] || '').trim() !== String(exceptFamId).trim()) || null;
+}
+
+/* One person, one row: re-file the existing record under the new family. */
+async function movePerson(person, toId){
+  const out = Object.assign({}, person, {
+    'Family ID': String(toId).trim(), 'Relation to Family Head': 'Self'
+  });
+  const r = await api('save', { sheet: MODULES.members.sheet, record: JSON.stringify(out) });
+  if(!r || !r.ok) throw new Error((r && r.error) || 'save failed');
+  upsertLocal('members', out);
+  return out;
+}
+
+/* Returns the moved record, false to fall through and create a new one,
+   or null if the user backed out entirely. */
+function confirmMove(name, person, fromId, toId){
+  return new Promise(resolve => {
+    const fromFam = (DB.families || []).find(f => String(f['Family ID']).trim() === fromId);
+    const fromName = fromFam ? (fromFam['Family Head'] || fromId) : fromId;
+    openModal(`
+      <header><h3>${esc(name)} is already on the register</h3></header>
+      <div class="body confirm">
+        <p><b>${esc(person['Member ID'] || '')}</b> — ${esc(name)} is currently a member of
+        <b>${esc(fromName)}</b> (${esc(fromId)}).</p>
+        <p class="muted">Moving keeps one record for the person, with their photo, age and history intact.
+        Adding a second record would mean the same villager counted twice.</p>
+      </div>
+      <footer>
+        <button class="btn" id="mvCancel">Cancel</button>
+        <button class="btn" id="mvNew">Add as a new person</button>
+        <button class="btn btn-primary" id="mvMove">Move to this subfamily</button>
+      </footer>`);
+
+    const done = v => { closeModal(); resolve(v); };
+    document.getElementById('mvCancel').onclick = () => done(null);
+    document.getElementById('mvNew').onclick = () => done(false);
+    document.getElementById('mvMove').onclick = async () => {
+      const b = document.getElementById('mvMove');
+      b.disabled = true; b.textContent = 'Moving…';
+      try {
+        const out = await movePerson(person, toId);
+        toast(esc(name) + ' moved to ' + toId + ' — no duplicate created', 'good');
+        render();
+        done(out);
+      } catch(e){
+        toast(e.message || String(e), 'bad');
+        b.disabled = false; b.textContent = 'Move to this subfamily';
+      }
+    };
+  });
+}
+
+function headMemberOf(famId, head){
+  const h = String(head).trim().toLowerCase();
+  return (DB.members || []).filter(x => !isDeceased(x)).find(x =>
+    String(x['Family ID'] || '').trim() === String(famId).trim() &&
+    (String(x['Name'] || '').trim().toLowerCase() === h ||
+     String(x['Relation to Family Head'] || '').trim().toLowerCase() === 'self'));
+}
+
+/* nextId() can repeat an ID while several rows are written in one pass, which
+   silently overwrites an existing member. Track what this session has issued. */
+const ISSUED = new Set();
+function freeMemberId(){
+  const taken = new Set((DB.members || []).map(x => String(x['Member ID'] || '').trim()));
+  let id = nextId('members'), guard = 0;
+  while((taken.has(id) || ISSUED.has(id)) && guard++ < 999){
+    const m = String(id).match(/^(\D*)(\d+)$/);
+    if(!m) break;
+    id = m[1] + String(parseInt(m[2], 10) + 1).padStart(m[2].length, '0');
+  }
+  ISSUED.add(id);
+  return id;
+}
+
+/* Families created before this feature existed: add the missing head rows. */
+async function addMissingHeads(){
+  const missing = (DB.families || []).filter(f => {
+    const head = String(f['Family Head'] || '').trim();
+    const id = String(f['Family ID'] || '').trim();
+    return head && id && !headMemberOf(id, head);
+  });
+  if(!missing.length){ toast('Every family head is already a member', 'good'); return; }
+
+  /* Three outcomes, and they must be counted separately: a fresh row, a move
+     of someone the register already holds, and a name clash only a human can
+     settle. Never guess on the last one — a wrong move quietly empties one
+     family and corrupts another. */
+  const plural = n => n === 1 ? '' : 's';
+  const willMove = missing.filter(f => {
+    const other = findPersonElsewhere(f['Family Head'], f['Family ID']);
+    const parent = String(f['Parent Family ID'] || '').trim();
+    return other && parent && String(other['Family ID'] || '').trim() === parent;
+  }).length;
+  const clashes = missing.filter(f => {
+    const other = findPersonElsewhere(f['Family Head'], f['Family ID']);
+    const parent = String(f['Parent Family ID'] || '').trim();
+    return other && !(parent && String(other['Family ID'] || '').trim() === parent);
+  }).length;
+  const fresh = missing.length - willMove - clashes;
+
+  busy(true, 'Adding ' + fresh + ' head' + plural(fresh) + ' as new member' + plural(fresh) +
+    (willMove ? ', moving ' + willMove + ' already on the register' : '') + '…');
+  let done = 0, skipped = [], err = '';
+  for(const f of missing){
+    try { await addHeadAsMember(f, true); done++; }
+    catch(e){
+      if(e && e.sameName) skipped.push(e.sameName);
+      else if(!err) err = e.message || String(e);
+    }
+  }
+  busy(false);
+  await refresh(true);
+  render();
+  if(done) toast(done + ' family head' + plural(done) + ' sorted out' +
+    (willMove ? ' (' + willMove + ' moved, not duplicated)' : ''), 'good');
+  if(skipped.length) reportNameClashes(skipped);
+  if(err) toast((missing.length - done - skipped.length) + ' failed: ' + err, 'bad');
+}
+
+/* Someone must look at these by eye — two villagers can share a name. */
+function reportNameClashes(list){
+  openModal(`
+    <header>
+      <div><h3>${list.length} head${list.length === 1 ? '' : 's'} need${list.length === 1 ? 's' : ''} a look</h3>
+      <div class="sub">Someone with the same name is already on the register</div></div>
+      <div class="sp"></div><button class="btn btn-sm" onclick="closeModal()">Close</button>
+    </header>
+    <div class="body">
+      <p class="muted small">These were left untouched. Two villagers can share a name, so the app will not
+      guess which record belongs where. Open each family, and either move the existing member across
+      or add the head as a new person.</p>
+      <div class="tablewrap" style="max-height:none;margin-top:14px"><table class="grid">
+        <thead><tr><th>Name</th><th>This family</th><th>Already in</th><th></th></tr></thead>
+        <tbody>${list.map(s => `<tr>
+          <td data-label="Name">${esc(s.name)}</td>
+          <td data-label="This family">${esc(s.family)}</td>
+          <td data-label="Already in">${esc(s.other)}</td>
+          <td class="acts"><button class="btn btn-sm" data-fam="${esc(s.family)}">Open</button></td>
+        </tr>`).join('')}</tbody></table></div>
+    </div>
+    <footer><button class="btn btn-primary" onclick="closeModal()">Close</button></footer>`);
+  document.querySelectorAll('[data-fam]').forEach(b => {
+    b.onclick = () => { closeModal(); openProfile(b.dataset.fam); };
+  });
+}
+
+/* The backend finds rows by their ID, so a changed ID cannot be an update —
+   the old row is removed and the record is written under the new ID. */
+async function renameId(key, oldId, newId){
+  const m = MODULES[key];
+  const r = await api('delete', { sheet: m.sheet, idField: m.idField, idValue: oldId });
+  if(!r || !r.ok) throw new Error((r && r.error) || 'Could not replace the old ID');
+  removeLocal(key, oldId);
+  if(key === 'members'){
+    (DB.families || []).forEach(f => {
+      if(String(f['Head Member ID'] || '').trim() === String(oldId)) f['Head Member ID'] = newId;
+    });
+  }
+}
+
+/* Preview duplicate risk when the household/person details change.
+   The server performs the final check again before writing. */
+function malDupCurrentForm_(key,rec){
+  const data=Object.assign({},rec||{});
+  const fields=key==='families'?['Family ID','Given Name','Surname','Village Locality','Mobile']:
+    ['Member ID','Family ID','Given Name','Surname','Date of Birth','Father Name','Mother Name','Mobile'];
+  for(const n of fields){const el=document.getElementById('f_'+n.replace(/[^a-z0-9]/gi,'_'));if(el)data[n]=el.value;}
+  const given=String(data['Given Name']||'').trim(),surname=String(data.Surname||'').trim();
+  if(given&&surname)data[key==='families'?'Family Head':'Name']=given+' '+surname;
+  return data;
+}
+let malDupPreviewRun_=0;
+function malShowDupWarning_(info){
+  const el=document.getElementById('malDuplicateWarning');if(!el)return;
+  el.hidden=!(info&&info.duplicate);
+  if(!el.hidden){el.className='mal-dup-note '+(info.level==='block'?'blocking':'');
+    el.textContent=(info.level==='block'?'⛔ Duplicate warning: ':'⚠ Check possible duplicate: ')+(info.message||'Please review existing records.');}
+}
+function malWireDuplicatePreview_(key,record,isEditing){
+  if(key!=='families'&&key!=='members')return;
+  const host=document.getElementById('formGrid');if(!host)return;
+  let timer=null;
+  host.addEventListener('change',()=>{
+    if(timer)clearTimeout(timer);
+    const run=++malDupPreviewRun_;
+    timer=setTimeout(async()=>{
+      const rec=malDupCurrentForm_(key,record);
+      if(!(key==='families'?rec['Family Head']:rec.Name&&rec['Family ID'])){malShowDupWarning_(null);return;}
+      try{const r=await api('duplicateCheck',{sheet:MODULES[key].sheet,record:JSON.stringify(rec),excludeId:isEditing?String(record[MODULES[key].idField]||''):''});
+        if(run===malDupPreviewRun_&&document.getElementById('formGrid')===host)malShowDupWarning_(r);
+      }catch(e){/* Server-side save remains authoritative. */}
+    },450);
+  });
+}
+/* Keep errors beside the Save button, which remains visible even when the
+   long mobile/desktop edit form is scrolled to its bottom. Also keep the top
+   error for keyboard users. */
+function malMemberSaveError_(message){
+  const top=document.getElementById('formErr');
+  if(top){top.classList.remove('hide');top.textContent=String(message||'Could not save changes.');}
+  const footer=document.getElementById('malFormSaveStatus');
+  if(footer)footer.textContent=String(message||'Could not save changes.');
+}
+async function saveRecord(key, rec, editing, opts){
+  const m = MODULES[key];
+  const originalId = editing ? String(rec[m.idField] ?? '').trim() : '';
+  const FIELDS = allFields(key);
+  if(key === 'families'){
+    const famId = String(rec['Family ID'] || '').trim();
+    Object.keys(COUNTED).forEach(c => { if(famId) rec[c] = String(familyCount(famId, c)); });
+  }
+  const status=document.getElementById('malFormSaveStatus');
+  if(status)status.textContent='Checking details…';
+  const oldError=document.getElementById('formErr');if(oldError)oldError.classList.add('hide');
+  const out = Object.assign({}, rec);
+  const problems = [];
+  FIELDS.forEach(f => {
+    if(f.hidden) return;
+    const el = document.getElementById(fid(f));
+    if(!el) return;
+    let v = el.value;
+    if(f.t === 'tel' && v && !/^\d{10}$/.test(v.trim().replace(/[\s\-+]/g, ''))) problems.push(f.n + ' should be a 10 digit mobile number');
+    if(f.req && !String(v).trim() && !(editing && (key==='families'||key==='members') && ['Given Name','Surname'].includes(f.n) && !String(rec['Given Name']||rec.Surname||'').trim())) problems.push(f.n + ' is required');
+    out[f.n] = v;
+  });
+  if(key==='members')malApplyRelationshipLinks_(out,problems);
+  if(key==='families'||key==='members'){
+    let given=String(out['Given Name']||'').trim(),surname=String(out.Surname||'').trim();
+    if(malNameHasRepeatedSurname_(given,surname)){
+      const corrected=malNameStripSuffix_(given,surname);
+      if(corrected){given=corrected;out['Given Name']=given;}
+    }
+    const confirmation=document.getElementById('malSurnameConfirm');
+    let keepLegacyName=false;
+    if(confirmation && !confirmation.checked){
+      const proposed=opts&&opts.suggestedNameParts;
+      const saved=opts&&opts.originalSaved;
+      const same=(a,b)=>malNameTidy_(a).toLocaleLowerCase('en-IN')===malNameTidy_(b).toLocaleLowerCase('en-IN');
+      if(editing&&saved&&proposed&&same(given,proposed.given)&&same(surname,proposed.surname)){
+        // Other edits (such as Father/Mother Name) must NEVER silently approve
+        // a suggested surname. Omit those columns entirely from the write.
+        delete out['Given Name'];delete out.Surname;
+        out[key==='families'?'Family Head':'Name']=saved[key==='families'?'Family Head':'Name'];
+        given='';surname='';keepLegacyName=true;
+      }else{
+        problems.push('Check the suggested surname and tick the confirmation box before changing the name.');
+      }
+    }
+    if(!keepLegacyName && ((given&&!surname)||(!given&&surname)||(!editing&&(!given||!surname))))
+      problems.push('Please enter both Given Name and Surname.');
+    if(!keepLegacyName&&given&&surname){out[key==='families'?'Family Head':'Name']=(given+' '+surname).replace(/\s+/g,' ').trim();}
+    if(key==='families'){
+      const famId=String(out['Family ID']||rec['Family ID']||'').trim();
+      const pid=String(out['Parent Family ID']||'').trim();
+      if(pid&&!malFamilyById_(pid))problems.push('Parent Family ID does not exist.');
+      if(pid&&malParentWouldLoop_(famId,pid))problems.push('Parent family would create a circular relationship.');
+      if(!editing&&PENDING_HEAD&&PENDING_HEAD.memberId){
+        const person=(DB.members||[]).find(x=>String(x['Member ID']||'')===PENDING_HEAD.memberId);
+        const expected=String(person&&person.Name||'').trim();
+        const entered=String(out['Family Head']||'').trim();
+        if(!person||!expected||entered.toLocaleLowerCase('en-IN')!==expected.toLocaleLowerCase('en-IN'))
+          problems.push('Chosen existing member name must match the new subfamily head. Use the selected person or cancel and create a new head.');
+      }
+    }
+    // Name is generated from the edited Given Name and Surname. Do not reset
+    // it to the previous value when editing a Member (the old code did this).
+    if(key==='members'){
+      out['Residence Status']=out['Residence Status']||rec['Residence Status']||'Living in Malipatana';
+      if(out['Residence Status']==='Living in Malipatana')for(const n of ['Current City','Current District','Current State','Current Country','Outside Address'])out[n]='';
+    }
+  }
+  if(problems.length){
+    const firstBad = FIELDS.find(f => problems.some(p => String(p).indexOf(f.n) === 0));
+    const el0 = firstBad ? document.getElementById(fid(firstBad)) : null;
+    if(el0){ el0.classList.add('bad'); try { el0.focus(); } catch(e){} }
+    malMemberSaveError_(problems[0]);
+    return;
+  }
+  if(key === 'users' && !editing && !String(out['Password'] || '').trim()){
+    malMemberSaveError_('Set a password for the new user.');
+    return;
+  }
+  const newId = String(out[m.idField] ?? '').trim();
+  const idChanged = editing && originalId && newId && newId !== originalId;
+  if((!editing || idChanged) && rowsOf(key).some(r => String(r[m.idField]).trim() === newId)){
+    malMemberSaveError_(m.idField + ' ' + newId + ' already exists. Change it and try again.');
+    return;
+  }
+  if(key==='families'||key==='members'){
+    const note=$('#formErr');
+    if(!navigator.onLine){malMemberSaveError_('Connect to the internet to check for duplicate family/member records before saving.');return;}
+    try{
+      const check=await api('duplicateCheck',{sheet:m.sheet,record:JSON.stringify(out),excludeId:editing?originalId:''});
+      malShowDupWarning_(check);
+      if(!check||!check.ok)throw new Error(check&&check.error||'Could not validate duplicates.');
+      if(check.level==='block'){
+        malMemberSaveError_(check.message);
+        return;
+      }
+      if(check.level==='warning'&&!window.confirm('Possible duplicate found.\n\n'+check.message+'\n\nConfirm this is a DIFFERENT person or household before saving.')){
+        malMemberSaveError_('Save cancelled — confirm this is a different person or household before continuing.');return;
+      }
+    }catch(e){malMemberSaveError_('Duplicate check could not finish: '+String(e.message||e)+'. Please retry when connected.');return;}
+  }
+  if(m.fields.some(f => f.n === 'Last Updated')) out['Last Updated'] = today();
+  out['Entered By'] = String(USER && (USER.name || USER.username) || '');
+  out['Entered At'] = localStamp(new Date());
+  if(m.fields.some(f => f.n === 'Created Date') && !out['Created Date']) out['Created Date'] = today();
+
+  const again = !!(opts && opts.again);
+  const btn = (again ? $('#saveMoreBtn') : $('#saveBtn')) || $('#saveBtn');
+  const label = btn.textContent;
+  if(status)status.textContent='Saving to register…';
+  btn.disabled = true; btn.textContent = 'Saving…';
+  try {
+    if(idChanged) await renameId(key, originalId, newId);
+    const r = await saveThrough('save', { sheet: m.sheet, record: JSON.stringify(out) },
+      m.title + ' · ' + (out[m.idField] || ''));
+    if(!r || !r.ok) throw new Error((r && r.error) || 'The sheet refused the save.');
+    upsertLocal(key, Object.assign({}, (opts&&opts.originalSaved)||{}, out));
+    const pending = PENDING_PHOTO, removing = REMOVE_PHOTO;
+    if(again) reopenBlank(key, out); else closeModal();
+    toast(r.queued ? 'Saved on this phone — it will reach the sheet when the signal returns'
+      : (idChanged ? ('ID changed to ' + newId) : (editing ? 'Changes saved' : 'Record added')), r.queued ? '' : 'good');
+    if(pending || removing) sendPhoto(key, out, pending, removing);
+    if(key === 'families') await addHeadAsMember(out);
+    if(key === 'contributions' && !editing && !again && yes(setting('WhatsApp Receipts', 'Yes')))
+      setTimeout(() => offerReceipt(out), 400);
+    render();
+    await refresh(true);
+    if(key === 'families'){
+      const head = String(out['Family Head'] || '').trim();
+      const fid2 = String(out['Family ID'] || '').trim();
+      /* Only send them to the bulk button when the head is genuinely absent.
+         If the person exists under another family, that button would copy
+         rather than move them, so say what is actually true instead. */
+      if(head && fid2 && !headMemberOf(fid2, head)){
+        if(findPersonElsewhere(head, fid2))
+          toast(head + ' is already on the register under another family — open that member and change their Family ID to ' + fid2, '');
+        else
+          toast('Head is not in Members yet — open Members and use "Add missing family heads"', 'bad');
+      }
+      /* A big household is entered as several subfamilies in one sitting, so
+         come straight back to the parent instead of dropping to the list.
+         A brand-new main family instead wants its people next \u2014 open the
+         roster rather than making someone hunt for it. */
+      const par = String(out['Parent Family ID'] || '').trim();
+      if(par && !editing && !again) setTimeout(() => (opts&&opts.openMembers ? openRoster(fid2) : openProfile(par)), 260);
+      else if(!editing && !again && fid2) setTimeout(() => openRoster(fid2), 260);
+    }
+  } catch(e){
+    malMemberSaveError_(e && e.message || 'The save did not complete.');
+    btn.disabled = false; btn.textContent = label;
+  }
+}
+
+/* Prevent two parallel saves from double-clicking the Save button. */
+const malSaveRecordUnwrapped_ = saveRecord;
+saveRecord = async function(key, rec, editing, opts){
+  const active=document.getElementById('saveBtn');
+  if(active&&active.dataset.malSaving==='1')return;
+  const buttons=['saveBtn','saveMoreBtn','malSaveAddMembers']
+    .map(id=>document.getElementById(id)).filter(Boolean);
+  const initial=buttons.map(b=>({el:b,label:b.textContent,disabled:b.disabled}));
+  if(active)active.dataset.malSaving='1';
+  buttons.forEach(b=>{b.disabled=true;});
+  try{return await malSaveRecordUnwrapped_(key,rec,editing,opts);}
+  catch(e){
+    console.error('Malipatana: member/form save stopped unexpectedly',e);
+    malMemberSaveError_(e&&e.message||'Unexpected save error. Please try again.');
+  }
+  finally{
+    if(active)delete active.dataset.malSaving;
+    initial.forEach(({el,label,disabled})=>{el.disabled=disabled;el.textContent=label;});
+  }
+};
+
+/* "Save and add another": a fresh blank form that keeps the fields a person
+   would otherwise retype — family, date, category. */
+function reopenBlank(key, prev){
+  const keep = {};
+  (key==='families' ? ['Parent Family ID','Surname','Village Locality'] : ['Family ID','Date','Month','Category','Event ID','Payment Mode','Frequency','Paid To','Address/Area'])
+    .forEach(c => { if(prev[c] !== undefined && prev[c] !== '') keep[c] = prev[c]; });
+  closeModal();
+  setTimeout(() => openForm(key, null, keep), 30);
+}
+
+function upsertLocal(key, rec){
+  const m = MODULES[key];
+  if(OPTIONAL_SHEETS.includes(key)) setTimeout(() => stashLocal(key), 0);
+  if(key === 'settingsList'){ DB.settings = DB.settings || {}; DB.settings[rec['Setting']] = rec['Value']; return; }
+  if(key === 'users'){ DB.users = DB.users || []; }
+  const arr = key === 'users' ? DB.users : (DB[key] = DB[key] || []);
+  const i = arr.findIndex(r => String(r[m.idField]).trim() === String(rec[m.idField]).trim());
+  if(i >= 0) arr[i] = rec; else arr.push(rec);
+}
+function removeLocal(key, id){
+  const m = MODULES[key];
+  if(OPTIONAL_SHEETS.includes(key)) setTimeout(() => stashLocal(key), 0);
+  if(key === 'settingsList'){ delete DB.settings[id]; return; }
+  const arr = key === 'users' ? (DB.users || []) : (DB[key] || []);
+  const i = arr.findIndex(r => String(r[m.idField]).trim() === String(id).trim());
+  if(i >= 0) arr.splice(i, 1);
+}
+
+/* =========================================================================
+   DELETE
+   ========================================================================= */
+function askDelete(key, id){
+  if(key==='families'){
+    const linked=malFamilyLinkedRecords_(id);
+    if(linked.length){
+      toast('Cannot delete '+id+': '+linked.map(([n,v])=>v+' '+n).join(', ')+'. Reassign linked records first. You can set the family to Inactive instead.','bad');
+      return;
+    }
+  }
+  const m = MODULES[key];
+  const row = rowsOf(key).find(r => String(r[m.idField]).trim() === String(id).trim()) || {};
+  const nameCol = m.fields.find(f => ['Family Head', 'Name', 'Student Name', 'Patient', 'Beneficiary', 'Affected Person', 'Description', 'Setting'].includes(f.n));
+  const label = nameCol ? row[nameCol.n] : '';
+  let linked = '';
+  if(key === 'families'){
+    const kids = ['members', 'contributions', 'income', 'expenditure', 'emergency', 'regularSupport', 'insurance', 'education', 'medical']
+      .map(k => [k, (DB[k] || []).filter(r => String(r['Family ID'] || '').trim() === String(id).trim()).length])
+      .filter(([, n]) => n > 0);
+    if(kids.length) linked = '<p class="muted">This family is used by ' + kids.map(([k, n]) => n + ' ' + (MODULES[k] ? MODULES[k].title.toLowerCase() : k)).join(', ') +
+      '. Those rows stay in the sheet and will show an unknown family.</p>';
+  }
+  openModal(`
+    <header><h3>Delete ${esc(singularOf(m))}?</h3></header>
+    <div class="body confirm">
+      <p><b>${esc(id)}</b>${label ? ' — ' + esc(label) : ''} will be removed from the ${esc(m.sheet)} sheet.</p>
+      ${linked}
+      <p class="muted">This cannot be undone from here. You can still recover it from the sheet's version history.</p>
+    </div>
+    <footer>
+      <button class="btn" onclick="closeModal()">Keep it</button>
+      <button class="btn btn-primary" id="delBtn" style="background:var(--brick);border-color:var(--brick)">Delete</button>
+    </footer>`);
+  $('#delBtn').onclick = async () => {
+    const b = $('#delBtn'); b.disabled = true; b.textContent = 'Deleting…';
+    try {
+      const r = await api('delete', { sheet: m.sheet, idField: m.idField, idValue: id });
+      if(!r || !r.ok) throw new Error((r && r.error) || 'Delete failed.');
+      removeLocal(key, id);
+      closeModal();
+      toast('Deleted', 'good');
+      render();
+      refresh(true);
+    } catch(e){ toast(e.message, 'bad'); b.disabled = false; b.textContent = 'Delete'; }
+  };
+}
+
+
+/* FAMILY RELATION SAFETY — operate on the existing Families/Member sheets only. */
+function malFamilyById_(id){
+  const wanted=String(id||'').trim();
+  return (DB.families||[]).find(f=>String(f['Family ID']||'').trim()===wanted)||null;
+}
+function malParentWouldLoop_(familyId,newParent){
+  const id=String(familyId||'').trim();let cur=String(newParent||'').trim();
+  if(!cur)return false;
+  const visited=new Set();
+  while(cur){
+    if(cur===id || visited.has(cur))return true;
+    visited.add(cur);
+    const f=malFamilyById_(cur);
+    if(!f)return false;
+    cur=String(f['Parent Family ID']||'').trim();
+  }
+  return false;
+}
+function malFamilyLinkedRecords_(fid){
+  const id=String(fid||'').trim();
+  const detail=[['Subfamilies',(DB.families||[]).filter(f=>String(f['Parent Family ID']||'').trim()===id).length]];
+  for(const k of ['members','contributions','income','expenditure','emergency','regularSupport','insurance','education','medical']){
+    const n=(DB[k]||[]).filter(x=>String(x['Family ID']||'').trim()===id).length;
+    if(n)detail.push([MODULES[k]?.title||k,n]);
+  }
+  return detail.filter(([,n])=>n>0);
+}
+
+/* Minimal everyday editor: full record is preserved, including hidden historic House No. */
+function openSubfamilyQuickEdit(id, parentMode){
+  if(!canEdit())return;
+  const fam=malFamilyById_(id);
+  if(!fam){toast('Family record not found','bad');return;}
+  const rec=Object.assign({},fam),prefill=malNamePrefillExisting_('families',rec);
+  const original=String(fam['Family Head']||'').trim();
+  const parent=String(fam['Parent Family ID']||'').trim();
+  const localities=[...new Set((DB.families||[]).map(f=>String(f['Village Locality']||'').trim()).filter(Boolean))].sort();
+  const familyOptions=(DB.families||[]).filter(f=>{
+    const pid=String(f['Family ID']||'').trim();return pid!==id&&!malParentWouldLoop_(id,pid);
+  });
+  const idOption=f=>`<option value="${esc(f['Family ID'])}">${esc(f['Family Head']||f['Family ID'])} (${esc(f['Family ID'])})</option>`;
+  openModal(`<header><div><h3>${parentMode?'Change parent family':'Quick edit · '+esc(original||id)}</h3>
+     <div class="sub">${esc(id)} · saved into the existing Families register</div></div><div class="sp"></div>
+     <button type="button" class="btn btn-sm" id="malSubClose">Close</button></header>
+   <div class="body"><div id="malSubError" class="errline hide" role="alert"></div>
+   ${prefill&&prefill.level==='suggested'?'<div class="mal-subnote">The old full name was split into suggested parts. Check the original name and confirm before saving.</div>':''}
+   <div class="mal-subform" style="margin-top:12px">
+     <label>Given Name(s)<input class="input" id="malSubGiven" value="${esc(rec['Given Name']||'')}"></label>
+     <label>Surname<input class="input" id="malSubSurname" value="${esc(rec.Surname||'')}"></label>
+     <div class="span-all fieldnote" id="malSubFull">Full name: ${esc(original)}</div>
+     <label>Village Locality (Sahi)<select class="input" id="malSubSahi"><option value="">— Select Sahi —</option>${malSahiChoices_(rec['Village Locality'])}</select></label>
+     <label>Family status<select class="input" id="malSubStatus">${['Active','Inactive','Shifted'].map(x=>`<option ${String(rec['Family Status']||'Active')===x?'selected':''}>${x}</option>`).join('')}</select></label>
+     <label class="span-all">Parent family<select class="input" id="malSubParent"><option value="">No parent — main family</option>${familyOptions.map(idOption).join('')}</select></label>
+     ${prefill&&prefill.level==='suggested'?'<label class="span-all" style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="malSubVerified" style="width:auto">I checked the given name and surname against the original full name.</label>':''}
+     <div class="span-all mal-subnote">Sahi and surname are separate. Changing the head’s name updates the Family record only; if it is the same person, also check that person’s Members record. Historic hidden address details are retained in the spreadsheet.</div>
+   </div></div>
+   <footer><button class="btn" id="malSubFullEdit">Open full edit form</button>
+   <button class="btn btn-primary" id="malSubSave">Save changes</button></footer>`);
+  const $el=x=>document.getElementById(x);
+  $el('malSubParent').value=parent;
+  $el('malSubClose').onclick=closeModal;
+  $el('malSubFullEdit').onclick=()=>{closeModal();openForm('families',id)};
+  const preview=()=>{
+    const g=malNameTidy_($el('malSubGiven').value),s=malNameTidy_($el('malSubSurname').value);
+    $el('malSubFull').textContent='Full Name (automatic): '+(malNameHasRepeatedSurname_(g,s)?g+' — repeated surname, will be corrected':([g,s].filter(Boolean).join(' ')||'—'));
+  };
+  ['malSubGiven','malSubSurname'].forEach(k=>$el(k).addEventListener('input',preview));preview();
+  $el('malSubSave').onclick=async()=>{
+    const error=$el('malSubError'),btn=$el('malSubSave');
+    error.classList.add('hide');
+    let given=malNameTidy_($el('malSubGiven').value),surname=malNameTidy_($el('malSubSurname').value);
+    if(malNameHasRepeatedSurname_(given,surname))given=malNameStripSuffix_(given,surname);
+    const pid=$el('malSubParent').value.trim();
+    const locality=$el('malSubSahi').value.trim();
+    const full=[given,surname].filter(Boolean).join(' ');
+    const bad=!given||!surname?'Fill both Given Name(s) and Surname.':
+      (!!$el('malSubVerified')&&!$el('malSubVerified').checked)?'Confirm the suggested name parts first.':
+      (pid&&!malFamilyById_(pid))?'The parent family no longer exists. Reload the register.':
+      malParentWouldLoop_(id,pid)?'Cannot move a family under itself or its descendants.':'';
+    if(bad){error.textContent=bad;error.classList.remove('hide');return;}
+    const updated={...fam,'Given Name':given,'Surname':surname,'Family Head':full,
+      'Village Locality':locality,'Family Status':$el('malSubStatus').value,
+      'Parent Family ID':pid,'Last Updated':today(),
+      'Entered By':String(USER&&(USER.name||USER.username)||''),'Entered At':localStamp(new Date())};
+    btn.disabled=true;btn.textContent='Saving…';
+    try{
+      if(!navigator.onLine)throw new Error('Please connect to the internet to save this change.');
+      const duplicate=await api('duplicateCheck',{sheet:MODULES.families.sheet,record:JSON.stringify(updated),excludeId:id});
+      if(!duplicate||!duplicate.ok)throw new Error(duplicate&&duplicate.error||'Duplicate check failed');
+      if(duplicate.level==='block')throw new Error(duplicate.message||'Duplicate family record');
+      if(duplicate.level==='warning'&&!confirm('Possible duplicate. '+(duplicate.message||'')+' Confirm this is a different family?')){btn.disabled=false;btn.textContent='Save changes';return;}
+      const response=await saveThrough('save',{sheet:MODULES.families.sheet,record:JSON.stringify(updated)},'Quick edit '+id);
+      if(!response||!response.ok)throw new Error(response&&response.error||'Saving was unsuccessful');
+      upsertLocal('families',updated);
+      const changedName=full.toLocaleLowerCase('en-IN')!==original.toLocaleLowerCase('en-IN');
+      closeModal();toast('Family updated'+(changedName?' — check the corresponding Member name too':''),'good');
+      render();await refresh(true);
+      if(!response.queued)openProfile(parentMode&&pid?pid:id);
+    }catch(e){error.textContent=e.message||String(e);error.classList.remove('hide');btn.disabled=false;btn.textContent='Save changes';}
+  };
+}
+async function malDeactivateSubfamily_(id){
+  if(!canEdit())return;
+  const fam=malFamilyById_(id);
+  if(!fam)return;
+  if(String(fam['Family Status']||'Active')==='Inactive'){toast('This family is already inactive');return;}
+  if(!confirm('Mark '+(fam['Family Head']||id)+' as Inactive? The family, members, records and history will be kept.'))return;
+  const updated={...fam,'Family Status':'Inactive','Last Updated':today()};
+  try{
+    const r=await saveThrough('save',{sheet:MODULES.families.sheet,record:JSON.stringify(updated)},'Deactivate '+id);
+    if(!r||!r.ok)throw new Error(r&&r.error||'Save failed');
+    upsertLocal('families',updated);closeModal();toast('Family set to Inactive; history retained','good');render();await refresh(true);
+    openProfile(String(fam['Parent Family ID']||id).trim());
+  }catch(e){toast(e.message||String(e),'bad');}
+}
+
+/* =========================================================================
+   FAMILY PROFILE
+   ========================================================================= */
+function openProfile(id){
+  const f = (DB.families || []).find(x => String(x['Family ID']).trim() === String(id).trim());
+  if(!f) return;
+  const mem = (DB.members || []).filter(x => String(x['Family ID']).trim() === String(id).trim());
+  const give = (DB.contributions || []).filter(x => String(x['Family ID']).trim() === String(id).trim());
+  const cases = (DB.emergency || []).filter(x => String(x['Family ID']).trim() === String(id).trim());
+  const sup = (DB.regularSupport || []).filter(x => String(x['Family ID']).trim() === String(id).trim());
+  const helped = cases.reduce((a, r) => a + num(r['Total Paid']), 0) +
+                 (DB.medical || []).filter(x => String(x['Family ID']).trim() === String(id).trim()).reduce((a, r) => a + num(r['Assistance']), 0) +
+                 (DB.education || []).filter(x => String(x['Family ID']).trim() === String(id).trim()).reduce((a, r) => a + num(r['Village Assistance']), 0);
+  const given = give.reduce((a, r) => a + num(r['Amount']), 0);
+  const alive=mem.filter(m=>!isDeceased(m));
+  const livingHere=alive.filter(m=>String(m['Residence Status']||'')==='Living in Malipatana').length;
+  const awayTemp=alive.filter(m=>String(m['Residence Status']||'')==='Outside temporarily').length;
+  const settledAway=alive.filter(m=>String(m['Residence Status']||'')==='Shifted permanently').length;
+  const unknownHome=alive.length-livingHere-awayTemp-settledAway;
+  const parentId = String(f['Parent Family ID'] || '').trim();
+  const parent = parentId ? (DB.families || []).find(x => String(x['Family ID']).trim() === parentId) : null;
+  const subs = (DB.families || []).filter(x => String(x['Parent Family ID'] || '').trim() === String(id).trim());
+  const subMembers = subs.reduce((a, s) =>
+    a + (DB.members || []).filter(m2 => String(m2['Family ID']).trim() === String(s['Family ID']).trim()).length, 0);
+
+  openModal(`
+    <header>
+      <div><h3>${esc(f['Family Head'] || id)}</h3>
+      <div class="sub">${esc(id)} · Malipatana ${f['Mobile'] ? '· ' + esc(f['Mobile']) : ''}</div><div class="mal-sahi-line"><span>📍 Village Locality (Sahi): <b>${esc(f['Village Locality']||'Not entered')}</b></span><span>Surname: <b>${esc(f.Surname||'Not verified')}</b></span>${canEdit()?`<button type="button" class="btn btn-sm" data-editsub="${esc(id)}">Quick edit</button>`:''}</div></div>
+      <div class="sp"></div><button class="btn btn-sm" onclick="closeModal()">Close</button>
+    </header>
+    <div class="body">
+      <div class="strip" style="margin-top:0">
+        <div><div class="k">Registered living</div><div class="v tnum">${alive.length}</div></div><div><div class="k">Living in village</div><div class="v tnum">${livingHere}</div></div>
+        <div><div class="k">Contributed</div><div class="v tnum" style="font-size:17px">${money(given)}</div></div>
+        <div><div class="k">Help received</div><div class="v tnum" style="font-size:17px">${money(helped)}</div></div>
+        <div><div class="k">Cases</div><div class="v tnum">${cases.length}</div></div>
+        <div><div class="k">Support</div><div class="v tnum">${sup.filter(x => String(x['Active']).toLowerCase() !== 'no').length}</div></div>
+        <div><div class="k">Status</div><div class="v" style="font-size:15px">${esc(f['Family Status'] || 'Active')}</div></div>
+      </div>
+      <div class="subnote">Living family connections: ${alive.length}. Currently in village: ${livingHere}; temporarily away: ${awayTemp}; settled outside: ${settledAway}; residence to verify: ${unknownHome}. Members remain linked to the family regardless of marriage.</div>
+      ${parent ? `<div class="subnote">Subfamily of <button class="linkish" data-fam="${esc(parentId)}">${esc(parent['Family Head'] || parentId)}</button> · ${esc(parentId)}</div>` : ''}
+      <div class="mal-subhead"><h4>Subfamilies <span class="muted small">${subs.length} · ${subMembers} members in all</span></h4>
+        ${canEdit()?`<button class="btn btn-primary btn-sm" data-addsub="${esc(id)}">+ Add subfamily</button>`:''}</div>
+      ${subs.length?`<div class="mal-subgrid">${subs.map(s=>{
+        const sid=String(s['Family ID']||'').trim();
+        const n=(DB.members||[]).filter(m2=>String(m2['Family ID']||'').trim()===sid).length;
+        const local=String(s['Village Locality']||'').trim();
+        return `<article class="mal-subcard">
+          <button type="button" class="mal-subtitle" data-fam="${esc(sid)}" title="View this subfamily">${esc(s['Family Head']||sid)}</button>
+          <div class="mal-submeta">${esc(sid)} · ${n} ${n===1?'member':'members'} · ${esc(s['Family Status']||'Active')}</div>
+          <div class="mal-subtags"><span class="mal-subtag">Surname: ${esc(s.Surname||'Not verified')}</span>
+            <span class="mal-subtag">Sahi: ${esc(local||'Not entered')}</span></div>
+          <div class="mal-subactions">
+            <button class="btn btn-sm" type="button" data-fam="${esc(sid)}">View</button>
+            ${canEdit()?`<button class="btn btn-sm" type="button" data-editsub="${esc(sid)}">Quick Edit</button>
+              <button class="btn btn-sm" type="button" data-membersub="${esc(sid)}">Members</button>
+              <details class="mal-submore"><summary class="btn btn-sm">More ▾</summary><div class="mal-moreitems">
+                <button class="btn btn-sm" type="button" data-movesub="${esc(sid)}">Change parent</button>
+                <button class="btn btn-sm" type="button" data-deactsub="${esc(sid)}">Deactivate</button>
+                <button class="btn btn-sm" type="button" data-fullsub="${esc(sid)}">Full edit</button>
+              </div></details>`:''}
+          </div></article>`;
+      }).join('')}</div>`:`<div class="subnote">No subfamilies yet. If a member starts a separate household, select “Add subfamily”; the parent and locality will be suggested automatically.</div>`}
+      <h4 style="font-family:var(--display);margin:20px 0 8px;font-size:16px;display:flex;align-items:center;gap:10px">Members
+        ${canEdit() ? `<button class="btn btn-sm" data-roster="${esc(id)}" style="font-weight:600">${mem.length ? 'Edit the list' : '+ Add the household'}</button>` : ''}</h4>
+      ${mem.length ? `<div class="tablewrap" style="max-height:none"><table class="grid">
+        <thead><tr><th></th><th>ID</th><th>Name</th><th>Relation</th><th>Marital</th><th>Residence</th><th class="num">Age</th><th>Occupation</th><th class="num">Income</th><th></th></tr></thead>
+        <tbody>${mem.map(x => `<tr><td data-label="" class="photocell">${
+            String(x['Photo'] || '').trim()
+              ? `<span class="cellav"><img data-srcs="${esc(photoSrcs(x['Photo'], 120).join('|'))}" alt="${esc(x['Name'] || '')}" loading="lazy"></span>`
+              : `<span class="cellav none">${esc(initials(x['Name']))}</span>`
+          }</td><td data-label="ID">${esc(x['Member ID'])}</td><td data-label="Name">${esc(x['Name'])}</td>
+          <td data-label="Relation">${esc(x['Relation to Family Head'])}</td><td data-label="Marital">${esc(x['Marital Status']||'Unknown')}</td><td data-label="Residence">${esc(x['Residence Status']||'Not verified')}</td><td class="num" data-label="Age">${esc(x['Age'])}</td>
+          <td data-label="Occupation">${esc(x['Occupation'])}</td><td class="num" data-label="Income">${x['Monthly Income'] ? money(x['Monthly Income']) : ''}</td>
+          <td class="acts"><button class="btn btn-sm" data-member="${esc(x['Member ID'])}">View</button></td></tr>`).join('')}</tbody>
+      </table></div>` : `<div class="subnote">No members recorded yet.${canEdit() ? ' Use <b>+ Add the household</b> above to put the whole family in at once — one line per person.' : ''}</div>`}
+      ${f['Remarks'] ? `<h4 style="font-family:var(--display);margin:20px 0 6px;font-size:16px">Remarks</h4><div class="small">${esc(f['Remarks'])}</div>` : ''}
+    </div>
+    <footer>
+      <button class="btn" onclick="openHousehold('${esc(id)}')">Whole household</button>
+      ${canEdit() ? `<button class="btn" onclick="closeModal();openRoster('${esc(id)}')">Add / edit members</button>
+      <button class="btn" onclick="closeModal();openSubfamily('${esc(id)}')">Add subfamily</button>
+      <button class="btn btn-primary" onclick="closeModal();openForm('families','${esc(id)}')">Edit family</button>` : ''}
+    </footer>`);
+
+  wirePhotoFallbacks(document.getElementById('modalRoot') || document);
+  document.querySelectorAll('[data-member]').forEach(b => {
+    b.onclick = () => { closeModal(); openMember(b.dataset.member); };
+  });
+  document.querySelectorAll('[data-fam]').forEach(b => {
+    b.onclick = () => { closeModal(); openProfile(b.dataset.fam); };
+  });
+  document.querySelectorAll('[data-addsub]').forEach(b => {
+    b.onclick = () => { closeModal(); openSubfamily(b.dataset.addsub); };
+  });
+  document.querySelectorAll('[data-roster]').forEach(b => {
+    b.onclick = () => { closeModal(); openRoster(b.dataset.roster); };
+  });
+  document.querySelectorAll('[data-editsub]').forEach(b=>{
+    b.onclick=()=>{const target=b.dataset.editsub;closeModal();openSubfamilyQuickEdit(target,false);};
+  });
+  document.querySelectorAll('[data-membersub]').forEach(b=>{
+    b.onclick=()=>{const target=b.dataset.membersub;closeModal();openRoster(target);};
+  });
+  document.querySelectorAll('[data-movesub]').forEach(b=>{
+    b.onclick=()=>{const target=b.dataset.movesub;closeModal();openSubfamilyQuickEdit(target,true);};
+  });
+  document.querySelectorAll('[data-deactsub]').forEach(b=>{
+    b.onclick=()=>malDeactivateSubfamily_(b.dataset.deactsub);
+  });
+  document.querySelectorAll('[data-fullsub]').forEach(b=>{
+    b.onclick=()=>{const target=b.dataset.fullsub;closeModal();openForm('families',target);};
+  });
+  document.querySelectorAll('[data-delsub]').forEach(b=>{
+    b.onclick=()=>askDelete('families',b.dataset.delsub);
+  });
+}
+
+/* A subfamily is an ordinary family row that names its parent, so it keeps
+   its own members, contributions and help history while the parent page
+   still shows the whole household together.
+
+   The head is PICKED from the parent's existing members rather than typed.
+   Typing a name meant the app had to guess afterwards whether "Sanjay Sahu"
+   was the Sanjay already on the register or a different one — and a wrong
+   guess either duplicates a person or empties the wrong family. Picking
+   carries the Member ID, so the move is certain. */
+let PENDING_HEAD = null;
+
+/* =========================================================================
+   HOUSEHOLD ROSTER — enter a whole family in one sitting.
+   Opening the member form once per person meant re-picking the family,
+   re-typing the surname and re-choosing the village for every child in the
+   house. This is the sheet a committee member actually fills sitting on a
+   veranda: one line per person, Enter to move along, save once.
+   ========================================================================= */
+const REL_OPTS = ['Self','Wife','Husband','Son','Daughter','Father','Mother','Brother','Sister',
+                  'Daughter-in-law','Son-in-law','Grandson','Granddaughter','Other'];
+
+function openRoster(famId){
+  if(!canEdit()){ toast('Your account cannot add members', 'bad'); return; }
+  const fid = String(famId).trim();
+  const fam = (DB.families || []).find(x => String(x['Family ID']).trim() === fid);
+  if(!fam){ toast('Family not found', 'bad'); return; }
+  const head = String(fam['Family Head'] || '').trim();
+  /* Most households share a surname, so offer it rather than making someone
+     type "Jena" eleven times. */
+  const surname = head.split(/\s+/).slice(-1)[0] || '';
+  const existing = (DB.members || [])
+    .filter(m => String(m['Family ID'] || '').trim() === fid && !isDeceased(m))
+    .sort((a, b) => String(a['Member ID']).localeCompare(String(b['Member ID'])));
+
+  const row = (m, i) => {
+    const rel = String(m ? (m['Relation to Family Head'] || '') : '').trim();
+    const g = String(m ? (m['Gender'] || '') : '').trim();
+    /* The head's name lives on the Families sheet as well. Editing it here
+       would update the member row and leave the family still calling him by
+       the old name, so send that one rename to the place that owns it. */
+    const isHead = !!m && (rel.toLowerCase() === 'self' ||
+      (head && String(m['Name'] || '').trim().toLowerCase() === head.toLowerCase()));
+    return `<tr data-r="${i}" ${m ? `data-mid="${esc(String(m['Member ID'] || '').trim())}"` : ''}>
+      <td class="rno">${i + 1}${m ? `<span class="midtag">${esc(String(m['Member ID'] || '').trim())}</span>` : ''}</td>
+      <td data-label="Name">${isHead
+        ? `<span class="headlock" title="The head’s name is changed on the family record">${esc(m['Name'] || '')}</span>`
+        : `<input class="rin" data-f="Name" value="${esc(m ? (m['Name'] || '') : '')}" placeholder="Full name">`}</td>
+      <td data-label="Relation"><select class="rin" data-f="Relation to Family Head">
+        <option value=""></option>
+        ${REL_OPTS.map(o => `<option ${rel === o ? 'selected' : ''}>${o}</option>`).join('')}
+      </select></td>
+      <td data-label="Gender"><select class="rin rsx" data-f="Gender">
+        <option value=""></option>
+        <option ${g === 'Male' ? 'selected' : ''}>Male</option>
+        <option ${g === 'Female' ? 'selected' : ''}>Female</option>
+        <option ${g === 'Other' ? 'selected' : ''}>Other</option>
+      </select></td>
+      <td data-label="Age"><input class="rin rage" data-f="Age" type="number" min="0" max="120"
+           value="${esc(m ? (m['Age'] || '') : '')}" placeholder="—"></td>
+      <td data-label="Mobile"><input class="rin rtel" data-f="Mobile" value="${esc(m ? (m['Mobile'] || '') : '')}" placeholder="—"></td>
+    </tr>`;
+  };
+
+  openModal(`
+    <header>
+      <div><h3>${esc(head || fid)}</h3>
+      <div class="sub">Everyone in the household · ${esc(fid)}</div></div>
+      <div class="sp"></div><button class="btn btn-sm" onclick="closeModal()">Cancel</button>
+    </header>
+    <div class="body">
+      <div class="fieldnote">One line per person. <kbd>Enter</kbd> moves along and opens a fresh line at the end.
+      Leave a line blank to skip it. The head’s name is set on the family record, so it is shown here but not editable.
+      Dates of birth, photos and occupations can be filled in later from each member’s page.</div>
+      <div class="tablewrap" style="max-height:none;margin-top:14px">
+        <table class="roster">
+          <colgroup><col class="cno"><col class="cname"><col class="crel"><col class="csex">
+            <col class="cage"><col class="ctel"></colgroup>
+          <thead><tr><th class="rno">#</th><th>Name</th><th>Relation</th><th>Gender</th>
+            <th>Age</th><th>Mobile</th></tr></thead>
+          <tbody id="rBody">
+            ${existing.map(row).join('')}
+            ${[0, 1, 2].map((_, k) => row(null, existing.length + k)).join('')}
+          </tbody>
+        </table>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <button class="btn btn-sm" id="rAdd">+ Another line</button>
+        ${surname ? `<button class="btn btn-sm" id="rSur">Add “${esc(surname)}” to bare first names</button>` : ''}
+        <span class="muted small" id="rCount"></span>
+      </div>
+    </div>
+    <footer>
+      <button class="btn" onclick="closeModal()">Close</button>
+      <button class="btn btn-primary" id="rSave">Save the household</button>
+    </footer>`);
+
+  const body = document.getElementById('rBody');
+  /* The head's row shows a locked span rather than an input, so every reader
+     of a row's name must go through here — a bare querySelector returns null
+     on that row and takes the whole modal down with it. */
+  const nameOf = tr => {
+    const i = tr.querySelector('[data-f="Name"]');
+    if(i) return i.value.trim();
+    const l = tr.querySelector('.headlock');
+    return l ? l.textContent.trim() : '';
+  };
+  const count = () => {
+    const filled = [...body.querySelectorAll('tr')].filter(tr => nameOf(tr)).length;
+    const el = document.getElementById('rCount');
+    if(el) el.textContent = filled + ' name' + (filled === 1 ? '' : 's') + ' on the list';
+  };
+
+  const addRow = () => {
+    const i = body.querySelectorAll('tr').length;
+    body.insertAdjacentHTML('beforeend', row(null, i));
+    wire();
+    return body.lastElementChild;
+  };
+
+  function wire(){
+    body.querySelectorAll('.rin').forEach(el => {
+      if(el.dataset.wired) return;
+      el.dataset.wired = '1';
+      el.addEventListener('input', count);
+      el.addEventListener('keydown', ev => {
+        if(ev.key !== 'Enter') return;
+        ev.preventDefault();
+        const all = [...body.querySelectorAll('.rin')];
+        const next = all[all.indexOf(el) + 1];
+        if(next){ next.focus(); if(next.select) next.select(); return; }
+        const tr = addRow();
+        tr.querySelector('[data-f="Name"]').focus();
+      });
+    });
+  }
+  wire();
+
+  document.getElementById('rAdd').onclick = () => {
+    addRow().querySelector('[data-f="Name"]').focus();
+  };
+
+  const sur = document.getElementById('rSur');
+  if(sur) sur.onclick = () => {
+    let n = 0;
+    body.querySelectorAll('[data-f="Name"]').forEach(inp => {
+      const v = inp.value.trim();
+      if(v && !/\s/.test(v)){ inp.value = v + ' ' + surname; n++; }
+    });
+    toast(n ? surname + ' added to ' + n + ' name' + (n === 1 ? '' : 's') : 'Every name already has a surname', n ? 'good' : '');
+  };
+
+  document.getElementById('rSave').onclick = async () => {
+    const btn = document.getElementById('rSave');
+    const rows = [...body.querySelectorAll('tr')].map(tr => {
+      const get = f => {
+        const el = tr.querySelector(`[data-f="${f}"]`);
+        return el ? el.value.trim() : '';
+      };
+      const locked = tr.querySelector('.headlock');
+      return { mid: tr.dataset.mid || '', name: nameOf(tr),
+               rel: get('Relation to Family Head'),
+               gender: get('Gender'), age: get('Age'), mobile: get('Mobile') };
+    }).filter(r => r.name);
+
+    if(!rows.length){ toast('Nothing to save — add at least one name', 'bad'); return; }
+
+    /* Two people in one household with the same name is a typo, not a fact. */
+    const seen = new Set(), dupe = rows.find(r => {
+      const k = r.name.toLowerCase();
+      if(seen.has(k)) return true;
+      seen.add(k); return false;
+    });
+    if(dupe){ toast('“' + dupe.name + '” appears twice on the list', 'bad'); return; }
+
+    btn.disabled = true;
+    let saved = 0, err = '';
+    for(const r of rows){
+      const was = r.mid ? (DB.members || []).find(m => String(m['Member ID']).trim() === r.mid) : null;
+      const rec = Object.assign({}, was || {}, {
+        'Member ID': r.mid || freeMemberId(),
+        'Family ID': fid,
+        'Name': r.name
+      });
+      if(r.rel) rec['Relation to Family Head'] = r.rel;
+      if(r.gender) rec['Gender'] = r.gender;
+      if(r.age) rec['Age'] = r.age;
+      if(r.mobile) rec['Mobile'] = r.mobile;
+      /* Unchanged rows cost a round trip each; skip them. */
+      if(was && ['Name','Relation to Family Head','Gender','Age','Mobile']
+          .every(k => String(was[k] || '') === String(rec[k] || ''))) continue;
+      btn.textContent = 'Saving ' + (saved + 1) + ' of ' + rows.length + '…';
+      try {
+        const res = await api('save', { sheet: MODULES.members.sheet, record: JSON.stringify(rec) });
+        if(!res || !res.ok) throw new Error((res && res.error) || 'the sheet refused the row');
+        upsertLocal('members', rec);
+        saved++;
+      } catch(e){ if(!err) err = e.message || String(e); }
+    }
+    closeModal();
+    if(saved) toast(saved + ' member' + (saved === 1 ? '' : 's') + ' saved to ' + (head || fid), 'good');
+    else if(!err) toast('Nothing had changed', '');
+    if(err) toast('Some rows failed: ' + err, 'bad');
+    render();
+  };
+
+  /* Last, so a throw in here can never leave Save unwired. */
+  count();
+}
+
+/* =========================================================================
+   HOUSEHOLD — one page holding a main family, every subfamily under it and
+   every person in all of them, each field editable in place.
+   The profile modal answers "tell me about this family"; this answers
+   "sit down with the household and get the register right", which is what a
+   committee member is actually doing on a veranda.
+   ========================================================================= */
+let HOUSEHOLD_ID = null;
+
+/* Subfamilies point at a parent; follow that up to the top of the house. */
+function householdRoot(id){
+  let cur = String(id || '').trim(), guard = 0;
+  while(guard++ < 12){
+    const f = (DB.families || []).find(x => String(x['Family ID']).trim() === cur);
+    const par = f ? String(f['Parent Family ID'] || '').trim() : '';
+    if(!par || par === cur) return cur;
+    cur = par;
+  }
+  return cur;
+}
+function householdBranches(rootId){
+  const root = (DB.families || []).find(x => String(x['Family ID']).trim() === rootId);
+  const subs = (DB.families || [])
+    .filter(x => String(x['Parent Family ID'] || '').trim() === rootId)
+    .sort((a, b) => String(a['Family ID']).localeCompare(String(b['Family ID'])));
+  return root ? [root].concat(subs) : subs;
+}
+function openHousehold(id){
+  HOUSEHOLD_ID = householdRoot(id);
+  closeModal();
+  go('household');
+}
+
+function renderHousehold(){
+  if(!canSee('families')){ $('#main').innerHTML = '<div class="empty"><b>Not available to your account</b></div>'; return; }
+  const rootId = HOUSEHOLD_ID;
+  const branches = householdBranches(rootId);
+  if(!branches.length){ $('#main').innerHTML = '<div class="empty"><b>Household not found</b></div>'; return; }
+  const root = branches[0];
+  const edit = canEdit();
+  const peopleOf = fid => (DB.members || [])
+    .filter(m => String(m['Family ID'] || '').trim() === String(fid).trim())
+    .sort((a, b) => String(a['Member ID']).localeCompare(String(b['Member ID'])));
+
+  const totalPeople = branches.reduce((a, b) => a + peopleOf(b['Family ID']).length, 0);
+  const living = branches.reduce((a, b) => a + peopleOf(b['Family ID']).filter(m => !isDeceased(m)).length, 0);
+
+  const branchCard = (b, i) => {
+    const fid = String(b['Family ID']).trim();
+    const head = String(b['Family Head'] || '').trim();
+    const people = peopleOf(fid);
+    const isRoot = i === 0;
+    const row = m => {
+      const mid = String(m['Member ID'] || '').trim();
+      const rel = String(m['Relation to Family Head'] || '').trim();
+      const g = String(m['Gender'] || '').trim();
+      const dead = isDeceased(m);
+      const isHead = rel.toLowerCase() === 'self' ||
+        (head && String(m['Name'] || '').trim().toLowerCase() === head.toLowerCase());
+      const fld = (label, inner) => `<label class="pf"><span>${label}</span>${inner}</label>`;
+      return `<div class="pcard${dead ? ' gone' : ''}" data-mid="${esc(mid)}" data-fid="${esc(fid)}">
+        <div class="pf pname"><span>Name${isHead ? ' · head' : ''}</span>${isHead || !edit
+          ? `<span class="headlock">${esc(m['Name'] || '')}</span>`
+          : `<input class="rin" data-f="Name" value="${esc(m['Name'] || '')}">`}</div>
+        ${fld('Relation', edit ? `<select class="rin" data-f="Relation to Family Head">
+          <option value=""></option>
+          ${REL_OPTS.map(o => `<option ${rel === o ? 'selected' : ''}>${o}</option>`).join('')}
+        </select>` : `<span class="ro">${esc(rel) || '—'}</span>`)}
+        ${fld('Gender', edit ? `<select class="rin" data-f="Gender"><option value=""></option>
+          <option ${g === 'Male' ? 'selected' : ''}>Male</option>
+          <option ${g === 'Female' ? 'selected' : ''}>Female</option>
+          <option ${g === 'Other' ? 'selected' : ''}>Other</option></select>` : `<span class="ro">${esc(g) || '—'}</span>`)}
+        ${fld('Age', edit ? `<input class="rin rage" data-f="Age" type="number" min="0" max="120" value="${esc(m['Age'] || '')}">` : `<span class="ro">${esc(m['Age'] || '—')}</span>`)}
+        ${fld('Mobile', edit ? `<input class="rin rtel" data-f="Mobile" value="${esc(m['Mobile'] || '')}">` : `<span class="ro">${esc(m['Mobile'] || '—')}</span>`)}
+        <div class="pfoot"><span class="whoid">${esc(mid)}${dead ? ' · <b>DECEASED</b>' : ''}</span>
+          <button class="btn btn-sm" data-openmem="${esc(mid)}">Open record</button></div>
+      </div>`;
+    };
+
+    return `<section class="branch${isRoot ? ' rootbranch' : ''}" data-branch="${esc(fid)}">
+      <div class="bhead">
+        <div class="bwho">
+          <span class="btag">${isRoot ? 'MAIN FAMILY' : 'SUBFAMILY ' + i}</span>
+          <b>${esc(head || fid)}</b>
+          <span class="muted small">${esc(fid)} · ${people.length} ${people.length === 1 ? 'person' : 'people'}</span>
+        </div>
+        <div class="sp"></div>
+        <div class="bacts">
+        ${edit ? `<button class="btn btn-sm" data-editfam="${esc(fid)}">Edit family</button>
+        <button class="btn btn-sm" data-roster="${esc(fid)}">Add people</button>` : ''}
+        <button class="btn btn-sm" data-openfam="${esc(fid)}">Full record</button>
+        </div>
+      </div>
+      <div class="bmeta"><span>Village Locality (Sahi): <b>${esc(b['Village Locality']||'Not entered')}</b></span>
+        <span>Surname: <b>${esc(b.Surname||'Not verified')}</b></span>
+        ${b['Mobile'] ? `<span class="tnum">${esc(b['Mobile'])}</span>` : ''}</div>
+      ${people.length ? `<div class="pcards">${people.map(row).join('')}</div>`
+        : `<div class="subnote">Nobody recorded in this branch yet.${edit ? ' Use <b>Add people</b> above.' : ''}</div>`}
+    </section>`;
+  };
+
+  $('#main').innerHTML = `
+    <div class="pagehead">
+      <div>
+        <h2>${esc(root['Family Head'] || rootId)} <span class="muted" style="font-size:16px">\u0B18\u0B30</span></h2>
+        <div class="sub">The whole household \u00b7 ${branches.length} ${branches.length === 1 ? 'branch' : 'branches'} \u00b7 ${living} living of ${totalPeople} recorded</div>
+      </div>
+      <div class="sp"></div>
+      <div class="hhacts">
+        <button class="btn btn-sm" onclick="go('families')">\u2190 All families</button>
+        ${edit ? `<button class="btn btn-sm" data-addsub="${esc(rootId)}">+ Add a subfamily</button>
+        <button class="btn btn-primary" id="hhSave" disabled>Save changes</button>` : ''}
+      </div>
+    </div>
+    ${edit ? '<div class="fieldnote">Change any box and the Save button wakes up. The head\u2019s name is set on the family record, so it is shown but not editable here.</div>' : ''}
+    <div class="branches">${branches.map(branchCard).join('')}</div>`;
+
+  /* One save for the whole house: collect only the rows that actually
+     differ, so a stray click does not rewrite forty rows in the sheet. */
+  const dirty = new Map();
+  const saveBtn = document.getElementById('hhSave');
+  const markDirty = tr => {
+    const mid = tr.dataset.mid;
+    const was = (DB.members || []).find(m => String(m['Member ID']).trim() === mid);
+    if(!was) return;
+    const vals = {};
+    tr.querySelectorAll('[data-f]').forEach(el => { vals[el.dataset.f] = el.value.trim(); });
+    const changed = Object.keys(vals).some(k => String(was[k] ?? '') !== vals[k]);
+    if(changed){ dirty.set(mid, { tr, vals }); tr.classList.add('edited'); }
+    else { dirty.delete(mid); tr.classList.remove('edited'); }
+    if(saveBtn){
+      saveBtn.disabled = dirty.size === 0;
+      saveBtn.textContent = dirty.size ? 'Save ' + dirty.size + ' change' + (dirty.size === 1 ? '' : 's') : 'Save changes';
+    }
+  };
+
+  $('#main').querySelectorAll('.pcard [data-f]').forEach(el => {
+    const tr = el.closest('.pcard');
+    el.addEventListener('input', () => markDirty(tr));
+    el.addEventListener('change', () => markDirty(tr));
+    el.addEventListener('keydown', ev => {
+      if(ev.key !== 'Enter') return;
+      ev.preventDefault();
+      const all = [...$('#main').querySelectorAll('.pcard [data-f]')];
+      const next = all[all.indexOf(el) + 1];
+      if(next){ next.focus(); if(next.select) next.select(); }
+      else if(saveBtn && !saveBtn.disabled) saveBtn.click();
+    });
+  });
+
+  $('#main').querySelectorAll('[data-openmem]').forEach(b => { b.onclick = () => openMember(b.dataset.openmem); });
+  $('#main').querySelectorAll('[data-openfam]').forEach(b => { b.onclick = () => openProfile(b.dataset.openfam); });
+  $('#main').querySelectorAll('[data-editfam]').forEach(b => { b.onclick = () => openSubfamilyQuickEdit(b.dataset.editfam,false); });
+  $('#main').querySelectorAll('[data-roster]').forEach(b => { b.onclick = () => openRoster(b.dataset.roster); });
+  $('#main').querySelectorAll('[data-addsub]').forEach(b => { b.onclick = () => openSubfamily(b.dataset.addsub); });
+
+  if(saveBtn) saveBtn.onclick = async () => {
+    if(!dirty.size) return;
+    saveBtn.disabled = true;
+    const list = [...dirty.entries()];
+    let ok = 0, err = '';
+    for(const [mid, { tr, vals }] of list){
+      const was = (DB.members || []).find(m => String(m['Member ID']).trim() === mid);
+      const rec = Object.assign({}, was, vals);
+      saveBtn.textContent = 'Saving ' + (ok + 1) + ' of ' + list.length + '\u2026';
+      try {
+        const r = await api('save', { sheet: MODULES.members.sheet, record: JSON.stringify(rec) });
+        if(!r || !r.ok) throw new Error((r && r.error) || 'the sheet refused the row');
+        upsertLocal('members', rec);
+        tr.classList.remove('edited');
+        tr.classList.add('rowsaved');
+        dirty.delete(mid);
+        ok++;
+      } catch(e){ if(!err) err = e.message || String(e); }
+    }
+    if(ok) toast(ok + ' ' + (ok === 1 ? 'person' : 'people') + ' updated', 'good');
+    if(err) toast('Some rows failed: ' + err, 'bad');
+    saveBtn.textContent = 'Save changes';
+    saveBtn.disabled = dirty.size === 0;
+    if(!dirty.size) setTimeout(() => render(), 900);
+  };
+
+  wirePhotoFallbacks($('#main'));
+}
+
+/* Only worth its own button when there is more than one branch to gather. */
+function isHousehold(f){
+  const id = String(f['Family ID'] || '').trim();
+  if(String(f['Parent Family ID'] || '').trim()) return true;
+  return (DB.families || []).some(x => String(x['Parent Family ID'] || '').trim() === id);
+}
+
+function openSubfamily(parentId){
+  const pid = String(parentId).trim();
+  const p = (DB.families || []).find(x => String(x['Family ID']).trim() === pid);
+  /* Never offer the household's own head. Moving him would empty the parent
+     of the very person its "Family Head" field names, and the next run of
+     "Add missing family heads" would then recreate him — the duplication
+     loop this picker exists to prevent. A subfamily head is by definition
+     someone other than the head of the household it splits from. */
+  const pHead = String(p ? (p['Family Head'] || '') : '').trim().toLowerCase();
+  const pool = (DB.members || []).filter(m =>
+    String(m['Family ID'] || '').trim() === pid && !isDeceased(m) &&
+    String(m['Name'] || '').trim().toLowerCase() !== pHead &&
+    String(m['Relation to Family Head'] || '').trim().toLowerCase() !== 'self');
+
+  const start = (memberId) => {
+    const m = memberId ? pool.find(x => String(x['Member ID']).trim() === memberId) : null;
+    closeModal();
+    PENDING_HEAD = memberId ? { memberId: memberId, from: pid } : null;
+    openForm('families', null, Object.assign({
+      'Parent Family ID': pid,
+      'Village Locality': p ? (p['Village Locality'] || '') : '',
+      'Surname': m ? (malNameTidy_(m.Surname) || (malSurnameProposal_('members',m)||{}).surname || (p ? p.Surname || '' : '')) : (p ? p.Surname || '' : ''),
+      'Given Name': m ? (malNameTidy_(m['Given Name']) || (malSurnameProposal_('members',m)||{}).given || '') : ''
+    }, m ? {
+      'Family Head': m['Name'] || '',
+      'Head Gender': m['Gender'] || '',
+      'Mobile': m['Mobile'] || (p ? p['Mobile'] || '' : '')
+    } : {}));
+  };
+
+  if(!pool.length){ start(null); return; }
+  openModal(`
+    <header>
+      <div><h3>Who heads this subfamily?</h3>
+      <div class="sub">${esc(p ? (p['Family Head'] || pid) : pid)} · ${pool.length} member${pool.length === 1 ? '' : 's'}</div></div>
+      <div class="sp"></div><button class="btn btn-sm" onclick="closeModal()">Cancel</button>
+    </header>
+    <div class="body">
+      <p class="muted small">Pick the married son, brother or daughter-in-law who now keeps a separate
+      kitchen. Their record moves across whole — photo, age and history intact — so nobody is counted twice.</p>
+      <div class="pickgrid">
+        ${pool.map(m => {
+          const mid = esc(String(m['Member ID'] || '').trim());
+          const rel = String(m['Relation to Family Head'] || '').trim();
+          const age = m['Age'] ? m['Age'] + ' yrs' : '';
+          return `<button class="pickone" data-head="${mid}">
+            <b>${esc(m['Name'] || '')}</b>
+            <span>${esc([mid, rel, age].filter(Boolean).join(' · '))}</span>
+          </button>`;
+        }).join('')}
+      </div>
+      <div style="margin-top:16px">
+        <button class="btn" id="headNew">The head is not on this list</button>
+        <div class="fieldnote" style="margin-top:6px">Use this only for someone genuinely new to the register — a
+        wife who has just come to the village, for instance.</div>
+      </div>
+    </div>`);
+
+  document.querySelectorAll('[data-head]').forEach(b => { b.onclick = () => start(b.dataset.head); });
+  document.getElementById('headNew').onclick = () => start(null);
+}
+
+
+/* =========================================================================
+   PRINT — admins choose the columns
+   ========================================================================= */
+const PRINT_PREF = k => 'Print ' + MODULES[k].sheet;
+
+function openPrint(key, rows){
+  const m = MODULES[key];
+  const every = allFields(key).filter(f => f.t !== 'photo' && !(key==='families' && (f.n==='House No'||f.n==='Address/Area'))).map(f => f.n);
+  let chosen = [];
+  try { chosen = JSON.parse(setting(PRINT_PREF(key), '[]')) || []; } catch(e){}
+  if(!chosen.length) chosen = listCols(key).filter(c => fieldDef(key, c).t !== 'photo');
+
+  openModal(`
+    <header>
+      <div><h3>Print ${esc(m.title.toLowerCase())}</h3>
+      <div class="sub">${rows.length} row${rows.length === 1 ? '' : 's'} · tick the columns you want on paper</div></div>
+      <div class="sp"></div><button class="btn btn-sm" onclick="closeModal()">Close</button>
+    </header>
+    <div class="body">
+      <div class="pagegrid">
+        ${every.map(c => `<label class="colrow"><input type="checkbox" data-pc="${esc(c)}" ${chosen.includes(c) ? 'checked' : ''}> ${esc(c)}</label>`).join('')}
+      </div>
+      <div class="colrow" style="margin-top:14px">
+        <button class="btn btn-sm" id="pcAll">Tick all</button>
+        <button class="btn btn-sm" id="pcNone">Untick all</button>
+      </div>
+      <h4 class="msec">Page</h4>
+      <div class="colrow" style="margin-bottom:10px">
+        <label class="colrow" style="gap:7px"><input type="radio" name="pcOrient" value="portrait"> Portrait</label>
+        <label class="colrow" style="gap:7px"><input type="radio" name="pcOrient" value="landscape" checked> Landscape <span class="muted small">(fits more columns)</span></label>
+      </div>
+      <div class="colgrid">
+        <label class="colrow"><input type="checkbox" id="pcTotals" checked> Print money totals at the end</label>
+        <label class="colrow"><input type="checkbox" id="pcRemember" checked> Remember these columns for everyone</label>
+      </div>
+      <label class="lbl" for="pcTitle" style="margin-top:14px;display:block">Heading on the paper</label>
+      <input class="input" id="pcTitle" value="${esc(String(setting('Village Name', 'Malipatana')) + ' · ' + m.title)}">
+    </div>
+    <footer><button class="btn btn-primary" id="pcGo">Print</button></footer>`);
+
+  const modal = document.getElementById('modalRoot');
+  modal.querySelector('#pcAll').onclick = () => modal.querySelectorAll('[data-pc]').forEach(x => x.checked = true);
+  modal.querySelector('#pcNone').onclick = () => modal.querySelectorAll('[data-pc]').forEach(x => x.checked = false);
+  modal.querySelector('#pcGo').onclick = async () => {
+    const cols = [...modal.querySelectorAll('[data-pc]')].filter(x => x.checked).map(x => x.dataset.pc);
+    if(!cols.length){ toast('Tick at least one column', 'bad'); return; }
+    const opts = {
+      land: (modal.querySelector('input[name="pcOrient"]:checked') || {}).value === 'landscape',
+      totals: modal.querySelector('#pcTotals').checked,
+      title: modal.querySelector('#pcTitle').value.trim()
+    };
+    if(modal.querySelector('#pcRemember').checked){
+      const rec = { Setting: PRINT_PREF(key), Value: JSON.stringify(cols) };
+      try {
+        const r = await api('save', { sheet: MODULES.settingsList.sheet, record: JSON.stringify(rec) });
+        if(r && r.ok){ DB.settings = DB.settings || {}; DB.settings[PRINT_PREF(key)] = rec.Value; }
+      } catch(e){}
+    }
+    closeModal();
+    printRows(key, rows, cols, opts);
+  };
+}
+
+function printRows(key, rows, cols, opts){
+  const m = MODULES[key];
+  const moneyCols = cols.filter(c => fieldDef(key, c).t === 'money');
+  const cell = (r, c) => {
+    const f = fieldDef(key, c), v = r[c];
+    if(f.t === 'money') return v === '' || v == null ? '' : money(v);
+    if(f.t === 'date') return fmtDate(v);
+    if(f.t === 'event') return eventName(v) || (v || '');
+    return v == null ? '' : String(v);
+  };
+  const totals = moneyCols.map(c => `${esc(c)}: <b>${money(rows.reduce((a, r) => a + num(r[c]), 0))}</b>`).join(' · ');
+
+  const old = document.getElementById('printArea');
+  if(old) old.remove();
+  const el = document.createElement('div');
+  el.id = 'printArea';
+  el.className = opts.land ? 'land' : '';
+  el.innerHTML = `
+    <div class="phead">
+      <div>
+        <h1>${esc(opts.title || m.title)}</h1>
+        <div class="psub">${rows.length} record${rows.length === 1 ? '' : 's'} · printed ${esc(fmtDate(today()))}</div>
+      </div>
+      <div class="pstamp">ଆମ ଗାଁ ମାଳିପାଟଣା</div>
+    </div>
+    <table>
+      <thead><tr>${cols.map(c => `<th class="${['money','number'].includes(fieldDef(key, c).t) ? 'num' : ''}">${esc(c)}</th>`).join('')}</tr></thead>
+      <tbody>${rows.map(r => '<tr>' + cols.map(c =>
+        `<td class="${['money','number'].includes(fieldDef(key, c).t) ? 'num' : ''}">${esc(cell(r, c))}</td>`).join('') + '</tr>').join('')}</tbody>
+    </table>
+    ${opts.totals && totals ? `<div class="ptotals">${totals}</div>` : ''}
+    <div class="psign"><span>Secretary</span><span>Treasurer</span><span>President</span></div>`;
+  document.body.appendChild(el);
+  let pageRule = document.getElementById('printPage');
+  if(!pageRule){ pageRule = document.createElement('style'); pageRule.id = 'printPage'; document.head.appendChild(pageRule); }
+  pageRule.textContent = '@page{size:A4 ' + (opts.land ? 'landscape' : 'portrait') + ';margin:12mm}';
+  document.body.classList.add('printing');
+  const cleanup = () => {
+    document.body.classList.remove('printing'); el.remove();
+    const pr = document.getElementById('printPage'); if(pr) pr.remove();
+    window.removeEventListener('afterprint', cleanup);
+  };
+  window.addEventListener('afterprint', cleanup);
+  setTimeout(() => window.print(), 60);
+}
+
+/* =========================================================================
+   PER-USER ACCESS (admin)
+   ========================================================================= */
+function openAccess(username){
+  if(!isAdmin()) return;
+  const u = (DB.users || []).find(x => String(x['Username']).trim() === String(username).trim()) || { Username: username };
+  const role = String(u['Role'] || 'Viewer');
+  const a = accessOf(username) || {};
+  const pages = Array.isArray(a.pages) ? a.pages : [];
+  const usingRole = !a.pages && a.edit === undefined && a.del === undefined;
+
+  openModal(`
+    <header>
+      <div><h3>Access · ${esc(u['Name'] || username)}</h3>
+      <div class="sub">${esc(username)} · role ${esc(role)}${usingRole ? ' · following the role' : ' · custom'}</div></div>
+      <div class="sp"></div><button class="btn btn-sm" onclick="closeModal()">Close</button>
+    </header>
+    <div class="body">
+      <h4 class="msec">What this person can do</h4>
+      <div class="colgrid">
+        <label class="colrow"><input type="checkbox" id="acEdit" ${(a.edit !== undefined ? a.edit : ['admin','editor'].includes(role.toLowerCase())) ? 'checked' : ''}> Add and edit records</label>
+        <label class="colrow"><input type="checkbox" id="acDel" ${(a.del !== undefined ? a.del : role.toLowerCase() === 'admin') ? 'checked' : ''}> Delete records</label>
+      </div>
+
+      <h4 class="msec">Pages they can open</h4>
+      <div class="fieldnote" style="margin-bottom:8px">Nothing ticked means every page. The dashboard is always available.</div>
+      <div class="pagegrid">
+        ${ALL_PAGES.filter(p => p[0] !== 'dashboard').map(p =>
+          `<label class="colrow"><input type="checkbox" data-page="${p[0]}" ${pages.includes(p[0]) ? 'checked' : ''}> ${esc(p[1])}</label>`).join('')}
+      </div>
+      <div class="fieldnote">Admin pages (Users, Photos, Settings) stay admin-only whatever is set here.</div>
+    </div>
+    <footer>
+      <button class="btn" id="acClear">Follow the role instead</button>
+      <button class="btn btn-primary" id="acSave">Save access</button>
+    </footer>`);
+
+  const modal = document.getElementById('modalRoot');
+  const write = async (value) => {
+    const rec = { Setting: accessKey(username), Value: value };
+    const r = await api('save', { sheet: MODULES.settingsList.sheet, record: JSON.stringify(rec) });
+    if(!r || !r.ok) throw new Error((r && r.error) || 'could not save');
+    DB.settings = DB.settings || {};
+    DB.settings[accessKey(username)] = value;
+  };
+  modal.querySelector('#acSave').onclick = async () => {
+    const picked = [...modal.querySelectorAll('[data-page]')].filter(x => x.checked).map(x => x.dataset.page);
+    const value = JSON.stringify({
+      pages: picked,
+      edit: modal.querySelector('#acEdit').checked,
+      del: modal.querySelector('#acDel').checked
+    });
+    try { await write(value); closeModal(); render(); toast('Access updated for ' + username, 'good'); }
+    catch(e){ toast(e.message || String(e), 'bad'); }
+  };
+  modal.querySelector('#acClear').onclick = async () => {
+    try { await write(''); closeModal(); render(); toast(username + ' now follows the ' + role + ' role', 'good'); }
+    catch(e){ toast(e.message || String(e), 'bad'); }
+  };
+}
+
+/* =========================================================================
+   DECEASED MEMBERS
+   -------------------------------------------------------------------------
+   A person who has died stays in the register with their photo and history —
+   only the living are counted. Nothing is ever deleted.
+   ========================================================================= */
+const isDeceased = r => String(r['Life Status'] || '').trim().toLowerCase() === 'deceased';
+
+/* Household figures are counted from the living members, never typed.
+   COUNTED[col] = how to count it. */
+const COUNTED = {
+  'Total Members': list => list.length,
+  'Earning Members': list => list.filter(r => String(r['Earning Member'] || '').trim().toUpperCase() === 'YES').length,
+  'Children': list => list.filter(r => { const v=r['Age']; return v!=='' && v!=null && num(v)>=0 && num(v)<18; }).length,
+  'Elderly': list => list.filter(r => num(r['Age']) >= 60).length
+};
+function familyCount(famId, col){
+  const fn = COUNTED[col];
+  return fn ? fn(familyMembers(famId)) : 0;
+}
+const livingMembers = () => (DB.members || []).filter(r => !isDeceased(r));
+function familyMembers(famId, includeDeceased){
+  const list = (DB.members || []).filter(r => String(r['Family ID'] || '').trim() === String(famId).trim());
+  return includeDeceased ? list : list.filter(r => !isDeceased(r));
+}
+function deathsThisYear(){
+  const y = String(new Date().getFullYear());
+  return (DB.members || []).filter(r => isDeceased(r) && String(toISO(r['Date of Death']) || '').slice(0, 4) === y).length;
+}
+
+/* =========================================================================
+   IN MEMORY — the village's deceased, and the one place a death is recorded.
+   Search is by name, so a committee member types who died rather than
+   hunting for a member ID first.
+   ========================================================================= */
+let MEMO_Q = '';
+
+function renderMemorial(){
+  if(!canSee('members')){ $('#main').innerHTML = '<div class="empty"><b>Not available to your account</b></div>'; return; }
+  const edit = canEdit();
+  /* Recording a death is not ordinary editing: it retires a member, can hand a
+     family's headship to someone else, and writes a date the whole village
+     sees. Tributes stay open to editors; the death itself is the admin's. */
+  const rec = isAdmin();
+  const gone = (DB.members || []).filter(isDeceased);
+  const q = MEMO_Q.trim().toLowerCase();
+  const hit = m => !q || [m['Name'], m['Member ID'], m['Family ID'], m['Cause of Death']]
+    .some(v => String(v || '').toLowerCase().includes(q));
+
+  const withDate = gone.filter(m => toISO(m['Date of Death']));
+  const noDate = gone.filter(m => !toISO(m['Date of Death']));
+  const shown = gone.filter(hit).sort((a, b) =>
+    String(toISO(b['Date of Death']) || '').localeCompare(String(toISO(a['Date of Death']) || '')));
+  const thisYear = withDate.filter(m => String(toISO(m['Date of Death'])).slice(0, 4) === String(new Date().getFullYear()));
+
+  const famHead = m => {
+    const f = (DB.families || []).find(x => String(x['Family ID']).trim() === String(m['Family ID'] || '').trim());
+    return f ? String(f['Family Head'] || '').trim() : '';
+  };
+
+  const card = m => {
+    const mid = String(m['Member ID'] || '').trim();
+    const d = toISO(m['Date of Death']);
+    const dob = toISO(m['Date of Birth']);
+    const age = d && dob ? Math.floor((new Date(d) - new Date(dob)) / 31557600000) : (m['Age'] || '');
+    return `<article class="memo">
+      ${m['Photo'] ? `<img class="mimg" src="${esc(thumbUrl(m['Photo'], 200))}" alt="" loading="lazy">`
+        : '<span class="mimg mno">\u25E6</span>'}
+      <div class="mtx">
+        <b>${esc(m['Name'] || mid)}</b>
+        <div class="mline">${dob ? esc(String(new Date(dob).getFullYear())) + ' \u2013 ' : ''}${d ? esc(String(new Date(d).getFullYear())) : 'year not recorded'}${age ? ' \u00b7 aged ' + esc(age) : ''}</div>
+        <div class="mline">${d ? 'Died ' + esc(fmtDate(d)) : '<i>date of death not recorded</i>'}</div>
+        ${m['Cause of Death'] ? `<div class="mcause">${esc(m['Cause of Death'])}</div>` : ''}
+        <div class="mfoot">
+          <span class="whoid">${esc(mid)}${m['Family ID'] ? ' \u00b7 ' + esc(m['Family ID']) : ''}${famHead(m) ? ' \u00b7 ' + esc(famHead(m)) : ''}</span>
+          <button class="btn btn-sm" data-openmem="${esc(mid)}">Open record</button>
+          ${edit ? `<button class="btn btn-sm${m['Memorial Message'] || m['Memorial Photo'] ? ' btn-primary' : ''}" data-tribute="${esc(mid)}">${m['Memorial Message'] || m['Memorial Photo'] ? 'Tribute \u2713' : 'Add tribute'}</button>` : ''}
+          ${rec && !d ? `<button class="btn btn-sm" data-fixdeath="${esc(mid)}">Add the date</button>` : ''}
+        </div>
+      </div>
+    </article>`;
+  };
+
+  $('#main').innerHTML = `
+    <div class="pagehead">
+      <div><h2>In memory <span class="muted" style="font-size:16px">\u0B38\u0B4D\u0B2E\u0B43\u0B24\u0B3F</span></h2>
+      <div class="sub">${gone.length} ${gone.length === 1 ? 'person' : 'people'} remembered${thisYear.length ? ' \u00b7 ' + thisYear.length + ' this year' : ''}${noDate.length ? ' \u00b7 ' + noDate.length + ' without a date' : ''}</div></div>
+      <div class="sp"></div>
+      <div class="hhacts">
+        <button class="btn btn-sm" data-remcal="1">Remembrance calendar</button>
+        ${rec ? '<button class="btn btn-primary" id="memoAdd">+ Record a death</button>' : ''}
+      </div>
+    </div>
+
+    ${rec ? `<div class="panel" style="margin-bottom:16px">
+      <div class="panel-head"><h3>Record a death</h3></div>
+      <div class="panel-body">
+        <div class="fieldnote" style="margin-bottom:10px">Type the name of the person who has died. Date and cause are asked for next, and if they headed a family you will be asked who takes over.</div>
+        <div class="memofind">
+          <input class="input" id="memoWho" list="memoLiving" placeholder="Name of the person who died" autocomplete="off">
+          <button class="btn btn-primary" id="memoGo">Continue</button>
+        </div>
+        <datalist id="memoLiving">${(DB.members || []).filter(m => !isDeceased(m))
+          .map(m => `<option value="${esc(m['Name'])}">${esc(m['Member ID'])}${m['Family ID'] ? ' \u00b7 ' + esc(m['Family ID']) : ''}${m['Age'] ? ' \u00b7 ' + esc(m['Age']) : ''}</option>`).join('')}</datalist>
+        <div id="memoMatches"></div>
+      </div>
+    </div>` : ''}
+
+    <div class="toolbar" style="margin-bottom:12px">
+      <input class="input" id="memoSearch" placeholder="Search the deceased\u2026" value="${esc(MEMO_Q)}" style="flex:1;min-width:180px">
+      ${MEMO_Q ? '<button class="btn btn-sm" id="memoClear">Clear</button>' : ''}
+    </div>
+
+    ${shown.length ? `<div class="memos">${shown.map(card).join('')}</div>`
+      : `<div class="empty"><b>${gone.length ? 'Nobody matches that search' : 'Nobody recorded yet'}</b>
+        <div class="muted small" style="margin-top:6px">${gone.length ? 'Try part of a name.'
+          : 'When a villager dies, use Record a death above. The person stays in the register \u2014 they simply stop being counted as living.'}</div></div>`}`;
+
+  const findWho = () => {
+    const raw = ($('#memoWho') || {}).value || '';
+    const s = raw.trim().toLowerCase();
+    if(!s) return null;
+    const living = (DB.members || []).filter(m => !isDeceased(m));
+    const exact = living.filter(m => String(m['Name'] || '').trim().toLowerCase() === s ||
+      String(m['Member ID'] || '').trim().toLowerCase() === s);
+    const part = living.filter(m => String(m['Name'] || '').toLowerCase().includes(s) &&
+      String(m['Name'] || '').trim().toLowerCase() !== s);
+    return exact.concat(part);
+  };
+
+  const go = () => {
+    const found = findWho();
+    const box = $('#memoMatches');
+    if(!found || !found.length){
+      box.innerHTML = '<div class="fieldnote" style="color:var(--brick)">No living member found by that name. Check the spelling, or add the person to Members first.</div>';
+      return;
+    }
+    if(found.length === 1){ box.innerHTML = ''; markDeceased(String(found[0]['Member ID']).trim()); return; }
+    /* Two people can share a name in a village; make the committee pick. */
+    box.innerHTML = '<div class="fieldnote">More than one person by that name \u2014 choose which:</div>' +
+      '<div class="memopick">' + found.slice(0, 8).map(m => `<button class="btn" data-pick="${esc(m['Member ID'])}">${esc(m['Name'])}
+        <span class="muted small">${esc(m['Member ID'])}${m['Family ID'] ? ' \u00b7 ' + esc(m['Family ID']) : ''}${m['Age'] ? ' \u00b7 ' + esc(m['Age']) : ''}</span></button>`).join('') + '</div>';
+    box.querySelectorAll('[data-pick]').forEach(b => { b.onclick = () => { box.innerHTML = ''; markDeceased(b.dataset.pick); }; });
+  };
+
+  if($('#memoGo')) $('#memoGo').onclick = go;
+  if($('#memoWho')) $('#memoWho').addEventListener('keydown', ev => {
+    if(ev.key === 'Enter'){ ev.preventDefault(); go(); }
+  });
+  if($('#memoAdd')) $('#memoAdd').onclick = () => { const i = $('#memoWho'); if(i){ i.focus(); i.select(); } };
+
+  const s = $('#memoSearch');
+  if(s) s.addEventListener('input', debounce(() => { MEMO_Q = s.value; renderMemorial(); }, 220));
+  if($('#memoClear')) $('#memoClear').onclick = () => { MEMO_Q = ''; renderMemorial(); };
+
+  $('#main').querySelectorAll('[data-openmem]').forEach(b => { b.onclick = () => openMember(b.dataset.openmem); });
+  $('#main').querySelectorAll('[data-fixdeath]').forEach(b => { b.onclick = () => markDeceased(b.dataset.fixdeath); });
+  $('#main').querySelectorAll('[data-tribute]').forEach(b => { b.onclick = () => openTribute(b.dataset.tribute); });
+  $('#main').querySelectorAll('[data-remcal]').forEach(b => { b.onclick = () => openRemembranceCalendar(); });
+  wirePhotoFallbacks($('#main'));
+}
+
+/* A tribute is the committee's own words, not a register field, so it gets
+   its own small form rather than another hidden box on the member record. */
+function openTribute(memberId){
+  if(!canEdit()){ toast('Your account cannot change records', 'bad'); return; }
+  const x = (DB.members || []).find(r => String(r['Member ID']).trim() === String(memberId).trim());
+  if(!x){ toast('Member not found', 'bad'); return; }
+  const msg = String(x['Memorial Message'] || '');
+  const pho = String(x['Memorial Photo'] || '');
+  const d = toISO(x['Date of Death']);
+
+  openModal(`
+    <header>
+      <div><h3>Tribute for ${esc(x['Name'] || memberId)}</h3>
+      <div class="sub">${esc(memberId)}${d ? ' · died ' + esc(fmtDate(d)) : ''}</div></div>
+      <div class="sp"></div><button class="btn btn-sm" onclick="closeModal()">Close</button>
+    </header>
+    <div class="body">
+      <div class="fieldnote">Shown on the remembrance band in the week before this person's anniversary, on whichever pages the admin has turned on. Keep it short — a line or two reads best.</div>
+      <label class="lbl" for="tbMsg" style="margin-top:14px;display:block">A few words</label>
+      <textarea class="input" id="tbMsg" rows="3" placeholder="e.g. A kind man who gave land for the village pond.">${esc(msg)}</textarea>
+      <label class="lbl" for="tbPho" style="margin-top:14px;display:block">A photograph for the memorial (optional)</label>
+      <input class="input" id="tbPho" value="${esc(pho)}" placeholder="https://drive.google.com/file/d/…/view">
+      <div class="fieldnote">A Drive link shared as <b>Anyone with the link · Viewer</b>, or a normal image URL. Leave empty to use the photo already on the member record${x['Photo'] ? '' : ', which is also empty for this person'}.</div>
+      ${pho || x['Photo'] ? `<div class="photoav" style="margin-top:14px;width:96px;height:96px">
+        <img data-srcs="${esc(photoSrcs(pho || x['Photo'], 200).join('|'))}" alt=""></div>` : ''}
+    </div>
+    <footer>
+      ${msg || pho ? '<button class="btn btn-danger" id="tbClear">Remove tribute</button>' : ''}
+      <button class="btn btn-primary" id="tbSave">Save tribute</button>
+    </footer>`);
+  wirePhotoFallbacks(document.getElementById('modalRoot'));
+
+  const write = async (message, photo, word) => {
+    const btn = document.getElementById(message || photo ? 'tbSave' : 'tbClear');
+    if(btn){ btn.disabled = true; btn.textContent = 'Saving\u2026'; }
+    const rec = Object.assign({}, x, { 'Memorial Message': message, 'Memorial Photo': photo });
+    try {
+      const r = await api('save', { sheet: MODULES.members.sheet, record: JSON.stringify(rec) });
+      if(!r || !r.ok) throw new Error((r && r.error) || 'the sheet refused the row');
+      upsertLocal('members', rec);
+      closeModal();
+      toast(word, 'good');
+      render();
+    } catch(e){
+      toast(e.message || String(e), 'bad');
+      if(btn){ btn.disabled = false; btn.textContent = message || photo ? 'Save tribute' : 'Remove tribute'; }
+    }
+  };
+
+  document.getElementById('tbSave').onclick = () => {
+    const m = document.getElementById('tbMsg').value.trim();
+    const p = document.getElementById('tbPho').value.trim();
+    if(!m && !p){ toast('Write a few words, or add a photograph', 'bad'); return; }
+    write(m, p, 'Tribute saved for ' + (x['Name'] || memberId));
+  };
+  const clr = document.getElementById('tbClear');
+  if(clr) clr.onclick = () => {
+    if(!confirm('Remove this tribute? The person stays in the register.')) return;
+    write('', '', 'Tribute removed');
+  };
+}
+
+/* Recording a death: mark the person, then settle the family head if needed. */
+async function markDeceased(memberId){
+  /* Guarded here too, so editing the page in a browser console changes nothing. */
+  if(!isAdmin()) { toast('Only the village admin can record a death', 'bad'); return; }
+  const x = (DB.members || []).find(r => String(r['Member ID']).trim() === String(memberId).trim());
+  if(!x) return;
+  const famId = String(x['Family ID'] || '').trim();
+  const fam = (DB.families || []).find(r => String(r['Family ID']).trim() === famId);
+  const wasHead = fam && String(fam['Family Head'] || '').trim().toLowerCase() === String(x['Name'] || '').trim().toLowerCase();
+  const others = familyMembers(famId).filter(r => String(r['Member ID']) !== String(memberId));
+
+  openModal(`
+    <header>
+      <div><h3>Record a death</h3><div class="sub">${esc(x['Name'] || memberId)} · ${esc(memberId)}${famId ? ' · ' + esc(famId) : ''}</div></div>
+      <div class="sp"></div><button class="btn btn-sm" onclick="closeModal()">Close</button>
+    </header>
+    <div class="body">
+      <div class="fieldnote" style="margin-bottom:14px">The person stays in the register with their photo and records. They simply stop being counted as living.</div>
+      <label class="lbl" for="dcDate">Date of death</label>
+      <input class="input" type="date" id="dcDate" value="${today()}" max="${today()}">
+      ${wasHead ? `
+        <h4 class="msec">This person is the family head</h4>
+        ${others.length ? `
+          <label class="lbl" for="dcHead">Who becomes the head of ${esc(famId)}?</label>
+          <select class="input" id="dcHead">
+            ${others.map(r => `<option value="${esc(r['Member ID'])}">${esc(r['Name'])} · ${esc(r['Relation to Family Head'] || '')}${r['Age'] ? ' · ' + esc(r['Age']) : ''}</option>`).join('')}
+            <option value="">— decide later —</option>
+          </select>
+          <div class="fieldnote">The family record is updated and that member's relation becomes Self.</div>`
+          : '<div class="fieldnote">No other living member is recorded in this family, so the family head is left blank.</div>'}` : ''}
+      <label class="lbl" for="dcCause" style="margin-top:14px;display:block">Cause of death</label>
+      <input class="input" id="dcCause" list="dcCauses" placeholder="e.g. old age, heart attack, accident">
+      <datalist id="dcCauses">${['Old age','Heart attack','Stroke','Cancer','Kidney failure','Tuberculosis',
+        'Diabetes','Accident','Snake bite','Drowning','Childbirth','Illness — not known']
+        .concat(distinct('members', 'Cause of Death')).map(v => `<option value="${esc(v)}"></option>`).join('')}</datalist>
+      <label class="lbl" for="dcNote" style="margin-top:14px;display:block">Remark (optional)</label>
+      <input class="input" id="dcNote" placeholder="e.g. funeral help given from the village fund">
+    </div>
+    <footer>
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" id="dcGo">Record death</button>
+    </footer>`);
+
+  const modal = document.getElementById('modalRoot');
+  modal.querySelector('#dcGo').onclick = async () => {
+    const btn = modal.querySelector('#dcGo');
+    const when = modal.querySelector('#dcDate').value || today();
+    const note = modal.querySelector('#dcNote').value.trim();
+    const cause = modal.querySelector('#dcCause').value.trim();
+    const heir = (modal.querySelector('#dcHead') || {}).value || '';
+    btn.disabled = true; btn.textContent = 'Saving…';
+    try {
+      const out = Object.assign({}, x, {
+        'Life Status': 'Deceased',
+        'Date of Death': when,
+        'Cause of Death': cause,
+        'Earning Member': 'NO',
+        'Remarks': [x['Remarks'], note].filter(Boolean).join(' · ')
+      });
+      let r = await api('save', { sheet: MODULES.members.sheet, record: JSON.stringify(out) });
+      if(!r || !r.ok) throw new Error((r && r.error) || 'the sheet refused the change');
+      upsertLocal('members', out);
+
+      if(wasHead){
+        const heirRec = heir ? (DB.members || []).find(m2 => String(m2['Member ID']) === String(heir)) : null;
+        const famOut = Object.assign({}, fam, { 'Family Head': heirRec ? String(heirRec['Name'] || '') : '' });
+        if(heirRec) famOut['Mobile'] = famOut['Mobile'] || heirRec['Mobile'] || '';
+        r = await api('save', { sheet: MODULES.families.sheet, record: JSON.stringify(famOut) });
+        if(!r || !r.ok) throw new Error((r && r.error) || 'family not updated');
+        upsertLocal('families', famOut);
+        if(heirRec){
+          const hOut = Object.assign({}, heirRec, { 'Relation to Family Head': 'Self' });
+          r = await api('save', { sheet: MODULES.members.sheet, record: JSON.stringify(hOut) });
+          if(r && r.ok) upsertLocal('members', hOut);
+        }
+      }
+      closeModal();
+      render();
+      toast(String(x['Name'] || memberId) + ' recorded as deceased' +
+        (wasHead && heir ? ' · new head saved' : ''), 'good');
+    } catch(e){
+      toast(e.message || String(e), 'bad');
+      btn.disabled = false; btn.textContent = 'Record death';
+    }
+  };
+}
+
+/* =========================================================================
+   RECURRING EXPENSES
+   ========================================================================= */
+const FREQ_MONTHS = { 'Monthly': 1, 'Quarterly': 3, 'Half Yearly': 6, 'Yearly': 12 };
+function addMonths(iso, n){
+  const d = new Date(iso || today());
+  if(isNaN(d)) return today();
+  const day = d.getDate();
+  d.setMonth(d.getMonth() + n);
+  if(d.getDate() < day) d.setDate(0);
+  return localISO(d);
+}
+function recurringDue(daysAhead){
+  const limit = addDays(today(), daysAhead === undefined ? 7 : daysAhead);
+  return (DB.recurring || []).filter(r =>
+    String(r['Active'] || 'YES').toUpperCase() !== 'NO' &&
+    String(r['Next Due'] || '') && toISO(r['Next Due']) <= limit)
+    .sort((a, b) => String(toISO(a['Next Due'])).localeCompare(String(toISO(b['Next Due']))));
+}
+function addDays(iso, n){
+  const d = new Date(iso);
+  d.setDate(d.getDate() + n);
+  return localISO(d);
+}
+function recurringMonthly(){
+  return (DB.recurring || []).reduce((a, r) =>
+    String(r['Active'] || 'YES').toUpperCase() === 'NO' ? a
+      : a + num(r['Amount']) / (FREQ_MONTHS[String(r['Frequency'] || 'Monthly')] || 1), 0);
+}
+
+/* One click turns a due bill into a real expenditure row and moves the due date on. */
+async function payRecurring(id, btn){
+  const r0 = (DB.recurring || []).find(x => String(x['Recurring ID']).trim() === String(id).trim());
+  if(!r0) return;
+  const due = toISO(r0['Next Due']) || today();
+  const exp = {
+    'Expense ID': nextId('expenditure'),
+    'Date': today(),
+    'Category': String(r0['Category'] || 'Administration'),
+    'Subcategory': 'Recurring · ' + String(r0['Frequency'] || ''),
+    'Description': String(r0['Expense Name'] || '') + ' (' + String(r0['Frequency'] || '') + ', due ' + fmtDate(due) + ')',
+    'Amount': String(num(r0['Amount'])),
+    'Paid To': String(r0['Paid To'] || ''),
+    'Payment Mode': 'Cash'
+  };
+  const next = Object.assign({}, r0, {
+    'Last Paid': today(),
+    'Next Due': addMonths(due, FREQ_MONTHS[String(r0['Frequency'] || 'Monthly')] || 1)
+  });
+  if(btn){ btn.disabled = true; btn.textContent = 'Saving…'; }
+  try {
+    const a = await api('save', { sheet: MODULES.expenditure.sheet, record: JSON.stringify(exp) });
+    if(!a || !a.ok) throw new Error((a && a.error) || 'expenditure not saved');
+    upsertLocal('expenditure', exp);
+    const b = await api('save', { sheet: MODULES.recurring.sheet, record: JSON.stringify(next) });
+    if(!b || !b.ok) throw new Error((b && b.error) || 'due date not updated');
+    upsertLocal('recurring', next);
+    toast(money(exp['Amount']) + ' recorded · next due ' + fmtDate(next['Next Due']), 'good');
+    render();
+  } catch(e){
+    toast(e.message || String(e), 'bad');
+    if(btn){ btn.disabled = false; btn.textContent = 'Mark paid'; }
+  }
+}
+
+function recurringPanel(){
+  const due = recurringDue(7);
+  const monthly = recurringMonthly();
+  if(!(DB.recurring || []).length){
+    return `<div class="panel"><div class="panel-head"><h3>Recurring expenses</h3></div>
+      <div class="empty"><b>Nothing set up yet</b>Add the bills the village pays every month — electricity, priest, sweeper.
+      ${canEdit() ? '<button class="btn btn-sm" style="margin-top:12px" onclick="go(\'recurring\')">Set up</button>' : ''}</div></div>`;
+  }
+  return `<div class="panel">
+    <div class="panel-head"><h3>Recurring expenses</h3>
+      <span class="muted small">about ${money(monthly)} a month</span>
+      <div class="sp"></div>
+      <button class="btn btn-sm" onclick="go('recurring')">All</button>
+    </div>
+    ${due.length ? due.map(r => {
+      const d = toISO(r['Next Due']);
+      const late = d < today();
+      return `<div class="alert">
+        <span class="dot" style="background:${late ? 'var(--brick)' : 'var(--turmeric)'}"></span>
+        <span><b>${esc(r['Expense Name'])} · ${money(r['Amount'])}</b>
+          <span class="muted">${late ? 'overdue since ' : 'due '}${esc(fmtDate(d))} · ${esc(r['Frequency'] || '')}${r['Paid To'] ? ' · ' + esc(r['Paid To']) : ''}</span></span>
+        ${canEdit() ? `<button class="btn btn-sm btn-primary" data-pay="${esc(r['Recurring ID'])}" style="margin-left:auto;white-space:nowrap">Mark paid</button>` : ''}
+      </div>`;
+    }).join('') : '<div class="alert"><span class="dot" style="background:var(--green)"></span><span><b>Nothing due this week</b><span class="muted">All recurring bills are up to date</span></span></div>'}
+  </div>`;
+}
+
+/* ---------- quick edit: save a single row in place ---------- */
+async function saveRow(key, id, btn){
+  const m = MODULES[key];
+  const tr = $('#main').querySelector('[data-row="' + id.replace(/"/g, '\\"') + '"]');
+  if(!tr) return;
+  const row = rowsOf(key).find(r => String(r[m.idField]).trim() === String(id).trim());
+  if(!row) return;
+  const out = Object.assign({}, row);
+  tr.querySelectorAll('input[data-col]').forEach(inp => { out[inp.dataset.col] = inp.value.trim(); });
+  if(m.fields.some(f => f.n === 'Last Updated')) out['Last Updated'] = today();
+  out['Entered By'] = String(USER && (USER.name || USER.username) || '');
+  out['Entered At'] = localStamp(new Date());
+
+  btn.disabled = true; btn.textContent = 'Saving…';
+  try {
+    const r = await saveThrough('save', { sheet: m.sheet, record: JSON.stringify(out) },
+      m.title + ' · ' + id);
+    if(!r || !r.ok) throw new Error((r && r.error) || 'the sheet refused the change');
+    upsertLocal(key, out);
+    btn.textContent = r.queued ? 'Queued' : 'Saved';
+    tr.classList.add('rowsaved');
+    setTimeout(() => { btn.disabled = false; btn.textContent = 'Save'; tr.classList.remove('rowsaved'); }, 1600);
+  } catch(e){
+    toast(e.message || String(e), 'bad');
+    btn.disabled = false; btn.textContent = 'Save';
+  }
+}
+
+/* ---------- column manager (admin) ---------- */
+function openColumns(key){
+  if(!isAdmin()) return;
+  const m = MODULES[key];
+  const custom = customCols(key);
+  let hidden = [];
+  try { hidden = JSON.parse(setting('Hidden ' + m.sheet, '[]')) || []; } catch(e){}
+
+  const builtin = (m.list || []).filter(c => c !== m.idField);
+  openModal(`
+    <header>
+      <div><h3>Columns · ${esc(m.title)}</h3>
+      <div class="sub">Show or hide the standard columns, and add your own</div></div>
+      <div class="sp"></div><button class="btn btn-sm" onclick="closeModal()">Close</button>
+    </header>
+    <div class="body">
+      <h4 class="msec">Standard columns</h4>
+      <div class="colgrid">
+        ${builtin.map(c => `<label class="colrow"><input type="checkbox" data-hide="${esc(c)}" ${hidden.includes(c) ? '' : 'checked'}> ${esc(c)}</label>`).join('')}
+      </div>
+      <div class="fieldnote">Unticked columns stay in the sheet but leave the table.</div>
+
+      <h4 class="msec">Your own columns</h4>
+      ${custom.length ? `<div class="colgrid">${custom.map((c, i) => `
+        <div class="colrow">
+          <label style="display:flex;align-items:center;gap:6px"><input type="checkbox" data-cshow="${i}" ${c.hidden ? '' : 'checked'}></label>
+          <input class="input" data-cname="${i}" value="${esc(c.n)}">
+          <select class="input" data-ctype="${i}" style="max-width:130px">${COL_TYPES.map(t => `<option ${c.t === t ? 'selected' : ''}>${t}</option>`).join('')}</select>
+          <button class="btn btn-sm btn-danger" data-cdel="${esc(c.n)}">Delete</button>
+        </div>`).join('')}</div>` : '<div class="muted small">None yet.</div>'}
+      <div class="fieldnote">Untick a custom column's box to hide it from the table too.</div>
+
+      <h4 class="msec">Add a column</h4>
+      <div class="colrow">
+        <input class="input" id="newColName" placeholder="Column name, e.g. Aadhaar">
+        <select class="input" id="newColType" style="max-width:130px">${COL_TYPES.map(t => `<option>${t}</option>`).join('')}</select>
+        <button class="btn btn-sm" id="newColAdd">Add</button>
+      </div>
+      <div class="fieldnote">The column is created in the <b>${esc(m.sheet)}</b> sheet as well, so what you type in it is saved.</div>
+    </div>
+    <footer><button class="btn btn-primary" id="colsSave">Save changes</button></footer>`);
+
+  const modal = document.getElementById('modalRoot');
+  modal.querySelector('#newColAdd').onclick = async () => {
+    const name = modal.querySelector('#newColName').value.trim();
+    const type = modal.querySelector('#newColType').value;
+    if(!name) return;
+    if(allFields(key).some(f => f.n.toLowerCase() === name.toLowerCase())){ toast('That column already exists', 'bad'); return; }
+    try {
+      await saveCols(key, custom.concat([{ n: name, t: type }]));
+      await sheetColumn('addColumn', key, name);
+      toast('Column "' + name + '" added', 'good');
+      closeModal(); render(); openColumns(key);
+    } catch(e){ toast(e.message || String(e), 'bad'); }
+  };
+  modal.querySelectorAll('[data-cdel]').forEach(b => {
+    b.onclick = async () => {
+      const name = b.dataset.cdel;
+      if(!confirm('Remove the column "' + name + '"? Its values stay in the sheet.')) return;
+      try {
+        await saveCols(key, custom.filter(c => c.n !== name));
+        toast('Column removed from the dashboard', 'good');
+        closeModal(); render();
+      } catch(e){ toast(e.message || String(e), 'bad'); }
+    };
+  });
+  modal.querySelector('#colsSave').onclick = async () => {
+    const hide = [...modal.querySelectorAll('[data-hide]')].filter(x => !x.checked).map(x => x.dataset.hide);
+    const renamed = custom.map((c, i) => ({
+      n: (modal.querySelector('[data-cname="' + i + '"]') || {}).value ? modal.querySelector('[data-cname="' + i + '"]').value.trim() : c.n,
+      t: (modal.querySelector('[data-ctype="' + i + '"]') || {}).value || c.t,
+      hidden: !(modal.querySelector('[data-cshow="' + i + '"]') || { checked: true }).checked,
+      was: c.n
+    }));
+    try {
+      for(const c of renamed){ if(c.was !== c.n) await sheetColumn('renameColumn', key, c.was, c.n); }
+      await saveCols(key, renamed.map(c => ({ n: c.n, t: c.t, hidden: c.hidden })));
+      const rec = { Setting: 'Hidden ' + m.sheet, Value: JSON.stringify(hide) };
+      const r = await api('save', { sheet: MODULES.settingsList.sheet, record: JSON.stringify(rec) });
+      if(!r || !r.ok) throw new Error((r && r.error) || 'could not save');
+      DB.settings['Hidden ' + m.sheet] = rec.Value;
+      closeModal(); render();
+      toast('Columns updated', 'good');
+    } catch(e){ toast(e.message || String(e), 'bad'); }
+  };
+}
+
+/* A completed major expense's whole cost belongs on the Expenditure page, so
+   it is summarised there — one line each, click through for the bills. */
+function functionsPanel(){
+  const evs = (DB.events || []).slice().sort((a, b) =>
+    String(b['Start Date'] || b['Year'] || '').localeCompare(String(a['Start Date'] || a['Year'] || '')));
+  if(!evs.length) return '';
+  const row = e => {
+    const id = String(e['Event ID'] || '').trim();
+    const t = eventTotals(id);
+    const budget = num(e['Budget']);
+    const over = budget && t.spent > budget;
+    const st = String(e['Status'] || 'Planned');
+    const tone = st.toLowerCase() === 'completed' ? 'good' : st.toLowerCase() === 'ongoing' ? 'warn' : '';
+    return `<tr>
+      <td data-label="Major expense"><button class="linkish" data-event="${esc(id)}">${esc(e['Event Name'] || id)}</button>
+        <span class="muted small">${esc(e['Type'] || '')}${e['Year'] ? ' · ' + esc(e['Year']) : ''}</span></td>
+      <td data-label="Status"><span class="pill ${tone}">${esc(st)}</span></td>
+      <td class="num tnum" data-label="Budget">${budget ? money(budget) : '—'}</td>
+      <td class="num tnum" data-label="Collected">${money(t.raised)}</td>
+      <td class="num tnum" data-label="Spent" style="${over ? 'color:var(--brick);font-weight:700' : ''}">${money(t.spent)}</td>
+      <td class="num tnum" data-label="Bills">${t.bills}</td>
+    </tr>`;
+  };
+  const spentAll = evs.reduce((a, e) => a + eventTotals(String(e['Event ID'] || '').trim()).spent, 0);
+  const doneCount = evs.filter(e => String(e['Status'] || '').toLowerCase() === 'completed').length;
+  return `<div class="panel" style="margin-bottom:16px">
+    <div class="panel-head"><h3>Major expenses</h3>
+      <span class="muted small">total spent ${money(spentAll)} · ${doneCount} completed</span>
+      <div class="sp"></div>
+      <button class="btn btn-sm" onclick="go('events')">All major expenses</button>
+    </div>
+    <div class="tablewrap" style="max-height:none">
+      <table class="grid">
+        <thead><tr><th>Function</th><th>Status</th><th class="num">Budget</th><th class="num">Collected</th><th class="num">Spent</th><th class="num">Bills</th></tr></thead>
+        <tbody>${evs.slice(0, 6).map(row).join('')}</tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
+/* =========================================================================
+   MAJOR EXPENSES (Raja Parba and the like)
+   ========================================================================= */
+function eventRows(id){
+  const same = r => String(r['Event ID'] || '').trim() === String(id).trim();
+  return { spent: (DB.expenditure || []).filter(same), raised: (DB.income || []).filter(same) };
+}
+function eventTotals(id){
+  const { spent, raised } = eventRows(id);
+  return {
+    spent: spent.reduce((a, r) => a + num(r['Amount']), 0),
+    raised: raised.reduce((a, r) => a + num(r['Amount']), 0),
+    bills: spent.length, donations: raised.length
+  };
+}
+function eventName(id){
+  const e = (DB.events || []).find(x => String(x['Event ID']).trim() === String(id).trim());
+  return e ? e['Event Name'] : '';
+}
+
+function openEvent(id){
+  const e = (DB.events || []).find(x => String(x['Event ID']).trim() === String(id).trim());
+  if(!e) return;
+  const { spent, raised } = eventRows(id);
+  const t = eventTotals(id);
+  const budget = num(e['Budget']);
+  const pct = budget ? Math.min(100, Math.round(t.spent / budget * 100)) : 0;
+  const left = budget ? budget - t.spent : null;
+  const net = t.raised - t.spent;
+  const done = String(e['Status'] || '').toLowerCase() === 'completed';
+
+  const rowsTable = (title, list, cols) => !list.length ? '' :
+    `<h4 class="msec">${esc(title)}</h4><div class="tablewrap" style="max-height:none"><table class="grid"><thead><tr>${
+      cols.map(c => `<th class="${c === 'Amount' ? 'num' : ''}">${esc(c)}</th>`).join('')}</tr></thead><tbody${title === 'Expenditure' ? ' id="evLines"' : ''}>${
+      list.map(r => '<tr>' + cols.map(c => `<td class="${c === 'Amount' ? 'num tnum' : ''}" data-label="${esc(c)}">${
+        c === 'Amount' ? money(r[c]) : (c === 'Date' ? esc(fmtDate(r[c])) : esc(String(r[c] == null ? '' : r[c])))
+      }</td>`).join('') + '</tr>').join('')}</tbody></table></div>`;
+
+  openModal(`
+    <header>
+      <div><h3>${esc(e['Event Name'] || id)}</h3>
+      <div class="sub">${esc(id)} · ${esc(e['Type'] || 'Major expense')}${e['Year'] ? ' · ' + esc(e['Year']) : ''}${e['In Charge'] ? ' · in charge ' + esc(e['In Charge']) : ''}</div></div>
+      <div class="sp"></div><button class="btn btn-sm" onclick="closeModal()">Close</button>
+    </header>
+    <div class="body">
+      <div class="strip" style="margin-top:0">
+        <div><div class="k">Budget</div><div class="v tnum" style="font-size:17px">${budget ? money(budget) : '—'}</div></div>
+        <div><div class="k">Spent</div><div class="v tnum" style="font-size:17px">${money(t.spent)}</div></div>
+        <div><div class="k">Collected</div><div class="v tnum" style="font-size:17px">${money(t.raised)}</div></div>
+        <div><div class="k">Left in budget</div><div class="v tnum" style="font-size:17px;color:${left !== null && left < 0 ? 'var(--brick)' : 'var(--green)'}">${left === null ? '—' : money(left)}</div></div>
+        <div><div class="k">Collected − spent</div><div class="v tnum" style="font-size:17px;color:${net < 0 ? 'var(--brick)' : 'var(--green)'}">${money(net)}</div></div>
+        <div><div class="k">Status</div><div class="v" style="font-size:15px">${esc(e['Status'] || 'Planned')}</div></div>
+      </div>
+      ${budget ? `<div class="meter" style="margin-top:16px"><i style="width:${pct}%"></i></div>
+        <div class="small muted" style="margin-top:6px">${pct}% of the budget spent</div>` : ''}
+      ${rowsTable('Expenditure', spent, ['Expense ID','Date','Category','Description','Paid To','Amount'])}
+      ${canEdit() ? `
+      <h4 class="msec">Add a bill to this expense</h4>
+      <div class="evadd">
+        <input class="input" type="date" id="evDate" value="${today()}" aria-label="Date">
+        <input class="input" id="evDesc" list="evItems" placeholder="What was bought or paid for" aria-label="Description">
+        <input class="input" id="evTo" list="evPayees" placeholder="Paid to" aria-label="Paid to">
+        <input class="input tnum" id="evAmt" type="number" min="0" step="1" placeholder="Amount" aria-label="Amount">
+        <button class="btn btn-primary" id="evSave">Add</button>
+      </div>
+      <datalist id="evItems">${['Electricity / lighting','Band party','Loudspeaker and mic','Pandal and stage',
+        'Decoration and flowers','Prasad and bhog','Priest dakshina','Sweets','Utensils hire','Transport',
+        'Cleaning','Volunteer refreshment','Generator','Printing and invitation']
+        .concat(distinct('expenditure', 'Description')).map(v => `<option value="${esc(v)}"></option>`).join('')}</datalist>
+      <datalist id="evPayees">${distinct('expenditure', 'Paid To').map(v => `<option value="${esc(v)}"></option>`).join('')}</datalist>
+      <div class="evfoot">
+        <span><b class="tnum" id="evRun">${money(t.spent)}</b> entered so far${budget ? ' of ' + money(budget) : ''}</span>
+        <span class="keyhint"><kbd>Enter</kbd> moves along · <kbd>Enter</kbd> on the amount adds the line</span>
+      </div>
+      <div class="fieldnote">Each line is saved in the Expenditure sheet tagged to ${esc(e['Event Name'] || id)}, so it also appears on the main Expenditure page.</div>` : ''}
+      ${rowsTable('Donations and income', raised, ['Income ID','Date','Income Type','Source','Amount'])}
+      ${!spent.length && !raised.length ? '<div class="muted small" style="margin-top:18px">Nothing recorded yet. Add expenditure or income and choose this major expense in the <b>Event ID</b> box.</div>' : ''}
+      ${e['Remarks'] ? `<div class="mremark" style="margin-top:18px">${esc(e['Remarks'])}</div>` : ''}
+    </div>
+    <footer>
+      ${canEdit() ? `<button class="btn" id="evFull">More detail</button>
+      ${done ? '' : `<button class="btn" id="evDone">Mark completed</button>`}
+      <button class="btn btn-primary" onclick="closeModal();openForm('events','${esc(id)}')">Edit major expense</button>` : ''}
+    </footer>`);
+
+  const full = document.getElementById('evFull');
+  if(full) full.onclick = () => { closeModal(); openForm('expenditure', null, {
+    'Event ID': id, 'Category': 'Festival', 'Subcategory': String(e['Type'] || ''), 'Approved By': String(e['In Charge'] || '')
+  }); };
+
+  const strip = ['evDate','evDesc','evTo','evAmt'].map(i => document.getElementById(i)).filter(Boolean);
+  strip.forEach((el, i) => el.addEventListener('keydown', ev => {
+    if(ev.key !== 'Enter') return;
+    ev.preventDefault();
+    const next = strip[i + 1];
+    if(next){ next.focus(); if(next.select) next.select(); }
+    else { const b = document.getElementById('evSave'); if(b) b.click(); }
+  }));
+
+  const addBtn = document.getElementById('evSave');
+  if(addBtn) addBtn.onclick = async () => {
+    const desc = document.getElementById('evDesc').value.trim();
+    const amt = document.getElementById('evAmt').value.trim();
+    if(!desc || !num(amt)){ toast('Write what it was for and the amount', 'bad'); return; }
+    const rec = {
+      'Expense ID': nextId('expenditure'),
+      'Date': document.getElementById('evDate').value || today(),
+      'Category': 'Festival',
+      'Subcategory': String(e['Type'] || ''),
+      'Event ID': id,
+      'Description': desc,
+      'Amount': amt,
+      'Paid To': document.getElementById('evTo').value.trim(),
+      'Approved By': String(e['In Charge'] || '')
+    };
+    addBtn.disabled = true; addBtn.textContent = 'Saving…';
+    try {
+      const r = await saveThrough('save', { sheet: MODULES.expenditure.sheet, record: JSON.stringify(rec) },
+        'Bill · ' + desc);
+      if(!r || !r.ok) throw new Error((r && r.error) || 'the sheet refused the row');
+      upsertLocal('expenditure', rec);
+      toast(money(amt) + ' added · ' + desc, 'good');
+      const run = document.getElementById('evRun');
+      if(run) run.textContent = money(eventTotals(id).spent);
+      const list = document.getElementById('evLines');
+      if(list){
+        const tr = document.createElement('tr');
+        tr.className = 'rowsaved';
+        tr.innerHTML = ['Expense ID','Date','Category','Description','Paid To','Amount']
+          .map(c => '<td' + (c === 'Amount' ? ' class="num tnum"' : '') + ' data-label="' + c + '">' +
+            esc(c === 'Amount' ? money(rec[c]) : c === 'Date' ? fmtDate(rec[c]) : (rec[c] || '')) + '</td>').join('');
+        list.appendChild(tr);
+        setTimeout(() => tr.classList.remove('rowsaved'), 1200);
+      }
+      ['evDesc','evTo','evAmt'].forEach(i => { const el2 = document.getElementById(i); if(el2) el2.value = ''; });
+      const d = document.getElementById('evDesc');
+      if(d) d.focus();
+      addBtn.disabled = false; addBtn.textContent = 'Add';
+      return;
+    } catch(err){
+      toast(err.message || String(err), 'bad');
+      addBtn.disabled = false; addBtn.textContent = 'Add';
+    }
+  };
+
+  const dn = document.getElementById('evDone');
+  if(dn) dn.onclick = async () => {
+    dn.disabled = true; dn.textContent = 'Saving…';
+    const out = Object.assign({}, e, { Status: 'Completed' });
+    if(!out['End Date']) out['End Date'] = today();
+    try {
+      const r = await api('save', { sheet: MODULES.events.sheet, record: JSON.stringify(out) });
+      if(!r || !r.ok) throw new Error((r && r.error) || 'save failed');
+      upsertLocal('events', out);
+      closeModal();
+      toast(esc(out['Event Name']) + ' marked completed — its total now shows on the Expenditure page', 'good');
+      render();
+    } catch(err){ toast(err.message || String(err), 'bad'); dn.disabled = false; dn.textContent = 'Mark completed'; }
+  };
+}
+
+/* =========================================================================
+   MEMBER DETAIL
+   ========================================================================= */
+function openMember(id){
+  const x = (DB.members || []).find(r => String(r['Member ID']).trim() === String(id).trim());
+  if(!x) return;
+  const famId = String(x['Family ID'] || '').trim();
+  const fam = (DB.families || []).find(r => String(r['Family ID']).trim() === famId);
+  const photo = String(x['Photo'] || '').trim();
+  const isHead = String(x['Relation to Family Head'] || '').trim().toLowerCase() === 'self';
+
+  const rowsFor = k => (DB[k] || []).filter(r =>
+    String(r['Member ID'] || '').trim() === String(id).trim() ||
+    String(r['Beneficiary'] || r['Patient'] || r['Student Name'] || r['Affected Person'] || '').trim().toLowerCase() === String(x['Name'] || '').trim().toLowerCase());
+  const med = rowsFor('medical'), edu = rowsFor('education'), ins = rowsFor('insurance'), sup = rowsFor('regularSupport');
+
+  const line = (k, v) => v === '' || v == null ? '' :
+    `<div class="dl"><dt>${esc(k)}</dt><dd>${esc(String(v))}</dd></div>`;
+
+  const helpBlock = (title, list, cols) => !list.length ? '' :
+    `<h4 class="msec">${esc(title)}</h4><div class="tablewrap" style="max-height:none"><table class="grid"><thead><tr>${
+      cols.map(c => `<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${
+      list.map(r => '<tr>' + cols.map(c => `<td data-label="${esc(c)}">${esc(String(r[c] == null ? '' : r[c]))}</td>`).join('') + '</tr>').join('')
+    }</tbody></table></div>`;
+
+  openModal(`
+    <header>
+      <div><h3>${esc(x['Name'] || id)}${isDeceased(x) ? ' <span class="pill gone">Deceased</span>' : ''}</h3>
+      <div class="sub">${esc(id)}${isHead ? ' · Family head' : ''}${famId ? ' · ' + esc(famId) : ''}${
+        isDeceased(x) && toISO(x['Date of Death']) ? ' · died ' + esc(fmtDate(x['Date of Death'])) : ''}${
+        isDeceased(x) && x['Cause of Death'] ? ' · ' + esc(x['Cause of Death']) : ''}</div></div>
+      <div class="sp"></div><button class="btn btn-sm" onclick="closeModal()">Close</button>
+    </header>
+    <div class="body">
+      <div class="mprofile">
+        <div class="mphoto${photo ? '' : ' none'}">
+          ${photo ? `<img data-srcs="${esc(photoSrcs(photo, 520).join('|'))}" alt="${esc(x['Name'] || '')}">` : `<span>${esc(initials(x['Name']))}</span>`}
+        </div>
+        <div class="mfacts">
+          <dl class="dlgrid">
+            ${line('Relation', x['Relation to Family Head'])}
+            ${line('Gender', x['Gender'])}
+            ${line('Father', x['Father Name'])}
+            ${line('Mother', x['Mother Name'])}
+            ${line('Marital status', x['Marital Status']||'Not recorded')}
+            ${line('Spouse name', x['Spouse Name'])}
+            ${line('Residence', x['Residence Status']||'Not verified')}
+            ${String(x['Residence Status']||'')!=='Living in Malipatana'?line('Current place', [x['Current City'],x['Current District'],x['Current State'],x['Current Country']].filter(Boolean).join(', ')):''}
+            ${line('Age', x['Age'])}
+            ${line('Date of birth', x['Date of Birth'] ? fmtDate(x['Date of Birth']) : '')}
+            ${line('Education', x['Education'])}
+            ${line('Occupation', x['Occupation'])}
+            ${line('Earning member', x['Earning Member'])}
+            ${line('Monthly income', x['Monthly Income'] ? money(x['Monthly Income']) : '')}
+            ${line('Mobile', x['Mobile'])}
+            ${line('Disability', x['Disability'])}
+            ${line('Insurance', x['Insurance'])}
+          </dl>
+          ${x['Remarks'] ? `<div class="mremark">${esc(x['Remarks'])}</div>` : ''}
+          ${photo ? `<button class="btn btn-sm" id="mBig">View photo full size</button>` : ''}
+        </div>
+      </div>
+      ${helpBlock('Medical', med, ['Medical ID','Date','Illness','Hospital','Total Cost','Assistance'])}
+      ${helpBlock('Education', edu, ['Education ID','Institution','Class/Course','Year','Total Fees','Village Assistance'])}
+      ${helpBlock('Regular support', sup, ['Support ID','Support Type','Monthly Amount','Start Date','Active'])}
+      ${helpBlock('Insurance', ins, ['Insurance ID','Policy Type','Company','Policy Number','Renewal Date'])}
+      ${!med.length && !edu.length && !sup.length && !ins.length
+        ? '<div class="muted small" style="margin-top:18px">No medical, education, support or insurance records for this person.</div>' : ''}
+    </div>
+    <footer>
+      ${famId ? `<button class="btn" onclick="closeModal();openProfile('${esc(famId)}')">Open family</button>` : ''}
+      ${canEdit() ? `<button class="btn btn-primary" onclick="closeModal();openForm('members','${esc(id)}')">Edit member</button>` : ''}
+    </footer>`);
+
+  const mroot = document.getElementById('modalRoot');
+  wirePhotoFallbacks(mroot || document);
+  if(mroot) wireActions(mroot);
+  const big = document.getElementById('mBig');
+  if(big) big.onclick = () => openPhoto(photo, x['Name'] || '');
+}
+
+/* =========================================================================
+   PHOTOS (admin) — stores the two links as rows in the Settings sheet
+   ========================================================================= */
+function renderPhotos(){
+  if(!isAdmin()){ $('#main').innerHTML = '<div class="empty"><b>Admins only</b>Ask the village admin for access.</div>'; return; }
+  const loginVal = String(setting('Login Photo', '') || '');
+  const dashVal = String(setting('Dashboard Photo', '') || '');
+  $('#main').innerHTML = `
+  <div class="pagehead">
+    <div><h2>Photos <span class="muted" style="font-size:16px">ଫଟୋ</span></h2>
+    <div class="sub">Set the picture on the sign-in screen and across the top of the dashboard</div></div>
+  </div>
+  <div class="cols">
+    <div class="panel">
+      <div class="panel-head"><h3>Sign-in screen</h3></div>
+      <div class="panel-body">
+        <label class="lbl" for="photoLogin">Picture link</label>
+        <input class="input" id="photoLogin" value="${esc(loginVal)}" placeholder="village.jpg">
+        <div class="fieldnote">Everyone sees this before signing in.</div>
+        <div class="photobox" id="prevLogin">No picture</div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h3>Dashboard top</h3></div>
+      <div class="panel-body">
+        <label class="lbl" for="photoDash">Picture link</label>
+        <input class="input" id="photoDash" value="${esc(dashVal)}" placeholder="village.jpg">
+        <div class="fieldnote">Shown above the fund ledger after signing in.</div>
+        <div class="photobox" id="prevDash">No picture</div>
+      </div>
+    </div>
+  </div>
+  <div class="toolbar" style="margin-top:16px">
+    <button class="btn btn-primary" id="photoSave">Save pictures</button>
+    <button class="btn" id="photoReset">Use the village temple photo</button>
+    <span class="muted small" style="margin-left:auto">Leave a box empty to fall back to ${esc(CONFIG.DEFAULT_PHOTO)}</span>
+  </div>
+  <div class="panel" style="margin-top:16px">
+    <div class="panel-head"><h3>Where to get a link</h3></div>
+    <div class="panel-body small" style="line-height:1.7">
+      <p style="margin:0 0 10px"><b>Photo kept with the website.</b> Upload the picture into the same GitHub folder as
+      index.html, then type just its file name here, such as <b>village.jpg</b>. This is the fastest to load and works offline of Drive.</p>
+      <p style="margin:0 0 10px"><b>Photo in Google Drive.</b> Share the file as <i>Anyone with the link</i>, copy that link and
+      paste it here. The link is converted automatically.</p>
+      <p style="margin:0"><b>Photo anywhere on the web.</b> Paste the full address ending in .jpg or .png.</p>
+    </div>
+  </div>`;
+
+  const li = $('#photoLogin'), di = $('#photoDash');
+  const preview = (input, box) => {
+    const url = photoSrc(input.value || CONFIG.DEFAULT_PHOTO);
+    const el = $(box);
+    if(!url){ el.textContent = 'No picture'; return; }
+    el.innerHTML = '<img alt="preview">';
+    const img = el.querySelector('img');
+    img.onerror = () => { el.textContent = 'That link did not load. Check it is shared publicly.'; };
+    img.src = url;
+  };
+  const both = () => { preview(li, '#prevLogin'); preview(di, '#prevDash'); };
+  li.oninput = debounce(both, 500);
+  di.oninput = debounce(both, 500);
+  both();
+
+  $('#photoReset').onclick = () => { li.value = CONFIG.DEFAULT_PHOTO; di.value = CONFIG.DEFAULT_PHOTO; both(); };
+
+
+  $('#photoSave').onclick = async () => {
+    const b = $('#photoSave'); b.disabled = true; b.textContent = 'Saving…';
+    try {
+      await api('save', { sheet: 'Settings', record: JSON.stringify({ Setting: 'Login Photo', Value: li.value.trim() }) });
+      await api('save', { sheet: 'Settings', record: JSON.stringify({ Setting: 'Dashboard Photo', Value: di.value.trim() }) });
+      DB.settings['Login Photo'] = li.value.trim();
+      DB.settings['Dashboard Photo'] = di.value.trim();
+      store.set('mal_login_photo', li.value.trim() || CONFIG.DEFAULT_PHOTO);
+      toast('Pictures saved', 'good');
+    } catch(e){ toast(e.message, 'bad'); }
+    finally { b.disabled = false; b.textContent = 'Save pictures'; }
+  };
+}
+
+/* ---------- public sticky notes (sign-in screen): reuses the dashboard's
+   own drawer/drag code by seeding DB.settings before calling it. isAdmin()
+   is false pre-login, so edit/delete/pin buttons hide themselves already. */
+function paintPublicSticky(){
+  api('publicSticky').then(r => {
+    if(!r || !r.ok || r.showOnLogin === false || !(r.notes || []).length) return;
+    DB = DB || {}; DB.settings = DB.settings || {};
+    DB.settings['Sticky Notes'] = JSON.stringify(r.notes.map(n => Object.assign({ pin: true, done: false }, n)));
+    buildStickyTab();
+    stickyBadge();
+    paintSticky();
+  }).catch(() => {});
+}
+
+function initLoginScreen(){
+  const fe = $('#feChip');
+  if(fe) fe.textContent = CONFIG.VERSION;
+
+  const saved = local.get('mal_saved_user');
+  if(saved){ $('#u').value = saved; $('#rememberMe').checked = true; $('#p').focus(); }
+
+  $('#pwToggle').onclick = () => {
+    const p = $('#p'), showing = p.type === 'text';
+    p.type = showing ? 'password' : 'text';
+    $('#pwToggle').textContent = showing ? 'Show' : 'Hide';
+    p.focus();
+  };
+
+  $('#repairBtn').onclick = repairCache;
+  malInitOtp();
+  bePing();
+  paintPublicSticky();
+  paintLoginRemembrance();
+  paintLoginDays();
+  paintLoginNotices();
+}
+
+/* Check the *deployed* Apps Script version. Never claim a backend version
+   merely because the matching source file was packaged or pasted elsewhere. */
+async function bePing(){
+  const chip = $('#beChip');
+  const notice = document.getElementById('backendMismatch');
+  const title = document.getElementById('backendMismatchTitle');
+  const detail = document.getElementById('backendMismatchText');
+  const link = document.getElementById('backendHealthLink');
+  if(!chip) return;
+  if(notice) notice.hidden = true;
+  if(link) link.href = CONFIG.API_URL + '?action=health';
+  try {
+    const r = await api('health');
+    if(r && r.ok){
+      const actual = String(r.version || 'BE ?').trim();
+      const matches = actual === CONFIG.EXPECTED_BACKEND;
+      chip.textContent = actual;
+      chip.className = 'vchip ' + (matches ? 'ok' : 'bad');
+      if(!matches && notice){
+        title.textContent = 'Frontend / backend version mismatch';
+        detail.textContent = 'The deployed Apps Script reports ' + actual + '; this frontend was built for ' + CONFIG.EXPECTED_BACKEND +
+          '. Check the /exec URL configured in index.html and its Apps Script deployment. Do not change version labels to conceal a mismatch.';
+        notice.hidden = false;
+      }
+    } else {
+      chip.textContent = 'BE error'; chip.className = 'vchip bad';
+      if(notice){
+        title.textContent = 'Unable to verify backend';
+        detail.textContent = 'The configured Apps Script deployment did not return a successful health response.';
+        notice.hidden = false;
+      }
+    }
+  } catch(e){
+    chip.textContent = 'BE unreachable'; chip.className = 'vchip bad';
+    if(notice){
+      title.textContent = 'Unable to reach backend';
+      detail.textContent = 'Check the Apps Script deployment URL and web-app access settings.';
+      notice.hidden = false;
+    }
+  }
+}
+
+/* Clears everything this site has stored on the device and reloads a fresh copy.
+   Useful when an old version of the page is stuck in the browser cache. */
+async function repairCache(){
+  const btn = $('#repairBtn');
+  btn.disabled = true;
+  btn.textContent = 'Clearing…';
+  const keepUser = local.get('mal_saved_user');
+  try { sessionStorage.clear(); } catch(e){}
+  try { localStorage.clear(); } catch(e){}
+  try {
+    if(window.caches){ const names = await caches.keys(); await Promise.all(names.map(n => caches.delete(n))); }
+  } catch(e){}
+  try {
+    if(navigator.serviceWorker){
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map(r => r.unregister()));
+    }
+  } catch(e){}
+  if(keepUser){ try { localStorage.setItem('mal_saved_user', keepUser); } catch(e){} }
+  btn.textContent = 'Reloading…';
+  const u = new URL(location.href);
+  u.searchParams.set('fresh', Date.now());
+  location.replace(u.toString());
+}
+
+/* =========================================================================
+   BOOT
+   ========================================================================= */
+/* =========================================================================
+   V4 ADD-ON — Action plan, family tree, growing ages, Run all setup
+   Wrapped in one function so nothing above can clash with these names.
+   ========================================================================= */
+(function(){
+/* ---- ages that grow by themselves ---- */
+function yearsBetween(a, b){
+  const [fy, fm, fd] = a.split('-').map(Number), [ty, tm, td] = b.split('-').map(Number);
+  let y = ty - fy; if(tm < fm || (tm === fm && td < fd)) y--; return y;
+}
+function liveAge(r){
+  const dob = toISO(r['Date of Birth']), t = today();
+  if(isDeceased(r)){ const dd = toISO(r['Date of Death']); if(dob && dd) return Math.max(0, yearsBetween(dob, dd)); return r['Age'] === '' || r['Age'] == null ? '' : num(r['Age']); }
+  if(dob) return Math.max(0, yearsBetween(dob, t));
+  if(r['Age'] === '' || r['Age'] == null) return '';
+  const on = toISO(r['Age As On']);
+  return num(r['Age']) + (on ? Math.max(0, yearsBetween(on, t)) : 0);
+}
+function applyLiveAges(db){
+  if(!db || !Array.isArray(db.members)) return db;
+  db.members.forEach(r => { r['Age'] = liveAge(r); });
+  const s = db.summary;
+  if(s){
+    const lv = db.members.filter(r => !isDeceased(r));
+    s.children = lv.filter(r => r['Age']!=='' && r['Age']!=null && num(r['Age'])>=0 && num(r['Age'])<18).length;
+    s.elderly = lv.filter(r => num(r['Age']) >= 60).length;
+  }
+  return db;
+}
+function stampAge(rec){
+  if(rec['Date of Birth']){
+    rec['Age As On']='';rec['Age Source']='DOB';
+  }else if(String(rec['Age']??'').trim()!==''&&!isDeceased(rec)){
+    rec['Age As On']=today();rec['Age Source']='Estimated';
+  }else{rec['Age As On']='';rec['Age Source']='';}
+}
+const _load = load;
+load = async function(){ const d = await _load(); applyLiveAges(DB); return d; };
+const _cachedDb = cachedDb;
+cachedDb = function(){ const c = _cachedDb(); if(c) applyLiveAges(c); return c; };
+const _saveThrough = saveThrough;
+saveThrough = function(action, params, label){
+  if(action === 'save' && params && params.sheet === 'Members'){
+    try { const rec = JSON.parse(params.record); stampAge(rec); params = Object.assign({}, params, { record: JSON.stringify(rec) }); } catch(e){}
+  }
+  return _saveThrough(action, params, label);
+};
+const _ageField = MODULES.members.fields.find(f => f.n === 'Age');
+if(_ageField) _ageField.hint = 'Optional: enter DOB if known, otherwise an estimated age if known. If neither is known, leave both blank; age will show Not recorded.';
+
+/* ---- family tree (FE V2.9) ---- */
+/* Relationship IDs are internal references for the optional family-tree feature.
+   Public/editable Member forms already ask Father Name, Mother Name and Spouse
+   Name: never show a second set of person-ID dropdowns. Keep the existing IDs
+   in the record so editing other details never erases family-tree links. */
+MODULES.members.fields.push({ n:'Father ID', t:'person', hidden:true }, { n:'Mother ID', t:'person', hidden:true }, { n:'Spouse ID', t:'person', hidden:true }, { n:'Age As On', t:'date', hidden:true }, { n:'Age Source', t:'text', hidden:true });
+const _fieldHtml = fieldHtml;
+fieldHtml = function(key, f, value, editing, rec){
+  if(f.t !== 'person') return _fieldHtml(key, f, value, editing, rec);
+  const id = fid(f), cur = String(value ?? '');
+  const opts = (DB.members || []).slice().sort((a, b) => String(a['Name']).localeCompare(String(b['Name']))).map(m =>
+    `<option value="${esc(m['Member ID'])}" ${cur === String(m['Member ID']) ? 'selected' : ''}>${esc(m['Name'])} · ${esc(m['Member ID'])} · ${esc(m['Family ID'])}</option>`).join('');
+  return `<div><label class="lbl" for="${id}">${esc(f.n)}</label><select class="input" id="${id}"><option value=""></option>${opts}</select></div>`;
+};
+const _renderModule2 = renderModule;
+renderModule = function(key){
+  const out = _renderModule2(key);
+  if(key === 'families'){
+    const csv = document.querySelector('.toolbar [data-act="csv"]');
+    if(csv && !document.getElementById('treesAll')){
+      csv.insertAdjacentHTML('beforebegin', '<button class="btn btn-sm" id="treesAll">Print all trees</button>');
+      document.getElementById('treesAll').onclick = () => printTrees((DB.families || []).map(f => f['Family ID']));
+    }
+  }
+  return out;
+};
+const _openProfile = openProfile;
+openProfile = function(id){
+  _openProfile(id);
+  const f = document.querySelector('.modal footer'); if(!f) return;
+  const b = document.createElement('button'); b.className = 'btn'; b.textContent = 'Family tree';
+  b.onclick = () => { closeModal(); openTree(id); }; f.prepend(b);
+};
+
+const TBW = 176, TBH = 76, TPG = 22, TSG = 28, TVG = 74, TGUT = 102;
+const TDEFS = '<defs>' +
+  '<linearGradient id="gM" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3f8fc0"/><stop offset="1" stop-color="#1d4f73"/></linearGradient>' +
+  '<linearGradient id="gF" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ea7399"/><stop offset="1" stop-color="#b43c66"/></linearGradient>' +
+  '<linearGradient id="gO" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e8a317"/><stop offset="1" stop-color="#c1521e"/></linearGradient>' +
+  '<linearGradient id="gD" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#b4afa5"/><stop offset="1" stop-color="#77726a"/></linearGradient>' +
+  '<filter id="tsh" x="-10%" y="-10%" width="120%" height="135%"><feDropShadow dx="0" dy="2" stdDeviation="2.4" flood-color="#6b5a3a" flood-opacity=".25"/></filter></defs>';
+function treeBox(m, x, y, mine, tag){
+  const g = String(m['Gender'] || '').toLowerCase(), dead = isDeceased(m);
+  const grad = dead ? 'gD' : g === 'male' ? 'gM' : g === 'female' ? 'gF' : 'gO';
+  const cut = (s, n) => s.length > n ? s.slice(0, n - 1) + '…' : s;
+  const fitA = (t, w) => t.length * w > 106 ? ' textLength="106" lengthAdjust="spacingAndGlyphs"' : '';
+  const nm = String(m['Name'] || '').trim(), dob = toISO(m['Date of Birth']);
+  const age = m['Age'] !== '' && m['Age'] != null ? m['Age'] + ' yrs' : '';
+  const dod = toISO(m['Date of Death']);
+  const l2 = dead ? [dob ? 'b. ' + dob.slice(0, 4) : '', dod ? 'd. ' + dod.slice(0, 4) : '', m['Occupation']].filter(Boolean).join(' · ') : [age, m['Occupation']].filter(Boolean).join(' · ');
+  const l3 = dead ? 'ସ୍ୱର୍ଗୀୟ · ' + (tag || 'Late') : String(tag || '');
+  let s = `<g filter="url(#tsh)"><rect x="${x}" y="${y}" width="${TBW}" height="${TBH}" rx="15" fill="${dead ? '#eeeae2' : '#ffffff'}" stroke="${mine ? '#a8341e' : dead ? '#b9b2a3' : '#e3d9c4'}" stroke-width="${mine ? 2.4 : 1.2}"/></g>`;
+  s += `<circle cx="${x + 33}" cy="${y + TBH / 2}" r="23" fill="url(#${grad})"/><text x="${x + 33}" y="${y + TBH / 2 + 7}" text-anchor="middle" font-size="21" font-weight="800" fill="#fff">${esc((nm.charAt(0) || '?').toUpperCase())}</text>`;
+  s += `<text x="${x + 64}" y="${y + 29}" font-size="13.5" font-weight="800" fill="${dead ? '#6b665d' : '#16211c'}"${fitA(cut(nm, 20), 7.6)}>${esc(cut(nm, 20))}</text>`;
+  s += `<text x="${x + 64}" y="${y + 46}" font-size="10.5" fill="${dead ? '#7d776c' : '#44524c'}"${fitA(cut(l2, 24), 5.6)}>${esc(cut(l2, 24))}</text>`;
+  s += `<text x="${x + 64}" y="${y + 61}" font-size="10" font-weight="700" fill="${dead ? '#8a6d1f' : '#8a7a58'}"${fitA(cut(l3, 26), 5.8)}>${esc(cut(l3, 26))}</text>`;
+  if(dead) for(let i = 0; i < 11; i++){ const t = i / 10, px = x + 14 + t * (TBW - 28), py = y + 2 + 8 * Math.sin(Math.PI * t);
+    s += `<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="3.4" fill="${i % 2 ? '#d9531e' : '#e8a317'}" stroke="#fff" stroke-width=".8"/>`; }
+  return s;
+}
+function treeFor(famId, opts){
+  const all = DB.members || [], fam = String(famId).trim();
+  const ms = all.filter(m => String(m['Family ID']).trim() === fam);
+  if(!ms.length) return null;
+  const ids = new Set(ms.map(m => m['Member ID']));
+  const linked = ms.some(m => m['Father ID'] || m['Mother ID'] || m['Spouse ID']) ||
+                 all.some(m => ids.has(m['Father ID']) || ids.has(m['Mother ID']) || ids.has(m['Spouse ID']));
+  const mode = linked ? 'B' : 'A', rel = m => String(m['Relation to Family Head'] || '').trim().toLowerCase();
+  const used = new Set(), mark = (...ps) => ps.forEach(p => p && used.add(p['Member ID']));
+  const walk = (u, f) => { f(u); u.k.forEach(c => walk(c, f)); };
+  const roots = [];
+  if(!linked){
+    const by = r => ms.filter(m => rel(m) === r), head = by('self')[0] || ms[0];
+    const hu = { p: [head, by('wife')[0] || by('husband')[0]].filter(Boolean), k: [] };
+    const par = { p: [by('father')[0], by('mother')[0]].filter(Boolean), k: [] };
+    const sibs = [...by('brother'), ...by('sister')].map(m => ({ p: [m], k: [] }));
+    const inF = by('daughter-in-law'), inM = by('son-in-law');
+    hu.k = [...by('son'), ...by('daughter')].map(m => ({ p: [m, (rel(m) === 'son' ? inF : inM).shift()].filter(Boolean), k: [] }));
+    (hu.k[0] || hu).k.push(...[...by('grandson'), ...by('granddaughter')].map(m => ({ p: [m], k: [] })));
+    if(par.p.length){ par.k = [hu, ...sibs]; roots.push(par); } else roots.push(hu, ...sibs);
+  } else {
+    const byId = {}; all.forEach(m => byId[m['Member ID']] = m);
+    const sp = {};
+    all.forEach(m => { const id = m['Member ID'], s = m['Spouse ID'], f = m['Father ID'], mo = m['Mother ID'];
+      if(s && byId[s]){ sp[id] = s; if(!sp[s]) sp[s] = id; }
+      if(byId[f] && byId[mo]){ if(!sp[f]) sp[f] = mo; if(!sp[mo]) sp[mo] = f; } });
+    const spouse = m => byId[sp[m['Member ID']]] || null, parent = m => byId[m['Father ID']] || byId[m['Mother ID']] || null;
+    const kidsOf = m => { const s = spouse(m), k = new Set([m['Member ID'], s && s['Member ID']]);
+      return all.filter(c => k.has(c['Father ID']) || k.has(c['Mother ID'])).sort((a, b) => num(b['Age']) - num(a['Age'])); };
+    const unit = (m, d) => { const s = spouse(m), u = { p: [m, s].filter(Boolean), k: [] }; mark(m, s);
+      if(d < 7) kidsOf(m).forEach(c => { if(!used.has(c['Member ID'])) u.k.push(unit(c, d + 1)); }); return u; };
+    const top = m => { const seen = new Set(); let p = m; for(;;){ seen.add(p['Member ID']); const s = spouse(p), q = parent(p) || (s && parent(s));
+      if(!q || seen.has(q['Member ID'])) return p; p = q; } };
+    const tops = new Map();
+    ms.forEach(m => { const t = top(m), s = spouse(t); tops.set([t, s].filter(Boolean).map(x => x['Member ID']).sort().join('+'), t); });
+    tops.forEach(t => { if(used.has(t['Member ID'])) return; const u = unit(t, 0);
+      if(u.p.length === 2 && String(u.p[1]['Gender']).toLowerCase() === 'male') u.p.reverse(); roots.push(u); });
+  }
+  roots.forEach(r => walk(r, u => mark(...u.p)));
+  const measure = u => { u.uw = u.p.length * TBW + (u.p.length - 1) * TPG; u.k.forEach(measure);
+    u.kw = u.k.reduce((a, c, i) => a + c.W + (i ? TSG : 0), 0); u.W = Math.max(u.uw, u.kw); };
+  const place = (u, x0, l) => { u.l = l; u.x = x0 + (u.W - u.uw) / 2; let x = x0 + (u.W - u.kw) / 2; u.k.forEach(c => { place(c, x, l + 1); x += c.W + TSG; }); };
+  let x0 = 0; roots.forEach(r => { measure(r); place(r, x0, 0); x0 += r.W + TSG * 2; });
+  const G = opts && opts.slim ? 8 : TGUT, slim = !!(opts && opts.slim);
+  const tag = m => (mode === 'A' || String(m['Family ID']).trim() === fam) ? (m['Relation to Family Head'] || '') : 'Family ' + m['Family ID'];
+  const yOf = l => l * (TBH + TVG), mine = m => mode === 'B' && String(m['Family ID']).trim() === fam;
+  let body = '', maxX = 0, maxL = 0;
+  roots.forEach(r => walk(r, u => {
+    const y = yOf(u.l), cx = u.x + u.uw / 2, couple = u.p.length > 1, y1 = couple ? y + TBH / 2 + 11 : y + TBH;
+    maxX = Math.max(maxX, u.x + u.uw); maxL = Math.max(maxL, u.l);
+    u.k.forEach(c => { const ax = c.x + TBW / 2, y2 = yOf(u.l + 1), dy = (y2 - y1) * 0.55;
+      body += `<path d="M${cx} ${y1}C${cx} ${y1 + dy} ${ax} ${y2 - dy} ${ax} ${y2 - 3}" fill="none" stroke="#b39a68" stroke-width="2.2" stroke-linecap="round"/><circle cx="${ax}" cy="${y2 - 1}" r="3.2" fill="#b39a68"/>`; });
+    u.p.forEach((m, i) => { body += treeBox(m, u.x + i * (TBW + TPG), y, mine(m), tag(m)); });
+    if(couple){ const hx = u.x + TBW + TPG / 2, hy = y + TBH / 2;
+      body += `<circle cx="${hx}" cy="${hy}" r="10.5" fill="#fff" stroke="#c1521e" stroke-width="1.6"/><text x="${hx}" y="${hy + 4.2}" text-anchor="middle" font-size="12" fill="#c1521e">♥</text>`; }
+  }));
+  const rest = ms.filter(m => !used.has(m['Member ID']));
+  let H = yOf(maxL) + TBH, extra = '';
+  if(rest.length){
+    const y = H + 58; extra += `<text x="${-G + 16}" y="${y - 14}" font-size="12" font-weight="800" fill="#6b5a3a">Also in this household</text>`;
+    rest.forEach((m, i) => { extra += treeBox(m, i * (TBW + 18), y, mine(m), tag(m)); });
+    maxX = Math.max(maxX, rest.length * (TBW + 18) - 18); H = y + TBH;
+  }
+  let bands = '';
+  for(let l = 0; l <= maxL; l++) bands += `<rect x="${-G + 4}" y="${yOf(l) - 20}" width="${maxX + G + 20}" height="${TBH + 40}" rx="16" fill="${l % 2 ? '#fbf8f1' : '#f6f0e3'}"/>` +
+    `<text x="${-G + 16}" y="${yOf(l) + TBH / 2 - 6}" font-size="9" font-weight="700" fill="#a8341e" letter-spacing="1.1">GENERATION</text>` +
+    `<text x="${-G + 16}" y="${yOf(l) + TBH / 2 + 16}" font-size="22" font-weight="800" fill="#17303f">${l + 1}</text>`;
+  if(slim) bands = bands.replace(/<text[^>]*>(?:GENERATION|\d+)<\/text>/g, '');
+  const P = 10, W = maxX + G + 24 + P * 2, Ht = H + 48 + P * 2;
+  return { mode, count: used.size + rest.length, sig: mode === 'B' ? roots.map(r => r.p.map(p => p['Member ID']).join('+')).join('|') : '',
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${-G - P} ${-24 - P} ${W} ${Ht}" width="${W}" height="${Ht}" style="max-width:${Math.round(W * 1.4)}px" font-family="Plus Jakarta Sans,Baloo Bhaina 2,system-ui,sans-serif">${TDEFS}${bands}${body}${extra}</svg>` };
+}
+function treeSheet(famId){
+  const t = treeFor(famId); if(!t) return null;
+  const f = (DB.families || []).find(x => String(x['Family ID']).trim() === String(famId).trim()) || {};
+  const dot = c => `<i class="ld" style="background:${c}"></i>`;
+  const garland = '<svg width="52" height="12" viewBox="0 0 52 12" style="vertical-align:-2px;margin-right:5px">' +
+    [0, 1, 2, 3, 4].map(i => `<circle cx="${6 + i * 10}" cy="${4 + 3 * Math.sin(Math.PI * i / 4)}" r="3.2" fill="${i % 2 ? '#d9531e' : '#e8a317'}"/>`).join('') + '</svg>';
+  const leg = `<div class="tleg"><span>${dot('#2f7fb0')}Male</span><span>${dot('#d8577f')}Female</span><span>${dot('#e0a02f')}Other</span><span>${garland}ସ୍ୱର୍ଗୀୟ · Deceased</span><span style="color:#c1521e">♥ Married</span>` +
+    (t.mode === 'B' ? '<span><i class="lb"></i>This household</span>' : '') + '</div>';
+  const where = f['Village Locality'] ? ' · Sahi: ' + esc(f['Village Locality']) : ''; 
+  return { sig: t.sig, html: `<section class="tsheet"><div class="tband"></div><div class="thead"><span class="temb"></span><div class="tt"><div class="odia">ଆମ ଗାଁ ମାଳିପାଟଣା</div><b>${esc(setting('Village Name', 'Malipatana'))} Village Welfare</b></div>` +
+    `<div class="tmid"><div class="tk">ବଂଶ ବୃକ୍ଷ · FAMILY TREE</div><div>${t.mode === 'B' ? 'Generation tree' : 'Household tree'} · ${esc(famId)} · ${esc(f['Family Head'] || '')}${where}</div></div>` +
+    `<div class="tdate">Printed<br>${esc(fmtDate(today()))}</div></div><div class="tribbon"></div>${t.svg}${leg}</section>` };
+}
+function printTrees(ids){
+  const seen = new Set(), parts = [];
+  ids.forEach(id => { const s = treeSheet(id); if(!s) return; if(s.sig && ids.length > 1){ if(seen.has(s.sig)) return; seen.add(s.sig); } parts.push(s.html); });
+  if(!parts.length){ toast('No members to print yet', 'bad'); return; }
+  runPrint(parts.join(''), true);
+}
+function openTree(famId){
+  const slim = window.innerWidth < 700, t = treeFor(famId, { slim }), f = (DB.families || []).find(x => String(x['Family ID']).trim() === String(famId).trim()) || {};
+  if(!t){ toast('No members recorded for this family yet', 'bad'); return; }
+  openModal(`<header><div><h3>${t.mode === 'B' ? 'Generation tree' : 'Household tree'}</h3><div class="sub">${esc(f['Family Head'] || '')} · ${esc(famId)} · ${t.count} people</div></div><div class="sp"></div><button class="btn btn-sm" onclick="closeModal()">Close</button></header>
+    <div class="body"><div class="tzoom"><button class="btn btn-sm" data-z="-" aria-label="Zoom out">−</button><button class="btn btn-sm" data-z="fit">Fit</button><button class="btn btn-sm" data-z="+" aria-label="Zoom in">+</button><span class="muted small">Use + to zoom, swipe to move</span></div>
+    <div class="treebox">${t.svg}</div><div class="fieldnote" style="margin-top:10px">${t.mode === 'B' ? 'Built from the father, mother and spouse links you entered.' : 'Built from each member’s relation to the family head. Fill in Father and Mother on members to get a full generation tree.'}</div></div>
+    <footer><button class="btn" onclick="closeModal()">Close</button><button class="btn btn-primary" id="treePrintBtn">Print tree</button></footer>`);
+  document.querySelector('.modal').style.width = 'min(1100px,100%)';
+  const box = document.querySelector('.treebox'), svg = box.querySelector('svg'), nat = parseFloat(svg.getAttribute('width'));
+  let z = Math.min(1, box.clientWidth / nat);
+  const apply = () => { svg.style.maxWidth = 'none'; svg.style.width = Math.round(nat * z) + 'px'; svg.style.height = 'auto'; box.scrollLeft = (box.scrollWidth - box.clientWidth) / 2; };
+  document.querySelectorAll('.tzoom [data-z]').forEach(b => b.onclick = () => {
+    const k = b.dataset.z; z = k === '+' ? Math.min(2.2, z * 1.25) : k === '-' ? Math.max(0.3, z / 1.25) : Math.min(1, box.clientWidth / nat); apply(); });
+  apply();
+  document.getElementById('treePrintBtn').onclick = () => { closeModal(); printTrees([famId]); };
+}
+
+/* ---- action plan: village targets (FE V3.0) ---- */
+const UPD_TYPES = ['Letter sent', 'Reply received', 'Meeting', 'Site visit', 'Expense', 'Note', 'Completed'];
+MODULES.actionPlan = { sheet:'Action Plan', title:'Action plan', odia:'କାର୍ଯ୍ୟ ଯୋଜନା', idField:'Action ID', prefix:'ACT', blurb:'Village targets, short and long term',
+  fields:[ {n:'Action ID',t:'text',auto:true}, {n:'Title',t:'text',req:true}, {n:'Details',t:'textarea'},
+    {n:'Category',t:'datalist',opts:['Road','Water','Electricity','Education','Health','Sanitation','Temple & culture','Welfare fund','Livelihood','Other']},
+    {n:'Term',t:'select',opts:['Short term','Long term'],req:true}, {n:'Priority',t:'select',opts:['High','Medium','Low']}, {n:'Responsible',t:'datalist'},
+    {n:'Start Date',t:'date',def:'today'}, {n:'Target Date',t:'date'}, {n:'Estimated Cost',t:'money'},
+    {n:'Status',t:'select',opts:['Not started','In progress','On hold']}, {n:'Progress',t:'number'},
+    {n:'Completed On',t:'date',hidden:true}, {n:'Completion Remark',t:'textarea',hidden:true}, {n:'Last Updated',t:'date',hidden:true} ],
+  list:['Action ID','Title','Term','Priority','Target Date','Status','Progress'] };
+MODULES.actionUpdates = { sheet:'Action Updates', title:'Action updates', idField:'Update ID', prefix:'UPD', blurb:'Progress log',
+  fields:[ {n:'Update ID',t:'text',auto:true}, {n:'Action ID',t:'text',ro:true}, {n:'Date',t:'date',req:true,def:'today'}, {n:'Type',t:'select',opts:UPD_TYPES},
+    {n:'Note',t:'textarea'}, {n:'Sent To',t:'datalist'}, {n:'Ref No',t:'text'}, {n:'Copy Enclosed',t:'select',opts:['Yes','No']}, {n:'Copy Link',t:'text'},
+    {n:'Amount',t:'money'}, {n:'Progress',t:'number'}, {n:'By',t:'text'} ],
+  list:['Date','Type','Note'] };
+const PLAN = { tab: 'Short term', open: new Set() };
+const isDone = r => String(r['Status'] || '').toLowerCase() === 'completed';
+const sameId = (a, b) => String(a ?? '').trim() === String(b ?? '').trim();
+const rankP = r => ({ High: 0, Medium: 1, Low: 2 }[String(r['Priority'])] ?? 1);
+const updatesOf = id => (DB.actionUpdates || []).filter(u => sameId(u['Action ID'], id))
+  .sort((a, b) => toISO(b['Date']).localeCompare(toISO(a['Date'])) || String(b['Update ID']).localeCompare(String(a['Update ID'])));
+const spentOf = id => updatesOf(id).filter(u => u['Type'] === 'Expense').reduce((s, u) => s + num(u['Amount']), 0);
+const progOf = r => isDone(r) ? 100 : Math.max(0, Math.min(100, num(r['Progress'])));
+const okUrl = u => /^https?:\/\//i.test(String(u || '').trim());
+const pill = (t, tone) => `<span class="pill ${tone || ''}">${esc(t)}</span>`;
+const inTab = (r, t) => t === 'Completed' ? isDone(r) : (!isDone(r) && String(r['Term'] || 'Short term') === t);
+const sortPlan = (rows, t) => rows.slice().sort(t === 'Completed' ? (a, b) => toISO(b['Completed On']).localeCompare(toISO(a['Completed On']))
+  : (a, b) => rankP(a) - rankP(b) || (toISO(a['Target Date']) || '9999').localeCompare(toISO(b['Target Date']) || '9999'));
+function dueInfo(r){
+  const d = toISO(r['Target Date']); if(isDone(r) || !d) return null;
+  const days = Math.round((new Date(d) - new Date(today())) / 864e5);
+  if(days < 0) return { txt: 'overdue by ' + (-days) + ' day' + (days === -1 ? '' : 's'), cls: 'bad' };
+  if(days <= 30) return { txt: days === 0 ? 'due today' : 'due in ' + days + ' day' + (days === 1 ? '' : 's'), cls: 'warn' };
+  return null;
+}
+const UP_ICON = { 'Letter sent': '✉', 'Reply received': '↩', 'Meeting': '☰', 'Site visit': '⚑', 'Expense': '₹', 'Note': '✎', 'Completed': '✔' };
+function updLine(u){
+  const sent = [u['Sent To'] ? 'to ' + u['Sent To'] : '', u['Ref No'] ? 'Ref ' + u['Ref No'] : ''].filter(Boolean).join(' · ');
+  const copy = String(u['Copy Enclosed']).toLowerCase() === 'yes' ? pill('Copy enclosed', 'ok') : '';
+  const link = okUrl(u['Copy Link']) ? ` <a href="${esc(String(u['Copy Link']).trim())}" target="_blank" rel="noopener">View copy</a>` : '';
+  const amt = u['Type'] === 'Expense' && num(u['Amount']) ? ' · ' + money(u['Amount']) : '';
+  return `<div class="upd"><span class="ui">${UP_ICON[u['Type']] || '•'}</span><div style="flex:1;min-width:0"><b>${esc(u['Type'])}</b> <span class="muted small">${esc(fmtDate(u['Date']))}${amt}</span>
+    ${u['Note'] ? `<div>${esc(u['Note'])}</div>` : ''}${sent || copy || link ? `<div class="small muted">${esc(sent)} ${copy}${link}</div>` : ''}</div>
+    ${canEdit() ? `<span class="upact"><button class="btn btn-sm" data-pa="editupd" data-id="${esc(u['Update ID'])}" aria-label="Edit update">✎</button>${canDelete() ? `<button class="btn btn-sm btn-danger" data-pa="delupd" data-id="${esc(u['Update ID'])}" aria-label="Delete update">✕</button>` : ''}</span>` : ''}</div>`;
+}
+function planCard(r){
+  const id = r['Action ID'], done = isDone(r), prog = progOf(r), ups = updatesOf(id), spent = spentOf(id), est = num(r['Estimated Cost']), due = dueInfo(r);
+  const pri = String(r['Priority'] || 'Medium'), st = done ? 'Completed' : String(r['Status'] || 'Not started'), e = canEdit(), open = PLAN.open.has(id);
+  const meta = [r['Responsible'] ? 'Responsible: <b>' + esc(r['Responsible']) + '</b>' : '', r['Start Date'] ? 'Start: ' + esc(fmtDate(r['Start Date'])) : '',
+    r['Target Date'] ? 'Target: <b>' + esc(fmtDate(r['Target Date'])) + '</b>' + (due ? ' ' + pill(due.txt, due.cls) : '') : '',
+    est ? 'Estimated: ' + money(est) : '', spent ? 'Spent: <b>' + money(spent) + '</b>' : ''].filter(Boolean).join('<span class="dotsep">·</span>');
+  return `<article class="acard p-${esc(pri)} ${done ? 'done' : ''}"><div class="atop"><h3>${esc(r['Title'])}</h3><div class="chips">${pill(pri + ' priority', pri === 'High' ? 'bad' : pri === 'Low' ? 'ok' : 'warn')}${r['Category'] ? pill(r['Category']) : ''}${pill(st, done ? 'ok' : st === 'On hold' ? 'bad' : '')}</div></div>
+    ${r['Details'] ? `<p class="adet">${esc(r['Details'])}</p>` : ''}<div class="ameta">${meta}</div>
+    <div class="abar"><i style="width:${prog}%"></i></div><div class="small muted">${prog}% complete${ups.length ? ' · latest: ' + esc(ups[0]['Type']) + ', ' + esc(fmtDate(ups[0]['Date'])) : ''}</div>
+    ${done ? `<div class="aremark"><b>Completed on ${esc(fmtDate(r['Completed On']))}.</b> ${esc(r['Completion Remark'] || '')}</div>` : ''}
+    <div class="aacts">${e && !done ? `<button class="btn btn-sm btn-primary" data-pa="upd" data-id="${esc(id)}">+ Add update</button>` : ''}<button class="btn btn-sm" data-pa="ups" data-id="${esc(id)}">Updates (${ups.length})</button>
+      ${e && !done ? `<button class="btn btn-sm" data-pa="done" data-id="${esc(id)}">Mark completed</button>` : ''}${e && done ? `<button class="btn btn-sm" data-pa="reopen" data-id="${esc(id)}">Reopen</button>` : ''}
+      ${e ? `<button class="btn btn-sm" data-pa="edit" data-id="${esc(id)}">Edit</button>${canDelete() ? `<button class="btn btn-sm btn-danger" data-pa="del" data-id="${esc(id)}">Delete</button>` : ''}` : ''}</div>
+    <div class="aups ${open ? '' : 'hide'}" id="ups_${esc(id)}">${ups.length ? ups.map(updLine).join('') : '<div class="muted small">No updates yet.</div>'}</div></article>`;
+}
+function renderActionPlan(){
+  const main = $('#main'), all = DB.actionPlan || [];
+  const head = `<div class="pagehead"><div><h2>Action plan <span class="muted" style="font-size:16px">କାର୍ଯ୍ୟ ଯୋଜନା</span></h2><div class="sub">Village targets, short term and long term</div></div><div class="sp"></div>` +
+    (DB.actionReady ? `<button class="btn" data-pa="print">Print</button>${canEdit() ? '<button class="btn btn-primary" data-pa="add">+ Add target</button>' : ''}` : '') + '</div>';
+  if(!DB.actionReady){
+    const old = DB.actionReady === undefined;
+    main.innerHTML = head + `<div class="panel"><div class="panel-body"><b>${old ? 'The backend needs a one-time update' : 'One last step'}</b>
+      <p class="muted">${old ? 'Your Code.gs does not send the Action Plan data yet. Add the few small edits to your current Code.gs (do not replace the whole file) and deploy a new version.' : 'The Action Plan sheets have not been created in your Google Sheet yet.'}</p>
+      ${!old && isAdmin() ? '<button class="btn btn-primary" data-pa="runall">Open Run all setup</button>' : ''}</div></div>`;
+  } else {
+    const tab = PLAN.tab, list = sortPlan(all.filter(r => inTab(r, tab)), tab), cnt = t => all.filter(r => inTab(r, t)).length;
+    const active = all.filter(r => !isDone(r)), over = active.filter(r => { const d = dueInfo(r); return d && d.cls === 'bad'; }).length;
+    const est = active.reduce((s, r) => s + num(r['Estimated Cost']), 0), spent = active.reduce((s, r) => s + spentOf(r['Action ID']), 0);
+    main.innerHTML = head + `<div class="asum">${pill(active.length + ' active')}${over ? pill(over + ' overdue', 'bad') : ''}${pill(cnt('Completed') + ' completed', 'ok')}${est ? pill(money(spent) + ' spent of ' + money(est) + ' planned') : ''}</div>
+      <div class="apseg">${['Short term', 'Long term', 'Completed'].map(t => `<button data-pa="tab" data-id="${t}" class="${t === tab ? 'on' : ''}">${t} <b>${cnt(t)}</b></button>`).join('')}</div>` +
+      (list.length ? list.map(planCard).join('') : `<div class="empty"><b>${tab === 'Completed' ? 'Nothing completed yet' : 'No ' + tab.toLowerCase() + ' targets yet'}</b>${tab === 'Completed' ? 'Finished targets will appear here with their remark.' : canEdit() ? 'Press “Add target” to record the first one.' : ''}</div>`);
+  }
+  main.onclick = async e => {
+    const b = e.target.closest('[data-pa]'); if(!b) return; const a = b.dataset.pa, id = b.dataset.id;
+    if(a === 'tab'){ PLAN.tab = id; renderActionPlan(); }
+    else if(a === 'add') openForm('actionPlan', null, { 'Term': PLAN.tab === 'Long term' ? 'Long term' : 'Short term', 'Status': 'Not started', 'Priority': 'Medium', 'Progress': '0' });
+    else if(a === 'edit') openForm('actionPlan', id);
+    else if(a === 'ups'){ PLAN.open.has(id) ? PLAN.open.delete(id) : PLAN.open.add(id); const el = document.getElementById('ups_' + id); if(el) el.classList.toggle('hide'); }
+    else if(a === 'upd') openUpdateForm(id);
+    else if(a === 'editupd') openForm('actionUpdates', id);
+    else if(a === 'delupd') askDelete('actionUpdates', id);
+    else if(a === 'done') openComplete(id);
+    else if(a === 'reopen') reopenAction(id);
+    else if(a === 'del') confirmDeleteAction(id);
+    else if(a === 'print') openPlanPrint();
+    else if(a === 'runall') go('runAll');
+  };
+}
+async function savePlanRows(rows){ // rows: [[sheetName, key, record], ...]
+  for(const [sheet, key, rec] of rows){
+    rec['Entered By'] = String(USER && (USER.name || USER.username) || ''); rec['Entered At'] = localStamp(new Date());
+    const r = await saveThrough('save', { sheet, record: JSON.stringify(rec) }, MODULES[key].title + ' · ' + (rec[MODULES[key].idField] || ''));
+    if(!r || !r.ok) throw new Error((r && r.error) || 'Could not save.');
+    upsertLocal(key, rec);
+  }
+}
+function modalErr(msg){ const b = document.getElementById('pErr'); if(b){ b.classList.remove('hide'); b.textContent = msg; } }
+function openUpdateForm(actionId){
+  const r = (DB.actionPlan || []).find(x => sameId(x['Action ID'], actionId)); if(!r) return;
+  const auth = [...new Set((DB.actionUpdates || []).map(u => String(u['Sent To'] || '').trim()).filter(Boolean))];
+  const prog = progOf(r);
+  openModal(`<header><div><h3>Add update</h3><div class="sub">${esc(r['Title'])}</div></div><div class="sp"></div><button class="btn btn-sm" onclick="closeModal()">Close</button></header>
+    <div class="body"><div id="pErr" class="errline hide"></div><div class="formgrid">
+    <div><label class="lbl" for="u_Date">Date</label><input class="input" id="u_Date" type="date" value="${today()}"></div>
+    <div><label class="lbl" for="u_Type">What happened</label><select class="input" id="u_Type">${UPD_TYPES.filter(t => t !== 'Completed').map(t => `<option>${t}</option>`).join('')}</select></div>
+    <div class="wide"><label class="lbl" for="u_Note">Details</label><textarea class="input" id="u_Note" placeholder="e.g. Letter sent to the Block office asking for gravel support"></textarea></div>
+    <div class="lt"><label class="lbl" for="u_To">Sent to (authority)</label><input class="input" id="u_To" list="u_dl" autocomplete="off"><datalist id="u_dl">${auth.map(a => `<option value="${esc(a)}"></option>`).join('')}</datalist></div>
+    <div class="lt"><label class="lbl" for="u_Ref">Letter / reference no.</label><input class="input" id="u_Ref"></div>
+    <div class="lt"><label class="lbl" for="u_Copy">Copy enclosed</label><select class="input" id="u_Copy"><option>Yes</option><option>No</option></select></div>
+    <div class="lt"><label class="lbl" for="u_Link">Link to the copy (optional)</label><input class="input" id="u_Link" placeholder="https://drive.google.com/…"></div>
+    <div class="ex hide"><label class="lbl" for="u_Amt">Amount spent (₹)</label><input class="input tnum" id="u_Amt" type="number" min="0" inputmode="decimal"></div>
+    <div class="wide"><label class="lbl">Progress now: <b id="u_pv">${prog}%</b></label><input id="u_Prog" type="range" min="0" max="100" step="5" value="${prog}" style="width:100%"></div></div></div>
+    <footer><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-primary" id="updSave">Save update</button></footer>`);
+  const typeEl = document.getElementById('u_Type'), sync = () => { const t = typeEl.value, letter = t === 'Letter sent' || t === 'Reply received';
+    document.querySelectorAll('.lt').forEach(el => el.classList.toggle('hide', !letter)); document.querySelectorAll('.ex').forEach(el => el.classList.toggle('hide', t !== 'Expense')); };
+  typeEl.onchange = sync; sync();
+  document.getElementById('u_Prog').oninput = e => { document.getElementById('u_pv').textContent = e.target.value + '%'; };
+  document.getElementById('updSave').onclick = async () => {
+    const v = id => document.getElementById(id).value.trim(), type = v('u_Type'), letter = type === 'Letter sent' || type === 'Reply received', p = Number(v('u_Prog'));
+    if(!v('u_Date')) return modalErr('Choose the date.');
+    if(type === 'Expense' && !num(v('u_Amt'))) return modalErr('Enter the amount spent.');
+    if(!v('u_Note') && !letter) return modalErr('Write a short note about what happened.');
+    const upd = { 'Update ID': nextId('actionUpdates'), 'Action ID': actionId, 'Date': v('u_Date'), 'Type': type, 'Note': v('u_Note'), 'Sent To': letter ? v('u_To') : '', 'Ref No': letter ? v('u_Ref') : '',
+      'Copy Enclosed': letter ? v('u_Copy') : '', 'Copy Link': letter ? v('u_Link') : '', 'Amount': type === 'Expense' ? v('u_Amt') : '', 'Progress': p, 'By': (USER && (USER.name || USER.username)) || '' };
+    const plan = Object.assign({}, r, { 'Progress': p, 'Last Updated': today() });
+    if(!plan['Status'] || String(plan['Status']).toLowerCase() === 'not started') plan['Status'] = (p > 0 || type !== 'Note') ? 'In progress' : (plan['Status'] || 'Not started');
+    const btn = document.getElementById('updSave'); btn.disabled = true; btn.textContent = 'Saving…';
+    try { await savePlanRows([['Action Updates', 'actionUpdates', upd], ['Action Plan', 'actionPlan', plan]]); PLAN.open.add(actionId); closeModal(); toast('Update saved', 'good'); render(); refresh(true); }
+    catch(err){ modalErr(err.message); btn.disabled = false; btn.textContent = 'Save update'; }
+  };
+}
+function openComplete(id){
+  const r = (DB.actionPlan || []).find(x => sameId(x['Action ID'], id)); if(!r) return;
+  openModal(`<header><div><h3>Mark as completed</h3><div class="sub">${esc(r['Title'])}</div></div><div class="sp"></div><button class="btn btn-sm" onclick="closeModal()">Close</button></header>
+    <div class="body"><div id="pErr" class="errline hide"></div><div class="formgrid"><div class="wide"><label class="lbl" for="c_On">Completed on</label><input class="input" id="c_On" type="date" value="${today()}"></div>
+    <div class="wide"><label class="lbl" for="c_Rem">Final remark <span class="reqmark">*</span></label><textarea class="input" id="c_Rem" placeholder="What was achieved, and anything worth remembering. e.g. 300 m of road repaired up to the temple, finished within the ₹1.2 lakh plan."></textarea></div>
+    <div class="wide"><label class="lbl" for="c_Link">Link to the final report or copy (optional)</label><input class="input" id="c_Link" placeholder="https://drive.google.com/…"></div></div></div>
+    <footer><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-primary" id="doneSave">Mark completed</button></footer>`);
+  document.getElementById('doneSave').onclick = async () => {
+    const on = document.getElementById('c_On').value, rem = document.getElementById('c_Rem').value.trim(), link = document.getElementById('c_Link').value.trim();
+    if(!on) return modalErr('Choose the completion date.'); if(!rem) return modalErr('Please write the final remark.');
+    const rec = Object.assign({}, r, { 'Status': 'Completed', 'Progress': 100, 'Completed On': on, 'Completion Remark': rem, 'Last Updated': today() });
+    const upd = { 'Update ID': nextId('actionUpdates'), 'Action ID': id, 'Date': on, 'Type': 'Completed', 'Note': rem, 'Copy Link': link, 'Progress': 100, 'By': (USER && (USER.name || USER.username)) || '' };
+    const btn = document.getElementById('doneSave'); btn.disabled = true; btn.textContent = 'Saving…';
+    try { await savePlanRows([['Action Updates', 'actionUpdates', upd], ['Action Plan', 'actionPlan', rec]]); PLAN.tab = 'Completed'; closeModal(); toast('Moved to completed actions', 'good'); render(); refresh(true); }
+    catch(err){ modalErr(err.message); btn.disabled = false; btn.textContent = 'Mark completed'; }
+  };
+}
+async function reopenAction(id){
+  const r = (DB.actionPlan || []).find(x => sameId(x['Action ID'], id)); if(!r) return;
+  const rec = Object.assign({}, r, { 'Status': 'In progress', 'Progress': 90, 'Completed On': '', 'Completion Remark': '', 'Last Updated': today() });
+  try { await savePlanRows([['Action Plan', 'actionPlan', rec]]); PLAN.tab = String(r['Term'] || 'Short term'); toast('Target reopened', 'good'); render(); refresh(true); } catch(err){ toast(err.message, 'bad'); }
+}
+function confirmDeleteAction(id){
+  const r = (DB.actionPlan || []).find(x => sameId(x['Action ID'], id)); if(!r) return; const ups = updatesOf(id);
+  openModal(`<header><h3>Delete this target?</h3></header><div class="body confirm"><p><b>${esc(r['Title'])}</b> and its ${ups.length} update${ups.length === 1 ? '' : 's'} will be removed from the sheet.</p><p class="muted">This cannot be undone from here. You can still recover it from the sheet's version history.</p></div>
+    <footer><button class="btn" onclick="closeModal()">Keep it</button><button class="btn btn-primary" id="delPlan" style="background:var(--brick);border-color:var(--brick)">Delete</button></footer>`);
+  document.getElementById('delPlan').onclick = async () => {
+    const b = document.getElementById('delPlan'); b.disabled = true; b.textContent = 'Deleting…';
+    try { for(const u of ups){ await saveThrough('delete', { sheet: 'Action Updates', idField: 'Update ID', idValue: u['Update ID'] }, 'Action update'); removeLocal('actionUpdates', u['Update ID']); }
+      const x = await saveThrough('delete', { sheet: 'Action Plan', idField: 'Action ID', idValue: id }, 'Action plan'); if(!x || !x.ok) throw new Error((x && x.error) || 'Delete failed.');
+      removeLocal('actionPlan', id); closeModal(); toast('Deleted', 'good'); render(); refresh(true); } catch(err){ toast(err.message, 'bad'); b.disabled = false; b.textContent = 'Delete'; }
+  };
+}
+/* ---- printing ---- */
+function openPlanPrint(){
+  const chk = t => `<label class="remember"><input type="checkbox" class="pp-t" value="${t}" ${t === PLAN.tab || t !== 'Completed' ? 'checked' : ''}> ${t === 'Completed' ? 'Completed actions (with remarks)' : t + ' targets'}</label>`;
+  openModal(`<header><div><h3>Print action plan</h3><div class="sub">Choose what to include and how it should look</div></div><div class="sp"></div><button class="btn btn-sm" onclick="closeModal()">Close</button></header>
+    <div class="body"><div class="formgrid"><div class="wide"><label class="lbl">Include</label>${['Short term', 'Long term', 'Completed'].map(chk).join('')}</div>
+    <div class="wide"><label class="lbl" for="pp_style">Style</label><select class="input" id="pp_style">
+      <option value="colour">Colour — bold coloured headings, coloured priority and status (recommended)</option>
+      <option value="hl">Highlighter — bold headings, key dates and remarks marked in yellow</option>
+      <option value="plain">Plain — bold black headings, for black-and-white printing</option></select>
+      <div class="fieldnote">Colour reads fastest on paper. Highlighter works best when only a few things need attention. Plain is safest for photocopies.</div></div>
+    <div class="wide"><label class="remember"><input type="checkbox" id="pp_upd" checked> Include progress updates (letters sent, copies enclosed, expenses)</label></div></div></div>
+    <footer><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-primary" id="ppGo">Print</button></footer>`);
+  document.getElementById('ppGo').onclick = () => { const tabs = [...document.querySelectorAll('.pp-t:checked')].map(x => x.value);
+    if(!tabs.length){ toast('Tick at least one section', 'bad'); return; }
+    const o = { tabs, style: document.getElementById('pp_style').value, updates: document.getElementById('pp_upd').checked }; closeModal(); printPlan(o); };
+}
+function printItem(r, i, o){
+  const id = r['Action ID'], done = isDone(r), prog = progOf(r), pri = String(r['Priority'] || 'Medium'), due = dueInfo(r), est = num(r['Estimated Cost']), spent = spentOf(id);
+  const ups = o.updates ? updatesOf(id).filter(u => u['Type'] !== 'Completed').reverse() : [];
+  const chips = `<span class="pchip ${pri.toLowerCase()}">${esc(pri)} priority</span>` + (r['Category'] ? `<span class="pchip">${esc(r['Category'])}</span>` : '') + `<span class="pchip ${done ? 'done' : 'st'}">${esc(done ? 'Completed' : r['Status'] || 'Not started')}</span>`;
+  const meta = [r['Responsible'] ? '<b>Responsible:</b> ' + esc(r['Responsible']) : '', r['Start Date'] ? '<b>Start:</b> ' + esc(fmtDate(r['Start Date'])) : '',
+    r['Target Date'] ? `<b>Target:</b> <span class="pdate ${due ? due.cls : ''}">${esc(fmtDate(r['Target Date']))}${due ? ' (' + due.txt + ')' : ''}</span>` : '',
+    est ? '<b>Estimated:</b> ' + money(est) : '', spent ? '<b>Spent:</b> ' + money(spent) : ''].filter(Boolean).join(' &nbsp;·&nbsp; ');
+  const upl = ups.map(u => { const bits = [u['Sent To'] ? 'to ' + u['Sent To'] : '', u['Ref No'] ? 'Ref ' + u['Ref No'] : '', String(u['Copy Enclosed']).toLowerCase() === 'yes' ? 'copy enclosed ✓' : '', u['Type'] === 'Expense' && num(u['Amount']) ? money(u['Amount']) : ''].filter(Boolean).join(', ');
+    return `<div><b>${esc(fmtDate(u['Date']))}</b> — ${esc(u['Type'])}${u['Note'] ? ': ' + esc(u['Note']) : ''}${bits ? ' <i>(' + esc(bits) + ')</i>' : ''}</div>`; }).join('');
+  return `<div class="pitem ${pri === 'High' ? 'hi' : ''}"><div class="ptitle"><span class="pno">${i}.</span><b>${esc(r['Title'])}</b>${chips}</div>${r['Details'] ? `<div class="pdet">${esc(r['Details'])}</div>` : ''}<div class="pmeta">${meta}</div>
+    <div class="pbarw"><div class="pbar"><i style="width:${prog}%"></i></div><b>${prog}%</b></div>${done ? `<div class="pdone"><b>Completed on ${esc(fmtDate(r['Completed On']))}.</b> ${esc(r['Completion Remark'] || '')}</div>` : ''}${upl ? `<div class="pup">${upl}</div>` : ''}</div>`;
+}
+function runPrint(html, land){
+  const old = document.getElementById('printArea'); if(old) old.remove();
+  const el = document.createElement('div'); el.id = 'printArea'; el.className = land ? 'land' : ''; el.innerHTML = html; document.body.appendChild(el);
+  let rule = document.getElementById('printPage'); if(!rule){ rule = document.createElement('style'); rule.id = 'printPage'; document.head.appendChild(rule); }
+  rule.textContent = '@page{size:A4 ' + (land ? 'landscape;margin:9mm' : 'portrait;margin:11mm') + '}';
+  document.body.classList.add('printing');
+  const cleanup = () => { document.body.classList.remove('printing'); el.remove(); const pr = document.getElementById('printPage'); if(pr) pr.remove(); window.removeEventListener('afterprint', cleanup); };
+  window.addEventListener('afterprint', cleanup); setTimeout(() => window.print(), 60);
+}
+function printPlan(o){
+  const all = DB.actionPlan || [], secs = [['Short term', 'Short term targets'], ['Long term', 'Long term targets'], ['Completed', 'Completed actions']].filter(s => o.tabs.includes(s[0]));
+  let body = '', n = 0;
+  secs.forEach(([t, label]) => { const rows = sortPlan(all.filter(r => inTab(r, t)), t); if(!rows.length) return; n += rows.length;
+    body += `<h2 class="psec">${label}<span>${rows.length}</span></h2>` + rows.map((r, i) => printItem(r, i + 1, o)).join(''); });
+  if(!n){ toast('Nothing to print yet', 'bad'); return; }
+  runPrint(`<section class="psheet pstyle-${o.style}"><div class="tband"></div><div class="thead"><span class="temb"></span><div class="tt"><div class="odia">ଆମ ଗାଁ ମାଳିପାଟଣା</div><b>${esc(setting('Village Name', 'Malipatana'))} Village Welfare</b></div>` +
+    `<div class="tmid"><div class="tk">କାର୍ଯ୍ୟ ଯୋଜନା · ACTION PLAN</div><div>${secs.map(s => s[1]).join(' · ')}</div></div><div class="tdate">Printed<br>${esc(fmtDate(today()))}</div></div><div class="tribbon"></div>${body}</section>`);
+}
+
+/* ---- wiring: menu entries and pages ---- */
+ALL_PAGES.push(['actionPlan', 'Action plan']);
+const _buildNav = buildNav;
+buildNav = function(){
+  _buildNav();
+  const sb = document.getElementById('sidebar'); if(!sb) return;
+  const mk = (page, ic, label, n) => { const b = document.createElement('button'); b.className = 'nav'; b.dataset.page = page;
+    b.innerHTML = '<span class="ic">' + ic + '</span>' + esc(label) + (n !== '' && n != null ? '<span class="count">' + n + '</span>' : ''); b.onclick = () => go(page); return b; };
+  if(canSee('actionPlan')){
+    const anchor = ['regularSupport', 'emergency'].map(p => sb.querySelector('.nav[data-page="' + p + '"]')).find(Boolean);
+    const b = mk('actionPlan', '◎', local.get('mal_odia') === '1' ? MODULES.actionPlan.odia : 'Action plan', DB && DB.actionPlan ? DB.actionPlan.filter(r => !isDone(r)).length : '');
+    if(anchor) anchor.after(b); else sb.appendChild(b);
+
+  }
+  if(isAdmin()){
+    const anchor = sb.querySelector('.nav[data-page="photos"]'), b = mk('runAll', '▶', 'Run all setup', '');
+    if(anchor) anchor.after(b); else sb.appendChild(b);
+    const quick=mk('entryLinks','⚡','Shared entry links','');b.after(quick);
+    quick.after(mk('sharedApprovals','✓','Approvals & Corrections',''));
+    const first=sb.querySelector('.navgroup');if(first)first.before(b);
+  }
+};
+const _malBuildNavVerify = buildNav;
+buildNav=function(){
+  _malBuildNavVerify();
+  const side=document.getElementById('sidebar');
+  if(side && !side.querySelector('[data-mal-contact-verify]')){
+    const b=document.createElement('button');b.className='nav';b.type='button';
+    b.setAttribute('data-mal-contact-verify','1');b.innerHTML='<span class="ic">✓</span> Verify email';
+    b.onclick=()=>{closeDrawer();openMyVerification();};
+    side.appendChild(b);
+  }
+};
+const _render = render;
+render = function(){
+  if(PAGE === 'actionPlan' || PAGE === 'runAll' || PAGE === 'entryLinks' || PAGE === 'sharedApprovals'){
+    buildNav(); buildTabs();
+    document.querySelectorAll('.nav').forEach(b => b.classList.toggle('active', b.dataset.page === PAGE));
+    return PAGE === 'actionPlan' ? renderActionPlan() : PAGE === 'entryLinks' ? renderEntryLinks() : PAGE === 'sharedApprovals' ? renderSharedApprovals() : renderRunAll();
+  }
+  return _render();
+};
+function renderRunAll(){
+  const main = $('#main');
+  if(!isAdmin()){ main.innerHTML = '<div class="empty"><b>Admins only</b>Ask the village admin.</div>'; return; }
+  const steps = ['Core sheets and settings', 'Change history', 'Major expenses', 'Recurring expenses', 'Life status and date of death on Members', 'Grievances', 'Important days', 'Notice board', 'Subfamilies', 'Photos folder in Drive', 'Family tree columns on Members', 'Action Plan sheets', 'Temporary entry links'];
+  main.innerHTML = `<div class="pagehead"><div><h2>Run all setup</h2><div class="sub">Prepares every sheet and column the dashboard uses, in one go. Safe to run again: it only adds what is missing.</div></div></div>
+    <div class="panel"><div class="panel-body"><b>What it checks</b><ol class="small" style="line-height:1.8;margin:8px 0 14px 18px">${steps.map(s => '<li>' + esc(s) + '</li>').join('')}</ol>
+    <label class="lbl" for="ra_pw">Your admin password</label><input class="input" id="ra_pw" type="password" autocomplete="current-password" style="max-width:320px">
+    <div class="fieldnote">Asked again so nobody can run this from an unattended screen.</div>
+    <button class="btn btn-primary" id="ra_go" style="margin-top:12px">▶ Run all</button><div id="ra_out" style="margin-top:14px"></div>
+    <p class="muted small" style="margin-top:14px">Backend now: ${esc((DB && DB.version) || 'unknown')}</p></div></div>`;
+  $('#ra_go').onclick = async () => {
+    const pw = $('#ra_pw').value, out = $('#ra_out'), b = $('#ra_go');
+    if(!pw){ out.innerHTML = '<div class="errline">Enter your password first.</div>'; return; }
+    b.disabled = true; b.textContent = 'Running…'; out.innerHTML = '<div class="muted">Working through each step. This can take up to a minute.</div>';
+    try {
+      const r = await api('runAll', { username: (USER && USER.username) || '', password: pw });
+      if(!r || !r.ok) throw new Error((r && r.error) || 'The backend refused.');
+      const bad = (r.steps || []).filter(x => !x.ok);
+      out.innerHTML = '<div style="margin-bottom:8px"><b>' + (bad.length ? bad.length + ' step' + (bad.length === 1 ? '' : 's') + ' need attention' : 'Everything is ready') + '</b></div>' +
+        (r.steps || []).map(x => `<div class="upd"><span class="ui">${x.ok ? '✔' : '✕'}</span><div><b>${esc(x.step)}</b>${x.error ? '<div class="small muted">' + esc(x.error) + '</div>' : ''}</div></div>`).join('') +
+        (bad.length ? '<p class="small muted">If a step asks for permission, open Apps Script once, choose <b>setupEverything</b>, press Run and accept the permission request. Then run this again.</p>' : '');
+      await refresh(true);
+    } catch(err){
+      const m = String(err.message || err);
+      out.innerHTML = '<div class="errline">' + esc(/Unknown action/i.test(m) ? 'Your Code.gs does not have Run all yet. Add the edits from Code-gs-edits.txt, deploy a new version, then try again.' : m) + '</div>';
+    } finally { b.disabled = false; b.textContent = '▶ Run all'; }
+  };
+}
+})();
+
+
+/* EMAIL VERIFICATION — email OTP only. */
+let malContactChallenge={},malVerificationSnapshot=null;
+function malContactBadge(row){
+  if(!row || !row.present)return '<span class="verify-pill pending">Not added</span>';
+  return row.verified?'<span class="verify-pill done">✓ Verified</span>':
+    '<span class="verify-pill pending">Not verified</span>';
+}
+function malPaintContactVerification(result){
+  malVerificationSnapshot=result;
+  if(!document.getElementById('malVerificationList'))return;
+  const contacts=result.contacts||{};
+  document.getElementById('malVerificationList').innerHTML=['email'].map(ch=>{
+    const d=contacts[ch]||{},label='Email',ico='✉';
+    return '<section class="mal-verify-row"><div class="mal-verify-label"><span class="mal-verify-ico">'+ico+'</span><div><strong>'+label+'</strong><div class="muted small">'+esc(d.masked||'Not registered')+'</div></div></div>'+malContactBadge(d)+
+      (d.verified?'<p class="muted small">Self-verified by OTP on '+esc(d.verifiedAt||'')+'</p>':
+        '<p class="muted small">Only a successful OTP sent to this contact earns a verified badge.'+
+        (d.legacyTrusted?' Previous admin approval does not count as self-verification.':'')+'</p>')+
+      (!d.verified&&d.present&&d.available?'<button class="btn btn-primary mal-send-own" type="button" data-mal-channel="'+ch+'">Send '+label+' OTP</button>':
+        !d.verified?'<div class="muted small">'+(!d.present?'Ask the administrator to add this contact.':'Verification is unavailable until the administrator enables delivery.')+'</div>':'')+
+      '<div id="mal-verify-code-'+ch+'" hidden class="mal-verify-code"><label class="lbl">6-digit '+label+' code</label><input class="input" id="mal-verify-input-'+ch+'" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Enter code"><button class="btn btn-primary mal-confirm-own" type="button" data-mal-channel="'+ch+'">Confirm '+label+'</button></div>'+ 
+      '<div id="mal-verify-result-'+ch+'" class="small" role="status" aria-live="polite"></div></section>';
+  }).join('');
+  document.getElementById('malEmailVerificationSummary').textContent=contacts.email&&contacts.email.verified?'✓ Email verified':'Email verification is required for OTP sign-in and recovery';
+  document.querySelectorAll('.mal-send-own').forEach(btn=>btn.onclick=async()=>{
+    const ch=btn.dataset.malChannel,res=document.getElementById('mal-verify-result-'+ch);
+    btn.disabled=true;res.textContent='Sending OTP…';
+    try{const r=await api('requestContactVerification',{channel:ch});
+      if(!r || !r.ok)throw new Error(r&&r.error||'Could not deliver OTP.');
+      malContactChallenge[ch]=r.challenge;
+      document.getElementById('mal-verify-code-'+ch).hidden=false;
+      res.textContent='Code sent. It expires in five minutes.';
+      document.getElementById('mal-verify-input-'+ch).focus();
+    }catch(e){res.textContent=e.message||'Could not send code.';}finally{btn.disabled=false;}
+  });
+  document.querySelectorAll('.mal-confirm-own').forEach(btn=>btn.onclick=async()=>{
+    const ch=btn.dataset.malChannel,code=document.getElementById('mal-verify-input-'+ch).value.trim(),
+      res=document.getElementById('mal-verify-result-'+ch);
+    if(!malContactChallenge[ch]||!/^[0-9]{6}$/.test(code)){res.textContent='Enter the six-digit code.';return;}
+    btn.disabled=true;res.textContent='Checking…';
+    try{const r=await api('confirmContactVerification',{challenge:malContactChallenge[ch],code});
+      if(!r || !r.ok)throw new Error(r&&r.error||'Code rejected.');
+      delete malContactChallenge[ch];malPaintContactVerification(r);
+      malUpdateVerificationChip(r);
+      toast('Email verified','good');
+      if(isAdmin())refresh(true);
+    }catch(e){res.textContent=e.message||'Could not verify code.';}finally{btn.disabled=false;}
+  });
+}
+function malUpdateVerificationChip(data){
+  const chip=document.getElementById('malMyVerifyBtn');if(!chip||!data)return;
+  const verified=!!(data.contacts&&data.contacts.email&&data.contacts.email.verified);
+  chip.textContent=verified?'✓ Email verified':'✓ Verify email';
+  chip.classList.toggle('all-verified',verified);
+}
+async function openMyVerification(){
+  if(!USER||!USER.token){toast('Sign in first','bad');return;}
+  malContactChallenge={};
+  openModal('<header><h3>Verify my email</h3><button class="btn btn-sm" type="button" onclick="closeModal()">Close</button></header>'+
+    '<div class="body"><p class="muted">Verify your registered email using a one-time code. The badge confirms email ownership, not legal identity.</p>'+
+    '<div id="malVerificationList"><div class="muted">Loading your verification details…</div></div>'+
+    '<p id="malEmailVerificationSummary" class="mal-verify-summary"></p><p class="muted small">Never share your OTP. Changing your email automatically removes its badge.</p></div>');
+  try{const r=await api('myVerification');if(!r || !r.ok)throw new Error(r&&r.error||'Could not load verification data.');
+    malPaintContactVerification(r);malUpdateVerificationChip(r);
+  }catch(e){const el=document.getElementById('malVerificationList');if(el)el.textContent=e.message||'Could not load profile.';}
+}
+async function malRefreshVerificationChip(){
+  if(!USER||!USER.token)return;
+  try{const r=await api('myVerification');if(r&&r.ok)malUpdateVerificationChip(r);}catch(e){}
+}
+
+$('#loginBtn').onclick = doLogin;
+$('#p').addEventListener('keydown', e => { if(e.key === 'Enter') doLogin(); });
+$('#u').addEventListener('keydown', e => { if(e.key === 'Enter') $('#p').focus(); });
+$('#logoutBtn').onclick = doLogout;
+$('#malMyVerifyBtn').onclick = openMyVerification;
+$('#refreshBtn').onclick = () => refresh(false);
+$('#menuBtn').onclick = () => $('#sidebar').classList.contains('open') ? closeDrawer() : openDrawer();
+$('#scrim').onclick = closeDrawer;
+
+/* Independently guarded: these are the last statements before the async boot,
+   and when one throws the other must still run — a failure in the photo must
+   not leave the version chips, the Show toggle and Repair unbound. */
+try { applyLoginPhoto(); } catch(e){ console.warn('login photo:', e); }
+try { initLoginScreen(); } catch(e){ console.warn('login screen:', e); }
+
+(async () => {
+  const saved = store.get('mal_user');
+  if(!saved) return;
+  try {
+    USER = JSON.parse(saved);
+    busy(true, 'Loading village records…');
+    await load();
+    enterApp();
+  } catch(e){
+    /* The saved login is unreadable, so the register cannot open — positive
+       evidence for the self-repair block, which is the only thing that clears
+       storage. Without this report a corrupt entry would be deleted here but
+       whatever else is stale would survive, and the blank screen with it. */
+    if(window.malNoteBadStore) window.malNoteBadStore('the saved sign-in');
+    store.del('mal_user');
+  } finally { busy(false); }
+})();

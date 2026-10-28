@@ -1,0 +1,6 @@
+/* Shared offline / connectivity treatment, Malipatana FE v3.5.41 */
+.mal-connectivity-banner[hidden]{display:none!important}
+.mal-connectivity-banner{position:sticky;top:0;z-index:9999;box-sizing:border-box;width:100%;background:#fff5e5;border-bottom:2px solid #d7a046;color:#624319;padding:10px max(12px,env(safe-area-inset-left));font:600 13px/1.5 system-ui,-apple-system,sans-serif;text-align:center;box-shadow:0 3px 12px #261f1219}
+.mal-connectivity-banner strong{color:#603612}
+.mal-connectivity-banner .mal-connectivity-icon{margin-right:7px}
+@media(prefers-reduced-motion:reduce){html:focus-within{scroll-behavior:auto!important}}

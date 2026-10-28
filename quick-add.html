@@ -1,0 +1,630 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#103b46"><meta name="referrer" content="no-referrer"><title>Quick Add Malipatana · No-login village entry</title>
+<link rel="icon" type="image/png" sizes="64x64" href="shared-entry-favicon.png">
+<link rel="apple-touch-icon" href="shared-entry-icon-192.png">
+<link rel="manifest" href="quick-add.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Quick Add Malipatana">
+<style>
+:root{--navy:#143847;--teal:#086f63;--teal2:#dff5ed;--gold:#d49a39;--ink:#17333d;--muted:#667d81;--line:#dbe6e2;--cream:#faf7f0;--red:#a03939;--shadow:0 8px 30px rgba(16,51,59,.08)}*{box-sizing:border-box}
+body{margin:0;background:linear-gradient(145deg,#e9f7f3 0%,#fbfaf5 50%,#edf4f8 100%);font:15px/1.55 system-ui,-apple-system,'Segoe UI',sans-serif;color:var(--ink);min-height:100vh}main{width:min(840px,100%);padding:12px 14px 110px;margin:auto}.head{border-radius:20px;background:linear-gradient(120deg,#103846,#086f63);color:#fff;display:flex;gap:13px;align-items:center;padding:18px 19px;margin:3px 0 16px;box-shadow:var(--shadow)}.head img{width:46px;height:46px;border-radius:12px}.head h1{font-size:22px;line-height:1.15;margin:0}.head p{font-size:12px;color:#d9f5ec;margin:4px 0 0}.box{background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px;margin:0 0 13px;box-shadow:var(--shadow)}h2{margin:0 0 7px;font-size:19px;letter-spacing:-.35px}h3{margin:0 0 12px;font-size:15px;color:#185a57}.sub{color:var(--muted);font-size:13px;margin:0 0 13px}.alert{border-radius:12px;padding:13px;margin-bottom:12px;white-space:pre-wrap;overflow-wrap:anywhere}.alert.error{background:#fff0ed;border:1px solid #eabbb3;color:#8f362d}.alert.success{background:#e8f8ef;border:1px solid #a7d8ba;color:#14593c}.notice{background:#eef8f4;border:1px solid #c5e7d9;color:#235951;border-radius:12px;padding:10px 12px;font-size:13px;margin:12px 0}.nav{display:flex;gap:8px;padding:7px;border-radius:14px;background:#f0f6f4;margin:10px 0 14px}.nav button{flex:1;border:0;background:transparent;color:#51736d;min-height:44px;border-radius:10px;font-weight:750;cursor:pointer}.nav button.selected{background:#fff;color:#096b60;box-shadow:0 2px 8px #124b4215}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.field{display:flex;flex-direction:column;gap:5px;min-width:0;font-size:13px;font-weight:700;color:#31545a;margin-bottom:12px}.field input,.field select,.field textarea{display:block;width:100%;max-width:100%;border:1px solid #cbded9;border-radius:11px;background:#fff;font:inherit;font-size:15px;color:var(--ink);padding:10px 12px;min-height:45px}.field input:focus,.field select:focus,.field textarea:focus{outline:3px solid #c9f1e4;border-color:var(--teal)}.field textarea{min-height:72px;resize:vertical}.field small{font-size:11px;color:#718886;font-weight:450}.required{color:#bf5338}.buttons{display:flex;flex-wrap:wrap;gap:9px;align-items:center;margin:12px 0 0}.primary,.secondary{border:0;border-radius:12px;background:var(--teal);color:#fff;min-height:46px;padding:11px 20px;font:inherit;font-weight:750;cursor:pointer}.secondary{background:#e8f3ee;color:#0d665e}.primary:disabled,.secondary:disabled{opacity:.5;cursor:wait}.hero-id{padding:13px;background:var(--teal2);border:1px solid #b8e0d0;color:#126358;border-radius:12px;font-weight:800;overflow-wrap:anywhere;margin-bottom:12px}.hero-id small{display:block;font-size:12px;font-weight:500}.mini{font-size:12px;color:var(--muted)}.hidden{display:none!important}.steps{display:flex;gap:10px;align-items:center;font-size:13px;font-weight:700;color:var(--muted);margin:0 0 14px}.steps span{border-radius:20px;background:#e5f2ed;padding:5px 10px}.steps span.current{background:var(--teal);color:white}details{border:1px solid #e2e9e5;border-radius:13px;padding:13px;margin:14px 0;background:#fcfdfb}summary{cursor:pointer;font-weight:750;color:#165b55;list-style:revert}details .grid{margin-top:16px}.photo-row{display:flex;gap:12px;align-items:center}.photo-row img{border-radius:12px;width:65px;height:65px;object-fit:cover}.photo-row .preview{flex:none;width:70px;height:70px;border:1px dashed #a5cec1;border-radius:12px;display:grid;place-items:center;color:#659d8e;overflow:hidden;background:#f3faf8}.photo-row .field{flex:1}.recent{padding:10px 0;border-bottom:1px solid #e9eeeb}.recent:last-child{border:0}.receipt{padding:14px;border-radius:14px;border:1px solid #a9d9c1;background:#eaf9f0;margin:12px 0}.receipt strong{font-size:17px;color:#11634f}.receipt .codes{font-size:13px;overflow-wrap:anywhere;color:#276153}.sticky{position:sticky;top:0;z-index:3}.tab-headers{display:flex;align-items:center;justify-content:space-between}.pill{border-radius:100px;background:#e0f4ea;color:#17675b;padding:5px 10px;font-size:11px;font-weight:700}.mutedbox{border-radius:12px;background:#f6f8f6;padding:12px;color:#607b77;font-size:12px}.privacy{border-left:3px solid #dca846;background:#fff9ed;padding:10px 12px;border-radius:6px;font-size:12px;color:#7b5b25;margin-top:12px}#status{white-space:pre-line}#attachmentFeedback{font-size:13px;margin:8px 0;color:#1a6153}#familyOptionsStatus{color:#a05b16}#familySelect{background:#f4faf7}button:focus-visible{outline:3px solid #e6bd5d;outline-offset:2px}
+.live-name{grid-column:1/-1;padding:10px 13px;background:#F0FAF4;border:1px solid #BFE5D5;border-radius:11px;font-size:14px;color:#235448;margin:-1px 0 12px}.live-name strong{color:#135E4D}.live-name span{font-weight:800;color:#096B5B;overflow-wrap:anywhere}
+@media(max-width:600px){main{padding:9px 10px 92px}.head{padding:15px}.head h1{font-size:19px}.box{padding:14px;border-radius:15px}.grid{grid-template-columns:1fr;gap:0}.field{margin-bottom:13px}.buttons>button{flex:1;min-width:120px}.primary,.secondary{min-height:47px}.nav{gap:5px}.nav button{font-size:13px}}
+.duplicate-alert{padding:12px 14px;margin:10px 0;background:#fff3cb;border:1px solid #e0bb64;border-radius:12px;color:#7e4f0e;font-size:13px;font-weight:700}.duplicate-alert.blocking{background:#ffeded;color:#9f2a27;border-color:#e5aaa3}.duplicate-alert[hidden]{display:none!important}
+ .mal-shared-matchbox{border:1px solid #c8d7d0;border-radius:9px;background:#fff;max-height:180px;overflow:auto;margin-top:5px}
+ .mal-shared-matchbox[hidden]{display:none!important}
+ .mal-shared-choice{display:block;width:100%;padding:10px;text-align:left;border:0;border-bottom:1px solid #edf2ee;background:#fff;cursor:pointer}
+ .mal-shared-choice:hover,.mal-shared-choice:focus{background:#e7f3ee}
+.mal-photo-file-hidden{position:absolute!important;width:1px!important;height:1px!important;overflow:hidden!important;clip-path:inset(50%)!important;opacity:0!important;pointer-events:none!important}
+.mal-photo-action-buttons{display:flex;gap:8px;flex-wrap:wrap;margin:7px 0}
+.mal-photo-action-buttons button{flex:1 1 128px;min-height:45px;border-radius:10px;border:1px solid #beded2;background:#eaf8f1;color:#10604f;font-size:14px;font-weight:750;padding:9px 11px;cursor:pointer}
+.mal-photo-action-buttons button.mal-take{background:#086f63;color:#fff;border-color:#086f63}
+@media(max-width:460px){.photo-row{align-items:start}.mal-photo-action-buttons{flex-direction:column}.mal-photo-action-buttons button{flex:initial;width:100%}}
+
+/* FE V3.5.40: Installable, login-free shared entry */
+.mal-install{background:linear-gradient(130deg,#fffdf4,#edf9f3);border:1px solid #cae5d6;border-radius:18px;padding:15px;margin-bottom:13px;box-shadow:var(--shadow)}
+.mal-install .intro{display:flex;gap:12px;align-items:center}.mal-install .intro img{height:52px;width:52px;border-radius:13px;flex:none;box-shadow:0 3px 8px #0a514125}
+.mal-install h2{font-size:17px;margin:0}.mal-install p{font-size:13px;color:#536f69;margin:3px 0 9px}.mal-install .install-actions{display:flex;gap:8px;flex-wrap:wrap}
+.mal-install .install-actions button{flex:1 1 154px;min-height:46px;padding:9px 11px;border-radius:11px;font:inherit;font-weight:750;cursor:pointer;background:#086f63;color:white;border:1px solid #086f63}
+.mal-install .install-actions button.mal-outline{color:#146257;border-color:#bad9cd;background:#fff}
+.mal-install-note{font-size:12px;color:#526961;margin-top:8px;overflow-wrap:anywhere}
+.mal-install-info{margin-top:10px;padding:12px;border-radius:10px;background:#fff;border:1px solid #cae5d6;font-size:13px;white-space:pre-wrap;color:#214b47}
+.mal-saved-link{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #e3ece7}
+.mal-saved-link:last-child{border-bottom:0}.mal-saved-link b{font-size:14px}.mal-saved-link small{display:block;color:#526d69;font-size:12px}
+.mal-saved-link .install-actions{flex:0 1 auto}
+@media(max-width:520px){.mal-saved-link{align-items:stretch;flex-direction:column}.mal-saved-link .install-actions{display:flex}.mal-saved-link .install-actions button{flex:1}}
+</style><link rel="stylesheet" href="malipatana-connectivity.css?v=3.5.45">
+</head><body><main>
+<header class="head"><img src="shared-entry-icon-192.png" alt="Quick Add Malipatana icon"><div><h1>Quick Add Malipatana</h1><p>No-login Family · Member · Expense entry</p></div></header>
+<details class="box" id="malEntryHelp"><summary style="cursor:pointer;font-weight:800;color:#0c685d;min-height:40px;display:flex;align-items:center">ℹ How to use this shared entry link</summary><div class="sub" style="margin-top:10px;line-height:1.7"><p>1. Check the link information and its allowed entry type.</p><p>2. Fill in the required fields. Use <strong>Take Photo</strong> or <strong>Choose Gallery</strong> only if a photo is needed.</p><p>3. Submit once, then keep your <strong>saved receipt / record ID</strong>. For a new person, use the cleared form and submit again.</p><p>4. Tap <strong>Save this link</strong>, then <strong>Install Quick Add app</strong> to reopen it without logging in. An installed shortcut does not override Admin pause or expiry.</p><p><strong>Shared-phone caution:</strong> anyone using this device can open links saved here. Remove saved links when finished on a borrowed phone.</p></div></details>
+<section id="malInstallPanel" class="mal-install hidden" aria-labelledby="malInstallTitle">
+ <div class="intro"><img src="shared-entry-icon-192.png" alt="Quick Add Malipatana icon">
+ <div><h2 id="malInstallTitle">Quick Add — save and install</h2><p>Quick family, member or expense entry · No login needed</p></div></div>
+ <div class="install-actions"><button id="malSaveLink" type="button">☆ Save this link</button><button id="malInstallApp" type="button">▣ Install Quick Add app</button><button id="malManageLinks" type="button" class="mal-outline">Manage saved links</button></div>
+ <div id="malInstallInfo" class="mal-install-info hidden" role="status" aria-live="polite"></div>
+ <div class="mal-install-note">Saving a link on this device keeps its access key here. Anyone using this unlocked phone may open it. Admin can pause or disable the link at any time.</div>
+</section>
+<section id="malSavedHome" class="box hidden" aria-labelledby="malSavedTitle">
+ <div class="intro" style="display:flex;align-items:center;gap:12px;margin-bottom:10px"><img src="shared-entry-icon-192.png" alt="Quick Add Malipatana" width="58" height="58" style="border-radius:13px"><div><h2 id="malSavedTitle">Quick Add · Saved Links</h2><p class="sub" style="margin:0">Open a saved link without logging in</p></div></div>
+ <div class="mal-install" style="margin:10px 0 14px"><div class="install-actions"><button type="button" id="malInstallQuickHome">▣ Install Quick Add on phone</button></div><div id="malHomeInstallInfo" class="mal-install-info hidden" role="status" aria-live="polite"></div><p class="mal-install-note">This is a separate icon from the main Malipatana app. If Chrome shows no Install option, use browser ⋮ → Add to Home screen.</p></div><div id="malSavedList"></div>
+ <p class="privacy">This list is stored only in this browser on this device. A saved link is not a user account or proof of identity. Admin's active, pause, expiry and usage rules still apply.</p>
+</section>
+<div id="status" class="box">Checking shared-link permission…</div>
+<section id="content" class="hidden"><div class="box"><div class="tab-headers"><h2 id="heading">Shared data entry</h2><span class="pill">No login required</span></div><p class="sub" id="info"></p><div id="expiry" class="notice"></div><div class="privacy">Only limited identification names from the selected family appear for linking parents; private contact, finance and photographs are not shared. Give this link only to trusted people.</div></div>
+<section id="malExistingRecords" class="box hidden" aria-labelledby="malExistingTitle">
+ <h2 id="malExistingTitle">🔎 Find an existing record</h2>
+ <p class="sub">Only Admin-approved categories appear here. Searching shows basic identification details, not private contacts, birthdays, incomes, personal photographs or full addresses.</p>
+ <div class="grid"><label class="field">Category<select id="malExistingCategory"><option value="family">Families</option><option value="member">Members</option><option value="expense">Expenses</option></select></label>
+ <label class="field">Search by name or ID (3+ letters)<input id="malExistingQuery" type="search" minlength="3" maxlength="70" placeholder="Type name or record number"></label></div>
+ <div class="buttons"><button id="malExistingSearch" class="secondary" type="button">Search records</button></div>
+ <div id="malExistingMatches" role="status" aria-live="polite"></div>
+ <form id="malExistingProposal" class="hidden" style="margin-top:14px"><h3 id="malExistingRecordTitle"></h3>
+ <p class="sub">Update only the relevant information. Your proposed corrections go to Admin; the official record remains unchanged until approved.</p>
+ <div id="malExistingFields" class="grid"></div><label class="field">Your name (optional, self-reported)<input name="submittedBy" maxlength="100" autocomplete="name"></label>
+ <div class="buttons"><button class="primary" type="submit" id="malSendProposal">Submit for Admin Approval</button><button class="secondary" type="button" id="malCancelProposal">Cancel</button></div></form>
+ </section>
+<div id="familyTabs" class="box hidden"><div class="nav"><button type="button" id="familyTab" class="selected">Family details</button><button type="button" id="memberTab">Member details</button></div><p class="sub">Enter Family or Member details directly. Choose an existing family inside Member details, or create a new family first.</p><div class="hero-id hidden" id="selectedFamilyBanner"></div></div>
+<form id="familyForm" class="box hidden"><h2>Family details</h2><p class="sub">Enter family details as in the signed-in dashboard. Family ID is created automatically when saved.</p>
+<div class="grid"><label class="field">Submitted by (your name)<input name="submittedBy" maxlength="100" placeholder="Who is filling this form?"><small>For Admin's submission history; a self-reported name, not verified login.</small></label></div><div class="grid"><label class="field">Family head first / given name <span class="required">*</span><input name="givenName" required maxlength="100" autocomplete="given-name"></label><label class="field">Surname <span class="required">*</span><input name="surname" required maxlength="80" autocomplete="family-name" list="surnameList"></label><label class="field">Mobile number<input name="phone" type="tel" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" placeholder="10 digits, optional"></label><label class="field">Village locality / Sahi<select name="locality" id="guestFamilySahi"><option value="">Choose Sahi (optional)</option></select><small>Admin-approved locality list.</small></label><label class="field hidden" id="guestFamilyOtherRow">Locality not listed<input name="localityOther" maxlength="100" placeholder="Enter the Sahi for Admin review"></label><div class="live-name" role="status" aria-live="polite"><strong>Full name (automatic):</strong> <span id="guestFamilyFullName">Enter first name and surname</span></div></div>
+<details><summary>Additional family details</summary><div class="grid"><label class="field">Parent family (optional)<select name="parentFamilyId" id="parentFamily"><option value="">Main family / none</option></select><small>Existing families appear in this dropdown automatically.</small></label><label class="field">Guide member ID (optional)<input name="guideMemberId" maxlength="60" placeholder="Existing member ID"></label><label class="field">Guidance status<select name="guidanceStatus"><option value="">Select</option><option>Open</option><option>Advising</option><option>Sent to committee</option><option>Helped</option><option>Closed</option></select></label><label class="field">Family status<select name="familyStatus"><option>Active</option><option>Inactive</option><option>Shifted</option></select></label><label class="field">Vulnerability<select name="vulnerable"><option>Normal</option><option>Vulnerable</option><option>Highly Vulnerable</option></select></label><label class="field">Guidance needed<select name="guidance"><option>No</option><option>Child education</option><option>Higher studies</option><option>Job or skill</option><option>Health</option><option>Money matters</option><option>Legal or papers</option><option>Other</option></select></label><label class="field">Guidance note<textarea name="guidanceNote" maxlength="500"></textarea></label></div><label class="field">Remarks<textarea name="note" maxlength="900"></textarea></label></details>
+<datalist id="surnameList"></datalist><div class="photo-row"><div class="preview" id="familyPreview">📷</div><div class="field"><label for="familyPhoto">Family photo (optional)</label><input type="file" class="mal-photo-file-hidden" id="familyPhoto" accept="image/jpeg,image/png,image/webp" aria-label="Selected family photo"><div class="mal-photo-action-buttons"><button type="button" class="mal-take" id="takeFamilyPhoto">📷 Take Photo</button><button type="button" id="chooseFamilyPhoto">🖼 Choose from Gallery</button></div><small>Original up to 20 MB retained privately; dashboard displays a small thumbnail.</small></div></div>
+<div class="buttons"><button type="submit" class="primary">Save family & add members →</button><button id="clearFamily" type="button" class="secondary">Clear</button></div></form>
+<form id="memberForm" class="box hidden"><h2>Member details</h2><div class="notice" id="currentFamilyText">Choose a family from the list, or save a new family first. Family ID fills automatically.</div>
+<div class="grid"><label class="field">Submitted by (your name)<input name="submittedBy" maxlength="100" placeholder="Who is filling this form?"><small>For Admin's submission history; a self-reported name, not verified login.</small></label></div><div class="grid"><label class="field">Village Locality / Sahi (find your family)<select id="guestMemberSahi"><option value="">All Sahis</option></select><small>Choose locality first, then family. The Family record owns its Sahi.</small></label><label class="field">Family <span class="required">*</span><select id="familySelect" aria-label="Choose the family"><option value="">Loading existing families…</option></select><small>Includes families already registered in the main dashboard; no search required.</small><small id="familyOptionsStatus" aria-live="polite"></small></label><label class="field">Family ID (auto-filled) <span class="required">*</span><input name="familyId" id="familyId" required maxlength="60" placeholder="Auto-filled when choosing family"></label><label class="field">Member first / given name <span class="required">*</span><input name="givenName" required maxlength="100" autocomplete="given-name"></label><label class="field">Surname <span class="required">*</span><input name="surname" required maxlength="80" autocomplete="family-name" list="surnameList"></label><label class="field">Relationship to family head<select name="relation"><option>Self</option><option>Wife</option><option>Husband</option><option>Son</option><option>Daughter</option><option>Father</option><option>Mother</option><option>Brother</option><option>Sister</option><option>Daughter-in-law</option><option>Son-in-law</option><option>Grandson</option><option>Granddaughter</option><option>Other</option></select></label><label class="field">Gender<select name="gender"><option value="">Choose</option><option>Male</option><option>Female</option><option>Other</option></select></label><label class="field">Date of birth / age (optional)<select id="guestBirthMode"><option value="unknown">I do not know either — leave blank</option><option value="dob">Exact date of birth known</option><option value="age">Only approximate age known</option></select><small>Both can be left blank. It will save as Not recorded, not zero.</small></label><label class="field" id="guestDobBlock" hidden>Date of birth<input name="dob" type="date" disabled></label><label class="field" id="guestAgeBlock" hidden>Approximate age (years)<input name="approxAge" type="number" min="0" max="120" step="1" inputmode="numeric" placeholder="e.g. 52" disabled><small>Marked estimated; recorded as of submission date.</small></label><label class="field" id="guestCalculatedAgeBlock" hidden>Age (calculated)<input id="agePreview" readonly placeholder="From date of birth"></label><label class="field">Mobile<input name="phone" type="tel" inputmode="numeric" pattern="[0-9]{10}" maxlength="10"></label><label class="field">Current residence<select name="residenceStatus" id="guestResidence"><option>Living in Malipatana</option><option>Outside temporarily</option><option>Shifted permanently</option></select></label><div class="live-name" role="status" aria-live="polite"><strong>Full name (automatic):</strong> <span id="guestMemberFullName">Enter first name and surname</span></div></div><details id="guestOutside" hidden><summary>Outside residence details</summary><div class="grid"><label class="field">Current city/town<input name="currentCity" maxlength="100"></label><label class="field">District<input name="currentDistrict" maxlength="100"></label><label class="field">State<input name="currentState" maxlength="100"></label><label class="field">Country<input name="currentCountry" maxlength="100"></label></div><label class="field">Full outside address (optional)<textarea name="outsideAddress" maxlength="500"></textarea></label></details>
+<details><summary>Parents, family relations, education and work</summary><div class="grid"><label class="field">Father name<select name="fatherId" id="guestFatherChoice" hidden><option value="">Type name manually / not registered</option></select><input name="fatherName" maxlength="100" autocomplete="off" placeholder="Father's name"><small>Choose registered father from this family, or type his name.</small></label><label class="field">Mother name<select name="motherId" id="guestMotherChoice" hidden><option value="">Type name manually / not registered</option></select><input name="motherName" maxlength="100" autocomplete="off" placeholder="Mother's name"><small>Choice links the existing member. It never creates a duplicate.</small></label><label class="field">Marital status<select name="maritalStatus" id="sharedMarital"><option value="">Not recorded</option><option>Unmarried</option><option>Married</option><option>Widowed</option><option>Divorced</option><option>Separated</option><option>Unknown</option></select></label><label class="field">Spouse name (if known)<input name="spouseName" maxlength="100" autocomplete="off" placeholder="Type 2 letters to look up in this family"><select name="spouseId" id="guestSpouseChoice" hidden><option value="">Not linked</option></select><div id="guestSpouseMatches" class="mal-shared-matchbox" hidden></div><small>Select existing member from suggestions, or keep the typed name. Members outside this family can be linked later by Admin.</small></label><label class="field">Education<select name="education"><option value="">Select</option><option>Illiterate</option><option>Primary</option><option>Class 10</option><option>Class 12</option><option>ITI/Diploma</option><option>Graduate</option><option>Post Graduate</option><option>Other</option></select></label><label class="field">Occupation<select name="occupation"><option value="">Select</option><option>Farmer</option><option>Daily Wage</option><option>Fisherman</option><option>Shop</option><option>Private Job</option><option>Government Job</option><option>Student</option><option>Homemaker</option><option>Unemployed</option><option>Retired</option><option>Other</option></select></label><label class="field">Earning member<select name="earning"><option value="">Not specified</option><option>Yes</option><option>No</option></select></label><label class="field">Monthly income (₹)<input name="income" type="number" step="0.01" min="0"></label><label class="field">Disability (optional)<select name="disability"><option value="">Not specified</option><option>No</option><option>Yes</option></select></label><label class="field">Insurance<select name="insurance"><option value="">Not specified</option><option>Yes</option><option>No</option></select></label></div><label class="field">Remarks<textarea name="note" maxlength="900"></textarea></label></details>
+<div class="photo-row"><div class="preview" id="memberPreview">📷</div><div class="field"><label for="memberPhoto">Member photograph (optional)</label><input type="file" class="mal-photo-file-hidden" id="memberPhoto" accept="image/jpeg,image/png,image/webp" aria-label="Selected member photo"><div class="mal-photo-action-buttons"><button type="button" class="mal-take" id="takeMemberPhoto">📷 Take Photo</button><button type="button" id="chooseMemberPhoto">🖼 Choose from Gallery</button></div><small>Original private in Google Drive · lightweight thumbnail in dashboard.</small></div></div>
+<div class="buttons"><button type="submit" class="primary">Save member</button><button type="button" class="secondary" id="addAnother">Clear for next member</button></div></form>
+<form id="expenseForm" class="box hidden"><h2>Event expense</h2><p class="sub" id="expenseEvent">Record an expense and who actually paid it.</p><div class="grid"><label class="field">Date <span class="required">*</span><input name="date" type="date" required></label><label class="field">Amount (₹) <span class="required">*</span><input name="amount" type="number" min="0.01" max="10000000" step="0.01" required></label><label class="field">Description <span class="required">*</span><input name="what" required maxlength="200" placeholder="What was purchased or paid for?"></label><label class="field">Paid by <span class="required">*</span><input name="paidBy" required maxlength="100" placeholder="Person who paid"></label><label class="field">Paid to<input name="paidTo" maxlength="100" placeholder="Shop, vendor or beneficiary"></label><label class="field">Payment mode<select name="method"><option>Cash</option><option>UPI</option><option>Bank Transfer</option><option>Cheque</option><option>Card</option><option>Other</option></select></label></div>
+<details><summary>Expense category and more details</summary><div class="grid"><label class="field">Category<select name="category"><option>Festival</option><option>Welfare</option><option>Medical</option><option>Education</option><option>Emergency</option><option>Administration</option><option>Infrastructure</option><option>Other</option></select></label><label class="field">Subcategory<input name="subcategory" maxlength="90"></label><label class="field">Family ID (if relevant)<input name="familyId" id="expenseFamilyId" maxlength="60" placeholder="Optional Family ID"></label><label class="field">Entered by<input name="enteredBy" maxlength="100" placeholder="Who is filling the form?"></label><label class="field">Existing bill/receipt link<input name="billReceipt" maxlength="240" placeholder="Optional link"></label></div><label class="field">Remarks<textarea name="note" maxlength="900"></textarea></label></details>
+<div class="photo-row"><div class="preview" id="expensePreview">📷</div><div class="field"><label for="expensePhoto">Bill/receipt photo (optional)</label><input type="file" class="mal-photo-file-hidden" id="expensePhoto" accept="image/jpeg,image/png,image/webp" aria-label="Selected expense photo"><div class="mal-photo-action-buttons"><button type="button" class="mal-take" id="takeExpensePhoto">📷 Take Photo</button><button type="button" id="chooseExpensePhoto">🖼 Choose from Gallery</button></div><small>Original up to 20 MB private; small preview used in dashboard.</small></div></div>
+<div class="buttons"><button class="primary" type="submit">Save expense</button></div></form>
+<div id="message" role="status" aria-live="polite"></div><div id="receipt" class="receipt hidden"></div><div id="attachmentFeedback"></div>
+
+<details id="findSection" class="box hidden"><summary>Correct my earlier entry using receipt</summary><p class="sub" style="margin-top:12px">Enter your Record ID and private edit code from the original receipt. Corrections now go to Admin for approval; the original record stays unchanged.</p><form id="findForm"><div class="grid"><label class="field">Record ID <input name="id" required maxlength="65" placeholder="FAM-… / MEM-… / EXP-…"></label><label class="field">Private edit code<input name="editCode" required maxlength="20" autocomplete="off"></label></div><button class="secondary" type="submit">Find my saved entry</button></form><form id="editForm" class="hidden"><h3 id="editingId"></h3><div id="editFields" class="grid"></div><div class="buttons"><button class="primary" type="submit">Submit Correction for Approval</button><button class="secondary" id="cancelEdit" type="button">Cancel</button></div></form></details>
+<details class="box"><summary>Last five submissions (optional)</summary><p class="sub" style="margin-top:12px">Private household details are not shown here.</p><div id="recent"></div></details>
+</section></main>
+<script>
+const API_URL='https://script.google.com/macros/s/AKfycbyccN1ErYm-NsqnZOlhV9GSLMBr9998Yk7yfi-foOpcLloDw0Mb9SLPMxDp58wWcXqEHA/exec';
+const malUrlParams=new URLSearchParams(location.search);
+const key=malUrlParams.get('key'), $=id=>document.getElementById(id);
+const malLocalLinkStorageKey='malipatana_shared_entry_links_v1';
+let malInstallPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();malInstallPrompt=e;});
+window.addEventListener('appinstalled',()=>{malInstallPrompt=null;malInstallText('Quick Add installed. Open the separate Quick Add Malipatana icon from your phone home screen.');});
+if('serviceWorker' in navigator && location.protocol==='https:'){
+ navigator.serviceWorker.register('./quick-add-sw.js',{scope:'./quick-add.html'}).catch(()=>{});
+}
+
+function malSavedLinks(){
+ try{
+  const list=JSON.parse(localStorage.getItem(malLocalLinkStorageKey)||'[]');
+  return Array.isArray(list)?list.filter(x=>x&&typeof x.key==='string'&&/^[a-f0-9]{32}$/i.test(x.key)).slice(0,20):[];
+ }catch(e){return []}
+}
+function malWriteLinks(list){
+ try{localStorage.setItem(malLocalLinkStorageKey,JSON.stringify(list.slice(-20)));return true;}catch(e){return false}
+}
+function malInstallText(message){const p=$('malInstallInfo');if(p){p.textContent=message;p.classList.remove('hidden');}}
+function malSaveCurrentLink(){
+ if(!key||!/^[a-f0-9]{32}$/i.test(key))return false;
+ const previous=malSavedLinks();const label=(kind==='expense'?'Village expense':kind==='family'?'Family & member entry':'Village entry')+
+  ($('info')&&kind==='expense'?' · '+String($('info').textContent||'').replace(/^Event:\s*/,'').slice(0,60):'');
+ const updated=previous.filter(x=>x.key!==key);
+ updated.push({key,label,savedAt:new Date().toISOString()});
+ if(!malWriteLinks(updated)){malInstallText('Could not save here. Enable browser storage or use Chrome menu → Add to Home screen.');return false;}
+ $('malSaveLink').textContent='✓ Saved to phone';return true;
+}
+function malSavedOpen(key){const u=new URL('quick-add.html',location.href);u.searchParams.set('key',key);location.assign(u.href)}
+function malHome(){
+ const installHome=$('malInstallQuickHome');if(installHome)installHome.onclick=()=>malQuickInstall(true);
+ $('malSavedHome').classList.remove('hidden');$('status').classList.add('hidden');$('content').classList.add('hidden');$('malInstallPanel').classList.add('hidden');
+ const holder=$('malSavedList');holder.replaceChildren();const list=malSavedLinks();
+ if(!list.length){const p=document.createElement('p');p.className='sub';p.textContent='No links saved on this phone yet. Open a shareable entry link from Admin, then tap Save this link or Install on phone.';holder.append(p);return;}
+ for(const item of list){
+  const row=document.createElement('div');row.className='mal-saved-link';
+  const text=document.createElement('div');const b=document.createElement('b');b.textContent=item.label||'Village entry';
+  const small=document.createElement('small');small.textContent='Saved '+(new Date(item.savedAt).toLocaleDateString('en-IN')||'on this device')+' · Admin permissions checked on opening';text.append(b,small);
+  const buttons=document.createElement('div');buttons.className='install-actions';
+  const open=document.createElement('button');open.type='button';open.textContent='Open';open.onclick=()=>malSavedOpen(item.key);
+  const remove=document.createElement('button');remove.type='button';remove.className='mal-outline';remove.textContent='Remove';
+  remove.onclick=()=>{if(confirm('Remove this link from this phone? The Admin link itself will remain unchanged.')){malWriteLinks(malSavedLinks().filter(x=>x.key!==item.key));malHome();}};
+  buttons.append(open,remove);row.append(text,buttons);holder.append(row);
+ }
+}
+async function malQuickInstall(fromHome){
+ const target=fromHome?$('malHomeInstallInfo'):$('malInstallInfo');
+ const show=txt=>{if(target){target.textContent=txt;target.classList.remove('hidden')}};
+ if(window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches){
+   show('Quick Add is already running as an app. Use its separate icon on the home screen.');return;
+ }
+ if(malInstallPrompt){
+  const evt=malInstallPrompt;malInstallPrompt=null;
+  try{await evt.prompt();const decision=await evt.userChoice;
+   if(decision&&decision.outcome==='accepted'){show('Quick Add installation accepted. Check your home screen or app drawer.');return;}
+  }catch(e){}
+ }
+ show('Open THIS Quick Add page in Android Chrome (not the installed Malipatana app). Tap Chrome ⋮ → Add to Home screen → Install, if offered. If you only see Create shortcut / Add shortcut, choose it: the Quick Add icon still opens without login.');
+}
+
+function malInitInstallPanel(){
+ $('malInstallPanel').classList.remove('hidden');
+ if(malSavedLinks().some(x=>x.key===key))$('malSaveLink').textContent='✓ Saved to phone';
+ $('malSaveLink').onclick=()=>{if(malSaveCurrentLink())malInstallText('Link saved. Tap Install Quick Add to open the separate app installation page.');};
+ $('malManageLinks').onclick=()=>{const u=new URL('quick-add.html',location.href);u.search='?installed=1&manage=1';location.assign(u.href)};
+ $('malInstallApp').onclick=async()=>{if(malSaveCurrentLink())await malQuickInstall(false);};
+}
+
+let kind='',linkCanEdit=false,editContext=null,busy=false,currentFamily='';
+let malApprovedSahis_=[];
+const familyCacheKey='mal_entry_families_'+(key||'').slice(0,9);
+let createdFamilies=[];
+let masterFamilies=[];
+let familyOptionsLoaded=false, familyOptionsLoading=null, familyOptionsMessage='';
+try {createdFamilies=JSON.parse(sessionStorage.getItem(familyCacheKey)||'[]').filter(x=>x&&x.id&&x.head).slice(-20);}catch(e){}
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function api(action,params={}){return new Promise((resolve,reject)=>{
+ const cb='malentry_'+Date.now()+'_'+Math.random().toString(36).slice(2),script=document.createElement('script');
+ let timeout=setTimeout(()=>{end();reject(Error('The server did not respond. Please check your connection.'))},28000);
+ function end(){clearTimeout(timeout);delete window[cb];script.remove()}
+ window[cb]=r=>{end();resolve(r)};script.onerror=()=>{end();reject(Error('Cannot reach the Malipatana backend.'))};
+ script.referrerPolicy='no-referrer';script.src=API_URL+'?'+new URLSearchParams({...params,...(action.startsWith('link')?{key}:{}),action,callback:cb,_:Date.now()});
+ document.body.append(script);
+})}
+
+/* A shared entry key can list parent names ONLY within the selected existing family.
+   The public registration page never exposes this list. */
+let malSharedParentRequest=0;
+let malSharedKnownMembers=[];
+function malSharedSuggestRole_(role){
+ const form=$('memberForm'),sel=$('guest'+role+'Choice'),input=form.elements[role.toLowerCase()+'Name'];
+ if(!sel||!input)return;
+ let panel=$('guest'+role+'Matches');
+ if(!panel){panel=document.createElement('div');panel.id='guest'+role+'Matches';panel.className='mal-shared-matchbox';panel.hidden=true;input.after(panel);}
+ const close=()=>{panel.replaceChildren();panel.hidden=true;};
+ const show=()=>{
+  close();if(sel.value)return;
+  const q=String(input.value||'').trim().toLocaleLowerCase('en-IN');if(q.length<2)return;
+  const results=malSharedKnownMembers.filter(m=>m.name.toLocaleLowerCase('en-IN').includes(q)).slice(0,8);
+  for(const m of results){const b=document.createElement('button');b.type='button';b.className='mal-shared-choice';
+   b.textContent=m.name+' · '+m.id;
+   b.onclick=()=>{sel.value=m.id;input.value=m.name;close();};panel.append(b);
+  }panel.hidden=!results.length;
+ };
+ input.addEventListener('input',()=>{sel.value='';show();});
+ input.addEventListener('focus',show);
+ input.addEventListener('blur',()=>setTimeout(close,160));
+ sel.addEventListener('change',()=>{const m=malSharedKnownMembers.find(m=>m.id===sel.value);if(m)input.value=m.name;});
+}
+for(const role of ['Father','Mother','Spouse'])malSharedSuggestRole_(role);
+
+async function malSharedLoadParents_(){
+  const id=String($('familyId').value||'').trim();
+  const serial=++malSharedParentRequest;
+  malSharedKnownMembers=[];
+  for(const role of ['Father','Mother','Spouse']){
+    const sel=$('guest'+role+'Choice');if(!sel)continue;
+    sel.replaceChildren(new Option('Type name manually / not registered',''));
+    sel.value='';
+  }
+  if(!id||!['family','multi'].includes(kind))return;
+  try{
+    const r=await api('linkMemberChoices',{familyId:id});
+    if(serial!==malSharedParentRequest||!r.ok||String($('familyId').value||'')!==id)return;
+    malSharedKnownMembers=(r.members||[]).filter(m=>m&&m.id&&m.name);
+    for(const role of ['Father','Mother','Spouse']){
+      const sel=$('guest'+role+'Choice');
+      malSharedKnownMembers.forEach(m=>sel.add(new Option(m.name+' · '+m.id,m.id)));
+    }
+  }catch(e){/* Name typing works even when member lookup is offline. */}
+}
+for(const role of ['Father','Mother']){
+  const sel=$('guest'+role+'Choice'),field=$('memberForm').elements[role.toLowerCase()+'Name'];
+  sel.addEventListener('change',()=>{
+    if(!sel.value)return;
+    const option=sel.selectedOptions[0];
+    if(option)field.value=option.textContent.replace(/ · MEM[^ ·]*$/,'');
+  });
+  field.addEventListener('input',()=>{
+    if(sel.value&&!sel.selectedOptions[0].textContent.startsWith(field.value.trim()+' · '))sel.value='';
+  });
+}
+$('familyId').addEventListener('change',malSharedLoadParents_);
+
+function showMessage(txt,good){$('message').className='alert '+(good?'success':'error');$('message').textContent=txt;$('message').scrollIntoView({block:'nearest',behavior:'smooth'});}
+function keepFamilies(){try{sessionStorage.setItem(familyCacheKey,JSON.stringify(createdFamilies.slice(-20)))}catch(e){}}
+function allKnownFamilies(){
+ const seen=new Set();return [...createdFamilies,...masterFamilies].filter(f=>{
+   if(!f || !f.id || seen.has(f.id))return false;seen.add(f.id);return true;
+ });
+}
+function updateVillageSuggestions(){
+ const surnames=[...new Set([...allKnownFamilies().map(f=>f.surname||''),...createdFamilies.map(f=>f.surname||'')].filter(Boolean))].sort();
+ const s=$('surnameList');
+ if(s)s.replaceChildren(...surnames.map(x=>{const o=document.createElement('option');o.value=x;return o;}));
+}
+function malSharedLocalityOptions_(select,includeAll){
+ if(!select)return;
+ const old=select.value;
+ const names=[...new Set([...malApprovedSahis_,...allKnownFamilies().map(f=>f.locality||'').filter(Boolean)])].sort((a,b)=>a.localeCompare(b));
+ select.replaceChildren(new Option(includeAll?'All Sahis':'— Choose Sahi (optional) —',''));
+ names.forEach(name=>select.add(new Option(name,name)));
+ if(!includeAll)select.add(new Option('Other / not listed','__other__'));
+ if(old&&[...select.options].some(o=>o.value===old))select.value=old;
+}
+async function malSharedLoadSahis_(){
+ try{const r=await api('publicLocalities');if(r&&r.ok)malApprovedSahis_=(r.localities||[]).filter(Boolean);}catch(e){}
+ malSharedLocalityOptions_($('guestFamilySahi'),false);
+ malSharedLocalityOptions_($('guestMemberSahi'),true);
+}
+$('guestFamilySahi').addEventListener('change',()=>{
+ $('guestFamilyOtherRow').classList.toggle('hidden',$('guestFamilySahi').value!=='__other__');
+});
+$('guestMemberSahi').addEventListener('change',()=>{
+ const selected=$('guestMemberSahi').value;
+ const current=allKnownFamilies().find(f=>f.id===currentFamily);
+ if(selected&&(!current||current.locality!==selected)){currentFamily='';$('familyId').value='';}
+ renderFamilyChoices();
+});
+void malSharedLoadSahis_();
+function renderFamilyChoices(){
+ updateVillageSuggestions();
+ const list=$('familySelect'),parent=$('parentFamily');
+ const prevParent=parent.value;
+ list.innerHTML='<option value="">'+(familyOptionsLoading?'Loading families…':'Choose family')+'</option>';
+ malSharedLocalityOptions_($('guestMemberSahi'),true);
+ const selectedSahi=$('guestMemberSahi').value;
+ parent.innerHTML='<option value="">Main family / none</option>';
+ allKnownFamilies().forEach(f=>{
+  for(const el of [list,parent]){
+   if(el===list&&selectedSahi&&f.locality!==selectedSahi)continue;
+   const o=document.createElement('option');o.value=f.id;
+   o.textContent=f.id+' · '+f.head+(f.house?' · House '+f.house:'');el.append(o)
+  }
+ });
+ // If someone typed a valid Family ID manually, do not discard it.
+ if(currentFamily && allKnownFamilies().some(f=>f.id===currentFamily))list.value=currentFamily;
+ $('familyId').value=currentFamily;
+ void malSharedLoadParents_();
+ if(prevParent && allKnownFamilies().some(f=>f.id===prevParent))parent.value=prevParent;
+ const f=allKnownFamilies().find(x=>x.id===currentFamily);
+ if(f && f.locality && !selectedSahi) $('guestMemberSahi').value=f.locality;
+ const memberSurname=$('memberForm').elements.surname;
+ if(f&&f.surname&&memberSurname&&!memberSurname.value)memberSurname.value=f.surname;
+ if(typeof updateMemberFullName==='function')updateMemberFullName();
+ $('selectedFamilyBanner').classList.toggle('hidden',!f);
+ $('selectedFamilyBanner').textContent=f?'Selected family: '+f.head+' · '+f.id:'';
+ $('currentFamilyText').textContent=f?'New members will be registered under '+f.head+' ('+f.id+').':
+  currentFamily?'Family ID '+currentFamily+' selected. The server will check that it exists.':
+  'Select an existing family from the list, or save a new family to create its ID automatically.';
+}
+async function loadFamilyOptions(){
+ if(familyOptionsLoaded || familyOptionsLoading) return familyOptionsLoading;
+ familyOptionsLoading=(async()=>{
+   const field=$('familySelect');
+   try {
+     const r=await api('linkFamilyOptions');
+     if(!r.ok)throw Error(r.error||'Could not load families');
+     // Only IDs and family-head names are sent. The backend checks this link.
+     masterFamilies=(r.families||[]).filter(x=>x && x.id && x.head);
+     malSharedLocalityOptions_($('guestFamilySahi'),false);malSharedLocalityOptions_($('guestMemberSahi'),true);
+     familyOptionsLoaded=true;
+     familyOptionsMessage='';
+   }catch(err){
+     familyOptionsMessage='Family list could not load. You may enter a known Family ID below.';
+     console.warn('Malipatana family list unavailable:',err.message);
+   }finally{
+     familyOptionsLoading=null;
+     renderFamilyChoices();
+     const label=$('familyOptionsStatus');
+     if(label)label.textContent=familyOptionsMessage;
+   }
+ })();
+ return familyOptionsLoading;
+}
+function malGuestNameRepeated_(given,surname){
+ const g=String(given||'').trim().replace(/\s+/g,' ').toLocaleLowerCase('en-IN');
+ const sn=String(surname||'').trim().replace(/\s+/g,' ').toLocaleLowerCase('en-IN');
+ return !!(g&&sn&&g.endsWith(' '+sn));
+}
+function malSharedLiveName_(formId,outputId){
+ const form=$(formId),out=$(outputId);
+ if(!form||!out)return ()=>{};
+ const note=document.createElement('div');note.style.cssText='color:#A83225;font-weight:600;margin-top:6px';note.hidden=true;
+ const fix=document.createElement('button');fix.type='button';fix.className='secondary';fix.textContent='Remove repeated surname';
+ fix.style.marginLeft='8px';
+ note.append('Surname is already included in Given Name. ',fix);
+ out.parentNode.append(note);
+ fix.onclick=()=>{
+  const g=String(form.elements.givenName.value||'').trim().replace(/\s+/g,' '),
+        surname=String(form.elements.surname.value||'').trim().replace(/\s+/g,' ');
+  if(malGuestNameRepeated_(g,surname)){
+   form.elements.givenName.value=g.slice(0,-surname.length).trim();update();
+  }
+ };
+ const update=()=>{
+  const a=String(form.elements.givenName.value||'').trim().replace(/\s+/g,' ');
+  const b=String(form.elements.surname.value||'').trim().replace(/\s+/g,' ');
+  const repeated=malGuestNameRepeated_(a,b);
+  note.hidden=!repeated;
+  out.textContent=repeated?a+' (surname repeated — correct before saving)':a&&b?a+' '+b:'Enter first name and surname';
+ };
+ form.elements.givenName.addEventListener('input',update);
+ form.elements.surname.addEventListener('input',update);
+ form.elements.surname.addEventListener('change',update);
+ update();
+ return update;
+}
+const updateFamilyFullName=malSharedLiveName_('familyForm','guestFamilyFullName');
+const updateMemberFullName=malSharedLiveName_('memberForm','guestMemberFullName');
+
+function showTab(tab){
+ const member=tab==='member';$('memberTab').classList.toggle('selected',member);$('familyTab').classList.toggle('selected',!member);
+ $('familyForm').classList.toggle('hidden',member);$('memberForm').classList.toggle('hidden',!member);
+ renderFamilyChoices();
+ if(member)void loadFamilyOptions();
+}
+$('familyTab').onclick=()=>showTab('family');$('memberTab').onclick=()=>showTab('member');
+$('familySelect').onchange=e=>{
+ currentFamily=e.target.value;$('familyId').value=currentFamily;
+ const f=allKnownFamilies().find(x=>x.id===currentFamily);
+ if(f&&f.surname&&!$('memberForm').elements.surname.value)$('memberForm').elements.surname.value=f.surname;
+ updateMemberFullName();
+ renderFamilyChoices();
+};
+$('familyId').onchange=e=>{currentFamily=e.target.value.trim();renderFamilyChoices()};
+$('clearFamily').onclick=()=>{$('familyForm').reset();$('familyPreview').textContent='📷';updateFamilyFullName();};
+function clearMember(){let fam=$('familyId').value;$('memberForm').reset();$('familyId').value=fam;currentFamily=fam;$('memberPreview').textContent='📷';$('agePreview').value='';$('guestBirthMode').value='unknown';syncSharedBirth();renderFamilyChoices();updateMemberFullName();}
+$('addAnother').onclick=clearMember;
+$('guestResidence').onchange=()=>{const out=$('guestOutside'),active=$('guestResidence').value!=='Living in Malipatana';out.hidden=!active;out.open=active;};
+function sharedYears(dob){if(!dob)return null;const [y,m,day]=dob.split('-').map(Number),check=new Date(Date.UTC(y,m-1,day)),now=new Date();if(check.getUTCFullYear()!==y||check.getUTCMonth()+1!==m||check.getUTCDate()!==day)return null;let years=now.getFullYear()-y;if(now.getMonth()+1<m||(now.getMonth()+1===m&&now.getDate()<day))years--;return years>=0&&years<=120?years:null;}
+function syncSharedBirth(){const form=$('memberForm'),mode=$('guestBirthMode').value;const dob=form.elements.dob,age=form.elements.approxAge; $('guestDobBlock').hidden=mode!=='dob';$('guestAgeBlock').hidden=mode!=='age';$('guestCalculatedAgeBlock').hidden=mode!=='dob';dob.disabled=mode!=='dob';age.disabled=mode!=='age';dob.required=false;age.required=false;if(mode!=='dob')dob.value='';if(mode!=='age')age.value='';showSharedAge();}
+function showSharedAge(){const dob=$('memberForm').elements.dob.value,age=sharedYears(dob);$('agePreview').value=!dob?'':age===null?'Check date':age+' years';}
+$('guestBirthMode').addEventListener('change',syncSharedBirth);
+$('memberForm').elements.dob.addEventListener('change',showSharedAge);
+$('memberForm').elements.dob.max=dateToday();
+syncSharedBirth();
+function dateToday(){const d=new Date();return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10)}
+$('expenseForm').elements.date.value=dateToday();
+function newPhotoPreview(inputId,previewId){
+ $(inputId).addEventListener('change',e=>{
+  const file=e.target.files[0],host=$(previewId);host.replaceChildren();
+  if(!file){host.textContent='📷';return}
+  if(!['image/jpeg','image/png','image/webp'].includes(file.type)||file.size>20*1024*1024){
+   e.target.value='';host.textContent='📷';showMessage('Choose a JPG, PNG or WebP photo of 20 MB or less.',false);return;
+  }
+  const url=URL.createObjectURL(file);const img=document.createElement('img');img.src=url;img.onload=()=>URL.revokeObjectURL(url);img.alt='Selected photograph';host.append(img);
+ });
+}
+[['familyPhoto','familyPreview'],['memberPhoto','memberPreview'],['expensePhoto','expensePreview']].forEach(([a,b])=>newPhotoPreview(a,b));
+// Use the existing file input for both choices: no second photo or duplicate upload.
+function malWirePhoneCamera_(fileId,cameraButtonId,galleryButtonId){
+ const input=$(fileId),camera=$(cameraButtonId),gallery=$(galleryButtonId);
+ if(!input||!camera||!gallery)return;
+ camera.addEventListener('click',()=>{input.setAttribute('capture','environment');input.click();});
+ gallery.addEventListener('click',()=>{input.removeAttribute('capture');input.click();});
+}
+malWirePhoneCamera_('familyPhoto','takeFamilyPhoto','chooseFamilyPhoto');
+malWirePhoneCamera_('memberPhoto','takeMemberPhoto','chooseMemberPhoto');
+malWirePhoneCamera_('expensePhoto','takeExpensePhoto','chooseExpensePhoto');
+
+async function info(){
+ try{const r=await api('linkInfo');if(!r.ok)throw Error(r.error||'Link unavailable');kind=r.type;linkCanEdit=!!r.canEdit;malPermissions_=r.permissions||{};malInitInstallPanel();
+  $('status').classList.add('hidden');$('content').classList.remove('hidden');
+  $('heading').textContent=kind==='expense'?'Event expense entry':kind==='multi'?'Family, Member & Expense Access':'Family & member registration';
+  $('info').textContent=kind==='expense'?'Event: '+(r.event||'Village event'):'Use only the View, Add and Propose Edit choices enabled by Admin.';
+  const addPolicy=r.addApproval||{};const addPolicyText=['family','member','expense'].filter(k=>malPermissions_?.[k]?.add).map(k=>(k==='family'?'Families':k==='member'?'Members':'Expenses')+': '+(addPolicy[k]==='required'?'Admin approval required':'saved immediately')).join(' · ');if(addPolicyText)$('info').textContent+='\nNew entries — '+addPolicyText;
+  $('expiry').textContent=(r.expires?'Valid until '+new Date(r.expires).toLocaleString('en-IN'):'Valid until disabled by administrator')+(r.remaining===null||r.remaining===undefined?'':' · '+r.remaining+' entries remaining');
+  const familyAdd=!!malPermissions_?.family?.add,memberAdd=!!malPermissions_?.member?.add,expenseAdd=!!malPermissions_?.expense?.add;
+  $('familyTabs').classList.toggle('hidden',!r.canSubmit||(!familyAdd&&!memberAdd));
+  $('familyTab').classList.toggle('hidden',!familyAdd);$('memberTab').classList.toggle('hidden',!memberAdd);
+
+  $('expenseForm').classList.toggle('hidden',!expenseAdd||!r.canSubmit);
+  const categories=['family','member','expense'].filter(k=>!!malPermissions_?.[k]?.view);
+  $('malExistingRecords').classList.toggle('hidden',!categories.length);
+  const cat=$('malExistingCategory');cat.replaceChildren();categories.forEach(k=>cat.add(new Option(k==='family'?'Families':k==='member'?'Members':'Expenses',k)));
+  $('findSection').classList.toggle('hidden',!r.canEdit);
+  if((familyAdd||memberAdd)&&r.canSubmit){
+    const member=!familyAdd||($('memberTab').classList.contains('selected')&&memberAdd);showTab(member?'member':'family');
+    // Populate Family and Parent Family dropdowns in the background; no search step.
+    void loadFamilyOptions();
+  }else{$('familyForm').classList.add('hidden');$('memberForm').classList.add('hidden');}
+  $('recent').replaceChildren();(r.recent||[]).forEach(x=>{
+    const el=document.createElement('div');el.className='recent';el.textContent=x.preview+' · '+x.when;$('recent').append(el);
+  });if(!(r.recent||[]).length)$('recent').textContent='No submissions yet.';
+ }catch(err){$('status').className='alert error';$('status').textContent=err.message; $('content').classList.add('hidden');}
+}
+function b64Data(file){return new Promise((resolve,reject)=>{const fr=new FileReader();fr.onerror=()=>reject(Error('Could not read file'));fr.onload=()=>resolve(String(fr.result).split(',')[1]);fr.readAsDataURL(file)})}
+async function thumbData(file){
+ const url=URL.createObjectURL(file);try{
+  const img=new Image();img.src=url;await img.decode();
+  const scale=Math.min(1,320/Math.max(img.width,img.height)),canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(img.width*scale));canvas.height=Math.max(1,Math.round(img.height*scale));
+  canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);return canvas.toDataURL('image/jpeg',.65).split(',')[1];
+ }finally{URL.revokeObjectURL(url)}
+}
+async function uploadPhoto(file,receipt){
+ const notice=$('attachmentFeedback');notice.textContent='Uploading original photograph and small preview…';
+ const nonce=Array.from(crypto.getRandomValues(new Uint8Array(16)),b=>b.toString(16).padStart(2,'0')).join('');
+ const fd=new FormData();
+ for(const [k,v] of Object.entries({action:'linkUploadPhoto',key,id:receipt.id,photoCode:receipt.photoCode,nonce,mime:file.type,
+  data:await b64Data(file),thumbData:await thumbData(file)}))fd.append(k,v);
+ // Apps Script's redirect response is not CORS-readable, so verify by an independent
+ // read-only status endpoint. An opaque fetch response alone NEVER counts as success.
+ try{await fetch(API_URL,{method:'POST',mode:'no-cors',body:fd,referrerPolicy:'no-referrer'});}catch(e){}
+ for(let attempt=0;attempt<8;attempt++){
+  await new Promise(resolve=>setTimeout(resolve,1400+attempt*350));
+  let r;try{r=await api('linkPhotoStatus',{id:receipt.id,nonce})}catch(e){continue}
+  if(r.ok&&r.uploaded){notice.textContent='Photo confirmed in private Drive. Thumbnail linked to the record.';return true}
+ }
+ notice.textContent='Record was saved, but photo upload could not be confirmed. Keep the receipt and retry the photograph—do not submit a duplicate record.';
+ const retry=document.createElement('button');retry.className='secondary';retry.textContent='Retry this photo';retry.onclick=()=>{retry.remove();uploadPhoto(file,receipt)};notice.append(' ',retry);
+ return false;
+}
+function saveReceipt(rec){
+ const box=$('receipt');box.replaceChildren();box.classList.remove('hidden');
+ const h=document.createElement('strong');h.textContent=(rec.pending?'Pending Admin Approval · ':'Saved · ')+rec.id;box.append(h);
+ const p=document.createElement('p');p.textContent=rec.message;box.append(p);
+ const text=(rec.pending?'Malipatana pending request: ':'Malipatana record: ')+rec.id+'\n'+(rec.editCode?'Private edit code: '+rec.editCode+'\n':'')+(rec.photoCode?'Photo attachment code: '+rec.photoCode+'\n':'');
+ if(rec.editCode){const c=document.createElement('p');c.className='codes';c.textContent='Private edit code: '+rec.editCode;box.append(c)}
+ const copy=document.createElement('button');copy.className='secondary';copy.type='button';copy.textContent='Copy private entry receipt';
+ copy.onclick=()=>navigator.clipboard.writeText(text).then(()=>{copy.textContent='Copied privately'}).catch(()=>{const x=document.createElement('textarea');x.value=text;box.append(x);x.select()});box.append(copy);
+ box.scrollIntoView({block:'nearest',behavior:'smooth'});
+}
+// Duplicate warnings are shown in the forms before submission; no search step is added.
+function malGuestDupPayload(mode,rec){
+ const cols=mode==='family'?['givenName','surname','locality','phone']:['givenName','surname','familyId','dob','fatherName','motherName','phone'];
+ return Object.fromEntries(cols.map(k=>[k,rec[k]||'']));
+}
+const malGuestDupMsgs={family:'dupMessageFamily',member:'dupMessageMember'};
+let malGuestDupSeq=0;
+for(const [mode,formId] of [['family','familyForm'],['member','memberForm']]){
+  const form=$(formId),button=form.querySelector('button[type="submit"]');
+  const note=document.createElement('div');note.id=malGuestDupMsgs[mode];note.className='duplicate-alert';note.hidden=true;
+  button.before(note);
+  let handle;
+  form.addEventListener('change',()=>{
+    clearTimeout(handle);const sequence=++malGuestDupSeq;
+    handle=setTimeout(async()=>{
+      const rec=Object.fromEntries(new FormData(form));
+      if(!(mode==='family'?(rec.givenName&&rec.surname):(rec.givenName&&rec.surname&&rec.familyId))){note.hidden=true;return;}
+      try{
+        const result=await api('linkDuplicateCheck',{mode,record:JSON.stringify(malGuestDupPayload(mode,rec))});
+        if(sequence!==malGuestDupSeq)return;
+        note.hidden=!result.duplicate;
+        if(result.duplicate){note.className='duplicate-alert'+(result.level==='block'?' blocking':'');
+          note.textContent=(result.level==='block'?'⛔ Duplicate warning: ':'⚠ Similar record: ')+(result.message||'');}
+      }catch(e){note.hidden=true;}
+    },500);
+  });
+}
+for(const [formId,mode,photoId] of [['familyForm','family','familyPhoto'],['memberForm','member','memberPhoto'],['expenseForm','expense','expensePhoto']]){
+ $(formId).addEventListener('submit',async ev=>{
+  ev.preventDefault();const form=ev.currentTarget,button=form.querySelector('button[type="submit"]');if(busy)return;busy=true;button.disabled=true;
+  const file=$(photoId).files[0],rec=Object.fromEntries(new FormData(form));
+  try{
+    if(mode==='family'||mode==='member'){
+      if(mode==='family'&&rec.locality==='__other__')rec.locality=String(rec.localityOther||'').trim();
+      delete rec.localityOther;
+      if(malGuestNameRepeated_(rec.givenName,rec.surname)){
+        form.elements.givenName.focus();
+        throw Error('Surname is already part of Given Name. Please enter Given Name and Surname separately.');
+      }
+      if(!navigator.onLine)throw Error('Internet connection is required for duplicate checking before saving.');
+      const dup=await api('linkDuplicateCheck',{mode,record:JSON.stringify(malGuestDupPayload(mode,rec))});
+      if(!dup||!dup.ok)throw Error(dup&&dup.error||'Duplicate check failed. Please retry.');
+      const note=$(malGuestDupMsgs[mode]);note.hidden=!dup.duplicate;
+      if(dup.duplicate){note.textContent=dup.message;note.className='duplicate-alert'+(dup.level==='block'?' blocking':'');}
+      if(dup.level==='block')throw Error(dup.message);
+      if(dup.level==='warning'&&!window.confirm('Similar record found.\n\n'+dup.message+'\n\nConfirm this is a DIFFERENT household/person before saving.'))return;
+    }
+    rec.deviceType=/iPad|Tablet/i.test(navigator.userAgent)?'Tablet':/Mobile|Android|iPhone/i.test(navigator.userAgent)?'Mobile':'Computer';
+    const r=await api('linkSubmit',{mode,record:JSON.stringify(rec)});if(!r.ok)throw Error(r.error||'Could not save record');
+   saveReceipt(r);showMessage(r.pending?'Received. Your details will be added only after Admin approval. Keep your request number.':r.message+' saved successfully.',true);
+   if(mode==='family'){
+    if(r.pending){form.reset();$('familyPreview').textContent='📷';showTab('family');showMessage('Family request sent. After Admin approves it, you can select that Family ID to add members. Keep the pending request number.',true);}
+    else {currentFamily=r.familyId||r.id;
+    createdFamilies.push({id:currentFamily,head:rec.givenName+' '+rec.surname, surname:rec.surname,locality:rec.locality||''});createdFamilies=createdFamilies.slice(-20);keepFamilies();
+    form.reset();showTab(malPermissions_?.member?.add?'member':'family');}
+   }else if(mode==='member'){clearMember();showTab('member');}
+   else {form.reset();form.elements.date.value=dateToday();$('expensePreview').textContent='📷';}
+   await info();
+   if(file&&r.photoCode){await uploadPhoto(file,r);}
+   if(mode==='family'||mode==='member')$(photoId).value='';
+  }catch(err){showMessage(err.message,false)}
+  finally{busy=false;button.disabled=false}
+ });
+}
+const EDIT_FIELDS={
+ family:[['head','Full name (legacy; auto-updated)','readonly'],['givenName','Given Name'],['surname','Surname'],['locality','Village locality / Sahi'],['phone','Mobile'],['parentFamilyId','Parent Family ID','readonly'],['vulnerable','Vulnerability'],['guidance','Needs guidance'],['guideMemberId','Guide Member ID'],['guidanceStatus','Guidance status'],['familyStatus','Family status'],['guidanceNote','Guidance note'],['note','Remarks']],
+ member:[['familyId','Family ID','readonly'],['name','Full name (legacy; auto-updated)','readonly'],['givenName','Given Name'],['surname','Surname'],['residenceStatus','Residence status'],['currentCity','Current City'],['currentDistrict','Current District'],['currentState','Current State'],['currentCountry','Current Country'],['outsideAddress','Outside Address'],['relation','Relationship'],['gender','Gender'],['dob','Date of birth','date'],['fatherName','Father'],['motherName','Mother'],['maritalStatus','Marital status'],['spouseName','Spouse'],['education','Education'],['occupation','Occupation'],['earning','Earning member'],['income','Monthly income','number'],['phone','Mobile'],['disability','Disability'],['insurance','Insurance'],['note','Remarks']],
+ expense:[['date','Date','date'],['amount','Amount','number'],['what','Description'],['category','Category'],['subcategory','Subcategory'],['familyId','Family ID','readonly'],['paidBy','Paid by'],['paidTo','Paid to'],['method','Payment method'],['enteredBy','Entered by'],['billReceipt','Bill/Receipt','readonly'],['note','Remarks']]
+};
+$('findForm').addEventListener('submit',async e=>{
+ e.preventDefault();const btn=e.currentTarget.querySelector('button[type="submit"]');btn.disabled=true;
+ try{const vals=Object.fromEntries(new FormData(e.currentTarget));const r=await api('linkSearch',vals);if(!r.ok)throw Error(r.error||'Cannot find record');
+  editContext={id:r.id,editCode:vals.editCode,type:r.type};$('editFields').replaceChildren();
+  (EDIT_FIELDS[r.type]||[]).forEach(([name,label,type])=>{const l=document.createElement('label');l.className='field';l.textContent=label;let inp;
+   if(r.type==='family'&&name==='locality'){
+     inp=document.createElement('select');inp.name=name;
+     malSharedLocalityOptions_(inp,false);
+     const oldLocality=String((r.fields||{})[name]||'');
+     if(oldLocality&&![...inp.options].some(o=>o.value===oldLocality))inp.add(new Option(oldLocality,oldLocality));
+     inp.value=oldLocality;
+   }else{
+     inp=document.createElement('input');inp.name=name;inp.value=(r.fields||{})[name]??'';
+     inp.readOnly=type==='readonly';inp.type=['date','number'].includes(type)?type:'text';
+   }l.append(inp);$('editFields').append(l)});
+  $('editingId').textContent='Editing '+r.id+' · Every correction is logged.';$('editForm').classList.remove('hidden');$('editForm').scrollIntoView({block:'nearest'});
+ }catch(err){showMessage(err.message,false);$('editForm').classList.add('hidden');editContext=null}
+ finally{btn.disabled=false}
+});
+$('cancelEdit').onclick=()=>{$('editForm').classList.add('hidden');editContext=null};
+$('editForm').addEventListener('submit',async e=>{
+ e.preventDefault();if(!editContext||!confirm('Save these corrections?'))return;
+ const btn=e.currentTarget.querySelector('button[type="submit"]');btn.disabled=true;
+ try{const r=await api('linkEdit',{id:editContext.id,editCode:editContext.editCode,record:JSON.stringify(Object.fromEntries(new FormData(e.currentTarget)))});
+  if(!r.ok)throw Error(r.error||'Edit failed');showMessage('Correction '+r.requestId+' submitted for Admin approval. Official record unchanged.',true);$('editForm').classList.add('hidden');editContext=null;await info();
+ }catch(err){showMessage(err.message,false)}finally{btn.disabled=false}
+});
+
+let malPermissions_={};
+const MAL_EXISTING_FIELD_LABELS={givenName:'Given name',surname:'Surname',locality:'Village locality / Sahi',
+  residenceStatus:'Residence',currentCity:'Current city',education:'Education',occupation:'Occupation',
+  date:'Date',amount:'Amount (₹)',what:'Description',category:'Category',subcategory:'Subcategory',paidBy:'Paid by',note:'Remarks'};
+let malExistingState=null;
+const malExistingMatches=$('malExistingMatches');
+$('malExistingCategory').onchange=()=>{malExistingMatches.replaceChildren();$('malExistingProposal').classList.add('hidden');malExistingState=null;};
+$('malExistingSearch').onclick=async()=>{
+ const btn=$('malExistingSearch'),mode=$('malExistingCategory').value,q=$('malExistingQuery').value.trim();
+ if(q.length<3){malExistingMatches.textContent='Enter at least 3 letters or numbers.';return;}
+ btn.disabled=true;malExistingMatches.textContent='Searching limited identification details…';$('malExistingProposal').classList.add('hidden');
+ try{
+  const r=await api('linkRecords',{mode,q});if(!r.ok)throw Error(r.error||'Search failed');
+  malExistingMatches.replaceChildren();
+  if(!(r.records||[]).length){malExistingMatches.textContent='No matching records.';return;}
+  for(const record of r.records){
+   const b=document.createElement('button');b.type='button';b.className='secondary';b.style.cssText='display:block;width:100%;text-align:left;margin:8px 0;';
+   b.textContent=record.label+' · '+record.id+(record.locality?' · '+record.locality:'');
+   b.onclick=()=>void malOpenExisting_(mode,record.id);
+   malExistingMatches.appendChild(b);
+  }
+  if(r.truncated){const hint=document.createElement('p');hint.className='sub';hint.textContent='Showing up to 12 results. Enter more letters to refine.';malExistingMatches.append(hint);}
+ }catch(e){malExistingMatches.textContent=e.message;}finally{btn.disabled=false}
+};
+async function malOpenExisting_(mode,id){
+ const form=$('malExistingProposal'),host=$('malExistingFields');form.classList.add('hidden');host.replaceChildren();
+ try{
+  const r=await api('linkRecord',{mode,id});if(!r.ok)throw Error(r.error||'Record unavailable');
+  malExistingState={mode,id,original:r.fields,canEdit:!!r.canEdit};
+  $('malExistingRecordTitle').textContent='Record '+r.id+(r.canEdit?' · Propose corrections':' · View only');
+  for(const [name,value] of Object.entries(r.fields||{})){
+   if(!MAL_EXISTING_FIELD_LABELS[name])continue;
+   const label=document.createElement('label');label.className='field';label.textContent=MAL_EXISTING_FIELD_LABELS[name];
+   const input=name==='note'||name==='what'?document.createElement('textarea'):document.createElement('input');
+   input.name=name;input.value=value==null?'':value;if(name==='amount')input.type='number';if(name==='date')input.type='date';
+   input.readOnly=!r.canEdit;input.disabled=!r.canEdit;
+   label.appendChild(input);host.append(label);
+  }
+  $('malSendProposal').classList.toggle('hidden',!r.canEdit);
+  form.classList.remove('hidden');form.scrollIntoView({block:'nearest',behavior:'smooth'});
+ }catch(e){showMessage(e.message,false)}
+}
+$('malCancelProposal').onclick=()=>{$('malExistingProposal').classList.add('hidden');malExistingState=null;};
+$('malExistingProposal').addEventListener('submit',async e=>{
+ e.preventDefault();const state=malExistingState;
+ if(!state||!state.canEdit)return;
+ const vals=Object.fromEntries(new FormData(e.currentTarget)),updates={};
+ for(const [name,previous] of Object.entries(state.original))if(Object.prototype.hasOwnProperty.call(vals,name)&&String(vals[name])!==String(previous??''))updates[name]=vals[name];
+ if(!Object.keys(updates).length){showMessage('No changes entered. Please edit a field before submitting.',false);return;}
+ if(!confirm('Send these corrections to the Admin for approval? Official records will remain unchanged.'))return;
+ const btn=$('malSendProposal');btn.disabled=true;
+ try{
+  const r=await api('linkPropose',{mode:state.mode,id:state.id,fields:JSON.stringify(updates),submittedBy:vals.submittedBy||''});
+  if(!r.ok)throw Error(r.error||'Submission failed');
+  showMessage('Correction request '+r.requestId+' submitted for Admin approval. Official record unchanged.',true);
+  $('malExistingProposal').classList.add('hidden');malExistingState=null;
+ }catch(err){showMessage(err.message,false)}finally{btn.disabled=false}
+});
+renderFamilyChoices();if(!key){if(malUrlParams.get('installed')==='1'){const saved=malSavedLinks();if(saved.length===1&&!malUrlParams.has('manage'))malSavedOpen(saved[0].key);else malHome();}else malHome();}else info();
+</script><script src="malipatana-connectivity.js?v=3.5.45"></script>
+</body></html>

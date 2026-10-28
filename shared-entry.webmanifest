@@ -1,0 +1,26 @@
+{
+  "id": "./entry.html",
+  "name": "Malipatana Shared Entry",
+  "short_name": "Village Entry",
+  "description": "Login-free authorised family, member and village expense entry links",
+  "start_url": "./entry.html?installed=1",
+  "scope": "./entry.html",
+  "display": "standalone",
+  "background_color": "#e9f7f3",
+  "theme_color": "#103b46",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "./shared-entry-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./shared-entry-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
