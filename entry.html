@@ -86,6 +86,8 @@ body.mal-member-first.mal-step-expense #expenseForm{display:block!important}
 #malMemberFirst [hidden]{display:none!important}
 #malMemberFirst .mal-wizard-back{border:0;background:transparent;color:#386960;text-decoration:underline;padding:7px 0}
 #malMemberFirst .mal-wizard-summary{background:#edf8f3;border-radius:12px;padding:12px;margin-top:10px}
+body.mal-creating-family #malFirstNew>label.field,body.mal-creating-family #malFirstFamilyHelp,body.mal-creating-family #malFirstNew>.mal-wizard-actions{display:none!important}
+#malFirstFamilyApprovalNote,#malMemberPendingNote{background:#fff8e9;border:1px solid #e8d4a7;border-radius:10px;padding:11px 12px;color:#74551c}
 #malMemberFirst .mal-existing-inline{display:grid;gap:10px}
 #malMemberFirst .mal-existing-field{border:1px solid #dde9e4;border-radius:12px;padding:11px 13px}
 #malMemberFirst .mal-existing-current{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
@@ -125,7 +127,8 @@ body.mal-member-first.mal-step-expense #expenseForm{display:block!important}
   </form>
  </section>
  <section id="malFirstNew" class="mal-wizard-step" hidden aria-label="New member details">
-  <h3>Not registered yet — add your details</h3>
+  <h3 id="malFirstMemberTitle">Member details</h3>
+  <p id="malMemberPendingNote" hidden>Family submitted for Admin approval. The member details below are not yet saved. Once approved, select this family and submit the member registration.</p>
   <p class="sub">Only a few details are needed now. You can provide the others later.</p>
   <label class="field">Your family <span class="required">*</span><select id="malFirstFamily"><option value="">Choose your family</option></select></label>
   <p class="mal-wizard-help" id="malFirstFamilyHelp">Choose the correct family head. A shared surname does not always mean the same household.</p>
@@ -151,8 +154,10 @@ body.mal-member-first.mal-step-expense #expenseForm{display:block!important}
   </div>
  </section>
  <section id="malFirstCreateFamily" class="mal-wizard-step" hidden aria-label="Create new family">
-  <h3>Add your family first</h3>
-  <p class="sub">Enter the family head's name. It may be different from your own name.</p>
+  <h3>Step 1 · New family details</h3>
+  <p class="sub">Enter the family head’s details below. All fields start blank. Complete the new member details underneath.</p>
+  <p id="malFirstFamilyApprovalNote" hidden>New families require Admin approval. You can submit this family now, but its member cannot be saved until the family is approved.</p>
+  <label style="display:flex;align-items:center;gap:9px;margin:10px 0;font-weight:600"><input id="malSameHead" type="checkbox" style="width:18px;height:18px"> I am the family head — use my name</label>
   <div class="mal-wizard-grid">
    <label class="field">Family head first name <span class="required">*</span><input id="malFirstHeadGiven" maxlength="100" autocomplete="off"></label>
    <label class="field">Family head surname <span class="required">*</span><input id="malFirstHeadSurname" maxlength="80" autocomplete="off"></label>
@@ -536,7 +541,7 @@ async function info(){
   $('status').classList.add('hidden');$('content').classList.remove('hidden');
   $('heading').textContent=kind==='expense'?'Event expense entry':kind==='multi'?'Family, Member & Expense Access':'Family & member registration';
   $('info').textContent=kind==='expense'?'Event: '+(r.event||'Village event'):'Use only the View, Add and Propose Edit choices enabled by Admin.';
-  const addPolicy=r.addApproval||{};const addPolicyText=['family','member','expense'].filter(k=>malPermissions_?.[k]?.add).map(k=>(k==='family'?'Families':k==='member'?'Members':'Expenses')+': '+(addPolicy[k]==='required'?'Admin approval required':'saved immediately')).join(' · ');if(addPolicyText)$('info').textContent+='\nNew entries — '+addPolicyText;
+  const addPolicy=r.addApproval||{};window.malSharedAddApprovalPolicy=addPolicy;const addPolicyText=['family','member','expense'].filter(k=>malPermissions_?.[k]?.add).map(k=>(k==='family'?'Families':k==='member'?'Members':'Expenses')+': '+(addPolicy[k]==='required'?'Admin approval required':'saved immediately')).join(' · ');if(addPolicyText)$('info').textContent+='\nNew entries — '+addPolicyText;
   $('expiry').textContent=(r.expires?'Valid until '+new Date(r.expires).toLocaleString('en-IN'):'Valid until disabled by administrator')+(r.remaining===null||r.remaining===undefined?'':' · '+r.remaining+' entries remaining');
   const familyAdd=!!malPermissions_?.family?.add,memberAdd=!!malPermissions_?.member?.add,expenseAdd=!!malPermissions_?.expense?.add;
   $('familyTabs').classList.toggle('hidden',!r.canSubmit||(!familyAdd&&!memberAdd));
@@ -654,7 +659,7 @@ for(const [formId,mode,photoId] of [['familyForm','family','familyPhoto'],['memb
    document.dispatchEvent(new CustomEvent('mal:entry-saved',{detail:{mode,id:r.id,familyId:r.familyId||r.id,pending:!!r.pending}}));
    if(file&&r.photoCode){await uploadPhoto(file,r);}
    if(mode==='family'||mode==='member')$(photoId).value='';
-  }catch(err){showMessage(err.message,false)}
+  }catch(err){showMessage(err.message,false);document.dispatchEvent(new CustomEvent('mal:entry-error',{detail:{mode,message:err.message}}));}
   finally{busy=false;button.disabled=false}
  });
 }
@@ -788,7 +793,7 @@ $('malExistingProposal').addEventListener('submit',async e=>{
  function allowed(){const p=permissions();return !!(p.member?.view||p.member?.add||p.family?.add);}
  function show(node,yes){node.hidden=!yes;}
  function setStatus(message){status.textContent=message;}
- function resetPanels(){updateSequence++;updateRecord=null;show(update,false);show(matches,false);show(next,false);show(create,false);show(receipt,false);matchList.replaceChildren();step('');}
+ function resetPanels(){updateSequence++;updateRecord=null;creatingForMember=false;document.body.classList.remove('mal-creating-family');show(update,false);show(matches,false);show(next,false);show(create,false);show(receipt,false);$('malMemberPendingNote').hidden=true;$('malFirstSave').disabled=false;$('malFirstMore').disabled=false;matchList.replaceChildren();step('');}
  function availableFamilies(){
   return allKnownFamilies().slice().sort((a,b)=>{
    const aMatch=normalized(a.surname)===normalized(surname.value),bMatch=normalized(b.surname)===normalized(surname.value);
@@ -970,11 +975,21 @@ $('malExistingProposal').addEventListener('submit',async e=>{
  };
  function showCreate(){
   if(!permissions().family?.add){setStatus('This link cannot add new families. Please contact the administrator.');return;}
-  show(create,true);show(next,false);
-  $('malFirstHeadGiven').value=given.value.trim();
-  $('malFirstHeadSurname').value=surname.value.trim();
-  create.scrollIntoView({behavior:'smooth',block:'nearest'});
+  // Keep family details blank; never assume the person registering is the family head.
+  $('malSameHead').checked=false;
+  $('malFirstHeadGiven').value='';$('malFirstHeadSurname').value='';$('malFirstHeadSahi').value='';
+  if(create.nextElementSibling!==next)next.before(create);
+  document.body.classList.add('mal-creating-family');
+  show(create,true);show(next,true);
+  $('malFirstMemberTitle').textContent='Step 2 · New member details';
+  $('malMemberPendingNote').hidden=true;
+  $('malFirstFamilyApprovalNote').hidden=!(window.malSharedAddApprovalPolicy?.family==='required');
+  create.scrollIntoView({behavior:'smooth',block:'start'});
  }
+ $('malSameHead').addEventListener('change',e=>{
+  if(e.target.checked){$('malFirstHeadGiven').value=given.value.trim();$('malFirstHeadSurname').value=surname.value.trim();}
+  else{$('malFirstHeadGiven').value='';$('malFirstHeadSurname').value='';}
+ });
  family.addEventListener('change',()=>{
   if(family.value==='__add_family__'){
    family.value='';
@@ -983,7 +998,7 @@ $('malExistingProposal').addEventListener('submit',async e=>{
  });
  document.addEventListener('mal:open-family-creation',showCreate);
  $('malFirstNewFamily').onclick=showCreate;
- $('malFirstBack').onclick=()=>{show(create,false);show(next,true);};
+ $('malFirstBack').onclick=()=>{document.body.classList.remove('mal-creating-family');show(create,false);show(next,true);$('malFirstMemberTitle').textContent='Member details';};
  function fillOriginalMember(){
   const id=family.value;
   if(!id||!availableFamilies().some(f=>f.id===id)){setStatus('Please choose the correct family first.');family.focus();return false;}
@@ -1051,13 +1066,23 @@ $('malExistingProposal').addEventListener('submit',async e=>{
   if(!document.body.classList.contains('mal-member-first'))return;
   if(r.mode==='family'&&creatingForMember){
    creatingForMember=false;
-   if(r.pending){setStatus('Family submitted for administrator approval. Once approved, return to add members.');show(create,false);return;}
+   document.body.classList.remove('mal-creating-family');
+   show(create,false);show(next,true);
+   $('malFirstMemberTitle').textContent='Step 2 · Member details';
+   if(r.pending){
+    $('malMemberPendingNote').hidden=false;
+    $('malFirstSave').disabled=true;$('malFirstMore').disabled=true;
+    setStatus('Family submitted for approval. Member details are not yet saved; return after the family is approved.');
+    next.scrollIntoView({behavior:'smooth',block:'nearest'});return;
+   }
    const id=r.familyId||r.id;
    if(id){
-    fillFamilies();family.value=id;show(create,false);show(next,true);
-    setStatus('Family saved. Your family is selected; complete the member registration below.');
+    fillFamilies();family.value=id;
+    $('malMemberPendingNote').hidden=true;
+    $('malFirstSave').disabled=false;$('malFirstMore').disabled=false;
+    setStatus('Family saved and selected. Finish by clicking Save member below.');
     next.scrollIntoView({behavior:'smooth',block:'nearest'});
-   }
+   }else setStatus('The backend did not return a Family ID. Contact Admin before saving the member.');
   }
   if(r.mode==='member'){
    step('');show(next,false);show(matches,false);show(create,false);
@@ -1067,6 +1092,7 @@ $('malExistingProposal').addEventListener('submit',async e=>{
   }
  }
  document.addEventListener('mal:entry-saved',afterSave);
+ document.addEventListener('mal:entry-error',e=>{if(e.detail?.mode==='family'&&creatingForMember)setStatus('Family not saved: '+(e.detail.message||'Please retry.'));});
  $('malFirstAnother').onclick=()=>{
   const previous=family.value;
   given.value='';surname.value='';$('malFirstAge').value='';
