@@ -172,15 +172,31 @@ document.addEventListener('DOMContentLoaded',()=>{
  });
 });
 </script>
+<style id="mal-install-collapse-style">
+#malInstallPanel{padding:0!important;overflow:hidden}
+#malInstallPanel .mal-install-collapse>summary{display:flex;gap:12px;align-items:center;min-height:60px;padding:13px 17px;font-size:16px;font-weight:800;line-height:1.35;color:#14584d;cursor:pointer;list-style:none}
+#malInstallPanel .mal-install-collapse>summary::-webkit-details-marker{display:none}
+#malInstallPanel .mal-install-chevron{margin-left:auto;font-size:22px;transition:transform .15s}
+#malInstallPanel .mal-install-collapse[open] .mal-install-chevron{transform:rotate(180deg)}
+#malInstallPanel .mal-install-collapse-body{padding:0 17px 17px}
+#malInstallPanel .mal-install-collapse>summary:focus-visible{outline:3px solid #0c8067;outline-offset:-4px;border-radius:10px}
+@media(max-width:600px){#malInstallPanel .mal-install-collapse>summary{font-size:15px;min-height:56px;padding:12px 14px}#malInstallPanel .mal-install-collapse-body{padding:0 13px 14px}}
+</style>
 </head><body><main>
 <header class="head"><img src="icon-180.png" alt="Malipatana emblem"><div><h1>ମାଳିପାଟଣା • Malipatana</h1><p>Simple village registration • No login needed</p></div></header>
 <details class="box" id="malEntryHelp"><summary style="cursor:pointer;font-weight:800;color:#0c685d;min-height:40px;display:flex;align-items:center">ℹ How to use this shared entry link</summary><div class="sub" style="margin-top:10px;line-height:1.7"><p>1. Check the link information and its allowed entry type.</p><p>2. Fill in the required fields. Use <strong>Take Photo</strong> or <strong>Choose Gallery</strong> only if a photo is needed.</p><p>3. Submit once, then keep your <strong>saved receipt / record ID</strong>. For a new person, use the cleared form and submit again.</p><p>4. Tap <strong>Save this link</strong>, then <strong>Install Quick Add</strong> to reopen it without logging in. An installed shortcut does not override Admin pause or expiry.</p><p><strong>Shared-phone caution:</strong> anyone using this device can open links saved here. Remove saved links when finished on a borrowed phone.</p></div></details>
 <section id="malInstallPanel" class="mal-install hidden" aria-labelledby="malInstallTitle">
+ <details id="malInstallDetails" class="mal-install-collapse">
+  <summary><span aria-hidden="true">🏠</span> <span>Save link · Install Quick Add</span><span class="mal-install-chevron" aria-hidden="true">⌄</span></summary>
+  <div class="mal-install-collapse-body">
  <div class="intro"><img src="shared-entry-icon-192.png" alt="Malipatana Shared Entry icon">
  <div><h2 id="malInstallTitle">Save link · Install Quick Add</h2><p>Quick family, member or expense entry · No login needed</p></div></div>
  <div class="install-actions"><button id="malSaveLink" type="button">☆ Save this link</button><button id="malInstallApp" type="button">▣ Install Quick Add</button><button id="malManageLinks" type="button" class="mal-outline">Manage saved links</button></div>
  <div id="malInstallInfo" class="mal-install-info hidden" role="status" aria-live="polite"></div>
  <div class="mal-install-note">Saving a link on this device keeps its access key here. Anyone using this unlocked phone may open it. Admin can pause or disable the link at any time.</div>
+
+  </div>
+ </details>
 </section>
 <section id="malSavedHome" class="box hidden" aria-labelledby="malSavedTitle">
  <div class="intro" style="display:flex;align-items:center;gap:12px;margin-bottom:10px"><img src="shared-entry-icon-192.png" alt="Malipatana Shared Entry" width="58" height="58" style="border-radius:13px"><div><h2 id="malSavedTitle">Saved Village Entry Links</h2><p class="sub" style="margin:0">Open a saved link without logging in</p></div></div>
