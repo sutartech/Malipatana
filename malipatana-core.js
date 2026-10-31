@@ -6741,6 +6741,17 @@ function initLoginScreen(){
   $('#repairBtn').onclick = repairCache;
   malInitOtp();
   bePing();
+  // Recheck when returning to the page after a mobile network/app switch.
+  // Avoid polling when hidden and avoid submitting any data automatically.
+  if(!window.malHealthVisibilityWired){
+    window.malHealthVisibilityWired=true;
+    let lastHealthResume=0;
+    document.addEventListener('visibilitychange',()=>{
+      if(document.visibilityState!=='visible'||Date.now()-lastHealthResume<30000)return;
+      lastHealthResume=Date.now();
+      if(document.getElementById('login')?.offsetParent!==null)void bePing();
+    });
+  }
   paintPublicSticky();
   paintLoginRemembrance();
   paintLoginDays();
@@ -6759,7 +6770,16 @@ async function bePing(){
   if(notice) notice.hidden = true;
   if(link) link.onclick = () => { link.disabled=true; bePing().finally(()=>{link.disabled=false;}); };
   try {
-    const r = await api('health');
+    // Apps Script may intermittently fail its content redirect on mobile.
+    // Retry ONLY this read-only health request, never a write or registration.
+    let r,healthFailure;
+    for(let attempt=0;attempt<3;attempt++){
+      try { r=await api('health'); if(r&&r.ok)break;
+        healthFailure=new Error((r&&r.error)||'Backend health check failed');
+      }catch(e){healthFailure=e;}
+      if(attempt<2)await new Promise(resolve=>setTimeout(resolve,650*(attempt+1)));
+    }
+    if(!r||!r.ok)throw healthFailure||new Error('Backend health check failed');
     if(r && r.ok){
       const actual = String(r.version || 'BE ?').trim();
       const matches = actual === CONFIG.EXPECTED_BACKEND;
