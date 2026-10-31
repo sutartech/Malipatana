@@ -558,7 +558,7 @@ async function renderSharedApprovals(){
       return '<button type="button" data-tab="'+page+'" data-kind="'+key+'" class="'+(key===current?'on':'')+'" aria-label="'+label+'" '+
         (key===current?'aria-current="page" ':'')+(['people','money'].includes(key)?'aria-haspopup="dialog" aria-expanded="false" ':'')+
         (off?'disabled aria-disabled="true" ':'')+'><span class="ic">'+icon(key)+'</span><span class="lb">'+label+'</span></button>';
-    }).join('')+'<button type="button" id="malMobileQuickAdd" class="mobile-quick-fab" aria-label="Quick entry: add expense or contribution" aria-haspopup="dialog" aria-expanded="false">'+
+    }).join('')+'<button type="button" id="malMobileQuickAdd" class="mobile-quick-fab" aria-label="Quick entry: add family, member, expense or contribution" aria-haspopup="dialog" aria-expanded="false">'+
       '<span class="plus-bubble" aria-hidden="true">+</span><span class="lb">Add</span></button>';
     bar.querySelectorAll('button[data-tab]').forEach(b=>b.addEventListener('click',()=>{
       if(b.disabled)return;
@@ -577,15 +577,15 @@ async function renderSharedApprovals(){
       p.innerHTML='<div class="quick-sheet" role="dialog" aria-modal="true" aria-labelledby="malQuickTitle">'+
         '<div class="quick-grabber" aria-hidden="true"></div><div class="quick-head"><h3 id="malQuickTitle">Quick entry</h3>'+
         '<button type="button" id="malQuickClose" class="quick-close" aria-label="Close quick entry">×</button></div>'+
-        '<p class="quick-sub">Record a payment or contribution in one step.</p><div class="quick-grid" id="malQuickGrid"></div></div>';
+        '<p class="quick-sub">Add a member, family, expense or contribution without searching the menu.</p><div class="quick-grid" id="malQuickGrid"></div></div>';
       document.body.appendChild(p);
       p.addEventListener('click',e=>{if(e.target===p)closeQuick(true)});
       p.querySelector('#malQuickClose').addEventListener('click',()=>closeQuick(true));
     }
-    // Only two high-frequency entry forms; all other modules remain in More.
+    // Four existing forms, still gated by server-side role permissions.
     const links=[];
     if(canEdit()){
-      [['expenditure','₹','Add expense'],['contributions','✚','Add contribution']]
+      [['members','♙','Add member'],['families','⌂','Add family'],['expenditure','₹','Add expense'],['contributions','✚','Add contribution']]
         .forEach(([id,ic,label])=>{if(allowed(id))links.push([id,ic,label,'form']);});
     }
     if(!links.length){
@@ -607,6 +607,14 @@ async function renderSharedApprovals(){
   };
   window.addEventListener('keydown',e=>{
     if(e.key==='Escape'){closeQuick(true);closePeople(true);closeMoney(true);}
+    if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'&&!e.altKey){
+      const target=document.activeElement;
+      if(target&&(/INPUT|TEXTAREA|SELECT/.test(target.tagName)||target.isContentEditable))return;
+      e.preventDefault();closeQuick(false);closePeople(false);closeMoney(false);
+      const search=document.querySelector('#main input[type="search"],#main input[data-search],#main input[placeholder*="Search"]');
+      if(search){search.focus();search.scrollIntoView({block:'center'});}
+      else if(typeof openDrawer==='function')openDrawer();
+    }
   });
   window.addEventListener('resize',()=>{
     const bar=document.getElementById('tabbar');if(bar&&USER)buildTabs();
