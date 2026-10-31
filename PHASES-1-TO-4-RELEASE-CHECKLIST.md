@@ -25,7 +25,7 @@ Scope: Existing live site, not design-preview.html.
 - [x] Enhanced keyboard dialog focus and return to invoking control.
 - [x] Ctrl/Cmd+K targets available search input, otherwise opens the navigation.
 - [ ] Test Family/Member create, edit, lookup, filter, column width persistence and printed output.
-- [ ] Verify public register.html and key-protected entry.html separately; they are not identical systems.
+- [ ] Verify public register.html, key-protected entry.html and separately installed quick-add.html; all point to the current backend but use different permission rules.
 - [ ] Test Quick Add permission-based visibility for Admin, Editor and Viewer.
 - [ ] Confirm finance, welfare, notice board, family tree and reports produce unchanged data.
 
@@ -33,7 +33,8 @@ Scope: Existing live site, not design-preview.html.
 - [x] Phase-specific stylesheet separates styling from business logic.
 - [x] This checklist defines regression gates before further deployments.
 - [ ] Modularize malipatana-core.js (~7.4k lines) into named modules only after regression tests exist.
-- [ ] Add automated Playwright/axe/Lighthouse tests in a separate test environment.
+- [x] Added read-only static regression checker: `node scripts/verify-static.mjs` (source/endpoint assertions only).
+- [ ] Add automated Playwright/axe/Lighthouse browser tests in a separate test environment.
 - [ ] Performance targets: LCP <=2.5s, INP <=200ms, CLS <=0.1 (75th percentile).
 - [ ] Accessibility target WCAG 2.2 AA with manual keyboard and mobile screen-reader checks.
 - [ ] Validate backup, restore, audit, access control, security and data-loss behavior.
