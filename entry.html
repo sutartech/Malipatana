@@ -182,6 +182,17 @@ document.addEventListener('DOMContentLoaded',()=>{
 #malInstallPanel .mal-install-collapse>summary:focus-visible{outline:3px solid #0c8067;outline-offset:-4px;border-radius:10px}
 @media(max-width:600px){#malInstallPanel .mal-install-collapse>summary{font-size:15px;min-height:56px;padding:12px 14px}#malInstallPanel .mal-install-collapse-body{padding:0 13px 14px}}
 </style>
+<style id="mal-share-summary-compact-style">
+#content>.mal-share-compact-summary{padding:14px 17px;margin-bottom:10px}
+#content>.mal-share-compact-summary .tab-headers{gap:10px;flex-wrap:wrap}
+#content>.mal-share-compact-summary h2{margin:0;font-size:17px;line-height:1.35}
+#content>.mal-share-compact-summary .notice{padding:8px 11px;margin:9px 0 7px;font-size:13px}
+#content>.mal-share-compact-summary .mal-share-information{margin:0;padding:0;background:transparent;border:0;box-shadow:none}
+#content>.mal-share-compact-summary .mal-share-information summary{font-size:13px;font-weight:700;color:#246455;min-height:32px;padding:5px 0;list-style:revert}
+#content>.mal-share-compact-summary .mal-share-information .sub{margin:8px 0;font-size:13px;line-height:1.45}
+#content>.mal-share-compact-summary .mal-share-information .privacy{margin:6px 0 4px}
+@media(max-width:600px){#content>.mal-share-compact-summary{padding:12px 13px}#content>.mal-share-compact-summary h2{font-size:16px}}
+</style>
 </head><body><main>
 <header class="head"><img src="icon-180.png" alt="Malipatana emblem"><div><h1>ମାଳିପାଟଣା • Malipatana</h1><p>Simple village registration • No login needed</p></div></header>
 <details class="box" id="malEntryHelp"><summary style="cursor:pointer;font-weight:800;color:#0c685d;min-height:40px;display:flex;align-items:center">ℹ How to use this shared entry link</summary><div class="sub" style="margin-top:10px;line-height:1.7"><p>1. Check the link information and its allowed entry type.</p><p>2. Fill in the required fields. Use <strong>Take Photo</strong> or <strong>Choose Gallery</strong> only if a photo is needed.</p><p>3. Submit once, then keep your <strong>saved receipt / record ID</strong>. For a new person, use the cleared form and submit again.</p><p>4. Tap <strong>Save this link</strong>, then <strong>Install Quick Add</strong> to reopen it without logging in. An installed shortcut does not override Admin pause or expiry.</p><p><strong>Shared-phone caution:</strong> anyone using this device can open links saved here. Remove saved links when finished on a borrowed phone.</p></div></details>
@@ -203,8 +214,16 @@ document.addEventListener('DOMContentLoaded',()=>{
  <div id="malSavedList"></div>
  <p class="privacy">This list is stored only in this browser on this device. A saved link is not a user account or proof of identity. Admin's active, pause, expiry and usage rules still apply.</p>
 </section>
-<div id="status" class="box">Checking shared-link permission…</div><div class="mal-reg-intro"><strong>Just tell us about your household.</strong> Register a member in an existing family, or create a new family first. Duplicate records are checked before saving.</div>
-<section id="content" class="hidden"><div class="box"><div class="tab-headers"><h2 id="heading">Shared data entry</h2><span class="pill">No login required</span></div><p class="sub" id="info"></p><div id="expiry" class="notice"></div><div class="privacy">Only limited identification names from the selected family appear for linking parents; private contact, finance and photographs are not shared. Give this link only to trusted people.</div></div>
+<div id="status" class="box">Checking shared-link permission…</div>
+<section id="content" class="hidden"><div class="box mal-share-compact-summary">
+ <div class="tab-headers"><h2 id="heading">Family &amp; member registration</h2><span class="pill">No login required</span></div>
+ <div id="expiry" class="notice"></div>
+ <details class="mal-share-information" id="malShareInformation">
+  <summary>ⓘ Link permissions &amp; privacy</summary>
+  <p class="sub" id="info"></p>
+  <div class="privacy">Only limited identification names from the selected family appear for linking parents; private contact, finance and photographs are not shared. Give this link only to trusted people.</div>
+ </details>
+</div>
 <style>
 .mal-action-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:12px 0}
 .mal-action-grid button{min-height:86px;border:1px solid #badbd1;border-radius:14px;background:#effaf6;color:#145c52;text-align:left;padding:13px;font-size:16px;font-weight:800;cursor:pointer}
