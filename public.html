@@ -108,6 +108,18 @@ header.top .sub b{color:#fff;font-weight:600}
 .grid4 .v{font-family:var(--display);font-size:29px;font-weight:700;margin-top:4px;
   font-variant-numeric:tabular-nums;color:var(--indigo);line-height:1.15}
 .grid4 .v.warm{color:var(--brick)}
+/* Every summary tile reserves equal heading space; totals align on one row. */
+.grid4{align-items:stretch}
+.grid4>div{display:flex;flex-direction:column;justify-content:flex-start;min-width:0}
+.grid4>div>.k{min-height:3.2em;display:flex;align-items:flex-start;line-height:1.55;overflow-wrap:anywhere}
+.grid4>div>.v{margin-top:8px;margin-bottom:0}
+@media(max-width:620px){
+  .grid4{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .grid4>div{padding:16px 14px}
+  .grid4>div>.k{min-height:3.2em}
+}
+@media(max-width:340px){.grid4{grid-template-columns:1fr}.grid4>div>.k{min-height:0}}
+
 .fundhow{display:flex;flex-direction:column;gap:12px;margin-top:10px}
 .fundhow>div{display:flex;flex-direction:column;gap:2px;padding-left:12px;
   border-left:2px solid #e0a02f66}
