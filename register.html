@@ -40,7 +40,9 @@ button.primary{background:#106653;color:white;width:100%;font-size:17px}button.s
 .mal-register-steps a:hover{filter:saturate(1.2) brightness(.98);transform:translateY(-1px)}
 .mal-register-steps a:focus-visible{outline:3px solid #145f59;outline-offset:2px}
 .mal-reg-count{font-size:12px;color:#4d7165;font-weight:700;margin-top:8px}section.card{scroll-margin-top:62px}</style>
-</head>
+<style>
+.mal-exists{background:#f5fbf7;border:1px solid #b7d7c4;border-radius:13px;padding:14px;margin:12px 0}.mal-exists legend{font-weight:800}.mal-exists label{display:flex;gap:10px;align-items:start;margin:9px 0}.mal-exists input{width:19px;height:19px;flex:none;accent-color:#096b57}.mal-exists p{font-size:13px}.mal-exists-msg{background:#fff0d4;border:1px solid #e3c182;border-radius:10px;padding:12px;color:#714910}[hidden]{display:none!important}
+</style></head>
 <body><main>
 <header><img src="icon-180.png" alt="Village emblem"><div><h1>ମାଳିପାଟଣା • Malipatana</h1><p>Simple village details form • No login or Family ID needed</p></div></header>
 <div id="backgroundPhotoBanner" hidden role="status"></div><div class="banner"><b>Just tell us about yourself or your household.</b> You do not need to decide if you belong to a main family, subfamily, or member record. The village administrator will organize the information after checking it.</div>
@@ -49,7 +51,14 @@ button.primary{background:#106653;color:white;width:100%;font-size:17px}button.s
 <section class="card" id="malRegBasic">
 <h2>1. Your name and parents <span class="tag">Basic details</span></h2>
 <p class="hint">You may also complete this form for a relative with their permission. If a parent is already registered, enter the same full name. The administrator can link the existing record during approval — do not submit the parent again.</p>
-<label class="field">Full name / ପୂରା ନାମ <span class="required">*</span><input name="fullName" required maxlength="180" placeholder="e.g. Dhruba Charan Sutar" autocomplete="name"></label>
+<label class="field">Full name / ପୂରା ନାମ <span class="required">*</span><input name="fullName" required maxlength="180" placeholder="e.g. Dhruba Charan Sutar" autocomplete="name"></label><fieldset class="mal-exists" id="malExistingCheck"><legend>Has this person or household already been registered?</legend>
+<label><input type="radio" name="existingRecordChoice" value="new" required> No, this is a new person / household.</label>
+<label><input type="radio" name="existingRecordChoice" value="existing"> Yes, already registered.</label>
+<label><input type="radio" name="existingRecordChoice" value="unsure"> Not sure — Admin should verify.</label>
+<p class="mal-exists-msg" id="malExistsMsg" role="status" aria-live="polite" hidden></p>
+<label id="malExistsAckRow" hidden><input id="malExistsAck" type="checkbox"> I checked the name, family/parent details and Sahi as far as I know. A similar name can belong to a different person.</label>
+<p>Personal details of existing villagers are not shown publicly. Admin will check the official register and pending requests before approval.</p>
+</fieldset>
 <div class="grid"><label class="field">Father's name / ପିତାଙ୍କ ନାମ<input name="fatherName" maxlength="140" placeholder="If known"></label>
 <label class="field">Mother's name / ମାତାଙ୍କ ନାମ<input name="motherName" maxlength="140" placeholder="If known"></label>
 <label class="field">Marital status (optional)<select name="maritalStatus" id="publicMarital"><option value="">Not sure / prefer not to say</option><option>Unmarried</option><option>Married</option><option>Widowed</option><option>Divorced</option><option>Separated</option></select></label>
@@ -225,10 +234,23 @@ function refreshBirthAge(){const a=liveYears(pubDob.value);birthAgeText.textCont
 pubDob.max=localDay();pubDob.addEventListener('input',refreshBirthAge);pubBirth.addEventListener('change',setBirthMode);setBirthMode();
 const publicMarital=$('publicMarital'),publicSpouse=$('publicSpouseField');
 if(publicMarital&&publicSpouse){const show=()=>{publicSpouse.hidden=!['Married','Widowed','Divorced','Separated'].includes(publicMarital.value)};publicMarital.onchange=show;show();}
+function updateExistingChoice(){
+ const choice=document.querySelector('input[name="existingRecordChoice"]:checked')?.value;
+ const msg=$('malExistsMsg'),row=$('malExistsAckRow');
+ row.hidden=choice!=='new';$('malExistsAck').required=choice==='new';
+ msg.hidden=!choice||choice==='new';
+ if(choice==='existing')msg.textContent='This person or household is already registered. Do not submit a new form; contact the village Admin to update or link the existing record.';
+ if(choice==='unsure')msg.textContent='You may submit for Admin review. Admin should compare the name, parents, household and locality with registered and pending records before approval.';
+ $('sendBtn').disabled=choice==='existing';
+}
+document.querySelectorAll('[name="existingRecordChoice"]').forEach(r=>r.addEventListener('change',updateExistingChoice));
 $('registration').addEventListener('submit',async event=>{
  event.preventDefault();if(submitting)return;
  const form=event.currentTarget;
  if(!currentAttempt&&!form.reportValidity())return;
+  if(!currentAttempt&&document.querySelector('[name="existingRecordChoice"]:checked')?.value==='existing'){
+    show('Already registered. Contact village Admin to correct the existing record, rather than adding another.',false);return;
+  }
  if(!currentAttempt){
   const values=Object.fromEntries(new FormData(form));
   if(values.locality==='__other__')values.locality=String(values.localityOther||'').trim();
@@ -268,7 +290,7 @@ function resetForAnother(keepSahi){
  const lastSahi=keepSahi?$('publicSahi').value:'';
  const lastOther=keepSahi?$('publicSahiOtherRow').querySelector('input').value:'';
  const form=$('registration');
- form.reset();currentAttempt=null;
+ form.reset();currentAttempt=null;updateExistingChoice();
  $('sendBtn').textContent='Send for Admin Review';$('sendBtn').disabled=false;
  $('result').className='';$('result').textContent='';
  if(keepSahi&&Array.from($('publicSahi').options).some(o=>o.value===lastSahi))$('publicSahi').value=lastSahi;
