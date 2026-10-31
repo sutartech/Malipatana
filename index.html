@@ -124,7 +124,7 @@
       <div id="backendMismatch" class="backend-mismatch" role="status" aria-live="polite" hidden>
         <b id="backendMismatchTitle">Backend update required</b>
         <span id="backendMismatchText"></span>
-        <a id="backendHealthLink" target="_blank" rel="noopener noreferrer">Check connected backend version ↗</a>
+        <button id="backendHealthLink" type="button" class="repair">↻ Retry backend connection</button>
       </div>
       <button class="repair" id="repairBtn">↻ Repair cache / session</button>
       <div class="helpline">Trouble signing in? Ask the village admin to check your row in the Users sheet.</div>
@@ -162,7 +162,7 @@
 <div id="modalRoot"></div>
 <div id="toasts"></div>
 
-<script src="malipatana-core.js?v=3.5.45-api-20261031-be1830"></script>
+<script src="malipatana-core.js?v=3.5.45-mobile-health-20261031"></script>
 
 <script>
 /* FE V3.5.45 — approval-managed, date-controlled login-free shared links. */
