@@ -1,0 +1,184 @@
+/* Malipatana · Comfortable Entry · 2026-10-31
+   Pure presentation. Loaded AFTER existing CSS. No form data or API changes.
+   Public registration, no-login shared entry, installed Quick Add, and
+   authenticated Family/Member/Expense/Quick Entry dialogs.
+*/
+:root {
+  --mal-entry-ink: #153f36;
+  --mal-entry-label: #28534a;
+  --mal-entry-border: #adcdbd;
+  --mal-entry-focus: #087866;
+  --mal-entry-focus-glow: #b7e6d5;
+}
+
+/* A comfortable typed value: darker and visibly stronger than placeholder. */
+#registration .field > input:not([type="file"]):not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+#registration .field > select,
+#registration .field > textarea,
+#content .field input:not([type="file"]):not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+#content .field select,
+#content .field textarea,
+#malMemberFirst .mal-wizard-grid input:not([type="file"]):not([type="checkbox"]):not([type="radio"]),
+/* Logged-in dialogs and entry sections. Avoid ordinary tables/search tools. */
+#app .field input:not([type="file"]):not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+#app .field select,
+#app .field textarea,
+#main .field input:not([type="file"]):not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+#main .field select,
+#main .field textarea,
+#modalRoot input:not([type="file"]):not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+#modalRoot select,
+#modalRoot textarea,
+#malQuickPanel input:not([type="file"]):not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+#malQuickPanel select,
+#malQuickPanel textarea,
+#malPeoplePanel input:not([type="file"]):not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+#malPeoplePanel select,
+#malPeoplePanel textarea,
+#malMoneyPanel input:not([type="file"]):not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+#malMoneyPanel select,
+#malMoneyPanel textarea,
+.modal .body input:not([type="file"]):not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+.modal .body select,
+.modal .body textarea {
+  font-family: inherit;
+  font-size: 18px !important;
+  font-weight: 600 !important;
+  line-height: 1.45;
+  letter-spacing: .005em;
+  color: var(--mal-entry-ink) !important;
+  background-color: #fff !important;
+  border: 1.5px solid var(--mal-entry-border);
+  border-radius: 12px;
+  min-height: 52px;
+  padding: 12px 14px;
+  box-shadow: 0 2px 6px rgba(16, 75, 53, .035);
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Dark text without huge paragraphs; pleasant for longer diary-style notes. */
+#registration textarea,
+#content textarea,
+#malQuickPanel textarea,
+#malPeoplePanel textarea,
+#malMoneyPanel textarea,
+.modal .body textarea,
+#modalRoot textarea {
+  min-height: 104px;
+  resize: vertical;
+  padding-block: 13px;
+}
+
+/* Crisp labels, moderate density, easy visual scanning. */
+#registration .field,
+#content .field,
+#malMemberFirst .field,
+#app .field,
+#main .field,
+.modal .body label,
+#malQuickPanel label,
+#malPeoplePanel label,
+#malMoneyPanel label {
+  font-size: 15px;
+  color: var(--mal-entry-label);
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+/* Placeholder stays neutral so real entered text stands out. */
+#registration input::placeholder,
+#registration textarea::placeholder,
+#content input::placeholder,
+#content textarea::placeholder,
+#app .field input::placeholder,
+#main .field input::placeholder,
+#main .field textarea::placeholder,
+#modalRoot input::placeholder,
+#modalRoot textarea::placeholder,
+#malQuickPanel input::placeholder,
+#malQuickPanel textarea::placeholder,
+.modal .body input::placeholder,
+.modal .body textarea::placeholder {
+  color: #798c83 !important;
+  opacity: 1;
+  font-size: 16px;
+  font-weight: 400;
+}
+
+/* Gentle but unmistakable active field; no layout jump on focus. */
+#registration :is(input, select, textarea):focus,
+#content :is(input, select, textarea):focus,
+#malMemberFirst :is(input, select, textarea):focus,
+#app .field :is(input, select, textarea):focus,
+#main .field :is(input, select, textarea):focus,
+#modalRoot :is(input, select, textarea):focus,
+#malQuickPanel :is(input, select, textarea):focus,
+#malPeoplePanel :is(input, select, textarea):focus,
+#malMoneyPanel :is(input, select, textarea):focus,
+.modal .body :is(input, select, textarea):focus {
+  outline: 3px solid var(--mal-entry-focus-glow) !important;
+  outline-offset: 1px;
+  border-color: var(--mal-entry-focus) !important;
+  background-color: #fafffc !important;
+  box-shadow: 0 0 0 1px rgba(8, 120, 102, .16);
+}
+
+#registration .field:focus-within,
+#content .field:focus-within,
+#app .field:focus-within,
+#main .field:focus-within {
+  color: #086853;
+}
+
+#registration .field small,
+#content .field small,
+#app .field small,
+#main .field small,
+#modalRoot .fieldnote {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #586f64;
+  font-weight: 450;
+}
+
+/* Honor disabled state, never make an unavailable field appear usable. */
+#registration :is(input, select, textarea):disabled,
+#content :is(input, select, textarea):disabled,
+#app .field :is(input, select, textarea):disabled,
+#main .field :is(input, select, textarea):disabled {
+  background-color: #eef3ef !important;
+  opacity: .72;
+}
+
+@media (max-width: 600px) {
+  #registration .field > input:not([type="file"]):not([type="checkbox"]):not([type="radio"]),
+  #registration .field > select,
+  #registration .field > textarea,
+  #content .field input:not([type="file"]):not([type="checkbox"]):not([type="radio"]),
+  #content .field select,
+  #content .field textarea,
+  #app .field input:not([type="file"]):not([type="checkbox"]):not([type="radio"]),
+  #app .field select,
+  #app .field textarea,
+  #main .field input:not([type="file"]):not([type="checkbox"]):not([type="radio"]),
+  #main .field select,
+  #main .field textarea,
+  #modalRoot input:not([type="file"]):not([type="checkbox"]):not([type="radio"]),
+  #modalRoot select,
+  #modalRoot textarea,
+  #malMemberFirst .mal-wizard-grid input:not([type="file"]):not([type="checkbox"]):not([type="radio"]),
+  #malQuickPanel input:not([type="file"]):not([type="checkbox"]):not([type="radio"]),
+  #malQuickPanel select,
+  #malQuickPanel textarea {
+    min-height: 54px;
+    font-size: 18px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #registration :is(input, select, textarea),
+  #content :is(input, select, textarea) {
+    transition: none;
+  }
+}
