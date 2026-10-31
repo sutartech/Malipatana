@@ -686,9 +686,10 @@ function render(d){
     var countCards=[
       ['families','Families',c.families,false],
       ['members','Registered members',c.members,false],
+      ['familyHeads','Family heads recorded',c.familyHeadsRecorded,false],
       ['helpedThisYear','Helped this year',c.helpedThisYear,true],
       ['supportRunning','Support running',c.supportRunning,true]
-    ].filter(function(item){return show[item[0]]!==false;});
+    ].filter(function(item){return item[2]!==undefined && item[2]!==null && show[item[0]]!==false;});
     if(countCards.length)cards.push('<div class="card"><h2>' + t('The village') + '</h2><div class="grid4">' +
       countCards.map(function(item){return tile(t(item[1]),item[2],item[3]);}).join('') +
       '</div>'+(show.members!==false?'<p class="count-explainer">' + t('Registered members counts individual living entries in the Members register. Family records are counted separately.') + '</p>':'')+'</div>');
