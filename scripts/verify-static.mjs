@@ -15,6 +15,11 @@ check('Admin registration control exists',index.includes("api('registrationManag
 check('Public registration checks backend status',register.includes("api('registrationStatus'"));
 check('Public registration has advisory duplicate preview',register.includes("api('registrationDuplicateCheck'"))&&register.includes('malDupStatusBasic'));
 check('Admin registration queue shows duplicate review',index.includes('Duplicate Review'));
+check('Village Suggestions public page exists',existsSync(resolve(root,'suggestions.html')));
+check('Suggestions Admin module exists',existsSync(resolve(root,'malipatana-suggestions.js')));
+check('Suggestions linked on public and login pages',file('public.html').includes('suggestions.html')&&index.includes('suggestions.html'));
+check('Suggestions module loaded for authenticated Admin',index.includes('malipatana-suggestions.js'));
+check('Existing Grievance UI preserved',file('public.html').includes('gFab')&&core.includes('grievances'));
 check('Public registration uses dedicated submission endpoint',register.includes("action:'registrationSubmit'"));
 check('Shareable entry validates link access',entry.includes("api('linkInfo'"));
 check('Shareable entry submits via linkSubmit',entry.includes("api('linkSubmit'"));
