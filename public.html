@@ -369,22 +369,23 @@ header.top .veil{background:linear-gradient(176deg,#0B2635B8 0%,#123A41A3 45%,#0
 .mal-public-action-dock .gfab{position:static;right:auto;bottom:auto;z-index:auto;min-height:53px}
 .mal-public-suggestion-fab{background:#087965;color:#fff;border:0;border-radius:999px;min-height:53px;padding:13px 19px;font:inherit;font-weight:800;font-size:14.5px;cursor:pointer;box-shadow:0 14px 28px -11px #08796599;display:flex;align-items:center;gap:8px}
 .mal-public-suggestion-fab:hover{background:#086653}
-.mal-public-suggestion-fab[aria-expanded="true"]{background:#055848}
-.mal-public-suggestion-panel{position:absolute;right:0;bottom:calc(100% + 12px);width:min(344px,calc(100vw - 28px));background:white;border:1px solid #b5d8c3;border-radius:17px;padding:17px;box-shadow:0 18px 50px #102f3c3c;color:#19353c}
-.mal-public-suggestion-panel[hidden]{display:none!important}
-.mal-public-suggestion-panel h3{margin:0 0 6px;font-size:18px;color:#125a48}
-.mal-public-suggestion-panel p{margin:0 0 13px;font-size:13px;color:#526d63}
-.mal-public-suggestion-panel a{display:flex;align-items:center;justify-content:center;min-height:47px;border-radius:11px;text-decoration:none;font-weight:800;margin:8px 0}
-.mal-public-suggestion-panel .mal-choice-new{background:#087965;color:#fff}
-.mal-public-suggestion-panel .mal-choice-track{background:#f5fbf7;color:#0d6755;border:1px solid #a5d0b5}
-.mal-public-suggestion-panel .mal-choice-close{display:block;margin-left:auto;background:transparent;border:0;color:#536d65;cursor:pointer;font-weight:800;padding:3px 9px}
-.mal-public-action-dock button:focus-visible,.mal-public-suggestion-panel a:focus-visible{outline:3px solid #d2a43d;outline-offset:3px}
-@media(max-width:540px){.mal-public-action-dock{right:12px;left:12px;bottom:calc(12px + env(safe-area-inset-bottom));gap:8px;justify-content:flex-end}
+.mal-public-action-dock button:focus-visible,.smodal button:focus-visible{outline:3px solid #d2a43d;outline-offset:3px}
+.smodal{border-top:5px solid #087965;display:flex;flex-direction:column}
+.smodal .gmhead{flex:none;padding:15px 19px 12px;border-bottom:1px solid #d9e8df;align-items:center}
+.smodal .gmhead h3{color:#125a48}
+.smodal .smodal-subtitle{color:#58756a;font-size:12px;margin:0 0 9px;padding:0 19px;flex:none}
+.smodal iframe{display:block;width:100%;height:min(64vh,650px);border:0;flex:1;min-height:290px;background:#fff}
+.smodal .smodal-fallback{padding:7px 19px 12px;font-size:12px;color:#5b7169}
+.smodal .smodal-fallback a{color:#086b59;font-weight:700}
+@media(max-width:540px){
+.mal-public-action-dock{right:12px;left:12px;bottom:calc(12px + env(safe-area-inset-bottom));gap:8px;justify-content:flex-end}
 .mal-public-action-dock .gfab,.mal-public-suggestion-fab{padding:11px 12px;font-size:12px;min-height:49px;gap:6px}
 .mal-public-action-dock .gfab .lbl{display:inline!important}.mal-public-action-dock .gfab .ico{font-size:16px}
-.mal-public-suggestion-panel{right:0;bottom:calc(100% + 10px)}}
+.smodal iframe{height:68dvh;min-height:250px}
+.smodal .gmhead{padding:13px 15px 8px}
+}
 @media(max-width:350px){.mal-public-action-dock{gap:6px}.mal-public-action-dock .gfab,.mal-public-suggestion-fab{font-size:11px;padding:9px 10px}}
-@media print{.mal-public-action-dock{display:none!important}}
+@media print{.mal-public-action-dock,.sugoverlay{display:none!important}}
 </style>
 </head>
 <body>
@@ -412,18 +413,19 @@ header.top .veil{background:linear-gradient(176deg,#0B2635B8 0%,#123A41A3 45%,#0
   <div id="out"><div class="card"><div class="state"><b data-t="Loading the village account…">Loading the village account…</b><span data-t="This page reads the same sheet the committee uses.">This page reads the same sheet the committee uses.</span></div></div></div>
 
   <div class="mal-public-action-dock noprint" id="malPublicActionDock">
-    <div class="mal-public-suggestion-panel" id="malSuggestionChoices" role="dialog" aria-modal="false" aria-label="Village suggestion options" hidden>
-      <button type="button" class="mal-choice-close" id="malSuggestionClose" aria-label="Close suggestion options">✕</button>
-      <h3>💡 Village Suggestions</h3>
-      <p>Share an idea to improve village welfare, or check the progress of one already submitted.</p>
-      <a href="suggestions.html" class="mal-choice-new">✍ Give Suggestion</a>
-      <a href="suggestions.html#track" class="mal-choice-track">⌕ Track Suggestion Status</a>
-    </div>
-    <button type="button" class="mal-public-suggestion-fab" id="malSuggestionFab" aria-controls="malSuggestionChoices" aria-expanded="false" aria-haspopup="dialog">💡 <span>Suggestion</span></button>
+    <button type="button" class="mal-public-suggestion-fab" id="malSuggestionFab" aria-controls="malSuggestionOverlay" aria-haspopup="dialog">💡 <span>Suggestion</span></button>
     <button class="gfab" id="gFab" aria-label="Raise or track a grievance"><span class="ico">📣</span> <span class="lbl" data-t="Raise / track a grievance">Grievance</span></button>
   </div>
 
-  <div class="goverlay noprint" id="gOverlay">
+  <div class="goverlay sugoverlay noprint" id="malSuggestionOverlay" role="presentation">
+  <div class="gmodal smodal" role="dialog" aria-modal="true" aria-labelledby="malSuggestionHeading">
+    <div class="gmhead"><h3 id="malSuggestionHeading">💡 Village Suggestions · ଗ୍ରାମ ପରାମର୍ଶ</h3><button type="button" class="gmclose" id="malSuggestionClose" aria-label="Close suggestions">×</button></div>
+    <p class="smodal-subtitle">Give a suggestion, track its status, or view approved village ideas</p>
+    <iframe id="malSuggestionFrame" title="Village suggestion form and tracking" loading="lazy" data-src="suggestions.html?embed=1"></iframe>
+    <div class="smodal-fallback">Having trouble? <a href="suggestions.html" target="_blank" rel="noopener">Open the full Suggestions page</a>.</div>
+  </div>
+</div>
+<div class="goverlay noprint" id="gOverlay">
   <div class="gmodal">
     <div class="gmhead"><h3 data-t="Grievance">Grievance</h3><button class="gmclose" id="gClose">×</button></div>
     <div class="gtabs">
@@ -658,19 +660,20 @@ function render(d){
 
 /* ---------- grievances: raise / track / steps ---------- */
 const malSuggFab=document.getElementById('malSuggestionFab');
-const malSuggChoices=document.getElementById('malSuggestionChoices');
-function malCloseSuggChoices(){malSuggChoices.hidden=true;malSuggFab.setAttribute('aria-expanded','false');}
+const malSuggOverlay=document.getElementById('malSuggestionOverlay');
+const malSuggFrame=document.getElementById('malSuggestionFrame');
+function malCloseSuggChoices(){malSuggOverlay.classList.remove('open');}
 malSuggFab.onclick=function(){
-  const opening=malSuggChoices.hidden;
-  malSuggChoices.hidden=!opening;
-  malSuggFab.setAttribute('aria-expanded',String(opening));
-  if(opening)document.getElementById('malSuggestionClose').focus();
+  document.getElementById('gOverlay').classList.remove('open');
+  if(!malSuggFrame.src||malSuggFrame.src==='about:blank')malSuggFrame.src=malSuggFrame.dataset.src;
+  malSuggOverlay.classList.add('open');
+  document.getElementById('malSuggestionClose').focus();
 };
 document.getElementById('malSuggestionClose').onclick=function(){malCloseSuggChoices();malSuggFab.focus();};
-document.addEventListener('click',function(e){if(!e.target.closest('#malPublicActionDock'))malCloseSuggChoices();});
-document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!malSuggChoices.hidden){malCloseSuggChoices();malSuggFab.focus();}});
-document.getElementById('gFab').onclick = function(){ malCloseSuggChoices(); document.getElementById('gOverlay').classList.add('open'); };
-document.getElementById('gClose').onclick = function(){ document.getElementById('gOverlay').classList.remove('open'); };
+malSuggOverlay.addEventListener('click',function(e){if(e.target===malSuggOverlay){malCloseSuggChoices();malSuggFab.focus();}});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&malSuggOverlay.classList.contains('open')){malCloseSuggChoices();malSuggFab.focus();}});
+document.getElementById('gFab').onclick = function(){malCloseSuggChoices();document.getElementById('gOverlay').classList.add('open');};
+document.getElementById('gClose').onclick = function(){document.getElementById('gOverlay').classList.remove('open');};
 document.getElementById('gOverlay').addEventListener('click', function(ev){
   if(ev.target.id === 'gOverlay') document.getElementById('gOverlay').classList.remove('open');
 });
