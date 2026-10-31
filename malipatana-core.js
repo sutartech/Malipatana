@@ -2109,7 +2109,7 @@ const MODULES = {
       { n:'Insurance', t:'select', opts:YESNO },
       { n:'Remarks', t:'textarea' },
       { n:'Photo', t:'photo', hint:'Original saved privately (up to 20 MB) in Drive; dashboard uses a small thumbnail' },
-      { n:'Life Status', t:'select', opts:['Alive','Deceased'], hidden:true },
+      { n:'Life Status', t:'select', opts:['Alive','Deceased'], def:'Alive' },
       { n:'Date of Death', t:'date', hidden:true },
       { n:'Cause of Death', t:'text', hidden:true },
       { n:'Memorial Message', t:'textarea', hidden:true },
@@ -4758,6 +4758,20 @@ async function saveRecord(key, rec, editing, opts){
     if(f.req && !String(v).trim() && !(editing && (key==='families'||key==='members') && ['Given Name','Surname'].includes(f.n) && !String(rec['Given Name']||rec.Surname||'').trim())) problems.push(f.n + ' is required');
     out[f.n] = v;
   });
+  if(key==='members'){
+    const priorStatus=String(rec['Life Status']||'Alive').trim().toLowerCase();
+    const nextStatus=String(out['Life Status']||'Alive').trim().toLowerCase();
+    if(!['alive','deceased'].includes(nextStatus))problems.push('Choose Alive or Deceased.');
+    if(nextStatus==='deceased' && priorStatus!=='deceased'){
+      problems.push('To record a death, use the dedicated Record death action so the date and family head are handled.');
+    }
+    if(nextStatus==='alive' && priorStatus==='deceased'){
+      if(!window.confirm('Restore this member to Alive? The recorded date and cause of death will be cleared.'))return;
+      out['Date of Death']='';
+      out['Cause of Death']='';
+      out['Earning Member']=rec['Earning Member']||'NO';
+    }
+  }
   if(key==='members')malApplyRelationshipLinks_(out,problems);
   if(key==='families'||key==='members'){
     let given=String(out['Given Name']||'').trim(),surname=String(out.Surname||'').trim();
