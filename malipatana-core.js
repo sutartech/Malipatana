@@ -3694,11 +3694,16 @@ function exportCsv(key, rows){
 /* =========================================================================
    MODAL
    ========================================================================= */
+let malPreviousFocus=null;
 function openModal(html){
-  $('#modalRoot').innerHTML = '<div class="overlay" id="overlay"><div class="modal" role="dialog" aria-modal="true">' + html + '</div></div>';
+  malPreviousFocus=document.activeElement instanceof HTMLElement?document.activeElement:null;
+  $('#modalRoot').innerHTML = '<div class="overlay" id="overlay"><div class="modal" role="dialog" aria-modal="true" aria-label="Record details" tabindex="-1">' + html + '</div></div>';
   document.body.classList.add('modalOpen');
   $('#overlay').onclick = e => { if(e.target.id === 'overlay') closeModal(); };
   document.addEventListener('keydown', escClose);
+  const dialog=document.querySelector('#overlay .modal');
+  const initial=dialog&&dialog.querySelector('input:not([disabled]),select:not([disabled]),button:not([disabled])');
+  (initial||dialog)?.focus({preventScroll:true});
 }
 let MAL_KEEP_PENDING_HEAD_ON_CLOSE=false;
 function closeModal(){
@@ -3706,8 +3711,18 @@ function closeModal(){
   $('#modalRoot').innerHTML = '';
   document.body.classList.remove('modalOpen');
   document.removeEventListener('keydown', escClose);
+  if(malPreviousFocus&&malPreviousFocus.isConnected)malPreviousFocus.focus({preventScroll:true});
+  malPreviousFocus=null;
 }
-function escClose(e){ if(e.key === 'Escape') closeModal(); }
+function escClose(e){
+  if(e.key==='Escape'){e.preventDefault();closeModal();return;}
+  if(e.key!=='Tab')return;
+  const modal=document.querySelector('#overlay .modal');if(!modal)return;
+  const items=[...modal.querySelectorAll('a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])')].filter(el=>el.getClientRects().length);
+  if(!items.length){e.preventDefault();modal.focus();return;}
+  if(e.shiftKey&&document.activeElement===items[0]){e.preventDefault();items.at(-1).focus();}
+  else if(!e.shiftKey&&document.activeElement===items.at(-1)){e.preventDefault();items[0].focus();}
+}
 
 /* =========================================================================
    ADD / EDIT
