@@ -2,19 +2,18 @@
    Never exposes private suggestion records through public endpoints. */
 (function(){
 'use strict';
-const PAGE='villageSuggestions';
+const PAGE_KEY='villageSuggestions';
 const baseNav=buildNav,baseRender=render;
 const escS=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const statuses=['Received','Under Review','Accepted','Not Feasible','Action Planned','In Progress','Implemented','Closed'];
 let suggestions=[],actionHistory=[],filter='All',searchTerm='';
-function setupNav(){baseNav();const side=document.getElementById('sidebar');if(!side||!isAdmin()||side.querySelector('[data-page="'+PAGE+'"]'))return;
-const nav=document.createElement('button');nav.type='button';nav.className='nav';nav.dataset.page=PAGE;
-nav.innerHTML='<span class="ic">💡</span> Village suggestions';nav.onclick=()=>go(PAGE);
+function setupNav(){baseNav();const side=document.getElementById('sidebar');if(!side||!isAdmin()||side.querySelector('[data-page="'+PAGE_KEY+'"]'))return;
+const nav=document.createElement('button');nav.type='button';nav.className='nav';nav.dataset.page=PAGE_KEY;
+nav.innerHTML='<span class="ic">💡</span> Village suggestions';nav.onclick=()=>go(PAGE_KEY);
 const grv=side.querySelector('[data-page="grievances"]');if(grv)grv.after(nav);else side.appendChild(nav);}
 buildNav=setupNav;
-render=function(){if(PAGE!==window.PAGE)return baseRender();};
 const previousRender=baseRender;
-render=function(){if(window.PAGE!==PAGE)return previousRender();setupNav();buildTabs();document.querySelectorAll('.nav').forEach(b=>b.classList.toggle('active',b.dataset.page===PAGE));draw();};
+render=function(){if(PAGE!==PAGE_KEY)return previousRender();setupNav();buildTabs();document.querySelectorAll('.nav').forEach(b=>b.classList.toggle('active',b.dataset.page===PAGE_KEY));draw();};
 function draw(){
 const host=document.getElementById('main');if(!host)return;
 host.innerHTML='<div class="pagehead"><div><h2>💡 Village Suggestions & Action Taken</h2><div class="sub">Admin-only review, assignment, action history and publication</div></div></div>'+
