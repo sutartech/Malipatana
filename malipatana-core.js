@@ -1025,8 +1025,9 @@ function renderPublicPage(){
           <div class="segrow">
             <button class="seg${setting('Public Page Language', 'English').toLowerCase().indexOf('od') === 0 ? '' : ' on'}" data-lang="English">English</button>
             <button class="seg${setting('Public Page Language', 'English').toLowerCase().indexOf('od') === 0 ? ' on' : ''}" data-lang="Odia">ଓଡ଼ିଆ</button>
+            <button class="seg${setting('Public Page Language', 'English') === 'Both' ? ' on' : ''}" data-lang="Both">Both / ଉଭୟ</button>
           </div>
-          <div class="fieldnote">Either way the page carries a button to switch, and a visitor's own choice is remembered on their phone.</div>
+          <div class="fieldnote">Choose Both to show English and Odia together in the public Suggestion and Grievance forms. Visitors can still change language.</div>
         </div>
       </div>
     </div>
