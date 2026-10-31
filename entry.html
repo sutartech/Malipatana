@@ -193,6 +193,16 @@ document.addEventListener('DOMContentLoaded',()=>{
 #content>.mal-share-compact-summary .mal-share-information .privacy{margin:6px 0 4px}
 @media(max-width:600px){#content>.mal-share-compact-summary{padding:12px 13px}#content>.mal-share-compact-summary h2{font-size:16px}}
 </style>
+<style id="mal-optional-actions-style">
+#malQuickActions{padding:8px 15px!important}
+#malQuickActions .mal-optional-actions{margin:0;border:0;padding:0;background:transparent}
+#malQuickActions .mal-optional-actions>summary{font-weight:800;font-size:15px;min-height:44px;display:flex;align-items:center;color:#155d4f;cursor:pointer;list-style:none}
+#malQuickActions .mal-optional-actions>summary::-webkit-details-marker{display:none}
+#malQuickActions .mal-optional-actions>summary:after{content:"⌄";font-size:20px;margin-left:auto}
+#malQuickActions .mal-optional-actions[open]>summary:after{content:"⌃"}
+#malQuickActions .mal-action-grid{margin:8px 0}
+#malQuickActions .mal-action-grid button{min-height:64px}
+</style>
 </head><body><main>
 <header class="head"><img src="icon-180.png" alt="Malipatana emblem"><div><h1>ମାଳିପାଟଣା • Malipatana</h1><p>Simple village registration • No login needed</p></div></header>
 <details class="box" id="malEntryHelp"><summary style="cursor:pointer;font-weight:800;color:#0c685d;min-height:40px;display:flex;align-items:center">ℹ How to use this shared entry link</summary><div class="sub" style="margin-top:10px;line-height:1.7"><p>1. Check the link information and its allowed entry type.</p><p>2. Fill in the required fields. Use <strong>Take Photo</strong> or <strong>Choose Gallery</strong> only if a photo is needed.</p><p>3. Submit once, then keep your <strong>saved receipt / record ID</strong>. For a new person, use the cleared form and submit again.</p><p>4. Tap <strong>Save this link</strong>, then <strong>Install Quick Add</strong> to reopen it without logging in. An installed shortcut does not override Admin pause or expiry.</p><p><strong>Shared-phone caution:</strong> anyone using this device can open links saved here. Remove saved links when finished on a borrowed phone.</p></div></details>
@@ -352,13 +362,13 @@ body.mal-creating-family #malFirstNew>label.field,body.mal-creating-family #malF
  <div class="mal-wizard-actions" id="malFirstExpenseAction" hidden><button id="malFirstExpense" type="button" class="secondary">₹ Enter village expense</button></div>
 </section>
 <section id="malQuickActions" class="box hidden" aria-label="Quick village entry actions">
-<h2>Other actions</h2><p class="sub">Add an expense or correct an existing record, where permitted by Admin.</p>
+<details class="mal-optional-actions" id="malOptionalActions">
+<summary>More options · Expense &amp; corrections</summary>
 <div class="mal-action-grid">
-<button type="button" data-mal-task="family">＋ New Family<small>Register a household not listed</small></button>
-<button type="button" data-mal-task="member">＋ Add Member<small>Add a missing family member</small></button>
 <button type="button" data-mal-task="expense">₹ Add expense<small>Record village or event expense</small></button>
 <button type="button" data-mal-task="modify">⌕ Find &amp; Correct<small>Find records and submit corrections</small></button>
-</div><p class="privacy">Existing record changes are submitted for administrator approval. The link may be disabled or expired by Admin.</p>
+</div><p class="sub">Available only where permitted by Admin. Corrections require approval.</p>
+</details>
 </section>
 <section id="malExistingRecords" class="box hidden" aria-labelledby="malExistingTitle">
  <h2 id="malExistingTitle">🔎 Find a family, member or expense</h2>
