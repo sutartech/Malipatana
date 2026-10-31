@@ -1023,7 +1023,7 @@ function renderPublicPage(){
         <div class="langpick">
           <span class="lbl">Language a visitor first sees</span>
           <div class="segrow">
-            <button class="seg${setting('Public Page Language', 'English').toLowerCase().indexOf('od') === 0 ? '' : ' on'}" data-lang="English">English</button>
+            <button class="seg${setting('Public Page Language', 'English') === 'English' ? ' on' : ''}" data-lang="English">English</button>
             <button class="seg${setting('Public Page Language', 'English').toLowerCase().indexOf('od') === 0 ? ' on' : ''}" data-lang="Odia">ଓଡ଼ିଆ</button>
             <button class="seg${setting('Public Page Language', 'English') === 'Both' ? ' on' : ''}" data-lang="Both">Both / ଉଭୟ</button>
           </div>
