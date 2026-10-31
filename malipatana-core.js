@@ -3669,7 +3669,39 @@ function wireActions(root){
           return rec ? offerReceipt(rec) : null;
         }
         case 'rowsave': return saveRow(k, id, b);
-        case 'quick': { const vq = VIEW[k] || (VIEW[k] = {}); vq.quick = !vq.quick; return renderModule(k); }
+        case 'quick': {
+          const vq = VIEW[k] || (VIEW[k] = {});
+          if(!vq.quick){vq.quick=true;return renderModule(k);}
+          const trs=Array.from(root.querySelectorAll('tr[data-row]'));
+          const changed=trs.filter(tr=>{
+            const id=String(tr.dataset.row||'');
+            const rec=rowsOf(k).find(x=>String(x[MODULES[k].idField]||'').trim()===id);
+            return rec && Array.from(tr.querySelectorAll('input[data-col]')).some(inp=>{
+              const col=inp.dataset.col;
+              const now=String(inp.value||'').trim();
+              const before=String(inp.type==='date'?toISO(rec[col]):(rec[col]??'')).trim();
+              return now!==before;
+            });
+          });
+          if(!changed.length){vq.quick=false;return renderModule(k);}
+          b.disabled=true;b.textContent='Saving '+changed.length+' row(s)…';
+          let failures=0;
+          for(const tr of changed){
+            const id=String(tr.dataset.row||'');
+            const saveButton=tr.querySelector('[data-act="rowsave"]');
+            if(!saveButton || await saveRow(k,id,saveButton)!==true){failures++;break;}
+          }
+          b.disabled=false;
+          if(failures){
+            b.textContent='Done editing';
+            toast('At least one row was not saved. Quick Edit remains open. Check the error and retry.','bad');
+            return;
+          }
+          vq.quick=false;
+          renderModule(k);
+          toast(changed.length+' changed row(s) saved.','good');
+          return;
+        }
         case 'print': return isAdmin() ? openPrint(k, currentRows(k)) : window.print();
         case 'csv': return exportCsv(k, currentRows(k));
         case 'profile': return k === 'members' ? openMember(id) : k === 'events' ? openEvent(id) : openProfile(id);
@@ -6277,9 +6309,9 @@ function recurringPanel(){
 async function saveRow(key, id, btn){
   const m = MODULES[key];
   const tr = $('#main').querySelector('[data-row="' + id.replace(/"/g, '\\"') + '"]');
-  if(!tr) return;
+  if(!tr) return false;
   const row = rowsOf(key).find(r => String(r[m.idField]).trim() === String(id).trim());
-  if(!row) return;
+  if(!row) return false;
   const out = Object.assign({}, row);
   tr.querySelectorAll('input[data-col]').forEach(inp => { out[inp.dataset.col] = inp.value.trim(); });
   if(m.fields.some(f => f.n === 'Last Updated')) out['Last Updated'] = today();
@@ -6294,10 +6326,12 @@ async function saveRow(key, id, btn){
     upsertLocal(key, out);
     btn.textContent = r.queued ? 'Queued' : 'Saved';
     tr.classList.add('rowsaved');
-    setTimeout(() => { btn.disabled = false; btn.textContent = 'Save'; tr.classList.remove('rowsaved'); }, 1600);
+    setTimeout(() => { if(btn.isConnected){btn.disabled = false; btn.textContent = 'Save'; tr.classList.remove('rowsaved');} }, 1600);
+    return !r.queued;
   } catch(e){
     toast(e.message || String(e), 'bad');
     btn.disabled = false; btn.textContent = 'Save';
+    return false;
   }
 }
 
