@@ -254,13 +254,13 @@ if(publicMarital&&publicSpouse){const show=()=>{publicSpouse.hidden=!['Married',
    if(currentAttempt||submitting)return;
    const fields=malDupInputs();
    const complete=fields.fullName.length>=3&&
-     ((fields.fatherName&&fields.motherName)||((fields.fatherName||fields.motherName)&&fields.locality));
+     (fields.fatherName&&fields.motherName);
    const fingerprint=JSON.stringify(fields);
    const seq=++malDupSeq;
    clearTimeout(malDupTimer);
    if(!complete){
      malDupFingerprint='';malDupLastResult=null;
-     malDupPaint('unavailable',"Enter full name, a parent's name and Sahi (or both parents) to check potential matches. Optional details may be left blank; Admin will verify.");
+     malDupPaint('unavailable',"Enter the full name, father's name and mother's name to check for duplicates. Parent details remain optional for registration, but the automatic three-name check needs all three.");
      return;
    }
    if(fingerprint===malDupFingerprint&&malDupLastResult)return;
@@ -273,9 +273,9 @@ if(publicMarital&&publicSpouse){const show=()=>{publicSpouse.hidden=!['Married',
        if(!response||!response.ok)throw Error(response&&response.error||'Verification unavailable');
        malDupFingerprint=fingerprint;malDupLastResult=response;
        if(response.possibleDuplicate){
-         malDupPaint('warning','Possible existing registration. A similar record may exist. You can still submit for Admin review, but do not register the exact same person twice.');
+         malDupPaint('warning',response.level==='strong'?'Strong possible duplicate: full name, father’s name and mother’s name match an existing record. Contact Admin before submitting again.':'Possible duplicate: this full name already appears in the register or pending requests, but the parent details may differ or be incomplete. Admin must verify the person.');
        }else if(response.checked){
-         malDupPaint('clear','No close match indicated by the entered details. Admin will still check the official register and pending requests.');
+         malDupPaint('unavailable','Automatic check did not flag a match for these three names. This is not proof that the person is unregistered; Admin will verify the official records before approval.');
        }else{
          malDupPaint('unavailable','Automatic checking needs more details or is temporarily limited. Admin will verify before approval.');
        }
