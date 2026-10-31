@@ -3300,7 +3300,7 @@ function cellHtml(key, row, col){
   if(key==='members'&&col==='Residence Status'&&!String(raw||'').trim())return {cls:'',html:'<span class="pill warn">Not verified</span>'};
   if(col === 'Life Status'){
     const v = String(raw || '').trim();
-    if(!v || v.toLowerCase() === 'alive') return { cls: '', html: '' };
+    if(!v || v.toLowerCase() === 'alive') return { cls: '', html: '<span class="pill ok">Alive</span>' };
     const d = toISO(row['Date of Death']);
     return { cls: '', html: '<span class="pill gone">Deceased</span>' + (d ? ' <span class="muted small">' + esc(fmtDate(d)) + '</span>' : '') };
   }
