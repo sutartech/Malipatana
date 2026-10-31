@@ -72,7 +72,7 @@
 const CONFIG = {
   API_URL: 'https://script.google.com/macros/s/AKfycbzKN7T8vWfnqCfwtr_NNw3GWNwowWXxs1yntIjnndX_CnisIP2r1veilwEV3pVBLe9rlw/exec',
   VERSION: 'FE V3.5.45',
-  EXPECTED_BACKEND: 'BE V1.8.29',
+  EXPECTED_BACKEND: 'BE V1.8.30',
   IDLE_MINUTES: 30,
   /* Photo shown when no photo has been set in Settings.
      village.jpg sits in the same folder as this file on GitHub. */
