@@ -1277,9 +1277,33 @@ function renderRegistrations(){
  <section class="panel" style="padding:18px"><h3>Share this form with villagers</h3>
  <p class="muted small">No login, Family ID or Subfamily selection required. Father and mother names, household references and photo are optional.</p>
  <div class="reg-actions"><input id="regPublicURL" class="input" readonly value="${safe(url)}"><button id="regCopy" class="btn btn-primary">Copy link</button><a class="btn" target="_blank" rel="noopener noreferrer" href="${safe(url)}">Open form</a></div>
- <div class="reg-actions"><label>Status <select class="input" id="regStatus"><option>Pending</option><option>Approved</option><option>Rejected</option><option>All</option></select></label><button class="btn" id="regReload">↻ Reload requests</button><span class="small muted" id="regSummary">Loading…</span></div>
+ <div class="panel" style="padding:14px;margin:12px 0;border:1px solid #c4e1d4;border-radius:12px"><h3>Public registration control</h3><p class="small muted">Allow or pause registration. The existing Registration Requests remain preserved.</p><div class="reg-actions"><strong id="regAccessState">Checking…</strong><button class="btn" type="button" id="regAccessRefresh">↻ Check</button><button class="btn btn-primary" type="button" id="regAccessAllow" disabled>Allow Registration</button><button class="btn" type="button" id="regAccessPause" disabled>Pause Registration</button></div><p class="small muted" id="regAccessNote" role="status">Requires the corresponding authenticated Apps Script registrationManage action.</p></div><div class="reg-actions"><label>Status <select class="input" id="regStatus"><option>Pending</option><option>Approved</option><option>Rejected</option><option>All</option></select></label><button class="btn" id="regReload">↻ Reload requests</button><span class="small muted" id="regSummary">Loading…</span></div>
  <div id="regError" class="muted small"></div><div id="regRows"></div></section>`;
- document.getElementById('regStatus').value=regStatusFilter;
+ const regAllow=document.getElementById('regAccessAllow'),regPause=document.getElementById('regAccessPause'),regState=document.getElementById('regAccessState'),regNote=document.getElementById('regAccessNote');
+  async function refreshRegAccess(){
+    regAllow.disabled=true;regPause.disabled=true;regState.textContent='Checking…';
+    try{
+      const r=await api('registrationManage',{operation:'status'});
+      if(!r?.ok||typeof r.enabled!=='boolean'||r.canManage!==true)throw Error(r?.error||'The authenticated backend management action is not available.');
+      regState.textContent=r.enabled?'Registration: ALLOWED':'Registration: PAUSED';
+      regNote.textContent='Server-confirmed status.';regAllow.disabled=r.enabled;regPause.disabled=!r.enabled;
+    }catch(e){regState.textContent='Control unavailable';regNote.textContent=e.message+' The form has not been changed.';}
+  }
+  async function changeRegAccess(operation){
+    if(!confirm((operation==='pause'?'Pause':'Allow')+' public registration?'))return;
+    regAllow.disabled=true;regPause.disabled=true;
+    try{
+      const r=await api('registrationManage',{operation});
+      if(!r?.ok||r.enabled!==(operation==='open'))throw Error(r?.error||'Server did not confirm the change.');
+      toast(operation==='open'?'Registration allowed':'Registration paused','good');
+    }catch(e){regNote.textContent='No confirmed change: '+e.message;toast('Registration change unconfirmed','bad');}
+    await refreshRegAccess();
+  }
+  document.getElementById('regAccessRefresh').onclick=refreshRegAccess;
+  regAllow.onclick=()=>changeRegAccess('open');
+  regPause.onclick=()=>changeRegAccess('pause');
+  void refreshRegAccess();
+  document.getElementById('regStatus').value=regStatusFilter;
  document.getElementById('regCopy').onclick=()=>navigator.clipboard.writeText(url).then(()=>toast('Public form link copied','good')).catch(()=>toast('Copy the link from the text box','bad'));
  document.getElementById('regReload').onclick=reload;
  document.getElementById('regStatus').onchange=e=>{regStatusFilter=e.target.value;paintRows();};
