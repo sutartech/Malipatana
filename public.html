@@ -427,83 +427,83 @@ header.top .veil{background:linear-gradient(176deg,#0B2635B8 0%,#123A41A3 45%,#0
 
   <div class="mal-public-action-dock noprint" id="malPublicActionDock">
     <button type="button" class="mal-public-suggestion-fab" id="malSuggestionFab" aria-controls="malSuggestionOverlay" aria-haspopup="dialog">💡 <span>Suggestion</span></button>
-    <button class="gfab" id="gFab" aria-label="Raise or track a grievance"><span class="ico">📣</span> <span class="lbl" data-t="Raise / track a grievance">Grievance</span></button>
+    <button class="gfab" id="gFab" aria-label="Raise or track a grievance"><span class="ico">📣</span> <span class="lbl" data-t="Raise / track a grievance" data-mal-en="Grievance">Grievance</span></button>
   </div>
 
   <div class="goverlay sugoverlay noprint" id="malSuggestionOverlay" role="presentation">
   <div class="gmodal smodal" role="dialog" aria-modal="true" aria-labelledby="malSuggestionHeading">
     <div class="gmhead"><h3 id="malSuggestionHeading">💡 Village Suggestions · ଗ୍ରାମ ପରାମର୍ଶ</h3><button type="button" class="gmclose" id="malSuggestionClose" aria-label="Close suggestions">×</button></div>
     <div class="gtabs" role="tablist" aria-label="Village suggestion options">
-      <button type="button" class="on" id="sTabNew">Give suggestion</button>
-      <button type="button" id="sTabTrack">Track suggestion</button>
+      <button type="button" class="on" id="sTabNew" data-mal-en="Give suggestion">Give suggestion</button>
+      <button type="button" id="sTabTrack" data-mal-en="Track suggestion">Track suggestion</button>
       <button type="button" id="sTabPublic">Ideas &amp; progress</button>
     </div>
     <form class="gform" id="sForm">
-      <label for="sCategory">What is your suggestion about?</label>
+      <label for="sCategory" data-mal-en="What is your suggestion about?">What is your suggestion about?</label>
       <select id="sCategory" required><option value="">Choose category</option><option>Village Development</option><option>Education</option><option>Health &amp; Sanitation</option><option>Roads &amp; Infrastructure</option><option>Welfare &amp; Emergency Support</option><option>Youth &amp; Culture</option><option>Environment</option><option>Other</option></select>
-      <label for="sSuggestion">Describe your suggestion</label><textarea id="sSuggestion" minlength="12" maxlength="2200" required placeholder="What would improve our village, and how?"></textarea>
-      <label for="sBenefit">Expected benefit (optional)</label><textarea id="sBenefit" maxlength="700" placeholder="Who will benefit from this idea?"></textarea>
-      <label for="sSahi">Locality / Sahi (optional)</label><input id="sSahi" maxlength="110" placeholder="Village locality">
-      <label for="sName">Your name (optional)</label><input id="sName" maxlength="120" autocomplete="name" placeholder="Name">
-      <label for="sMobile">Mobile (optional, kept private)</label><input id="sMobile" maxlength="10" pattern="[6-9][0-9]{9}" inputmode="numeric" placeholder="10-digit mobile">
+      <label for="sSuggestion" data-mal-en="Describe your suggestion">Describe your suggestion</label><textarea id="sSuggestion" minlength="12" maxlength="2200" required placeholder="What would improve our village, and how?"></textarea>
+      <label for="sBenefit" data-mal-en="Expected benefit (optional)">Expected benefit (optional)</label><textarea id="sBenefit" maxlength="700" placeholder="Who will benefit from this idea?"></textarea>
+      <label for="sSahi" data-mal-en="Locality / Sahi (optional)">Locality / Sahi (optional)</label><input id="sSahi" maxlength="110" placeholder="Village locality">
+      <label for="sName" data-mal-en="Your name (optional)">Your name (optional)</label><input id="sName" maxlength="120" autocomplete="name" placeholder="Name">
+      <label for="sMobile" data-mal-en="Mobile (optional, kept private)">Mobile (optional, kept private)</label><input id="sMobile" maxlength="10" pattern="[6-9][0-9]{9}" inputmode="numeric" placeholder="10-digit mobile">
       <label class="s-check"><input type="checkbox" id="sPublicName"> Allow Admin to consider displaying my name (names are not published in this version).</label>
-      <div class="btnrow"><button class="gbtn s-submit" id="sSubmitBtn" type="submit">Submit suggestion</button></div>
+      <div class="btnrow"><button class="gbtn s-submit" id="sSubmitBtn" type="submit" data-mal-en="Submit suggestion">Submit suggestion</button></div>
       <div class="gmsg" id="sSubmitMsg" role="status" aria-live="polite"></div>
     </form>
     <div class="gform" id="sTrack" style="display:none">
-      <label for="sCode">Private tracking code</label>
+      <label for="sCode" data-mal-en="Private tracking code">Private tracking code</label>
       <input id="sCode" autocomplete="off" placeholder="Code received after submitting">
-      <p class="s-help">Save your private code carefully. It cannot be recovered from the public page.</p>
-      <div class="btnrow"><button class="gbtn s-submit" id="sCheckBtn" type="button">Check status</button></div>
+      <p class="s-help" data-mal-en="Save your private code carefully. It cannot be recovered from the public page.">Save your private code carefully. It cannot be recovered from the public page.</p>
+      <div class="btnrow"><button class="gbtn s-submit" id="sCheckBtn" type="button" data-mal-en="Check status">Check status</button></div>
       <div class="gmsg" id="sTrackMsg" role="status" aria-live="polite"></div>
     </div>
     <div class="gform" id="sPublished" style="display:none">
-      <p class="s-help">Only Admin-approved ideas appear here. Private contact details are never shown.</p>
-      <div class="btnrow"><button type="button" class="gbtn ghost" id="sRefresh">Refresh approved ideas</button></div>
+      <p class="s-help" data-mal-en="Only Admin-approved ideas appear here. Private contact details are never shown.">Only Admin-approved ideas appear here. Private contact details are never shown.</p>
+      <div class="btnrow"><button type="button" class="gbtn ghost" id="sRefresh" data-mal-en="Refresh approved ideas">Refresh approved ideas</button></div>
       <div id="sPublishedList" role="status">Select to load approved ideas.</div>
     </div>
-    <div class="s-modal-footer"><a href="suggestions.html" target="_blank" rel="noopener">Open full Suggestions page</a></div>
+    <div class="s-modal-footer"><a href="suggestions.html" target="_blank" rel="noopener" data-mal-en="Open full Suggestions page">Open full Suggestions page</a></div>
   </div>
 </div>
 <div class="goverlay noprint" id="gOverlay">
   <div class="gmodal">
     <div class="gmhead"><h3 data-t="Grievance">Grievance</h3><button class="gmclose" id="gClose">×</button></div>
     <div class="gtabs">
-      <button class="on" id="tabNew" data-t="Raise a grievance">Raise a grievance</button>
-      <button id="tabTrack" data-t="Track a grievance">Track a grievance</button>
-      <button id="tabSteps" data-t="How it is resolved">How it is resolved</button>
+      <button class="on" id="tabNew" data-t="Raise a grievance" data-mal-en="Raise a grievance">Raise a grievance</button>
+      <button id="tabTrack" data-t="Track a grievance" data-mal-en="Track a grievance">Track a grievance</button>
+      <button id="tabSteps" data-t="How it is resolved" data-mal-en="How it is resolved">How it is resolved</button>
     </div>
 
     <form class="gform" id="gformNew">
-      <label for="gName" data-t="Your name">Your name</label>
+      <label for="gName" data-t="Your name" data-mal-en="Your name">Your name</label>
       <input id="gName" required placeholder="Full name" data-tph="Full name">
-      <label for="gMobile" data-t="Mobile number">Mobile number</label>
+      <label for="gMobile" data-t="Mobile number" data-mal-en="Mobile number">Mobile number</label>
       <input id="gMobile" required placeholder="10-digit mobile" inputmode="numeric">
-      <label for="gCat" data-t="What is this about">What is this about</label>
+      <label for="gCat" data-t="What is this about" data-mal-en="What is this about">What is this about</label>
       <select id="gCat">
         <option>Water</option><option>Road</option><option>Electricity</option><option>Sanitation</option>
         <option>Fund misuse</option><option>Welfare benefit</option><option>Family record error</option><option>Other</option>
       </select>
-      <label for="gDesc" data-t="Describe the problem">Describe the problem</label>
+      <label for="gDesc" data-t="Describe the problem" data-mal-en="Describe the problem">Describe the problem</label>
       <textarea id="gDesc" required placeholder="What happened, where, and since when"></textarea>
       <div class="btnrow">
-        <button type="submit" class="gbtn" id="gSubmitBtn" data-t="Submit grievance">Submit grievance</button>
+        <button type="submit" class="gbtn" id="gSubmitBtn" data-t="Submit grievance" data-mal-en="Submit grievance">Submit grievance</button>
       </div>
       <div class="gmsg" id="gMsg"></div>
     </form>
 
     <div class="gform" id="gformTrack" style="display:none">
-      <label for="gLookup" data-t="Grievance number">Grievance number</label>
+      <label for="gLookup" data-t="Grievance number" data-mal-en="Grievance number">Grievance number</label>
       <input id="gLookup" placeholder="e.g. GRV-014">
       <div class="btnrow"><button class="gbtn ghost" id="gTrackBtn" data-t="Check status">Check status</button></div>
       <div class="gmsg" id="gTrackMsg"></div>
     </div>
 
     <div class="gsteps" id="gformSteps" style="display:none">
-      <div class="gstep"><div class="no">1</div><div class="tx"><b data-t="Received">Received</b><span>Your grievance reaches the committee the moment you submit it, with a grievance number to track it.</span></div></div>
-      <div class="gstep"><div class="no">2</div><div class="tx"><b data-t="Under review">Under review</b><span>A committee member looks into it and may contact you on the mobile number given.</span></div></div>
-      <div class="gstep"><div class="no">3</div><div class="tx"><b data-t="Action taken">Action taken</b><span>The committee acts — repair, correction, or a decision — and notes what was done.</span></div></div>
-      <div class="gstep"><div class="no">4</div><div class="tx"><b data-t="Resolved">Resolved</b><span>Marked resolved with a remark you can read back using your grievance number.</span></div></div>
+      <div class="gstep"><div class="no">1</div><div class="tx"><b data-t="Received" data-mal-en="Received">Received</b><span>Your grievance reaches the committee the moment you submit it, with a grievance number to track it.</span></div></div>
+      <div class="gstep"><div class="no">2</div><div class="tx"><b data-t="Under review" data-mal-en="Under review">Under review</b><span>A committee member looks into it and may contact you on the mobile number given.</span></div></div>
+      <div class="gstep"><div class="no">3</div><div class="tx"><b data-t="Action taken" data-mal-en="Action taken">Action taken</b><span>The committee acts — repair, correction, or a decision — and notes what was done.</span></div></div>
+      <div class="gstep"><div class="no">4</div><div class="tx"><b data-t="Resolved" data-mal-en="Resolved">Resolved</b><span>Marked resolved with a remark you can read back using your grievance number.</span></div></div>
     </div>
   </div>
   </div>
@@ -544,6 +544,21 @@ function t(s){
 
 /* Static markup is tagged once with data-t holding its English original, so
    switching back and forth never loses the source string. */
+var FORM_BOTH=false;
+var MAL_FORM_OR={"Village Suggestions · ଗ୍ରାମ ପରାମର୍ଶ":"ଗ୍ରାମ ଉନ୍ନତି ପରାମର୍ଶ","Give suggestion":"ପରାମର୍ଶ ଦିଅନ୍ତୁ","Track suggestion":"ପରାମର୍ଶ ସ୍ଥିତି ଦେଖନ୍ତୁ","Ideas & progress":"ପରାମର୍ଶ ଓ ଅଗ୍ରଗତି","What is your suggestion about?":"କେଉଁ ବିଷୟରେ ପରାମର୍ଶ?","Describe your suggestion":"ଆପଣଙ୍କ ପରାମର୍ଶ ଲେଖନ୍ତୁ","Expected benefit (optional)":"ଆଶା କରାଯାଉଥିବା ଲାଭ (ଇଚ୍ଛାଧୀନ)","Locality / Sahi (optional)":"ସାହି / ଅଞ୍ଚଳ (ଇଚ୍ଛାଧୀନ)","Your name (optional)":"ଆପଣଙ୍କ ନାମ (ଇଚ୍ଛାଧୀନ)","Mobile (optional, kept private)":"ମୋବାଇଲ୍ (ଇଚ୍ଛାଧୀନ, ଗୋପନୀୟ)","Allow Admin to consider displaying my name (names are not published in this version).":"ନାମ ଦେଖାଇବାକୁ ପ୍ରଶାସକଙ୍କୁ ଅନୁମତି (ବର୍ତ୍ତମାନ ନାମ ପ୍ରକାଶ ହୁଏ ନାହିଁ)","Submit suggestion":"ପରାମର୍ଶ ଦାଖଲ କରନ୍ତୁ","Private tracking code":"ଗୋପନୀୟ ଟ୍ରାକିଂ କୋଡ୍","Save your private code carefully. It cannot be recovered from the public page.":"ଗୋପନୀୟ କୋଡ୍ ସାଇତି ରଖନ୍ତୁ। ପବ୍ଲିକ୍ ପୃଷ୍ଠାରୁ ଏହାକୁ ପୁଣି ପାଇହେବ ନାହିଁ।","Check status":"ସ୍ଥିତି ଯାଞ୍ଚ କରନ୍ତୁ","Only Admin-approved ideas appear here. Private contact details are never shown.":"କେବଳ ପ୍ରଶାସକ ଅନୁମୋଦିତ ପରାମର୍ଶ ଏଠାରେ ଦେଖାଯାଏ। ବ୍ୟକ୍ତିଗତ ବିବରଣୀ ଗୋପନ ରହେ।","Refresh approved ideas":"ଅନୁମୋଦିତ ପରାମର୍ଶ ପୁନଃ ଦେଖନ୍ତୁ","Open full Suggestions page":"ସମ୍ପୂର୍ଣ୍ଣ ପରାମର୍ଶ ପୃଷ୍ଠା ଖୋଲନ୍ତୁ","Grievance":"ଅଭିଯୋଗ","Raise a grievance":"ଅଭିଯୋଗ କରନ୍ତୁ","Track a grievance":"ଅଭିଯୋଗ ସ୍ଥିତି ଦେଖନ୍ତୁ","How it is resolved":"କିପରି ସମାଧାନ ହୁଏ","Your name":"ଆପଣଙ୍କ ନାମ","Mobile number":"ମୋବାଇଲ୍ ନମ୍ବର","What is this about":"ଏହା କେଉଁ ବିଷୟରେ","Describe the problem":"ସମସ୍ୟା ବର୍ଣ୍ଣନା କରନ୍ତୁ","Submit grievance":"ଅଭିଯୋଗ ଦାଖଲ କରନ୍ତୁ","Grievance number":"ଅଭିଯୋଗ ନମ୍ବର","Received":"ଗ୍ରହଣ କରାଗଲା","Under review":"ସମୀକ୍ଷା ଚାଲିଛି","Action taken":"କାର୍ଯ୍ୟାନୁଷ୍ଠାନ ନିଆଗଲା","Resolved":"ସମାଧାନ ହେଲା"};
+function paintPublicFormLang(){
+ const both=FORM_BOTH;
+ document.querySelectorAll('#malSuggestionOverlay [data-mal-en],#gOverlay [data-mal-en]').forEach(function(el){
+  const en=el.getAttribute('data-mal-en'),od=MAL_FORM_OR[en]||OR[en]||en;
+  el.textContent=both?en+' / '+od:LANG==='or'?od:en;
+ });
+ document.querySelectorAll('#sCategory option').forEach(function(o){
+  if(!o.dataset.original)o.dataset.original=o.textContent.trim();
+  const en=o.dataset.original,od=OR[en]||MAL_FORM_OR[en]||en;
+  o.textContent=both?en+' / '+od:LANG==='or'?od:en;
+  if(o.hasAttribute('value')&&o.value)o.value=en;
+ });
+}
 function applyLang(){
   document.documentElement.lang = LANG === 'or' ? 'or' : 'en';
   document.querySelectorAll('[data-t]').forEach(function(el){
@@ -563,6 +578,7 @@ function applyLang(){
   });
   var b = document.getElementById('langBtn');
   if(b) b.textContent = LANG === 'or' ? 'English' : 'ଓଡ଼ିଆ';
+  paintPublicFormLang();
 }
 
 function setLang(l, remember){
@@ -1045,6 +1061,7 @@ function loadPublic(attempt){
        someone picks a language themselves, their choice wins on that phone. */
     var saved = null;
     try { saved = localStorage.getItem('mal_pub_lang'); } catch(e){}
+    FORM_BOTH=String(r.lang||'').toLowerCase()==='both';
     setLang(saved || (r.lang === 'or' ? 'or' : 'en'), false);
     if(r.off){
       document.getElementById('asof').textContent = 'not public at the moment';
