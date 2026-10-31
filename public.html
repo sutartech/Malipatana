@@ -364,6 +364,28 @@ header.top .veil{background:linear-gradient(176deg,#0B2635B8 0%,#123A41A3 45%,#0
 
 <style id="mal-notice-links-css">.ntc .mal-notice-link,.noticeboard .mal-notice-link{color:#075f70;text-decoration:underline;text-underline-offset:3px;font-weight:700;overflow-wrap:anywhere}.ntc .mal-notice-link:hover,.noticeboard .mal-notice-link:hover{color:#ad441f}</style>
 <link rel="stylesheet" href="malipatana-connectivity.css?v=3.5.45">
+<style id="mal-public-suggestion-card">
+.village-suggestion-card{position:relative;overflow:hidden;margin:20px 0 18px;padding:24px 26px;display:grid;grid-template-columns:minmax(0,1fr) 240px;align-items:center;gap:25px;background:linear-gradient(115deg,#edf8ef 0%,#ddf2e4 55%,#f7fbef 100%);border:2px solid #91c4a4;border-radius:21px;box-shadow:0 12px 26px #15563815}
+.village-suggestion-card:before{content:"";position:absolute;right:-60px;top:-90px;width:310px;height:310px;background:radial-gradient(circle,#fff6c0a3,transparent 68%);pointer-events:none}
+.village-suggestion-card>*{position:relative}
+.village-suggestion-heading{display:flex;align-items:center;gap:13px}
+.village-suggestion-icon{flex:none;display:grid;place-items:center;width:57px;height:57px;font-size:31px;background:#fff2c8;border:1px solid #e8d17c;border-radius:17px}
+.village-suggestion-kicker{color:#256446;font-size:11px;font-weight:850;letter-spacing:.035em}
+.village-suggestion-card h2{font-family:var(--display);font-size:clamp(23px,3vw,29px);line-height:1.2;color:#125343;margin:4px 0 0}
+.village-suggestion-odia{font-size:15px;color:#1e7457;font-weight:800}
+.village-suggestion-content>p{font-size:15px;color:#365e51;line-height:1.55;margin:13px 0 11px}
+.village-suggestion-note{padding:9px 12px;background:#ffffffbc;border-left:4px solid #c0a04f;border-radius:9px;color:#436457;font-size:13px}
+.village-suggestion-actions{display:grid;gap:11px}
+.village-suggestion-actions a{display:flex;justify-content:center;align-items:center;text-align:center;text-decoration:none;border-radius:12px;min-height:52px;padding:10px 14px;font-weight:800;font-size:15px}
+.village-suggestion-primary{background:#087864;color:white!important;box-shadow:0 7px 17px #08786424}
+.village-suggestion-primary:hover{background:#066552}
+.village-suggestion-secondary{background:white;color:#0c6353!important;border:2px solid #a2cdb4}
+.village-suggestion-secondary:hover{background:#f7fff9}
+.village-suggestion-actions>span{text-align:center;font-size:12px;color:#527267}
+.village-suggestion-actions a:focus-visible{outline:3px solid #a86c07;outline-offset:3px}
+@media(max-width:700px){.village-suggestion-card{display:block;padding:18px 16px;margin:16px 0}.village-suggestion-heading{align-items:flex-start}.village-suggestion-card h2{font-size:24px}.village-suggestion-actions{margin-top:18px}.village-suggestion-icon{width:49px;height:49px;font-size:27px}}
+@media print{.village-suggestion-card{display:none!important}}
+</style>
 </head>
 <body>
 
@@ -389,7 +411,23 @@ header.top .veil{background:linear-gradient(176deg,#0B2635B8 0%,#123A41A3 45%,#0
 <div class="wrap">
   <div id="out"><div class="card"><div class="state"><b data-t="Loading the village account…">Loading the village account…</b><span data-t="This page reads the same sheet the committee uses.">This page reads the same sheet the committee uses.</span></div></div></div>
 
-  <div class="noprint" style="margin:18px 0;display:flex;gap:10px;flex-wrap:wrap;align-items:center"><a href="suggestions.html" style="display:inline-flex;align-items:center;gap:8px;background:#e6f5eb;border:1px solid #a7d1b7;color:#105e4d;border-radius:12px;text-decoration:none;padding:10px 15px;font-weight:800">💡 Give a Village Suggestion · Track Progress</a><span style="font-size:12px;color:#576b61">Ideas for welfare, education, development and village improvements</span></div>
+  <section class="village-suggestion-card noprint" aria-labelledby="villageSuggestionTitle">
+  <div class="village-suggestion-content">
+    <div class="village-suggestion-heading">
+      <span class="village-suggestion-icon" aria-hidden="true">💡</span>
+      <div><span class="village-suggestion-kicker">YOUR IDEA MATTERS · ଆପଣଙ୍କ ମତ ମୂଲ୍ୟବାନ</span>
+      <h2 id="villageSuggestionTitle">Village Suggestions</h2>
+      <div class="village-suggestion-odia" lang="or">ଗ୍ରାମ ଉନ୍ନତି ପରାମର୍ଶ</div></div>
+    </div>
+    <p>Have an idea to improve Malipatana? Share your thoughts on village development, education, roads, sanitation, youth activities and welfare.</p>
+    <div class="village-suggestion-note">No login needed. Suggestions help improve the village; for a specific complaint, use the separate <strong>Grievance</strong> button.</div>
+  </div>
+  <div class="village-suggestion-actions">
+    <a class="village-suggestion-primary" href="suggestions.html">✍ Give Suggestion</a>
+    <a class="village-suggestion-secondary" href="suggestions.html#track">⌕ Track Suggestion</a>
+    <span>Free to submit · Reviewed by Admin</span>
+  </div>
+</section>
   <button class="gfab noprint" id="gFab" aria-label="Raise or track a grievance"><span class="ico">📣</span> <span class="lbl" data-t="Raise / track a grievance">Raise / track a grievance</span></button>
 
   <div class="goverlay noprint" id="gOverlay">
