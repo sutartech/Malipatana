@@ -41,6 +41,10 @@ button.primary{background:#106653;color:white;width:100%;font-size:17px}button.s
 .mal-register-steps a:focus-visible{outline:3px solid #145f59;outline-offset:2px}
 .mal-reg-count{font-size:12px;color:#4d7165;font-weight:700;margin-top:8px}section.card{scroll-margin-top:62px}</style>
 <style>
+.mal-dup-status{margin:12px 0;padding:12px 14px;background:#f0f8f4;border:1px solid #b8d9c7;border-radius:12px;color:#24584a;font-size:13px;line-height:1.55}
+.mal-dup-status[data-state="warning"]{background:#fff0d9;color:#744812;border-color:#e5c383}
+.mal-dup-status[data-state="unavailable"]{background:#f4f5f6;color:#52666a;border-color:#d4dcda}
+.mal-dup-status strong{display:block;margin-bottom:2px}
 .mal-duplicate-info{margin:12px 0 2px;padding:11px 13px;border:1px solid #bedacf;background:#f3faf5;border-radius:11px;font-size:13px;line-height:1.55;color:#315e51}
 </style></head>
 <body><main>
@@ -52,6 +56,7 @@ button.primary{background:#106653;color:white;width:100%;font-size:17px}button.s
 <h2>1. Your name and parents <span class="tag">Basic details</span></h2>
 <p class="hint">You may also complete this form for a relative with their permission. If a parent is already registered, enter the same full name. The administrator can link the existing record during approval — do not submit the parent again.</p>
 <label class="field">Full name / ପୂରା ନାମ <span class="required">*</span><input name="fullName" required maxlength="180" placeholder="e.g. Dhruba Charan Sutar" autocomplete="name"></label><div class="mal-duplicate-info" role="note"><strong>Already registered?</strong> You don't need to submit again. Ask the village administrator to correct or link your existing record. If you are unsure, complete this form; Admin will check for possible duplicates before approval. A matching name alone does not mean the same person.</div>
+<div id="malDupStatusBasic" class="mal-dup-status" role="status" aria-live="polite" data-state="unavailable"><strong>Duplicate verification</strong><span id="malDupTextBasic">Enter your name, a parent's name and Sahi to check potential matches. Admin verifies all registrations.</span></div>
 <div class="grid"><label class="field">Father's name / ପିତାଙ୍କ ନାମ<input name="fatherName" maxlength="140" placeholder="If known"></label>
 <label class="field">Mother's name / ମାତାଙ୍କ ନାମ<input name="motherName" maxlength="140" placeholder="If known"></label>
 <label class="field">Marital status (optional)<select name="maritalStatus" id="publicMarital"><option value="">Not sure / prefer not to say</option><option>Unmarried</option><option>Married</option><option>Widowed</option><option>Divorced</option><option>Separated</option></select></label>
@@ -72,6 +77,7 @@ button.primary{background:#106653;color:white;width:100%;font-size:17px}button.s
 <label class="field">Current city / town (if living outside)<input name="currentPlace" maxlength="180" placeholder="e.g. Bengaluru, Karnataka"></label>
 <label class="field">Other household members you wish to mention (optional)<textarea name="otherMembers" maxlength="500" placeholder="Their names and relation to you, one per line. No ID or separate family type required."></textarea></label>
 </section>
+<div id="malDupStatusHome" class="mal-dup-status" role="status" aria-live="polite" data-state="unavailable" style="margin:0 0 14px"><strong>Registration verification</strong><span id="malDupTextHome">Admin checks possible duplicates before approving a registration.</span></div>
 <section class="card" id="malRegOther"><h2>3. Other details (optional)</h2>
 <div class="grid"><label class="field">Education<input name="education" maxlength="100" placeholder="e.g. Graduate, Class 12"></label>
 <label class="field">Occupation<input name="occupation" maxlength="100" placeholder="e.g. Farmer, Student"></label></div>
@@ -83,6 +89,7 @@ button.primary{background:#106653;color:white;width:100%;font-size:17px}button.s
 <div class="consent"><input id="consent" type="checkbox" required><label for="consent">I have permission to submit these details and understand they will be seen by authorised village administrators before being added to the official register.</label></div>
 <label class="honeypot" aria-hidden="true">Website<input name="website" tabindex="-1" autocomplete="off"></label>
 <button id="sendBtn" type="submit" class="primary">Send for Admin Review</button>
+<div id="malDupStatusSubmit" class="mal-dup-status" role="status" aria-live="polite" data-state="unavailable"><strong>Existing record check</strong><span id="malDupTextSubmit">Admin will compare the submitted details with existing records before approval.</span></div>
 <div id="result" role="status" aria-live="polite"></div>
 <p class="hint" style="margin-top:12px">Submitting does <b>not</b> automatically add anyone to the official village register. Admin must first check and approve the details.</p>
 </section></form>
@@ -227,6 +234,61 @@ function refreshBirthAge(){const a=liveYears(pubDob.value);birthAgeText.textCont
 pubDob.max=localDay();pubDob.addEventListener('input',refreshBirthAge);pubBirth.addEventListener('change',setBirthMode);setBirthMode();
 const publicMarital=$('publicMarital'),publicSpouse=$('publicSpouseField');
 if(publicMarital&&publicSpouse){const show=()=>{publicSpouse.hidden=!['Married','Widowed','Divorced','Separated'].includes(publicMarital.value)};publicMarital.onchange=show;show();}
+ // Advisory duplicate preview. Only a generic indication is public.
+ const malDupProbeKey=newSecret();
+ let malDupTimer=0,malDupSeq=0,malDupFingerprint='',malDupLastResult=null;
+ function malDupPaint(state,message){
+   ['Basic','Home','Submit'].forEach(part=>{
+     const box=$('malDupStatus'+part),label=$('malDupText'+part);
+     if(box){box.dataset.state=state;label.textContent=message;}
+   });
+ }
+ function malDupInputs(){
+   const f=$('registration');
+   const sahi=f.elements.locality.value==='__other__'?
+       String(f.elements.localityOther.value||'').trim():String(f.elements.locality.value||'').trim();
+   return {fullName:f.elements.fullName.value.trim(),fatherName:f.elements.fatherName.value.trim(),
+     motherName:f.elements.motherName.value.trim(),locality:sahi};
+ }
+ function malScheduleDuplicateCheck(){
+   if(currentAttempt||submitting)return;
+   const fields=malDupInputs();
+   const complete=fields.fullName.length>=3&&
+     ((fields.fatherName&&fields.motherName)||((fields.fatherName||fields.motherName)&&fields.locality));
+   const fingerprint=JSON.stringify(fields);
+   const seq=++malDupSeq;
+   clearTimeout(malDupTimer);
+   if(!complete){
+     malDupFingerprint='';malDupLastResult=null;
+     malDupPaint('unavailable',"Enter full name, a parent's name and Sahi (or both parents) to check potential matches. Optional details may be left blank; Admin will verify.");
+     return;
+   }
+   if(fingerprint===malDupFingerprint&&malDupLastResult)return;
+   malDupPaint('unavailable','Checking for possible existing registrations…');
+   malDupTimer=setTimeout(async()=>{
+     try{
+       // No date of birth or mobile is included in the public GET.
+       const response=await api('registrationDuplicateCheck',{...fields,probeKey:malDupProbeKey},12000);
+       if(seq!==malDupSeq)return;
+       if(!response||!response.ok)throw Error(response&&response.error||'Verification unavailable');
+       malDupFingerprint=fingerprint;malDupLastResult=response;
+       if(response.possibleDuplicate){
+         malDupPaint('warning','Possible existing registration. A similar record may exist. You can still submit for Admin review, but do not register the exact same person twice.');
+       }else if(response.checked){
+         malDupPaint('clear','No close match indicated by the entered details. Admin will still check the official register and pending requests.');
+       }else{
+         malDupPaint('unavailable','Automatic checking needs more details or is temporarily limited. Admin will verify before approval.');
+       }
+     }catch(err){
+       if(seq===malDupSeq)malDupPaint('unavailable','Automatic duplicate check is not available yet. You may still submit for Admin review.');
+     }
+   },900);
+ }
+ ['fullName','fatherName','motherName','locality','localityOther'].forEach(name=>{
+   const input=$('registration').elements.namedItem(name);
+   if(input){input.addEventListener('change',malScheduleDuplicateCheck);input.addEventListener('blur',malScheduleDuplicateCheck);}
+ });
+
 $('registration').addEventListener('submit',async event=>{
  event.preventDefault();if(submitting)return;
  const form=event.currentTarget;
@@ -245,7 +307,7 @@ $('registration').addEventListener('submit',async event=>{
  try{
   const receipt=await submitAndCheck(attempt);
   currentAttempt=null;
-  $('reference').textContent='Registration number: '+receipt.id+' · Status: '+receipt.status;
+  $('reference').textContent='Registration number: '+receipt.id+' · Status: '+receipt.status+(receipt.reviewRequired?' · Possible duplicate flagged for Admin verification':'');
   $('registration').style.display='none';$('done').style.display='block';$('malRegisterSteps').hidden=true;
   $('done').scrollIntoView({behavior:'smooth',block:'start'});
   // The Add Another action is available IMMEDIATELY after the receipt is confirmed.
@@ -270,7 +332,7 @@ function resetForAnother(keepSahi){
  const lastSahi=keepSahi?$('publicSahi').value:'';
  const lastOther=keepSahi?$('publicSahiOtherRow').querySelector('input').value:'';
  const form=$('registration');
- form.reset();currentAttempt=null;
+ form.reset();currentAttempt=null;malDupFingerprint='';malDupLastResult=null;malDupSeq++;clearTimeout(malDupTimer);malDupPaint('unavailable','Admin will verify against registered and pending records before approval.');
  $('sendBtn').textContent='Send for Admin Review';$('sendBtn').disabled=false;
  $('result').className='';$('result').textContent='';
  if(keepSahi&&Array.from($('publicSahi').options).some(o=>o.value===lastSahi))$('publicSahi').value=lastSahi;
