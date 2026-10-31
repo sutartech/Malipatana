@@ -70,7 +70,7 @@
    Existing JSONP/GET authentication is not ideal for sensitive user credentials.
    ========================================================================= */
 const CONFIG = {
-  API_URL: 'https://script.google.com/macros/s/AKfycbyccN1ErYm-NsqnZOlhV9GSLMBr9998Yk7yfi-foOpcLloDw0Mb9SLPMxDp58wWcXqEHA/exec',
+  API_URL: 'https://script.google.com/macros/s/AKfycbzKN7T8vWfnqCfwtr_NNw3GWNwowWXxs1yntIjnndX_CnisIP2r1veilwEV3pVBLe9rlw/exec',
   VERSION: 'FE V3.5.45',
   EXPECTED_BACKEND: 'BE V1.8.29',
   IDLE_MINUTES: 30,
