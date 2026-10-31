@@ -162,7 +162,7 @@
 <div id="modalRoot"></div>
 <div id="toasts"></div>
 
-<script src="malipatana-core.js?v=3.5.45-api-20261031-registration-control"></script>
+<script src="malipatana-core.js?v=3.5.45-api-20261031-be1830"></script>
 
 <script>
 /* FE V3.5.45 — approval-managed, date-controlled login-free shared links. */
@@ -285,8 +285,8 @@ async function renderEntryLinks(){
   try{
    const live=await api('health');
    if(!live||!live.ok||!live.capabilities||!live.capabilities.linkManagement)
-     throw Error('Install BE V1.8.29 before creating or managing these links.');
-   if(!live.capabilities.sharedAddApproval)throw Error('Deploy BE V1.8.29 to choose Add approval rules.');
+     throw Error('Install BE V1.8.30 before creating or managing these links.');
+   if(!live.capabilities.sharedAddApproval)throw Error('Deploy BE V1.8.30 to choose Add approval rules.');
    const event=ev.value,record=(DB.events||[]).find(x=>String(x['Event ID'])===event);
    const startAt=startMode.value==='scheduled'?malLinkIso_(document.getElementById('linkStart').value):'';
    if(startMode.value==='scheduled'&&!startAt)throw Error('Choose a start date and time.');
