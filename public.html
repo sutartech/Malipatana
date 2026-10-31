@@ -339,6 +339,7 @@ tr:last-child td{border-bottom:0}
   padding:9px 15px;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;white-space:nowrap;
   backdrop-filter:blur(8px);transition:background .15s ease,transform .15s ease}
 .langbtn:hover{background:#ffffff33;transform:translateY(-1px)}
+.mal-public-language{appearance:auto;color:#fff;background:#294e55;border:1px solid #ffffff75;max-width:150px;min-height:44px;cursor:pointer}.mal-public-language option{color:#1a3b37;background:#fff}
 @media print{ .topright{display:none} }
 /* nowrap keeps the pill a pill, but on a narrow phone a long label would then
    run off the screen instead of wrapping — so there it loses its words and
@@ -418,7 +419,7 @@ header.top .veil{background:linear-gradient(176deg,#0B2635B8 0%,#123A41A3 45%,#0
 </header>
 
 <div class="topright">
-  <button class="langbtn" id="langBtn" type="button" aria-label="Change language">ଓଡିଆ</button>
+  <select class="langbtn mal-public-language" id="langSelect" aria-label="Public page language"><option value="en">English</option><option value="or">ଓଡ଼ିଆ</option><option value="both">Both / ଉଭୟ</option></select>
   <a class="signin" href="index.html"><span data-t="Committee sign-in">Committee sign-in</span> &rarr;</a>
 </div>
 
@@ -561,6 +562,7 @@ function paintPublicFormLang(){
  });
 }
 function applyLang(){
+  FORM_BOTH=LANG==='both';
   document.documentElement.lang = LANG === 'or' ? 'or' : 'en';
   document.querySelectorAll('[data-t]').forEach(function(el){
     el.textContent = t(el.getAttribute('data-t'));
@@ -577,14 +579,14 @@ function applyLang(){
     o.value = o.dataset.t;
     o.textContent = t(o.dataset.t);
   });
-  var b = document.getElementById('langBtn');
-  if(b) b.textContent = LANG === 'or' ? 'English' : 'ଓଡ଼ିଆ';
+  var languageSelect=document.getElementById('langSelect');
+  if(languageSelect)languageSelect.value=LANG;
   paintPublicFormLang();
 }
 
 function setLang(l, remember){
-  LANG = l === 'or' ? 'or' : 'en';
-  if(remember){ try { localStorage.setItem('mal_pub_lang', LANG); } catch(e){} }
+  LANG = ['or','both'].includes(l) ? l : 'en';
+  if(remember){ try { localStorage.setItem('mal_pub_lang_choice_v2',LANG); } catch(e){} }
   applyLang();
   if(LAST) render(LAST);
 }
@@ -1068,9 +1070,10 @@ function loadPublic(attempt){
     /* The admin's choice is the default a first-time reader lands on; once
        someone picks a language themselves, their choice wins on that phone. */
     var saved = null;
-    try { saved = localStorage.getItem('mal_pub_lang'); } catch(e){}
-    FORM_BOTH=String(r.lang||'').toLowerCase()==='both';
-    setLang(saved || (r.lang === 'or' ? 'or' : 'en'), false);
+    try { saved = localStorage.getItem('mal_pub_lang_choice_v2'); } catch(e){}
+    // New preference key prevents stale English/Odia choice hiding Admin Both.
+    const serverMode=String(r.lang||'en').trim().toLowerCase();
+    setLang(saved || (['or','both'].includes(serverMode)?serverMode:'en'),false);
     if(r.off){
       document.getElementById('asof').textContent = 'not public at the moment';
       document.getElementById('out').innerHTML =
@@ -1103,9 +1106,7 @@ function loadPublic(attempt){
   });
 }
 
-document.getElementById('langBtn').onclick = function(){
-  setLang(LANG === 'or' ? 'en' : 'or', true);
-};
+document.getElementById('langSelect').onchange=function(){setLang(this.value,true);};
 applyLang();
 
 loadPublic(0);
