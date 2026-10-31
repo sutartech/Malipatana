@@ -108,10 +108,10 @@ async function malCheckRegistrationReady_(){
  try{
   const key=newSecret();
   const state=await api('registrationStatus',{key},9500);
-  if(state&&!state.ok && /registration.*(?:disabled|not enabled)/i.test(String(state.error||''))){
+  if(state&&(state.enabled===false||(!state.ok&&/registration.*(?:disabled|not enabled|paused)/i.test(String(state.error||''))))){
    const banner=document.createElement('div');banner.className='banner';banner.setAttribute('role','alert');
    banner.style.background='#fff0ee';banner.style.borderColor='#e4b9ae';
-   banner.textContent='Registration is temporarily unavailable. The village administrator must enable Registration Requests in Apps Script. Please do not submit until it is enabled.';
+   banner.textContent='Registration is currently paused by the village administrator. Please return when registration reopens.';
    $('registration').before(banner);
   }
  }catch(e){/* A transient connectivity issue must not prevent filling the form. */}
