@@ -106,6 +106,72 @@ document.addEventListener('DOMContentLoaded',function(){
  }
 });
 </script>
+<style id="mal-entry-usability-v2">
+/* Prioritize actual forms over secondary utilities, with engaging step buttons. */
+.mal-four-steps{position:sticky;top:0;z-index:4;background:#fff;padding:8px 0 12px}
+.mal-four-steps button{font:800 13px/1.3 inherit;border:1.5px solid #c9ded7;border-radius:11px;min-height:47px;padding:8px 4px;cursor:pointer}
+.mal-four-steps button:nth-child(1){background:#e0f0ff;border-color:#9dcfff;color:#195b86}
+.mal-four-steps button:nth-child(2){background:#e6f5e3;border-color:#a8d9a6;color:#245e35}
+.mal-four-steps button:nth-child(3){background:#fff0d9;border-color:#efc58c;color:#805016}
+.mal-four-steps button:nth-child(4){background:#f2e8ff;border-color:#d3b7f9;color:#63338f}
+.mal-four-steps button:focus-visible{outline:3px solid #0b7d66;outline-offset:2px}
+.mal-four-steps button.mal-step-current{box-shadow:0 0 0 2px #287d69,0 5px 13px #164b3925}
+.mal-entry-step-target{scroll-margin-top:85px}
+#content .field input:not([type=file]):not([type=checkbox]):not([type=radio]),#content .field select,#content .field textarea{
+ color:#17392f!important;font-weight:600!important;font-size:18px!important;background:#fff!important;
+ min-height:54px;border:1.5px solid #a1c5b4!important;border-radius:12px;padding:12px 14px!important;
+}
+#content .field input:focus,#content .field select:focus,#content .field textarea:focus{
+ background:#f5fff9!important;border-color:#0a826b!important;outline:3px solid #b3ddce!important;outline-offset:1px
+}
+#content .field input::placeholder,#content .field textarea::placeholder{color:#70867c!important;font-size:16px;font-weight:400!important}
+#content .field{font-weight:750;color:#25483e;font-size:15px}
+#malInstallPanel.mal-secondary-compact{margin-top:10px}
+#malQuickActions.mal-secondary-compact,#malExistingRecords.mal-secondary-compact{margin-top:10px}
+@media(max-width:540px){.mal-four-steps button{font-size:12px;min-height:48px}}
+</style>
+<script id="mal-entry-usability-script">
+document.addEventListener('DOMContentLoaded',()=>{
+ const byId=id=>document.getElementById(id);
+ const content=byId('content'),familyTabs=byId('familyTabs');
+ if(content&&familyTabs){
+   const intro=content.querySelector(':scope > .box:first-child');
+   if(intro)intro.after(familyTabs);else content.prepend(familyTabs);
+   let after=familyTabs;
+   ['familyForm','memberForm'].forEach(id=>{const el=byId(id);if(el){after.after(el);after=el;}});
+   // Utilities remain available, but appear after the registration forms.
+   for(const id of ['malQuickActions','malExistingRecords']){
+     const el=byId(id);if(el){after.after(el);after=el;el.classList.add('mal-secondary-compact');}
+   }
+ }
+ const install=byId('malInstallPanel');
+ if(install)install.classList.add('mal-secondary-compact');
+ document.querySelectorAll('#familyForm,#memberForm').forEach(form=>{
+   const nav=form.querySelector('.mal-four-steps');if(!nav)return;
+   const original=[...nav.querySelectorAll('span')];
+   const inputs=[...form.querySelectorAll('input,select,textarea')].filter(el=>!['hidden','file','checkbox','radio'].includes(el.type)&&!el.closest('[hidden]'));
+   const name=form.querySelector('[name="givenName"]')||inputs[0];
+   const household=form.id==='memberForm'?(byId('familySelect')||inputs[1]):(form.querySelector('[name="locality"]')||inputs[2]);
+   const details=form.querySelector('details')||inputs[Math.floor(inputs.length/2)];
+   const submit=form.querySelector('button[type="submit"],input[type="submit"],.primary[type="submit"]')||form.querySelector('button.primary');
+   const targets=[name,household,details,submit];
+   nav.replaceChildren(...original.map((span,i)=>{
+     const btn=document.createElement('button');btn.type='button';btn.textContent=span.textContent;
+     btn.setAttribute('aria-label','Go to '+span.textContent);
+     btn.onclick=()=>{
+       const el=targets[i];if(!el)return;
+       if(el.tagName==='DETAILS')el.open=true;
+       const hiddenParent=el.closest('details:not([open])');if(hiddenParent)hiddenParent.open=true;
+       el.classList.add('mal-entry-step-target');
+       el.scrollIntoView({behavior:'smooth',block:'center'});
+       if(el.matches('input,select,textarea,button'))el.focus({preventScroll:true});
+       nav.querySelectorAll('button').forEach((b,j)=>b.classList.toggle('mal-step-current',i===j));
+     };
+     return btn;
+   }));
+ });
+});
+</script>
 </head><body><main>
 <header class="head"><img src="icon-180.png" alt="Malipatana emblem"><div><h1>ମାଳିପାଟଣା • Malipatana</h1><p>Simple village registration • No login needed</p></div></header>
 <details class="box" id="malEntryHelp"><summary style="cursor:pointer;font-weight:800;color:#0c685d;min-height:40px;display:flex;align-items:center">ℹ How to use this shared entry link</summary><div class="sub" style="margin-top:10px;line-height:1.7"><p>1. Check the link information and its allowed entry type.</p><p>2. Fill in the required fields. Use <strong>Take Photo</strong> or <strong>Choose Gallery</strong> only if a photo is needed.</p><p>3. Submit once, then keep your <strong>saved receipt / record ID</strong>. For a new person, use the cleared form and submit again.</p><p>4. Tap <strong>Save this link</strong>, then <strong>Install Quick Add</strong> to reopen it without logging in. An installed shortcut does not override Admin pause or expiry.</p><p><strong>Shared-phone caution:</strong> anyone using this device can open links saved here. Remove saved links when finished on a borrowed phone.</p></div></details>
