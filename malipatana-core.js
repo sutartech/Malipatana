@@ -6798,7 +6798,7 @@ async function bePing(){
     if(!r||!r.ok)throw healthFailure||new Error('Backend health check failed');
     if(r && r.ok){
       const actual = String(r.version || 'BE ?').trim();
-      const matches = actual === CONFIG.EXPECTED_BACKEND || actual === 'BE V1.8.31' || actual === 'BE V1.8.32';
+      const matches = actual === CONFIG.EXPECTED_BACKEND || actual === 'BE V1.8.31' || actual === 'BE V1.8.32' || actual === 'BE V1.8.33' || actual === 'BE V1.8.34' || actual === 'BE V1.8.35';
       chip.textContent = actual;
       chip.className = 'vchip ' + (matches ? 'ok' : 'bad');
       if(!matches && notice){
