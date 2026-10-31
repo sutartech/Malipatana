@@ -2394,3 +2394,30 @@ table.grid tbody tr:hover td:first-child{background:#EEF8F5}
 }
 @media(max-width:365px){.mal-ah-kpis{grid-template-columns:1fr 1fr}.mal-ah-kpi:last-child{grid-column:1/-1}}
 
+
+/* Malipatana comfortable entry v20261031 */
+/* Inputs throughout logged-in Family, Member, Expense, Quick Add and Admin forms */
+#main input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]),
+#main select,#main textarea,
+.modal input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]),
+.modal select,.modal textarea{
+  font-family:var(--body),system-ui,sans-serif;
+  font-size:18px;font-weight:600;line-height:1.45;
+  color:#163c33;background:#fff;
+  border:1.5px solid #a7c8b9;border-radius:11px;
+  min-height:50px;padding:11px 13px;
+  opacity:1;
+}
+#main textarea,.modal textarea{min-height:100px;resize:vertical}
+#main input::placeholder,#main textarea::placeholder,.modal input::placeholder,.modal textarea::placeholder{font-size:16px;font-weight:400;color:#71857c;opacity:1}
+#main input:focus,#main select:focus,#main textarea:focus,.modal input:focus,.modal select:focus,.modal textarea:focus{
+  outline:3px solid #b8dfd0;outline-offset:1px;
+  border-color:#087865;background:#fcfffd;box-shadow:0 0 0 1px #08786524
+}
+#main label,.modal label{font-size:14.5px;color:#274b42;font-weight:650}
+#main input:disabled,#main select:disabled,.modal input:disabled,.modal select:disabled{opacity:.7;background:#edf3ee}
+@media(max-width:600px){
+ #main input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]),
+ #main select,#main textarea,.modal input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]),
+ .modal select,.modal textarea{font-size:18px;min-height:52px}
+}
