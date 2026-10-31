@@ -19,7 +19,7 @@ check('Shareable entry submits via linkSubmit',entry.includes("api('linkSubmit'"
 check('Installed Quick Add validates link access',quick.includes("api('linkInfo'"));
 check('Duplicate checks exist',core.includes("api('duplicateCheck'")&&entry.includes("api('linkDuplicateCheck'"));
 check('Moving Notice Board preserved',core.includes('malToggleTicker')&&css.includes('.mal-notice-ticker'));
-check('Photo library preserved',core.includes('photoLibraryList'));
+check('Photo library preserved',core.includes('renderPhotos')&&index.includes("api('photoLibraryList'"));
 check('Mobile navigation preserved',index.includes("id=\"tabbar\"")&&index.includes('malMobileQuickAdd'));
 check('Four Quick Add options preserved', ['Add member','Add family','Add expense','Add contribution'].every(s=>index.includes(s)));
 check('Odia text present',/[\u0B00-\u0B7F]/u.test(index));
