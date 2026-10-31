@@ -51,9 +51,9 @@ button.primary{background:#106653;color:white;width:100%;font-size:17px}button.s
 <section class="card" id="malRegBasic">
 <h2>1. Your name and parents <span class="tag">Basic details</span></h2>
 <p class="hint">You may also complete this form for a relative with their permission. If a parent is already registered, enter the same full name. The administrator can link the existing record during approval — do not submit the parent again.</p>
-<label class="field">Full name / ପୂରା ନାମ <span class="required">*</span><input name="fullName" required maxlength="180" placeholder="e.g. Dhruba Charan Sutar" autocomplete="name"></label><fieldset class="mal-exists" id="malExistingCheck"><legend>Has this person or household already been registered?</legend>
-<label><input type="radio" name="existingRecordChoice" value="new" required> No, this is a new person / household.</label>
-<label><input type="radio" name="existingRecordChoice" value="existing"> Yes, already registered.</label>
+<label class="field">Full name / ପୂରା ନାମ <span class="required">*</span><input name="fullName" required maxlength="180" placeholder="e.g. Dhruba Charan Sutar" autocomplete="name"></label><fieldset class="mal-exists" id="malExistingCheck"><legend>Is this person already registered? (An existing family may add a new member.)</legend>
+<label><input type="radio" name="existingRecordChoice" value="new" required> No, this person has not been registered yet (even if the family already exists).</label>
+<label><input type="radio" name="existingRecordChoice" value="existing"> Yes, this exact person was registered earlier.</label>
 <label><input type="radio" name="existingRecordChoice" value="unsure"> Not sure — Admin should verify.</label>
 <p class="mal-exists-msg" id="malExistsMsg" role="status" aria-live="polite" hidden></p>
 <label id="malExistsAckRow" hidden><input id="malExistsAck" type="checkbox"> I checked the name, family/parent details and Sahi as far as I know. A similar name can belong to a different person.</label>
@@ -239,7 +239,7 @@ function updateExistingChoice(){
  const msg=$('malExistsMsg'),row=$('malExistsAckRow');
  row.hidden=choice!=='new';$('malExistsAck').required=choice==='new';
  msg.hidden=!choice||choice==='new';
- if(choice==='existing')msg.textContent='This person or household is already registered. Do not submit a new form; contact the village Admin to update or link the existing record.';
+ if(choice==='existing')msg.textContent='This exact person is already registered. Do not submit a new form; contact the village Admin to update or link the existing record.';
  if(choice==='unsure')msg.textContent='You may submit for Admin review. Admin should compare the name, parents, household and locality with registered and pending records before approval.';
  $('sendBtn').disabled=choice==='existing';
 }
@@ -249,7 +249,7 @@ $('registration').addEventListener('submit',async event=>{
  const form=event.currentTarget;
  if(!currentAttempt&&!form.reportValidity())return;
   if(!currentAttempt&&document.querySelector('[name="existingRecordChoice"]:checked')?.value==='existing'){
-    show('Already registered. Contact village Admin to correct the existing record, rather than adding another.',false);return;
+    show('Person already registered. Contact village Admin to correct or link the existing record instead of creating a second record.',false);return;
   }
  if(!currentAttempt){
   const values=Object.fromEntries(new FormData(form));
