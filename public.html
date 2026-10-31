@@ -364,27 +364,27 @@ header.top .veil{background:linear-gradient(176deg,#0B2635B8 0%,#123A41A3 45%,#0
 
 <style id="mal-notice-links-css">.ntc .mal-notice-link,.noticeboard .mal-notice-link{color:#075f70;text-decoration:underline;text-underline-offset:3px;font-weight:700;overflow-wrap:anywhere}.ntc .mal-notice-link:hover,.noticeboard .mal-notice-link:hover{color:#ad441f}</style>
 <link rel="stylesheet" href="malipatana-connectivity.css?v=3.5.45">
-<style id="mal-public-suggestion-card">
-.village-suggestion-card{position:relative;overflow:hidden;margin:20px 0 18px;padding:24px 26px;display:grid;grid-template-columns:minmax(0,1fr) 240px;align-items:center;gap:25px;background:linear-gradient(115deg,#edf8ef 0%,#ddf2e4 55%,#f7fbef 100%);border:2px solid #91c4a4;border-radius:21px;box-shadow:0 12px 26px #15563815}
-.village-suggestion-card:before{content:"";position:absolute;right:-60px;top:-90px;width:310px;height:310px;background:radial-gradient(circle,#fff6c0a3,transparent 68%);pointer-events:none}
-.village-suggestion-card>*{position:relative}
-.village-suggestion-heading{display:flex;align-items:center;gap:13px}
-.village-suggestion-icon{flex:none;display:grid;place-items:center;width:57px;height:57px;font-size:31px;background:#fff2c8;border:1px solid #e8d17c;border-radius:17px}
-.village-suggestion-kicker{color:#256446;font-size:11px;font-weight:850;letter-spacing:.035em}
-.village-suggestion-card h2{font-family:var(--display);font-size:clamp(23px,3vw,29px);line-height:1.2;color:#125343;margin:4px 0 0}
-.village-suggestion-odia{font-size:15px;color:#1e7457;font-weight:800}
-.village-suggestion-content>p{font-size:15px;color:#365e51;line-height:1.55;margin:13px 0 11px}
-.village-suggestion-note{padding:9px 12px;background:#ffffffbc;border-left:4px solid #c0a04f;border-radius:9px;color:#436457;font-size:13px}
-.village-suggestion-actions{display:grid;gap:11px}
-.village-suggestion-actions a{display:flex;justify-content:center;align-items:center;text-align:center;text-decoration:none;border-radius:12px;min-height:52px;padding:10px 14px;font-weight:800;font-size:15px}
-.village-suggestion-primary{background:#087864;color:white!important;box-shadow:0 7px 17px #08786424}
-.village-suggestion-primary:hover{background:#066552}
-.village-suggestion-secondary{background:white;color:#0c6353!important;border:2px solid #a2cdb4}
-.village-suggestion-secondary:hover{background:#f7fff9}
-.village-suggestion-actions>span{text-align:center;font-size:12px;color:#527267}
-.village-suggestion-actions a:focus-visible{outline:3px solid #a86c07;outline-offset:3px}
-@media(max-width:700px){.village-suggestion-card{display:block;padding:18px 16px;margin:16px 0}.village-suggestion-heading{align-items:flex-start}.village-suggestion-card h2{font-size:24px}.village-suggestion-actions{margin-top:18px}.village-suggestion-icon{width:49px;height:49px;font-size:27px}}
-@media print{.village-suggestion-card{display:none!important}}
+<style id="mal-public-action-dock">
+.mal-public-action-dock{position:fixed;right:22px;bottom:22px;display:flex;align-items:center;gap:10px;z-index:60}
+.mal-public-action-dock .gfab{position:static;right:auto;bottom:auto;z-index:auto;min-height:53px}
+.mal-public-suggestion-fab{background:#087965;color:#fff;border:0;border-radius:999px;min-height:53px;padding:13px 19px;font:inherit;font-weight:800;font-size:14.5px;cursor:pointer;box-shadow:0 14px 28px -11px #08796599;display:flex;align-items:center;gap:8px}
+.mal-public-suggestion-fab:hover{background:#086653}
+.mal-public-suggestion-fab[aria-expanded="true"]{background:#055848}
+.mal-public-suggestion-panel{position:absolute;right:0;bottom:calc(100% + 12px);width:min(344px,calc(100vw - 28px));background:white;border:1px solid #b5d8c3;border-radius:17px;padding:17px;box-shadow:0 18px 50px #102f3c3c;color:#19353c}
+.mal-public-suggestion-panel[hidden]{display:none!important}
+.mal-public-suggestion-panel h3{margin:0 0 6px;font-size:18px;color:#125a48}
+.mal-public-suggestion-panel p{margin:0 0 13px;font-size:13px;color:#526d63}
+.mal-public-suggestion-panel a{display:flex;align-items:center;justify-content:center;min-height:47px;border-radius:11px;text-decoration:none;font-weight:800;margin:8px 0}
+.mal-public-suggestion-panel .mal-choice-new{background:#087965;color:#fff}
+.mal-public-suggestion-panel .mal-choice-track{background:#f5fbf7;color:#0d6755;border:1px solid #a5d0b5}
+.mal-public-suggestion-panel .mal-choice-close{display:block;margin-left:auto;background:transparent;border:0;color:#536d65;cursor:pointer;font-weight:800;padding:3px 9px}
+.mal-public-action-dock button:focus-visible,.mal-public-suggestion-panel a:focus-visible{outline:3px solid #d2a43d;outline-offset:3px}
+@media(max-width:540px){.mal-public-action-dock{right:12px;left:12px;bottom:calc(12px + env(safe-area-inset-bottom));gap:8px;justify-content:flex-end}
+.mal-public-action-dock .gfab,.mal-public-suggestion-fab{padding:11px 12px;font-size:12px;min-height:49px;gap:6px}
+.mal-public-action-dock .gfab .lbl{display:inline!important}.mal-public-action-dock .gfab .ico{font-size:16px}
+.mal-public-suggestion-panel{right:0;bottom:calc(100% + 10px)}}
+@media(max-width:350px){.mal-public-action-dock{gap:6px}.mal-public-action-dock .gfab,.mal-public-suggestion-fab{font-size:11px;padding:9px 10px}}
+@media print{.mal-public-action-dock{display:none!important}}
 </style>
 </head>
 <body>
@@ -411,24 +411,17 @@ header.top .veil{background:linear-gradient(176deg,#0B2635B8 0%,#123A41A3 45%,#0
 <div class="wrap">
   <div id="out"><div class="card"><div class="state"><b data-t="Loading the village account…">Loading the village account…</b><span data-t="This page reads the same sheet the committee uses.">This page reads the same sheet the committee uses.</span></div></div></div>
 
-  <section class="village-suggestion-card noprint" aria-labelledby="villageSuggestionTitle">
-  <div class="village-suggestion-content">
-    <div class="village-suggestion-heading">
-      <span class="village-suggestion-icon" aria-hidden="true">💡</span>
-      <div><span class="village-suggestion-kicker">YOUR IDEA MATTERS · ଆପଣଙ୍କ ମତ ମୂଲ୍ୟବାନ</span>
-      <h2 id="villageSuggestionTitle">Village Suggestions</h2>
-      <div class="village-suggestion-odia" lang="or">ଗ୍ରାମ ଉନ୍ନତି ପରାମର୍ଶ</div></div>
+  <div class="mal-public-action-dock noprint" id="malPublicActionDock">
+    <div class="mal-public-suggestion-panel" id="malSuggestionChoices" role="dialog" aria-modal="false" aria-label="Village suggestion options" hidden>
+      <button type="button" class="mal-choice-close" id="malSuggestionClose" aria-label="Close suggestion options">✕</button>
+      <h3>💡 Village Suggestions</h3>
+      <p>Share an idea to improve village welfare, or check the progress of one already submitted.</p>
+      <a href="suggestions.html" class="mal-choice-new">✍ Give Suggestion</a>
+      <a href="suggestions.html#track" class="mal-choice-track">⌕ Track Suggestion Status</a>
     </div>
-    <p>Have an idea to improve Malipatana? Share your thoughts on village development, education, roads, sanitation, youth activities and welfare.</p>
-    <div class="village-suggestion-note">No login needed. Suggestions help improve the village; for a specific complaint, use the separate <strong>Grievance</strong> button.</div>
+    <button type="button" class="mal-public-suggestion-fab" id="malSuggestionFab" aria-controls="malSuggestionChoices" aria-expanded="false" aria-haspopup="dialog">💡 <span>Suggestion</span></button>
+    <button class="gfab" id="gFab" aria-label="Raise or track a grievance"><span class="ico">📣</span> <span class="lbl" data-t="Raise / track a grievance">Grievance</span></button>
   </div>
-  <div class="village-suggestion-actions">
-    <a class="village-suggestion-primary" href="suggestions.html">✍ Give Suggestion</a>
-    <a class="village-suggestion-secondary" href="suggestions.html#track">⌕ Track Suggestion</a>
-    <span>Free to submit · Reviewed by Admin</span>
-  </div>
-</section>
-  <button class="gfab noprint" id="gFab" aria-label="Raise or track a grievance"><span class="ico">📣</span> <span class="lbl" data-t="Raise / track a grievance">Raise / track a grievance</span></button>
 
   <div class="goverlay noprint" id="gOverlay">
   <div class="gmodal">
@@ -664,7 +657,19 @@ function render(d){
 }
 
 /* ---------- grievances: raise / track / steps ---------- */
-document.getElementById('gFab').onclick = function(){ document.getElementById('gOverlay').classList.add('open'); };
+const malSuggFab=document.getElementById('malSuggestionFab');
+const malSuggChoices=document.getElementById('malSuggestionChoices');
+function malCloseSuggChoices(){malSuggChoices.hidden=true;malSuggFab.setAttribute('aria-expanded','false');}
+malSuggFab.onclick=function(){
+  const opening=malSuggChoices.hidden;
+  malSuggChoices.hidden=!opening;
+  malSuggFab.setAttribute('aria-expanded',String(opening));
+  if(opening)document.getElementById('malSuggestionClose').focus();
+};
+document.getElementById('malSuggestionClose').onclick=function(){malCloseSuggChoices();malSuggFab.focus();};
+document.addEventListener('click',function(e){if(!e.target.closest('#malPublicActionDock'))malCloseSuggChoices();});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!malSuggChoices.hidden){malCloseSuggChoices();malSuggFab.focus();}});
+document.getElementById('gFab').onclick = function(){ malCloseSuggChoices(); document.getElementById('gOverlay').classList.add('open'); };
 document.getElementById('gClose').onclick = function(){ document.getElementById('gOverlay').classList.remove('open'); };
 document.getElementById('gOverlay').addEventListener('click', function(ev){
   if(ev.target.id === 'gOverlay') document.getElementById('gOverlay').classList.remove('open');
