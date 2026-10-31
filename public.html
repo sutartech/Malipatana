@@ -545,6 +545,7 @@ function t(s){
 /* Static markup is tagged once with data-t holding its English original, so
    switching back and forth never loses the source string. */
 var FORM_BOTH=false;
+var MAL_FORM_CATEGORIES_OR={"Village Development":"ଗ୍ରାମ ଉନ୍ନତି","Education":"ଶିକ୍ଷା","Health & Sanitation":"ସ୍ୱାସ୍ଥ୍ୟ ଓ ପରିମଳ","Roads & Infrastructure":"ରାସ୍ତା ଓ ଭିତ୍ତିଭୂମି","Welfare & Emergency Support":"କଲ୍ୟାଣ ଓ ଜରୁରୀ ସହାୟତା","Youth & Culture":"ଯୁବ ଓ ସଂସ୍କୃତି","Environment":"ପରିବେଶ","Other":"ଅନ୍ୟାନ୍ୟ"};
 var MAL_FORM_OR={"Village Suggestions · ଗ୍ରାମ ପରାମର୍ଶ":"ଗ୍ରାମ ଉନ୍ନତି ପରାମର୍ଶ","Give suggestion":"ପରାମର୍ଶ ଦିଅନ୍ତୁ","Track suggestion":"ପରାମର୍ଶ ସ୍ଥିତି ଦେଖନ୍ତୁ","Ideas & progress":"ପରାମର୍ଶ ଓ ଅଗ୍ରଗତି","What is your suggestion about?":"କେଉଁ ବିଷୟରେ ପରାମର୍ଶ?","Describe your suggestion":"ଆପଣଙ୍କ ପରାମର୍ଶ ଲେଖନ୍ତୁ","Expected benefit (optional)":"ଆଶା କରାଯାଉଥିବା ଲାଭ (ଇଚ୍ଛାଧୀନ)","Locality / Sahi (optional)":"ସାହି / ଅଞ୍ଚଳ (ଇଚ୍ଛାଧୀନ)","Your name (optional)":"ଆପଣଙ୍କ ନାମ (ଇଚ୍ଛାଧୀନ)","Mobile (optional, kept private)":"ମୋବାଇଲ୍ (ଇଚ୍ଛାଧୀନ, ଗୋପନୀୟ)","Allow Admin to consider displaying my name (names are not published in this version).":"ନାମ ଦେଖାଇବାକୁ ପ୍ରଶାସକଙ୍କୁ ଅନୁମତି (ବର୍ତ୍ତମାନ ନାମ ପ୍ରକାଶ ହୁଏ ନାହିଁ)","Submit suggestion":"ପରାମର୍ଶ ଦାଖଲ କରନ୍ତୁ","Private tracking code":"ଗୋପନୀୟ ଟ୍ରାକିଂ କୋଡ୍","Save your private code carefully. It cannot be recovered from the public page.":"ଗୋପନୀୟ କୋଡ୍ ସାଇତି ରଖନ୍ତୁ। ପବ୍ଲିକ୍ ପୃଷ୍ଠାରୁ ଏହାକୁ ପୁଣି ପାଇହେବ ନାହିଁ।","Check status":"ସ୍ଥିତି ଯାଞ୍ଚ କରନ୍ତୁ","Only Admin-approved ideas appear here. Private contact details are never shown.":"କେବଳ ପ୍ରଶାସକ ଅନୁମୋଦିତ ପରାମର୍ଶ ଏଠାରେ ଦେଖାଯାଏ। ବ୍ୟକ୍ତିଗତ ବିବରଣୀ ଗୋପନ ରହେ।","Refresh approved ideas":"ଅନୁମୋଦିତ ପରାମର୍ଶ ପୁନଃ ଦେଖନ୍ତୁ","Open full Suggestions page":"ସମ୍ପୂର୍ଣ୍ଣ ପରାମର୍ଶ ପୃଷ୍ଠା ଖୋଲନ୍ତୁ","Grievance":"ଅଭିଯୋଗ","Raise a grievance":"ଅଭିଯୋଗ କରନ୍ତୁ","Track a grievance":"ଅଭିଯୋଗ ସ୍ଥିତି ଦେଖନ୍ତୁ","How it is resolved":"କିପରି ସମାଧାନ ହୁଏ","Your name":"ଆପଣଙ୍କ ନାମ","Mobile number":"ମୋବାଇଲ୍ ନମ୍ବର","What is this about":"ଏହା କେଉଁ ବିଷୟରେ","Describe the problem":"ସମସ୍ୟା ବର୍ଣ୍ଣନା କରନ୍ତୁ","Submit grievance":"ଅଭିଯୋଗ ଦାଖଲ କରନ୍ତୁ","Grievance number":"ଅଭିଯୋଗ ନମ୍ବର","Received":"ଗ୍ରହଣ କରାଗଲା","Under review":"ସମୀକ୍ଷା ଚାଲିଛି","Action taken":"କାର୍ଯ୍ୟାନୁଷ୍ଠାନ ନିଆଗଲା","Resolved":"ସମାଧାନ ହେଲା"};
 function paintPublicFormLang(){
  const both=FORM_BOTH;
@@ -554,7 +555,7 @@ function paintPublicFormLang(){
  });
  document.querySelectorAll('#sCategory option').forEach(function(o){
   if(!o.dataset.original)o.dataset.original=o.textContent.trim();
-  const en=o.dataset.original,od=OR[en]||MAL_FORM_OR[en]||en;
+  const en=o.dataset.original,od=MAL_FORM_CATEGORIES_OR[en]||OR[en]||MAL_FORM_OR[en]||en;
   o.textContent=both?en+' / '+od:LANG==='or'?od:en;
   if(o.hasAttribute('value')&&o.value)o.value=en;
  });
