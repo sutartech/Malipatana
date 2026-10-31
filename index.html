@@ -1329,7 +1329,7 @@ function paintRows(){
  summary.textContent=regRequests.filter(x=>x.Status==='Pending').length+' pending · '+items.length+' displayed';
  if(!items.length){host.innerHTML='<div class="reg-empty">No requests in this section.</div>';return;}
  host.innerHTML=items.map((r,i)=>`<div class="reg-item" data-reg-id="${safe(r['Request ID'])}"><div class="reg-info">
- <div class="reg-main">${safe(regFullName(r))} <span class="reg-state">${safe(r.Status)}</span></div>
+ <div class="reg-main">${safe(regFullName(r))} <span class="reg-state">${safe(r.Status)}</span> ${r["Duplicate Review"]?'<span class="reg-state" style="background:#fff0d7;color:#81521d;border:1px solid #e0bf75">⚠ Check duplicate</span>':''}</div>
  <div class="small muted">${safe(r['Request ID'])} · ${safe(r['Submitted At'])}</div>
  <div class="small">${r['Father Name']?'Father: '+safe(r['Father Name'])+' · ':''}${r['Mother Name']?'Mother: '+safe(r['Mother Name'])+' · ':''}${safe(r['Village Locality']||'Locality not entered')}</div>
  ${r.Photo?'<div class="small">📷 Photo attached privately</div>':''}</div><button class="btn btn-primary btn-sm" data-reg-review="${safe(r['Request ID'])}">Review</button></div>`).join('');
@@ -1370,6 +1370,7 @@ function reviewRequest(id){
  <b>Other household names:</b> ${safe(r['Other Household Members']||'—')}<br>
  <b>Submitted by:</b> ${safe(r['Submitted By']||'—')} · <b>Notes:</b> ${safe(r.Remarks||'—')}
  </div>
+ ${r["Duplicate Review"]?('<div class="reg-caution"><b>⚠ Automatic duplicate review:</b> '+safe(r["Duplicate Review"])+'. Check existing Members, Families and pending requests before making a new ID.</div>'):''}
  ${duplicates.length?`<div class="reg-caution">⚠ A person with the same name or matching DOB/mobile may already be registered. Do not create another Member ID without checking.</div>`:''}
  ${spouseMentions.length?`<div class="reg-tip">This person is named as an unlinked spouse of ${spouseMentions.map(m=>safe(m.Name)+' ('+safe(m['Member ID'])+')').join(', ')}. That spouse text is not a separate Member record. After approval, verify and link the new Member ID in the original record if applicable.</div>`:''}
  ${r.Photo?`<div class="reg-photo"><button class="btn btn-sm" id="regShowPhoto">Show private photo thumbnail</button><div id="regPhotoPreview"></div></div>`:''}
