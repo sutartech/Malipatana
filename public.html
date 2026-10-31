@@ -400,7 +400,7 @@ header.top .veil{background:linear-gradient(176deg,#0B2635B8 0%,#123A41A3 45%,#0
 @media(max-width:350px){.mal-public-action-dock{gap:6px}.mal-public-action-dock .gfab,.mal-public-suggestion-fab{font-size:11px;padding:9px 10px}}
 @media print{.mal-public-action-dock,.sugoverlay{display:none!important}}
 </style>
-</head>
+<style>.count-explainer{color:#59736d;font-size:12px;padding:0 21px 15px;margin:0;line-height:1.5}</style></head>
 <body>
 
 <header class="top">
@@ -681,9 +681,9 @@ function render(d){
   }
 
   if(c) cards.push('<div class="card"><h2>' + t('The village') + '</h2><div class="grid4">' +
-    tile(t('Families'), c.families) + tile(t('Members'), c.members) +
+    tile(t('Families'), c.families) + tile(t('Registered members'), c.members) +
     tile(t('Helped this year'), c.helpedThisYear, true) + tile(t('Support running'), c.supportRunning, true) +
-    '</div></div>');
+    '</div><p class="count-explainer">' + (c.familyHeadsRecorded != null ? t('Family heads recorded') + ': ' + Number(c.familyHeadsRecorded) + ' · ' : '') + t('Registered members counts individual living entries in the Members register. Family records are counted separately.') + '</p></div>');
 
   if((d.events || []).length){
     cards.push('<div class="card"><h2>' + t('Major expenses completed') + '</h2><table>' +
