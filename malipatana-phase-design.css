@@ -1,0 +1,38 @@
+/* Malipatana phased UI polish. Presentation-only; no API, storage or permissions. */
+:root{--mal-focus:#a8730d;--mal-quiet:#64756f}
+#app .main{min-width:0}
+#app .pagehead h2,#app .ux-home-identity strong{letter-spacing:-.02em}
+#app .panel,#app .ux-home-section,#app .ux-kpi{border-radius:15px}
+#app .panel-head h3,#app .pagehead h2{line-height:1.25}
+#app .btn,#app .iconbtn,#app .nav{transition:background-color .15s ease,border-color .15s ease}
+#app .btn:focus-visible,#app button:focus-visible,#app a:focus-visible,#app input:focus-visible,#app select:focus-visible,#app summary:focus-visible{outline:3px solid var(--mal-focus)!important;outline-offset:2px}
+#app .tablewrap,#app .tblwrap,#app .table-scroll{overscroll-behavior-inline:contain}
+#app .noticeboard,#app .mal-notice-ticker{scroll-margin-top:72px}
+#app .mal-notice-pause{min-width:44px;min-height:44px}
+#app .tabbar button,#app .mobile-quick-fab{touch-action:manipulation}
+#app .ux-quick-buttons{display:flex;gap:9px;flex-wrap:wrap}
+#app .ux-quick-buttons .btn{min-height:44px}
+#app .fieldnote,#app .muted{line-height:1.5}
+#malQuickPanel .quick-sheet{max-height:min(88dvh,650px);overflow-y:auto}
+#malQuickPanel .quick-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+#malQuickPanel .quick-grid button{min-height:68px}
+#malPeoplePanel .people-choices button,#malMoneyPanel .money-choices button{min-height:52px}
+@media(max-width:860px){
+ #app .main{padding-bottom:calc(100px + env(safe-area-inset-bottom))}
+ #app .btn,#app .iconbtn{min-height:44px}
+ #app .pagehead{gap:10px;flex-wrap:wrap}
+ #app .ux-home .panel{max-width:100%}
+ #app .noticeboard .ntc,#app .mal-notice-ticker{max-width:100%}
+}
+@media(max-width:420px){
+ #malQuickPanel .quick-grid{gap:8px}
+ #app .panel-head{flex-wrap:wrap}
+}
+@media(prefers-reduced-motion:reduce){
+ #app .btn,#app .iconbtn,#app .nav{transition:none}
+ #app .mal-notice-track{animation:none!important;transform:none!important}
+}
+@media print{
+ #app .tabbar,#app .mobile-quick-fab,#malQuickPanel,#malPeoplePanel,#malMoneyPanel{display:none!important}
+ #app .panel,#app .ux-kpi{box-shadow:none!important}
+}
