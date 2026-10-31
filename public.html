@@ -370,7 +370,20 @@ header.top .veil{background:linear-gradient(176deg,#0B2635B8 0%,#123A41A3 45%,#0
 .mal-public-suggestion-fab{background:#087965;color:#fff;border:0;border-radius:999px;min-height:53px;padding:13px 19px;font:inherit;font-weight:800;font-size:14.5px;cursor:pointer;box-shadow:0 14px 28px -11px #08796599;display:flex;align-items:center;gap:8px}
 .mal-public-suggestion-fab:hover{background:#086653}
 .mal-public-action-dock button:focus-visible,.smodal button:focus-visible{outline:3px solid #d2a43d;outline-offset:3px}
-.smodal{border-top:5px solid #087965;display:flex;flex-direction:column}
+.smodal{border-top:4px solid #087965}
+.smodal .gtabs{flex:none}
+.smodal .gtabs button.on{color:#086a56;border-bottom-color:#087965}
+.smodal .gform{padding-bottom:15px}
+.smodal .gform label{display:block}
+.smodal .s-submit{background:#087965!important}
+.smodal .s-help{font-size:12px;color:#60746a;margin:10px 0}
+.smodal .s-check{display:flex!important;gap:10px;align-items:flex-start;font-size:12px;font-weight:500}
+.smodal .s-check input{width:18px;height:18px;flex:none}
+.smodal .s-modal-footer{padding:7px 20px 15px;font-size:12px}
+.smodal .s-modal-footer a{color:#086a56}
+.smodal #sPublishedList article{padding:10px 0;border-bottom:1px solid #e4ece7}
+.smodal #sPublishedList p{margin:4px 0 10px}
+.smodal #sSubmitMsg,.smodal #sTrackMsg{white-space:pre-wrap;overflow-wrap:anywhere}
 .smodal .gmhead{flex:none;padding:15px 19px 12px;border-bottom:1px solid #d9e8df;align-items:center}
 .smodal .gmhead h3{color:#125a48}
 .smodal .smodal-subtitle{color:#58756a;font-size:12px;margin:0 0 9px;padding:0 19px;flex:none}
@@ -420,9 +433,36 @@ header.top .veil{background:linear-gradient(176deg,#0B2635B8 0%,#123A41A3 45%,#0
   <div class="goverlay sugoverlay noprint" id="malSuggestionOverlay" role="presentation">
   <div class="gmodal smodal" role="dialog" aria-modal="true" aria-labelledby="malSuggestionHeading">
     <div class="gmhead"><h3 id="malSuggestionHeading">💡 Village Suggestions · ଗ୍ରାମ ପରାମର୍ଶ</h3><button type="button" class="gmclose" id="malSuggestionClose" aria-label="Close suggestions">×</button></div>
-    <p class="smodal-subtitle">Give a suggestion, track its status, or view approved village ideas</p>
-    <iframe id="malSuggestionFrame" title="Village suggestion form and tracking" loading="lazy" data-src="suggestions.html?embed=1"></iframe>
-    <div class="smodal-fallback">Having trouble? <a href="suggestions.html" target="_blank" rel="noopener">Open the full Suggestions page</a>.</div>
+    <div class="gtabs" role="tablist" aria-label="Village suggestion options">
+      <button type="button" class="on" id="sTabNew">Give suggestion</button>
+      <button type="button" id="sTabTrack">Track suggestion</button>
+      <button type="button" id="sTabPublic">Ideas &amp; progress</button>
+    </div>
+    <form class="gform" id="sForm">
+      <label for="sCategory">What is your suggestion about?</label>
+      <select id="sCategory" required><option value="">Choose category</option><option>Village Development</option><option>Education</option><option>Health &amp; Sanitation</option><option>Roads &amp; Infrastructure</option><option>Welfare &amp; Emergency Support</option><option>Youth &amp; Culture</option><option>Environment</option><option>Other</option></select>
+      <label for="sSuggestion">Describe your suggestion</label><textarea id="sSuggestion" minlength="12" maxlength="2200" required placeholder="What would improve our village, and how?"></textarea>
+      <label for="sBenefit">Expected benefit (optional)</label><textarea id="sBenefit" maxlength="700" placeholder="Who will benefit from this idea?"></textarea>
+      <label for="sSahi">Locality / Sahi (optional)</label><input id="sSahi" maxlength="110" placeholder="Village locality">
+      <label for="sName">Your name (optional)</label><input id="sName" maxlength="120" autocomplete="name" placeholder="Name">
+      <label for="sMobile">Mobile (optional, kept private)</label><input id="sMobile" maxlength="10" pattern="[6-9][0-9]{9}" inputmode="numeric" placeholder="10-digit mobile">
+      <label class="s-check"><input type="checkbox" id="sPublicName"> Allow Admin to consider displaying my name (names are not published in this version).</label>
+      <div class="btnrow"><button class="gbtn s-submit" id="sSubmitBtn" type="submit">Submit suggestion</button></div>
+      <div class="gmsg" id="sSubmitMsg" role="status" aria-live="polite"></div>
+    </form>
+    <div class="gform" id="sTrack" style="display:none">
+      <label for="sCode">Private tracking code</label>
+      <input id="sCode" autocomplete="off" placeholder="Code received after submitting">
+      <p class="s-help">Save your private code carefully. It cannot be recovered from the public page.</p>
+      <div class="btnrow"><button class="gbtn s-submit" id="sCheckBtn" type="button">Check status</button></div>
+      <div class="gmsg" id="sTrackMsg" role="status" aria-live="polite"></div>
+    </div>
+    <div class="gform" id="sPublished" style="display:none">
+      <p class="s-help">Only Admin-approved ideas appear here. Private contact details are never shown.</p>
+      <div class="btnrow"><button type="button" class="gbtn ghost" id="sRefresh">Refresh approved ideas</button></div>
+      <div id="sPublishedList" role="status">Select to load approved ideas.</div>
+    </div>
+    <div class="s-modal-footer"><a href="suggestions.html" target="_blank" rel="noopener">Open full Suggestions page</a></div>
   </div>
 </div>
 <div class="goverlay noprint" id="gOverlay">
@@ -661,17 +701,79 @@ function render(d){
 /* ---------- grievances: raise / track / steps ---------- */
 const malSuggFab=document.getElementById('malSuggestionFab');
 const malSuggOverlay=document.getElementById('malSuggestionOverlay');
-const malSuggFrame=document.getElementById('malSuggestionFrame');
+
 function malCloseSuggChoices(){malSuggOverlay.classList.remove('open');}
 malSuggFab.onclick=function(){
   document.getElementById('gOverlay').classList.remove('open');
-  if(!malSuggFrame.src||malSuggFrame.src==='about:blank')malSuggFrame.src=malSuggFrame.dataset.src;
   malSuggOverlay.classList.add('open');
   document.getElementById('malSuggestionClose').focus();
 };
 document.getElementById('malSuggestionClose').onclick=function(){malCloseSuggChoices();malSuggFab.focus();};
 malSuggOverlay.addEventListener('click',function(e){if(e.target===malSuggOverlay){malCloseSuggChoices();malSuggFab.focus();}});
 document.addEventListener('keydown',function(e){if(e.key==='Escape'&&malSuggOverlay.classList.contains('open')){malCloseSuggChoices();malSuggFab.focus();}});
+// Native Suggestions: same modal and form layout as Grievances, no embedded page.
+const sGet=id=>document.getElementById(id);
+const sTabs={sTabNew:'sForm',sTabTrack:'sTrack',sTabPublic:'sPublished'};
+Object.keys(sTabs).forEach(id=>sGet(id).onclick=()=>{
+ Object.keys(sTabs).forEach(key=>{
+  sGet(key).classList.toggle('on',key===id);
+  sGet(sTabs[key]).style.display=key===id?'':'none';
+ });
+ if(id==='sTabPublic')sRefreshPublished();
+});
+function sReceipt(){const b=crypto.getRandomValues(new Uint8Array(32));return Array.from(b,x=>x.toString(16).padStart(2,'0')).join('');}
+function sApi(action,params={},timeout=15000){return new Promise((resolve,reject)=>{
+ const cb='msp'+Date.now()+'_'+Math.floor(Math.random()*1000000),script=document.createElement('script');
+ const timer=setTimeout(()=>{cleanup();reject(new Error('Backend timeout'))},timeout);
+ function cleanup(){clearTimeout(timer);script.remove();try{delete window[cb]}catch(e){}}
+ window[cb]=r=>{cleanup();resolve(r)};
+ script.onerror=()=>{cleanup();reject(new Error('Connection failed'))};
+ script.referrerPolicy='no-referrer';
+ script.src=API_URL+'?'+new URLSearchParams(Object.assign({action,callback:cb,_:Date.now()},params));
+ document.body.appendChild(script);
+});}
+let sAttempt=null;
+sGet('sForm').addEventListener('submit',async e=>{
+ e.preventDefault();
+ const btn=sGet('sSubmitBtn'),msg=sGet('sSubmitMsg');
+ if(!sAttempt)sAttempt={receipt:sReceipt(),data:{category:sGet('sCategory').value,
+ suggestion:sGet('sSuggestion').value.trim(),benefit:sGet('sBenefit').value.trim(),
+ sahi:sGet('sSahi').value.trim(),name:sGet('sName').value.trim(),
+ mobile:sGet('sMobile').value.trim(),publicName:sGet('sPublicName').checked?'Yes':'',
+ website:''}};
+ btn.disabled=true;msg.className='gmsg show';msg.textContent='Submitting and checking confirmation…';
+ try{
+  const a=sAttempt;
+  let res=await sApi('suggestionStatus',{receipt:a.receipt},10000).catch(()=>null);
+  if(!res?.found){
+   await fetch(API_URL,{method:'POST',mode:'no-cors',body:new URLSearchParams({...a.data,receipt:a.receipt,action:'publicSuggestion'}),credentials:'omit',referrerPolicy:'no-referrer'});
+   for(let i=0;i<13;i++){await new Promise(done=>setTimeout(done,1300));res=await sApi('suggestionStatus',{receipt:a.receipt},10000).catch(()=>null);if(res?.found)break;}
+  }
+  if(!res?.found)throw Error('Receipt not yet confirmed. Keep this form and retry using the same submission.');
+  msg.className='gmsg show good';
+  msg.textContent='Suggestion received: '+res.id+'\nPrivate tracking code (save this): '+a.receipt;
+  sGet('sCode').value=a.receipt;sAttempt=null;sGet('sForm').reset();
+ }catch(err){msg.className='gmsg show bad';msg.textContent='Not confirmed: '+err.message;}
+ finally{btn.disabled=false}
+});
+sGet('sCheckBtn').onclick=async()=>{
+ const code=sGet('sCode').value.trim().toLowerCase(),msg=sGet('sTrackMsg');
+ if(!/^[a-f0-9]{64}$/.test(code)){msg.className='gmsg show bad';msg.textContent='Enter your private tracking code.';return;}
+ msg.className='gmsg show';msg.textContent='Checking…';
+ try{const r=await sApi('suggestionStatus',{receipt:code});
+ msg.className='gmsg show '+(r?.found?'good':'bad');
+ msg.textContent=r?.found?'ID: '+r.id+'\nStatus: '+r.status+'\nCategory: '+r.category+(r.remark?'\nCommittee decision: '+r.remark:'')+(r.action?'\nAction taken: '+r.action:''):'No suggestion found for this code.';
+ }catch(err){msg.className='gmsg show bad';msg.textContent=err.message;}
+};
+async function sRefreshPublished(){
+ const host=sGet('sPublishedList');host.textContent='Loading approved ideas…';
+ try{const r=await sApi('suggestionPublic');if(!r?.ok)throw Error(r?.error||'Could not load');
+ const items=r.items||[];
+ host.innerHTML=items.length?items.map(item=>'<article><b>'+esc(item.title)+'</b> · '+esc(item.status)+'<p>'+esc(item.summary)+'</p>'+(item.action?'<p><b>Action taken:</b> '+esc(item.action)+'</p>':'')+'</article>').join(''):'No approved ideas have been published yet.';
+ }catch(err){host.textContent=err.message;}
+}
+sGet('sRefresh').onclick=sRefreshPublished;
+
 document.getElementById('gFab').onclick = function(){malCloseSuggChoices();document.getElementById('gOverlay').classList.add('open');};
 document.getElementById('gClose').onclick = function(){document.getElementById('gOverlay').classList.remove('open');};
 document.getElementById('gOverlay').addEventListener('click', function(ev){
