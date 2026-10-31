@@ -680,10 +680,17 @@ function render(d){
       '<div class="v' + (warmWhenSet && v > 0 ? ' warm' : '') + '">' + v + '</div></div>';
   }
 
-  if(c) cards.push('<div class="card"><h2>' + t('The village') + '</h2><div class="grid4">' +
-    tile(t('Families'), c.families) + tile(t('Registered members'), c.members) +
-    tile(t('Helped this year'), c.helpedThisYear, true) + tile(t('Support running'), c.supportRunning, true) +
-    '</div><p class="count-explainer">' + (c.familyHeadsRecorded != null ? t('Family heads recorded') + ': ' + Number(c.familyHeadsRecorded) + ' · ' : '') + t('Registered members counts individual living entries in the Members register. Family records are counted separately.') + '</p></div>');
+  if(c){
+    var countCards=[
+      ['families','Families',c.families,false],
+      ['members','Registered members',c.members,false],
+      ['helpedThisYear','Helped this year',c.helpedThisYear,true],
+      ['supportRunning','Support running',c.supportRunning,true]
+    ].filter(function(item){return show[item[0]]!==false;});
+    if(countCards.length)cards.push('<div class="card"><h2>' + t('The village') + '</h2><div class="grid4">' +
+      countCards.map(function(item){return tile(t(item[1]),item[2],item[3]);}).join('') +
+      '</div>'+(show.members!==false?'<p class="count-explainer">' + t('Registered members counts individual living entries in the Members register. Family records are counted separately.') + '</p>':'')+'</div>');
+  }
 
   if((d.events || []).length){
     cards.push('<div class="card"><h2>' + t('Major expenses completed') + '</h2><table>' +
