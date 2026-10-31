@@ -6757,7 +6757,7 @@ async function bePing(){
   const link = document.getElementById('backendHealthLink');
   if(!chip) return;
   if(notice) notice.hidden = true;
-  if(link) link.href = CONFIG.API_URL + '?action=health';
+  if(link) link.onclick = () => { link.disabled=true; bePing().finally(()=>{link.disabled=false;}); };
   try {
     const r = await api('health');
     if(r && r.ok){
@@ -6775,7 +6775,7 @@ async function bePing(){
       chip.textContent = 'BE error'; chip.className = 'vchip bad';
       if(notice){
         title.textContent = 'Unable to verify backend';
-        detail.textContent = 'The configured Apps Script deployment did not return a successful health response.';
+        detail.textContent = 'The backend did not confirm readiness. Tap Retry backend connection; if this persists, ask Admin to check the deployed service.';
         notice.hidden = false;
       }
     }
@@ -6783,7 +6783,7 @@ async function bePing(){
     chip.textContent = 'BE unreachable'; chip.className = 'vchip bad';
     if(notice){
       title.textContent = 'Unable to reach backend';
-      detail.textContent = 'Check the Apps Script deployment URL and web-app access settings.';
+      detail.textContent = 'Could not verify the backend from this browser. Tap Retry backend connection. If it still fails, open Malipatana in Chrome (not an in-app browser), check your internet connection, or ask Admin to verify web-app access.';
       notice.hidden = false;
     }
   }
