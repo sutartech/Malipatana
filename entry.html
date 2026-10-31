@@ -58,6 +58,16 @@ main{max-width:740px;padding:15px 12px 65px}
 .primary{background:#106653;border-radius:11px}
 .secondary{background:#e7f3ee;color:#135d48;border-radius:11px}
 @media(max-width:600px){.box{padding:17px}.head{padding:16px}#familyTabs .nav button{font-size:14px}}
+
+/* Simple, mobile-first registration selection */
+.mal-simple-choices{display:flex;gap:9px;margin:13px 0 9px}
+.mal-simple-choices button{flex:1;min-width:0;background:#e7f3ee;color:#135d48;border:1px solid #b6ddc8;font-weight:800}
+.mal-simple-choices button.mal-simple-selected{background:#106653;color:#fff;border-color:#106653}
+.mal-simple-hint{font-size:12px;color:#657b74;line-height:1.5;margin:0 0 15px}
+.mal-simple-choices[hidden],.mal-simple-choices button[hidden]{display:none!important}
+#malEntryHelp{padding:10px 16px}
+#malEntryHelp summary{font-size:13px}
+@media(max-width:520px){.mal-simple-choices button{padding:10px 7px;font-size:13px}}
 </style><link rel="stylesheet" href="malipatana-connectivity.css?v=3.5.45">
 </head><body><main>
 <header class="head"><img src="icon-180.png" alt="Malipatana emblem"><div><h1>ମାଳିପାଟଣା • Malipatana</h1><p>Simple village registration • No login needed</p></div></header>
@@ -124,9 +134,14 @@ body.mal-creating-family #malFirstNew>label.field,body.mal-creating-family #malF
 @media(max-width:520px){#malMemberFirst{padding:16px 14px}#malMemberFirst .mal-wizard-grid{gap:9px}#malMemberFirst .mal-wizard-grid input{font-size:16px;padding:9px}#malMemberFirst .mal-wizard-title{font-size:21px}}
 </style>
 <section id="malMemberFirst" class="box hidden" aria-label="Simple village member registration">
- <h2 class="mal-wizard-title">1. Your name and parents <span class="mal-reg-tag">Basic details</span></h2>
- <p class="sub">Enter your first name and surname separately. We will check existing records before creating a new one. No login required.</p>
- <div class="mal-wizard-grid">
+ <h2 class="mal-wizard-title">Register Family or Member <span class="mal-reg-tag">No login</span></h2>
+ <p class="sub">To add a member, type the name below. Existing records are checked automatically before saving.</p>
+ <div class="mal-simple-choices" id="malSimpleChoices" role="group" aria-label="Choose registration type">
+ <button type="button" id="malSimpleMember" class="mal-simple-selected">＋ Register Member</button>
+ <button type="button" id="malSimpleFamily">＋ Register Family</button>
+</div>
+<p class="mal-simple-hint" id="malSimpleHelp">Select an existing family for the member, or register a new family first.</p>
+<div class="mal-wizard-grid">
   <label class="field">First / given name <span class="required">*</span><input id="malFirstGiven" autocomplete="given-name" maxlength="100" placeholder="First name"></label>
   <label class="field">Surname <span class="required">*</span><input id="malFirstSurname" autocomplete="family-name" list="surnameList" maxlength="80" placeholder="Surname"></label>
  </div>
@@ -153,7 +168,7 @@ body.mal-creating-family #malFirstNew>label.field,body.mal-creating-family #malF
  <section id="malFirstNew" class="mal-wizard-step" hidden aria-label="New member details">
   <h3 id="malFirstMemberTitle">2. Your home and relatives</h3>
   <p id="malMemberPendingNote" hidden>Family submitted for Admin approval. The member details below are not yet saved. Once approved, select this family and submit the member registration.</p>
-  <p class="sub">Only a few details are needed now. You can provide the others later.</p>
+  <p class="sub">Choose the correct family, fill the basic details and save. Other information is optional.</p>
   <label class="field">Your family <span class="required">*</span><select id="malFirstFamily"><option value="">Choose your family</option></select></label>
   <p class="mal-wizard-help" id="malFirstFamilyHelp">Choose the correct family head. A shared surname does not always mean the same household.</p>
   <div class="mal-wizard-grid">
@@ -161,7 +176,7 @@ body.mal-creating-family #malFirstNew>label.field,body.mal-creating-family #malF
    <label class="field">Gender (optional)<select id="malFirstGender"><option value="">Not specified</option><option>Male</option><option>Female</option><option>Other</option></select></label>
   </div>
   <label class="field">Approximate age (optional)<input id="malFirstAge" type="number" min="0" max="120" inputmode="numeric" step="1" placeholder="Only if known"></label>
-  <details class="mal-inline-more" id="malFirstOptional" open><summary>Additional details (optional — leave blank if unknown)</summary>
+  <details class="mal-inline-more" id="malFirstOptional"><summary>Additional details (optional — leave blank if unknown)</summary>
    <div class="mal-wizard-grid">
     <label class="field">Father's name<input id="malFirstFather" maxlength="100" placeholder="If known"></label>
     <label class="field">Mother's name<input id="malFirstMother" maxlength="100" placeholder="If known"></label>
@@ -174,7 +189,7 @@ body.mal-creating-family #malFirstNew>label.field,body.mal-creating-family #malF
   <div class="mal-wizard-actions">
    <button type="button" id="malFirstSave" class="primary">Save member</button>
    <button type="button" id="malFirstNewFamily" class="secondary">My family is not listed</button>
-   <button type="button" id="malFirstMore" class="secondary">More member details</button>
+   <button type="button" id="malFirstMore" class="secondary">Add more details (optional)</button>
   </div>
  </section>
  <section id="malFirstCreateFamily" class="mal-wizard-step" hidden aria-label="Create new family">
@@ -199,7 +214,7 @@ body.mal-creating-family #malFirstNew>label.field,body.mal-creating-family #malF
  <div class="mal-wizard-actions" id="malFirstExpenseAction" hidden><button id="malFirstExpense" type="button" class="secondary">₹ Enter village expense</button></div>
 </section>
 <section id="malQuickActions" class="box hidden" aria-label="Quick village entry actions">
-<h2>Share Your Family Details</h2><p class="sub">Search first to prevent duplicate family registrations. Add a missing family or member, or suggest corrections. No login required while the link is active.</p>
+<h2>Other actions</h2><p class="sub">Add an expense or correct an existing record, where permitted by Admin.</p>
 <div class="mal-action-grid">
 <button type="button" data-mal-task="family">＋ New Family<small>Register a household not listed</small></button>
 <button type="button" data-mal-task="member">＋ Add Member<small>Add a missing family member</small></button>
@@ -1136,6 +1151,41 @@ $('malExistingProposal').addEventListener('submit',async e=>{
   $('expenseForm').scrollIntoView({behavior:'smooth',block:'start'});
  };
  boot();
+})();
+
+/* Lightweight registration choice. Both choices retain existing server permissions
+   and the original validated linkSubmit + duplicate check handlers. */
+(function(){
+ const familyBtn=document.getElementById('malSimpleFamily');
+ const memberBtn=document.getElementById('malSimpleMember');
+ const memberWizard=document.getElementById('malMemberFirst');
+ const familyForm=document.getElementById('familyForm');
+ const choices=document.getElementById('malSimpleChoices');
+ if(!familyBtn||!memberBtn||!memberWizard)return;
+ const syncPermissions=()=>{
+  const p=malPermissions_||{};
+  familyBtn.hidden=!p.family?.add;
+  memberBtn.hidden=!(p.member?.add||p.member?.view);
+  choices.hidden=familyBtn.hidden&&memberBtn.hidden;
+ };
+ familyBtn.addEventListener('click',()=>{
+  if(!malPermissions_?.family?.add)return;
+  document.body.classList.remove('mal-step-member','mal-step-correct','mal-step-expense');
+  document.body.classList.add('mal-step-family');
+  showTab('family');
+  familyBtn.classList.add('mal-simple-selected');memberBtn.classList.remove('mal-simple-selected');
+  document.getElementById('malSimpleHelp').textContent='Enter the family head’s details, then save the family. You can add members afterwards.';
+  familyForm.scrollIntoView({behavior:'smooth',block:'start'});
+ });
+ memberBtn.addEventListener('click',()=>{
+  if(!(malPermissions_?.member?.add||malPermissions_?.member?.view))return;
+  document.body.classList.remove('mal-step-family','mal-step-correct','mal-step-expense','mal-step-member');
+  memberBtn.classList.add('mal-simple-selected');familyBtn.classList.remove('mal-simple-selected');
+  document.getElementById('malSimpleHelp').textContent='Enter a member name; duplicates will be checked before registration.';
+  memberWizard.scrollIntoView({behavior:'smooth',block:'start'});
+ });
+ new MutationObserver(syncPermissions).observe(document.getElementById('content'),{attributes:true,attributeFilter:['class']});
+ syncPermissions();
 })();
 renderFamilyChoices();if(!key){if(malUrlParams.get('installed')==='1'){const saved=malSavedLinks();if(saved.length===1&&!malUrlParams.has('manage'))malSavedOpen(saved[0].key);else malHome();}else malHome();}else info();
 </script><script src="malipatana-connectivity.js?v=3.5.45"></script>
