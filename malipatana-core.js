@@ -3641,7 +3641,7 @@ function wireActions(root){
   root.querySelectorAll('[data-act],[data-pay],[data-event],[data-photo],[data-work]').forEach(b => { b.type = 'button'; });
   if(root.dataset.delegated) return root;
   root.dataset.delegated = '1';
-  root.addEventListener('click', ev => {
+  root.addEventListener('click', async ev => {
     const b = ev.target.closest('[data-act],[data-pay],[data-event],[data-photo],[data-work]');
     if(!b || !root.contains(b)) return;
     const k = PAGE, id = b.dataset.id;
