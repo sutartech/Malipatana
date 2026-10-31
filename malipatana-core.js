@@ -1033,6 +1033,16 @@ function renderPublicPage(){
     </div>
 
     <div class="panel" style="margin-top:16px">
+      <div class="panel-head"><h3>Public village count cards</h3><span class="small">Choose each number to display</span></div>
+      <div class="panel-body">
+        <p class="fieldnote">The master “Village counts” switch below controls this entire group. When enabled, you can also show or hide each number separately.</p>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px">
+          ${[['Public Count Families','Families'],['Public Count Members','Registered members'],['Public Count Helped','Helped this year'],['Public Count Support','Support running']].map(([key,title])=>`<label class="switchrow">${box(key,on(key),!live)}<span><b>${esc(title)}</b></span></label>`).join('')}
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-top:16px">
       <div class="panel-head"><h3>Who sees what</h3></div>
       <div class="tablewrap" style="max-height:none">
         <table class="grid vismatrix">
@@ -6798,7 +6808,7 @@ async function bePing(){
     if(!r||!r.ok)throw healthFailure||new Error('Backend health check failed');
     if(r && r.ok){
       const actual = String(r.version || 'BE ?').trim();
-      const matches = actual === CONFIG.EXPECTED_BACKEND || actual === 'BE V1.8.31' || actual === 'BE V1.8.32' || actual === 'BE V1.8.33' || actual === 'BE V1.8.34' || actual === 'BE V1.8.35';
+      const matches = actual === CONFIG.EXPECTED_BACKEND || actual === 'BE V1.8.31' || actual === 'BE V1.8.32' || actual === 'BE V1.8.33' || actual === 'BE V1.8.34' || actual === 'BE V1.8.35' || actual === 'BE V1.8.36';
       chip.textContent = actual;
       chip.className = 'vchip ' + (matches ? 'ok' : 'bad');
       if(!matches && notice){
