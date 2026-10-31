@@ -108,17 +108,26 @@ header.top .sub b{color:#fff;font-weight:600}
 .grid4 .v{font-family:var(--display);font-size:29px;font-weight:700;margin-top:4px;
   font-variant-numeric:tabular-nums;color:var(--indigo);line-height:1.15}
 .grid4 .v.warm{color:var(--brick)}
-/* Every summary tile reserves equal heading space; totals align on one row. */
-.grid4{align-items:stretch}
-.grid4>div{display:flex;flex-direction:column;justify-content:flex-start;min-width:0}
-.grid4>div>.k{min-height:3.2em;display:flex;align-items:flex-start;line-height:1.55;overflow-wrap:anywhere}
-.grid4>div>.v{margin-top:8px;margin-bottom:0}
-@media(max-width:620px){
-  .grid4{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .grid4>div{padding:16px 14px}
-  .grid4>div>.k{min-height:3.2em}
+/* Public summary: make the labels and values true grid rows, so one-line
+   and wrapped headings cannot shift the figures by even a line-height. */
+.grid4.village-stats-grid{align-items:stretch}
+.grid4.village-stats-grid>.village-count-tile{
+  display:grid;grid-template-rows:64px 42px;align-content:start;min-width:0;
+  padding:16px 18px;box-sizing:border-box;
 }
-@media(max-width:340px){.grid4{grid-template-columns:1fr}.grid4>div>.k{min-height:0}}
+.grid4.village-stats-grid>.village-count-tile>.k{
+  display:block;min-height:0;height:auto;line-height:1.5;align-self:start;
+  overflow-wrap:anywhere;margin:0;padding:0;
+}
+.grid4.village-stats-grid>.village-count-tile>.v{
+  display:block;height:auto;min-height:0;margin:0;padding:0;
+  line-height:1.2;align-self:start;font-variant-numeric:tabular-nums;
+}
+@media(max-width:620px){
+  .grid4.village-stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .grid4.village-stats-grid>.village-count-tile{grid-template-rows:74px 42px;padding:16px 14px}
+}
+@media(max-width:340px){.grid4.village-stats-grid{grid-template-columns:1fr}}
 
 .fundhow{display:flex;flex-direction:column;gap:12px;margin-top:10px}
 .fundhow>div{display:flex;flex-direction:column;gap:2px;padding-left:12px;
@@ -690,7 +699,7 @@ function render(d){
      reads as an error, so a zero stays in neutral ink. */
   function tile(label, n, warmWhenSet){
     var v = Number(n) || 0;
-    return '<div><div class="k">' + esc(label) + '</div>' +
+    return '<div class="village-count-tile"><div class="k">' + esc(label) + '</div>' +
       '<div class="v' + (warmWhenSet && v > 0 ? ' warm' : '') + '">' + v + '</div></div>';
   }
 
@@ -702,7 +711,7 @@ function render(d){
       ['helpedThisYear','Helped this year',c.helpedThisYear,true],
       ['supportRunning','Support running',c.supportRunning,true]
     ].filter(function(item){return item[2]!==undefined && item[2]!==null && show[item[0]]!==false;});
-    if(countCards.length)cards.push('<div class="card"><h2>' + t('The village') + '</h2><div class="grid4">' +
+    if(countCards.length)cards.push('<div class="card"><h2>' + t('The village') + '</h2><div class="grid4 village-stats-grid">' +
       countCards.map(function(item){return tile(t(item[1]),item[2],item[3]);}).join('') +
       '</div>'+(show.members!==false?'<p class="count-explainer">' + t('Registered members counts individual living entries in the Members register. Family records are counted separately.') + '</p>':'')+'</div>');
   }
