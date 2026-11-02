@@ -3487,7 +3487,7 @@ function renderModule(key){
     ${malPeople?`<button type="button" class="btn btn-sm mal-toggle-filters" aria-expanded="${v.toolsOpen?'true':'false'}">☷ Filters & tools</button>`:''}
     ${hasFamily ? `<select class="input" id="famFilter" style="max-width:230px">
       <option value="">All families</option>
-      ${(DB.families || []).map(f => `<option value="${esc(f['Family ID'])}" ${v.fam === String(f['Family ID']) ? 'selected' : ''}>${esc(f['Family ID'])} · ${esc(f['Family Head'])}</option>`).join('')}
+      ${(DB.families || []).map(f => `<option value="${esc(f['Family ID'])}" ${v.fam === String(f['Family ID']) ? 'selected' : ''}>${esc(f['Family ID'])}</option>`).join('')}
     </select>` : ''}
     ${['families','members'].includes(key)?`<select class="input" id="surnameFilter" aria-label="Filter by surname"><option value="">All surnames</option>${[...new Set(rowsOf(key).map(r=>String(r.Surname||'').trim()).filter(Boolean))].sort().map(n=>`<option value="${esc(n)}" ${v.surname===n?'selected':''}>${esc(n)}</option>`).join('')}</select><select class="input" id="sahiFilter" aria-label="Filter by village locality"><option value="">All village localities</option>${[...new Set([...malConfiguredSahis_(),...(DB.families||[]).map(r=>String(r['Village Locality']||'').trim()).filter(Boolean)])].sort().map(n=>`<option value="${esc(n)}" ${v.locality===n?'selected':''}>${esc(n)}</option>`).join('')}</select>${key==='members'?`<select class="input" id="residenceFilter" aria-label="Filter by residence"><option value="">All residences</option>${['Living in Malipatana','Outside temporarily','Shifted permanently','Not verified'].map(n=>`<option ${v.residence===n?'selected':''}>${esc(n)}</option>`).join('')}</select><select class="input" id="maritalFilter" aria-label="Filter by marital status"><option value="">All marital statuses</option>${['Unknown','Unmarried','Married','Widowed','Divorced','Separated'].map(n=>`<option ${v.marital===n?'selected':''}>${esc(n)}</option>`).join('')}</select><select class="input" id="lifeFilter" aria-label="Filter by life status"><option value="">All life statuses</option><option value="Alive" ${v.life==='Alive'?'selected':''}>Living only</option><option value="Deceased" ${v.life==='Deceased'?'selected':''}>In memory</option></select>`:''}`:''}
     ${key === 'members' && canEdit() ? '<button class="btn btn-sm" data-act="heads">Add missing family heads</button>' : ''}    ${isAdmin() ? `<button class="btn btn-sm" data-act="cols">Columns</button>` : ''}
@@ -4248,7 +4248,7 @@ function fieldHtml(key, f, value, editing, rec){
     }
     case 'family':
       input = `<select class="input" id="${id}" data-role="family"><option value=""></option>` +
-        (DB.families || []).map(x => `<option value="${esc(x['Family ID'])}" ${String(val) === String(x['Family ID']) ? 'selected' : ''}>${esc(x['Family ID'])} · ${esc(x['Family Head'])}</option>`).join('') + `</select>`; break;
+        (DB.families || []).map(x => `<option value="${esc(x['Family ID'])}" ${String(val) === String(x['Family ID']) ? 'selected' : ''}>${esc(x['Family ID'])}</option>`).join('') + `</select>`; break;
     case 'member':
       input = `<select class="input" id="${id}" data-role="member"></select>`; break;
     case 'guide': {
