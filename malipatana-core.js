@@ -3678,7 +3678,7 @@ function wireActions(root){
         }
         case 'compact': {
           const name=k==='families'?'mal_compact_families_v1':'mal_compact_members_v1';
-          try{localStorage.setItem(name,compactOn?'0':'1');}catch(e){}
+          try{localStorage.setItem(name,localStorage.getItem(name)==='0'?'1':'0');}catch(e){}
           return renderModule(k);
         }
         case 'rowsave': return saveRow(k, id, b);
