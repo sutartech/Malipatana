@@ -3476,7 +3476,7 @@ function renderModule(key){
   const malPeople = key==='families'||key==='members';
   const malWidthPrefs=malPeople?malReadColumnWidths(key):{};
   const malWidths=malPeople?cols.map(c=>malSafeColumnWidth(malWidthPrefs[c],malDefaultColumnWidth(c))):[];
-  const malTotalWidth=malPeople?94+malWidths.reduce((a,b)=>a+b,0)+355:0;
+  const malTotalWidth=malPeople?malWidths.reduce((a,b)=>a+b,0)+200:0;
 
 
   $('#main').innerHTML = `
@@ -3521,9 +3521,9 @@ function renderModule(key){
   <div class="tablewrap">
     ${rows.length ? `
     <table class="grid${malPeople?' mal-people-register':''}" ${malPeople?'data-register="'+key+'" style="table-layout:fixed;width:max(100%, '+malTotalWidth+'px);min-width:'+malTotalWidth+'px"':''}>
-      ${malPeople ? `<colgroup><col style="width:94px">${cols.map((c,i)=>`<col data-width-name="${esc(c)}" style="width:${malWidths[i]}px">`).join('')}<col style="width:355px"></colgroup>` : ''}
+      ${malPeople ? `<colgroup>${cols.map((c,i)=>`<col data-width-name="${esc(c)}" style="width:${malWidths[i]}px">`).join('')}<col style="width:200px"></colgroup>` : ''}
       <thead><tr>
-        ${malPeople?'<th class="mal-open-sticky" scope="col">Open</th>':''}
+        
         ${cols.map(c => {
           const f = fieldDef(key, c), cls = ['money', 'number'].includes(f.t) ? 'num' : '';
           const ar = v.sort === c ? (v.dir > 0 ? ' ▲' : ' ▼') : '';
@@ -3538,7 +3538,7 @@ function renderModule(key){
           const gone = key === 'members' && isDeceased(r);
           const displayName=malDisplayFullName_(key,r)||String(r[m.idField]||'');
           return '<tr' + (quick ? ' data-row="' + id + '"' : '') + '' + (gone ? ' class="gonerow"' : '') + '>' +
-            (malPeople ? `<td class="mal-open-sticky mal-view-cell" data-label=""><button class="mal-view-btn" type="button" data-act="profile" data-id="${id}" title="Open ${esc(displayName)}">◉ <span>View</span></button></td>` : '') + cols.map(c => {
+            cols.map(c => {
             const f = fieldDef(key, c);
             if(quick && malPeople && ['Given Name','Surname','Family Head','Name'].includes(c)){
               const preview=cellHtml(key,r,c);
@@ -3553,7 +3553,8 @@ function renderModule(key){
             }
             const cell = cellHtml(key, r, c);
             const nameField=(key==='families'&&c==='Family Head')||(key==='members'&&c==='Name');
-            const content=nameField&&malPeople?`<button class="mal-name-view" type="button" data-act="profile" data-id="${id}" title="Open details">${cell.html}</button>`:cell.html;
+            const idField=malPeople&&c===m.idField;
+            const content=(nameField&&malPeople||idField)?`<button class="mal-name-view mal-id-profile" type="button" data-act="profile" data-id="${id}" title="Click to view full details">${cell.html}</button>`:cell.html;
             return `<td class="${cell.cls}" data-label="${esc(c)}">${content}</td>`;
           }).join('') + `<td class="acts" data-label="">
             ${quick ? `<button class="btn btn-sm btn-primary" data-act="rowsave" data-id="${id}">Save</button> ` : ''}
