@@ -2483,3 +2483,17 @@ table.grid tbody tr:hover td:first-child{background:#EEF8F5}
    position:static;
  }
 }
+
+/* Family and Member registers: visible resize grips and clickable permanent IDs. */
+@media screen and (min-width:761px){
+ .mal-people-register th[data-sort]{position:relative!important;padding-right:22px!important}
+ .mal-people-register .mal-col-resizer{
+   display:block!important;position:absolute!important;right:0!important;top:4px!important;bottom:4px!important;
+   width:14px!important;height:auto!important;cursor:col-resize!important;touch-action:none!important;
+   z-index:8!important;border-right:2px solid #74afa3!important;background:transparent!important;
+ }
+ .mal-people-register .mal-col-resizer:hover,.mal-people-register .mal-col-resizer:focus-visible{background:#d6eee5!important;border-right:3px solid #087568!important}
+ .mal-people-register .mal-col-resizer::after{content:"";position:absolute;top:22%;bottom:22%;right:4px;width:2px;background:#70ab9b;border-radius:2px}
+}
+.mal-people-register .mal-id-profile{font-weight:800!important;color:#087366!important;text-decoration:underline;text-decoration-color:#b4d8cb;text-underline-offset:3px;white-space:nowrap}
+.mal-people-register .mal-id-profile:hover{color:#074f49!important;background:#e9f6f0!important}
