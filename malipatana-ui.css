@@ -2470,3 +2470,16 @@ table.grid tbody tr:hover td:first-child{background:#EEF8F5}
 .mal-link-archive>summary{cursor:pointer;padding:13px 12px;font-weight:750;color:#155e57}
 .mal-link-archive-body{padding:3px 12px 12px;border-top:1px solid #e3eee8}
 @media(max-width:750px){.mal-link-summary{align-items:flex-start;flex-direction:column}.mal-register-toolbar #q{flex-basis:calc(100% - 160px)!important}}
+
+/* People registers: one natural page scroll, no nested vertical scrollbar.
+   Horizontal scrolling remains for wide column sets. */
+@media screen and (min-width:761px){
+ .tablewrap:has(table.mal-people-register){
+   max-height:none!important;height:auto!important;
+   overflow-x:auto!important;overflow-y:hidden!important;
+   contain:none!important;overscroll-behavior-x:contain;
+ }
+ .tablewrap:has(table.mal-people-register) table.grid th{
+   position:static;
+ }
+}
