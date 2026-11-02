@@ -315,9 +315,10 @@ async function showEntryList(){
  try{
   const r=await api('linkList');if(!r.ok)throw Error(r.error||'Unable to load links');
   const links=(r.links||[]).slice().reverse();
-  host.innerHTML=links.map(l=>{
+  const totalReceived=links.reduce((sum,l)=>sum+Math.max(0,Number(l.used)||0),0);
+  const cards=links.map(l=>{
    const active=String(l.active||'').toLowerCase()==='yes',state=String(l.status|| (active?'Open':'Paused'));
-   const usage='Entries '+Number(l.used||0)+' / '+(Number(l.max||0)||'∞');
+   const usage='Forms received: '+Number(l.used||0)+' · Limit: '+(Number(l.max||0)||'Unlimited');
    const old=!l.recoverable;
    return '<div class="mal-saved-link" style="padding:13px 0;border-bottom:1px solid #e1e8e3">'+
      '<b>'+esc(l.type==='family'?'Families & Members':l.type==='multi'?'All categories':'Expenses — '+(l.event||''))+'</b>'+
@@ -343,7 +344,12 @@ async function showEntryList(){
        '<h4 style="margin:12px 0 4px">Approve new entries or save directly</h4>'+malAddApprovalMatrix_(l.id,l.addApproval)+
        '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-primary btn-sm" data-link-save="'+esc(l.id)+'">Save changes</button><button class="btn btn-sm" data-link-cancel="'+esc(l.id)+'">Cancel</button></div>'+
      '</div></div>';
-  }).join('')||'<p>No links yet.</p>';
+  });
+  const overview='<div class="mal-link-summary"><strong>'+totalReceived+' forms received</strong><span>Across '+links.length+' saved link(s); counts reflect backend usage</span></div>';
+  host.innerHTML=overview+(cards.length
+    ? '<div class="mal-link-current"><div class="mal-link-kicker">Latest link</div>'+cards[0]+'</div>'+
+      (cards.length>1?'<details class="mal-link-archive"><summary>Previous links ('+(cards.length-1)+') — click to expand</summary><div class="mal-link-archive-body">'+cards.slice(1).join('')+'</div></details>':'')
+    : '<p>No links yet.</p>');
   const retrieveUrl=async (id)=>{
     const result=await api('linkGet',{id});
     if(!result||!result.ok)throw Error(result&&result.error||'Could not retrieve link');
