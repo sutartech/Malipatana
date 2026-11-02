@@ -2550,3 +2550,32 @@ table.grid tbody tr:hover td:first-child{background:#EEF8F5}
  }
  table.grid.mal-people-register.mal-resizing th[data-sort]{border-right-color:#bdd7cf!important}
 }
+
+/* Fix header/body mismatch after removing former Open column:
+   undo obsolete nth-child(2) sticky offset (94px) and old first-cell pinning. */
+@media screen and (min-width:761px){
+ table.grid.mal-people-register th,
+ table.grid.mal-people-register td,
+ table.grid.mal-people-register th:first-child,
+ table.grid.mal-people-register td:first-child,
+ table.grid.mal-people-register th:nth-child(2),
+ table.grid.mal-people-register td:nth-child(2){
+   position:static!important;left:auto!important;
+   z-index:auto!important;box-shadow:none!important;
+ }
+ table.grid.mal-people-register th[data-sort]{
+   position:relative!important;background:#eaf3f0!important;
+   vertical-align:middle!important;
+ }
+ table.grid.mal-people-register td{
+   vertical-align:middle!important;
+ }
+ table.grid.mal-people-register th:nth-child(2),
+ table.grid.mal-people-register td:nth-child(2){
+   background:inherit!important;
+ }
+ table.grid.mal-people-register .mal-col-resizer{
+   position:absolute!important;right:-6px!important;
+   z-index:3!important;box-shadow:none!important;
+ }
+}
