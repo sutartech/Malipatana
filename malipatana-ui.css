@@ -2451,3 +2451,22 @@ table.grid tbody tr:hover td:first-child{background:#EEF8F5}
  .mal-register-toolbar.mal-filters-open #maritalFilter,
  .mal-register-toolbar.mal-filters-open #lifeFilter{max-width:none!important;flex:1 1 145px!important}
 }
+
+/* Malipatana 6: denser registers, without reducing control tap sizes. */
+.mal-people-register ~ .mal-register-tip,.mal-register-tip{padding:6px 10px!important;margin:3px 0 6px!important;font-size:11px!important}
+.mal-register-nav{margin:0 0 4px!important;gap:5px!important}
+.mal-register-toolbar{gap:7px!important;margin-bottom:7px!important}
+.mal-register-toolbar .input{height:39px!important;min-height:39px!important}
+.mal-register-toolbar .btn{min-height:37px!important}
+.mal-register-toolbar.mal-filters-open{padding-bottom:5px!important}
+.mal-register-toolbar #q{flex-basis:230px!important}
+.mal-register-toolbar #famFilter{max-width:205px!important}
+.mal-register-toolbar #surnameFilter{max-width:195px!important}
+.mal-link-summary{display:flex;justify-content:space-between;flex-wrap:wrap;gap:7px;align-items:center;background:#eaf6f1;border:1px solid #c5e2d5;border-radius:10px;padding:9px 12px;margin:8px 0}
+.mal-link-summary strong{color:#096d5f}.mal-link-summary span{font-size:12px;color:#47736c}
+.mal-link-current{border:1px solid #a7d5c5;border-radius:12px;padding:10px 12px;margin:8px 0;background:#f7fcfa}
+.mal-link-kicker{font-weight:800;color:#087366;font-size:12px;text-transform:uppercase;letter-spacing:.05em}
+.mal-link-archive{border:1px solid #dae7e0;border-radius:11px;margin:10px 0;background:#fff}
+.mal-link-archive>summary{cursor:pointer;padding:13px 12px;font-weight:750;color:#155e57}
+.mal-link-archive-body{padding:3px 12px 12px;border-top:1px solid #e3eee8}
+@media(max-width:750px){.mal-link-summary{align-items:flex-start;flex-direction:column}.mal-register-toolbar #q{flex-basis:calc(100% - 160px)!important}}
