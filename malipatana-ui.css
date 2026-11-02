@@ -2421,3 +2421,33 @@ table.grid tbody tr:hover td:first-child{background:#EEF8F5}
  #main select,#main textarea,.modal input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]),
  .modal select,.modal textarea{font-size:18px;min-height:52px}
 }
+
+/* Malipatana 6: compact People register filters; open only on demand. */
+.mal-register-toolbar{align-items:center;gap:10px!important}
+.mal-register-toolbar #q{flex:2 1 260px;min-width:170px}
+.mal-register-toolbar .mal-toggle-filters{display:inline-flex!important;align-items:center;justify-content:center;white-space:nowrap;flex:0 0 auto;background:#edf7f3;border:1px solid #b8d9cd;color:#076c5e;font-weight:750}
+.mal-register-toolbar:not(.mal-filters-open) #sahiFilter,
+.mal-register-toolbar:not(.mal-filters-open) #residenceFilter,
+.mal-register-toolbar:not(.mal-filters-open) #maritalFilter,
+.mal-register-toolbar:not(.mal-filters-open) #lifeFilter{display:none!important}
+.mal-register-toolbar #famFilter{flex:1 1 165px;min-width:135px;max-width:235px!important}
+.mal-register-toolbar #surnameFilter{flex:1 1 155px;min-width:140px;max-width:220px!important}
+.mal-register-toolbar.mal-filters-open #sahiFilter,
+.mal-register-toolbar.mal-filters-open #residenceFilter,
+.mal-register-toolbar.mal-filters-open #maritalFilter,
+.mal-register-toolbar.mal-filters-open #lifeFilter{display:inline-flex!important;flex:1 1 170px;min-width:145px;max-width:230px;height:42px}
+.mal-register-toolbar.mal-filters-open{padding-bottom:10px;border-bottom:1px solid #d9e8e2}
+.mal-register-toolbar .input{height:42px;min-height:42px}
+@media(max-width:750px){
+ .mal-register-toolbar{display:flex!important;flex-wrap:wrap!important;gap:8px!important}
+ .mal-register-toolbar #q{flex:1 1 calc(100% - 160px)!important;min-width:140px!important}
+ .mal-register-toolbar .mal-toggle-filters{flex:0 0 auto!important}
+ .mal-register-toolbar:not(.mal-filters-open) #famFilter,
+ .mal-register-toolbar:not(.mal-filters-open) #surnameFilter{display:none!important}
+ .mal-register-toolbar.mal-filters-open #famFilter,
+ .mal-register-toolbar.mal-filters-open #surnameFilter{display:inline-flex!important;flex:1 1 145px!important;min-width:135px!important;max-width:none!important}
+ .mal-register-toolbar.mal-filters-open #sahiFilter,
+ .mal-register-toolbar.mal-filters-open #residenceFilter,
+ .mal-register-toolbar.mal-filters-open #maritalFilter,
+ .mal-register-toolbar.mal-filters-open #lifeFilter{max-width:none!important;flex:1 1 145px!important}
+}
