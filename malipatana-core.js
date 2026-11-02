@@ -3281,8 +3281,7 @@ function cellHtml(key, row, col){
   if(f.t === 'number'){ return { cls: 'num', html: '<span class="tnum">' + esc(raw) + '</span>' }; }
   if(f.t === 'date'){ return { cls: 'tnum', html: esc(fmtDate(raw)) }; }
   if(f.t === 'family'){
-    const nm = familyName(raw);
-    return { cls: '', html: esc(raw) + (nm ? ' <span class="muted small">' + esc(nm) + '</span>' : '') };
+    return { cls: '', html: esc(raw || '') };
   }
   if(f.t === 'member'){
     const nm = memberName(raw);
@@ -3461,7 +3460,15 @@ function renderModule(key){
   const v = VIEW[key] || (VIEW[key] = { q: '', sort: '', dir: 1, fam: '' });
   const rows = filterRows(key);
   const all = rowsOf(key);
-  const cols = listCols(key);
+  const compactDefaults={
+    families:['Family ID','Family Head','Surname','Village Locality','Parent Family ID'],
+    members:['Photo','Member ID','Name','Surname','Family ID','Life Status','Residence Status']
+  };
+  const compactSetting=key==='families'?'mal_compact_families_v1':'mal_compact_members_v1';
+  let compactOn=!!compactDefaults[key];
+  if(compactOn){try{compactOn=localStorage.getItem(compactSetting)!=='0';}catch(e){}}
+  const allColumns=listCols(key);
+  const cols=compactOn?allColumns.filter(c=>compactDefaults[key].includes(c)):allColumns;
   ROWCACHE[key] = rows;
   const moneyCols = cols.filter(c => fieldDef(key, c).t === 'money');
   const totals = moneyCols.map(c => c + ' ' + money(rows.reduce((a, r) => a + num(r[c]), 0)));
@@ -3490,7 +3497,8 @@ function renderModule(key){
       ${(DB.families || []).map(f => `<option value="${esc(f['Family ID'])}" ${v.fam === String(f['Family ID']) ? 'selected' : ''}>${esc(f['Family ID'])}</option>`).join('')}
     </select>` : ''}
     ${['families','members'].includes(key)?`<select class="input" id="surnameFilter" aria-label="Filter by surname"><option value="">All surnames</option>${[...new Set(rowsOf(key).map(r=>String(r.Surname||'').trim()).filter(Boolean))].sort().map(n=>`<option value="${esc(n)}" ${v.surname===n?'selected':''}>${esc(n)}</option>`).join('')}</select><select class="input" id="sahiFilter" aria-label="Filter by village locality"><option value="">All village localities</option>${[...new Set([...malConfiguredSahis_(),...(DB.families||[]).map(r=>String(r['Village Locality']||'').trim()).filter(Boolean)])].sort().map(n=>`<option value="${esc(n)}" ${v.locality===n?'selected':''}>${esc(n)}</option>`).join('')}</select>${key==='members'?`<select class="input" id="residenceFilter" aria-label="Filter by residence"><option value="">All residences</option>${['Living in Malipatana','Outside temporarily','Shifted permanently','Not verified'].map(n=>`<option ${v.residence===n?'selected':''}>${esc(n)}</option>`).join('')}</select><select class="input" id="maritalFilter" aria-label="Filter by marital status"><option value="">All marital statuses</option>${['Unknown','Unmarried','Married','Widowed','Divorced','Separated'].map(n=>`<option ${v.marital===n?'selected':''}>${esc(n)}</option>`).join('')}</select><select class="input" id="lifeFilter" aria-label="Filter by life status"><option value="">All life statuses</option><option value="Alive" ${v.life==='Alive'?'selected':''}>Living only</option><option value="Deceased" ${v.life==='Deceased'?'selected':''}>In memory</option></select>`:''}`:''}
-    ${key === 'members' && canEdit() ? '<button class="btn btn-sm" data-act="heads">Add missing family heads</button>' : ''}    ${isAdmin() ? `<button class="btn btn-sm" data-act="cols">Columns</button>` : ''}
+    ${key === 'members' && canEdit() ? '<button class="btn btn-sm" data-act="heads">Add missing family heads</button>' : ''}    ${compactDefaults[key] ? '<button class="btn btn-sm" data-act="compact" title="Switch between essential columns and all columns">'+(compactOn?'Show all columns':'Essential columns')+'</button>' : ''}
+    ${isAdmin() ? `<button class="btn btn-sm" data-act="cols">Columns</button>` : ''}
     ${isAdmin() && ['families','members','settingsList'].includes(key) ? '<button class="btn btn-sm btn-primary" data-act="localities">📍 Manage Sahis</button>' : ''}
     ${key==='users' && isAdmin() ? '<button class="btn btn-sm btn-primary" data-act="loginopts">Login / OTP options</button>' : ''}
     ${isAdmin() && ['families','members'].includes(key) && all.some(r=>!malNameTidy_(r.Surname)) ? '<button class="btn btn-sm btn-primary" data-act="surnameReview">Review '+all.filter(r=>!malNameTidy_(r.Surname)).length+' missing surnames</button>' : ''}
@@ -3667,6 +3675,11 @@ function wireActions(root){
         case 'receipt': {
           const rec = (DB.contributions || []).find(r => String(r['Contribution ID']).trim() === String(id).trim());
           return rec ? offerReceipt(rec) : null;
+        }
+        case 'compact': {
+          const name=k==='families'?'mal_compact_families_v1':'mal_compact_members_v1';
+          try{localStorage.setItem(name,compactOn?'0':'1');}catch(e){}
+          return renderModule(k);
         }
         case 'rowsave': return saveRow(k, id, b);
         case 'quick': {
