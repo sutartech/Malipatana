@@ -2497,3 +2497,18 @@ table.grid tbody tr:hover td:first-child{background:#EEF8F5}
 }
 .mal-people-register .mal-id-profile{font-weight:800!important;color:#087366!important;text-decoration:underline;text-decoration-color:#b4d8cb;text-underline-offset:3px;white-space:nowrap}
 .mal-people-register .mal-id-profile:hover{color:#074f49!important;background:#e9f6f0!important}
+
+/* Compact register filter typography: prevent clipped labels at desktop zoom. */
+.mal-register-toolbar select.input{
+ font-size:14px!important;line-height:1.25!important;font-weight:650!important;
+ padding:7px 30px 7px 12px!important;min-width:0;box-sizing:border-box;
+ text-overflow:ellipsis;white-space:nowrap;overflow:hidden;
+}
+.mal-register-toolbar #famFilter{flex:1 1 190px!important;max-width:260px!important}
+.mal-register-toolbar #surnameFilter{flex:1 1 175px!important;max-width:225px!important}
+.mal-register-toolbar .mal-toggle-filters{font-size:13px!important;padding:8px 11px!important}
+.mal-register-toolbar #q{font-size:15px!important}
+@media(max-width:900px){
+ .mal-register-toolbar select.input{font-size:13px!important;padding-right:28px!important}
+ .mal-register-toolbar #famFilter,.mal-register-toolbar #surnameFilter{max-width:none!important}
+}
