@@ -2527,3 +2527,26 @@ table.grid tbody tr:hover td:first-child{background:#EEF8F5}
  .mal-people-register .mal-col-resizer:hover::after,
  .mal-people-register .mal-col-resizer:focus-visible::after{background:#087568!important;width:3px!important}
 }
+
+/* Unified column edge: the resize hit area is invisible until hovered.
+   The only permanent separator is the real header-cell border. */
+@media screen and (min-width:761px){
+ table.grid.mal-people-register{border-collapse:separate!important;border-spacing:0!important}
+ table.grid.mal-people-register th[data-sort]{
+   border-right:1px solid #bdd7cf!important;position:relative!important;
+ }
+ table.grid.mal-people-register .mal-col-resizer{
+   right:-6px!important;top:0!important;bottom:0!important;
+   width:12px!important;border:0!important;background:transparent!important;
+   box-shadow:none!important;outline-offset:-2px;opacity:1!important;
+ }
+ table.grid.mal-people-register .mal-col-resizer::before,
+ table.grid.mal-people-register .mal-col-resizer::after{
+   content:none!important;display:none!important;
+ }
+ table.grid.mal-people-register .mal-col-resizer:hover,
+ table.grid.mal-people-register .mal-col-resizer:focus-visible{
+   background:rgba(7,117,103,.15)!important;border:0!important;
+ }
+ table.grid.mal-people-register.mal-resizing th[data-sort]{border-right-color:#bdd7cf!important}
+}
