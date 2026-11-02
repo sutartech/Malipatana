@@ -2512,3 +2512,18 @@ table.grid tbody tr:hover td:first-child{background:#EEF8F5}
  .mal-register-toolbar select.input{font-size:13px!important;padding-right:28px!important}
  .mal-register-toolbar #famFilter,.mal-register-toolbar #surnameFilter{max-width:none!important}
 }
+
+/* Single, clean resize divider: suppress duplicate pseudo-line. */
+@media screen and (min-width:761px){
+ .mal-people-register th[data-sort]{border-right:0!important}
+ .mal-people-register .mal-col-resizer{
+   border-right:0!important;background:transparent!important;width:12px!important;
+ }
+ .mal-people-register .mal-col-resizer::after{
+   content:""!important;position:absolute!important;right:3px!important;top:18%!important;
+   bottom:18%!important;width:2px!important;height:auto!important;
+   background:#80afa4!important;border-radius:2px!important;
+ }
+ .mal-people-register .mal-col-resizer:hover::after,
+ .mal-people-register .mal-col-resizer:focus-visible::after{background:#087568!important;width:3px!important}
+}
