@@ -1,0 +1,16 @@
+/* Malipatana notice colours and highlights — frontend-only */
+.mal-rich-toolbar{grid-column:1/-1;margin:8px 0 14px;padding:12px;border:1px solid #c7ddd4;background:#f4faf7;border-radius:12px;color:#174e43}
+.mal-rich-heading{font-size:14px;font-weight:800;margin-bottom:8px}
+.mal-rich-heading small{display:block;font-size:12px;color:#55776e;font-weight:500;margin-top:3px}
+.mal-rich-controls{display:flex;flex-wrap:wrap;align-items:end;gap:8px}
+.mal-rich-controls label{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:700;flex:1 1 135px}
+.mal-rich-controls select{width:100%;padding:9px;border-radius:8px;border:1px solid #aecdc0;background:white;color:#173b33}
+.mal-rich-controls button{border:1px solid #b7d7c9;border-radius:8px;padding:10px 12px;font-size:12px;font-weight:800;background:white;cursor:pointer}
+.mal-rich-controls .mal-rich-apply{background:#087568;color:#fff;border-color:#087568}
+.mal-rich-note{font-size:11px;color:#547267;margin:8px 0}
+.mal-rich-preview-title{font-size:12px;font-weight:800;margin:9px 0 5px}
+.mal-rich-preview{min-height:55px;background:white;border:1px solid #d4e7dd;border-radius:8px;padding:10px;line-height:1.5;font-size:14px;overflow-wrap:anywhere;white-space:pre-wrap}
+.mal-rich-muted{color:#87968f}
+.mal-rich-span{border-radius:3px;box-decoration-break:clone;-webkit-box-decoration-break:clone;padding:0 2px}
+.ntc .nbody p,.noticeboard .ntc p{white-space:normal;line-height:1.65}
+@media(max-width:600px){.mal-rich-toolbar{padding:9px}.mal-rich-controls{gap:6px}.mal-rich-controls button{flex:1 1 140px}}
