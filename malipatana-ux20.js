@@ -106,6 +106,7 @@ function build(){
 function enhance(){
  if(!active())return;
  build();
+ document.querySelectorAll('#sidebar [data-page]').forEach(b=>{if(!b.title)b.title=text(b.textContent);});
  apply();
  // Helpful descriptions for table headings, with no DOM structural changes.
  document.querySelectorAll('#main th[data-sort]').forEach(th=>{
