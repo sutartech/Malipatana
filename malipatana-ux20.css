@@ -109,3 +109,15 @@ body:has(#app.hide) .mal-ux-launcher,body:has(#app.hide) .mal-ux-top,body:has(#a
  #app .main{padding:0!important}
  #app .panel{box-shadow:none!important}
 }
+/* Optional compact desktop sidebar; navigation remains available by icon and tooltip. */
+@media(min-width:761px){
+ #app.mal-ux-sidebar-compact .sidebar{width:68px!important;padding-left:6px!important;padding-right:6px!important;overflow-x:hidden!important;transition:width .18s ease}
+ #app.mal-ux-sidebar-compact .sidebar .navgroup{font-size:0!important;padding:9px 0!important;height:8px!important;overflow:hidden}
+ #app.mal-ux-sidebar-compact .sidebar .nav{justify-content:center!important;gap:0!important;padding:11px 5px!important;font-size:0!important;min-height:42px}
+ #app.mal-ux-sidebar-compact .sidebar .nav .ic{font-size:17px!important;width:100%!important}
+ #app.mal-ux-sidebar-compact .sidebar .nav .count{display:none!important}
+ #app.mal-ux-sidebar-compact .sidebar .nav:hover:after{content:attr(data-page);position:absolute;left:72px;z-index:90;background:#123b43;color:#fff;padding:6px 9px;border-radius:7px;font-size:11px;white-space:nowrap}
+ #app.mal-ux-sidebar-compact .sidebar .nav{position:relative}
+}
+@media(max-width:760px){#app.mal-ux-sidebar-compact .sidebar{width: min(84vw,300px)!important}}
+#app .mal-ux-settings button{min-width:0}
