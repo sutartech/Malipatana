@@ -2601,3 +2601,16 @@ table.grid tbody tr:hover td:first-child{background:#EEF8F5}
  }
  #app table.grid.mal-people-register th:last-child{min-width:140px}
 }
+
+/* Home overview expansion — six balanced, colour-coded live summary cards. */
+.ux-kpi-grievances{background:linear-gradient(145deg,#fff 12%,#fff0ed 100%);border-color:#f2d8d2}
+.ux-kpi-emergency{background:linear-gradient(145deg,#fff 12%,#fff4df 100%);border-color:#f0dfbd}
+.ux-kpi-money{background:linear-gradient(145deg,#fff 12%,#eaf7f5 100%);border-color:#cfe7e2}
+.ux-kpi-grievances .ux-kpi-icon{background:#ffe2dc;color:#a84432}
+.ux-kpi-emergency .ux-kpi-icon{background:#ffedc9;color:#94600b}
+.ux-kpi-money .ux-kpi-icon{background:#d8f0e9;color:#087568}
+.ux-kpi-grievances .ux-kpi-foot{color:#984536}
+.ux-kpi-emergency .ux-kpi-foot{color:#8a5b12}
+.ux-kpi-money .ux-kpi-foot{color:#087568}
+@media(max-width:760px){.ux-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.ux-kpi{padding:11px 12px;min-height:102px;border-radius:14px}.ux-kpi strong{font-size:24px}}
+@media(max-width:390px){.ux-kpi-grid{grid-template-columns:1fr}}
