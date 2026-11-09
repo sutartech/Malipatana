@@ -3476,7 +3476,7 @@ function renderModule(key){
   const malPeople = key==='families'||key==='members';
   const malWidthPrefs=malPeople?malReadColumnWidths(key):{};
   const malWidths=malPeople?cols.map(c=>malSafeColumnWidth(malWidthPrefs[c],malDefaultColumnWidth(c))):[];
-  const malTotalWidth=malPeople?malWidths.reduce((a,b)=>a+b,0)+200:0;
+  const malTotalWidth=malPeople?malWidths.reduce((a,b)=>a+b,0)+160:0;
 
 
   $('#main').innerHTML = `
@@ -3510,7 +3510,7 @@ function renderModule(key){
   </div>
 
   ${['families','members'].includes(key)?`<div class="fieldnote" style="margin:3px 0 12px">Saved grouping: ${new Set(all.map(r=>String(r.Surname||'').trim()).filter(Boolean)).size} surname(s) · ${all.filter(r=>!String(r.Surname||'').trim()).length} older record(s) need review. Yellow surname labels are suggestions only, until saved. ${key==='families'?new Set(all.map(r=>String(r['Village Locality']||'').trim()).filter(Boolean)).size+' village localities.':'Use Sahi and current residence filters above.'}</div>`:''}
-  ${malPeople ? `<div class="mal-register-tip">💡 To open details, select <b>View</b> or click the name. Clicks on other cells will not open the record. Scroll sideways to reach <b>View, Edit or Delete</b> on the right. On PC, drag the column-header edge to resize.</div><div class="mal-register-nav" role="group" aria-label="Navigate wide Family and Member registers"><span class="muted small">Wide register — move horizontally:</span><button type="button" class="btn btn-sm" data-mal-scroll="start" aria-label="Scroll to names and first columns">← Names</button><button type="button" class="btn btn-sm" data-mal-scroll="end" aria-label="Scroll to View, Edit and Delete actions">Actions →</button></div>` : ''}
+  ${malPeople ? `<div class="mal-register-tip">💡 Click a Family ID, Member ID or name to view details. Drag a column edge to resize; use Actions for editing.</div><div class="mal-register-nav" role="group" aria-label="Navigate wide Family and Member registers"><span class="muted small">Wide register — move horizontally:</span><button type="button" class="btn btn-sm" data-mal-scroll="start" aria-label="Scroll to names and first columns">← Names</button><button type="button" class="btn btn-sm" data-mal-scroll="end" aria-label="Scroll to View, Edit and Delete actions">Actions →</button></div>` : ''}
   ${OPTIONAL_SHEETS.includes(key) && !SERVER_SHEETS.includes(key) ? `<div class="notice">
     <b>These records stay on this device</b>
     The sheet is not sending ${esc(MODULES[key].sheet)} yet. Ask the admin to add
@@ -3521,7 +3521,7 @@ function renderModule(key){
   <div class="tablewrap">
     ${rows.length ? `
     <table class="grid${malPeople?' mal-people-register':''}" ${malPeople?'data-register="'+key+'" style="table-layout:fixed;width:max(100%, '+malTotalWidth+'px);min-width:'+malTotalWidth+'px"':''}>
-      ${malPeople ? `<colgroup>${cols.map((c,i)=>`<col data-width-name="${esc(c)}" style="width:${malWidths[i]}px">`).join('')}<col style="width:200px"></colgroup>` : ''}
+      ${malPeople ? `<colgroup>${cols.map((c,i)=>`<col data-width-name="${esc(c)}" style="width:${malWidths[i]}px">`).join('')}<col style="width:160px"></colgroup>` : ''}
       <thead><tr>
         
         ${cols.map(c => {
@@ -3560,7 +3560,7 @@ function renderModule(key){
             ${quick ? `<button class="btn btn-sm btn-primary" data-act="rowsave" data-id="${id}">Save</button> ` : ''}
             ${key === 'recurring' && canEdit() ? `<button class="btn btn-sm" data-pay="${id}">Mark paid</button> ` : ''}
             ${key==='events' ? `<button class="btn btn-sm" data-act="profile" data-id="${id}">View</button> ` : ''}
-            ${malPeople ? `<button class="btn btn-sm mal-end-view" type="button" data-act="profile" data-id="${id}">View</button> ` : ''}
+            
             ${key === 'families' && isHousehold(r) ? `<button class="btn btn-sm" data-act="household" data-id="${id}">Household</button> ` : ''}
             ${key === 'users' && isAdmin() ? `<button class="btn btn-sm" type="button" data-toggle-user="${id}" data-enabled="${String(r.Active||'YES').toUpperCase()==='YES'?'NO':'YES'}">${String(r.Active||'YES').toUpperCase()==='YES'?'Disable':'Enable'}</button> <button class="btn btn-sm" data-act="access" data-id="${id}">Access</button> <button class="btn btn-sm" type="button" data-verify-reset="${id}">Reset email verification</button> ` : ''}
             ${key === 'contributions' ? `<button class="btn btn-sm" data-act="receipt" data-id="${id}">Receipt</button> ` : ''}
