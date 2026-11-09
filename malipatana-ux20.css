@@ -1,0 +1,111 @@
+/* Malipatana UX20 — visually cohesive enhancements, isolated from backend and register logic.
+ 01. design tokens 02. shell spacing 03. topbar 04. branding 05. sidebar
+ 06. nav hover 07. active nav 08. page heading 09. panel rhythm 10. cards
+ 11. button polish 12. accessible focus 13. inputs 14. filter toolbar
+ 15. table typography 16. table row hover 17. status badges 18. scroll tools
+ 19. compact/large/contrast preferences 20. responsive + print/reduced motion. */
+#app{--malux-accent:#087568;--malux-ink:#173c36;--malux-line:#d8e9e2;--malux-pale:#f2faf6;--malux-shadow:0 2px 10px rgba(16,55,45,.045)}
+#app .main{padding-top:clamp(14px,2vw,24px)!important;padding-bottom:100px!important}
+#app .topbar{box-shadow:0 3px 14px rgba(13,49,48,.08);border-bottom:1px solid rgba(255,255,255,.11)}
+#app .topbar .brand{letter-spacing:.01em;line-height:1.2}
+#app #sidebar{scrollbar-width:thin;scrollbar-color:#6f9c9b transparent}
+#app #sidebar .nav{border-radius:9px;transition:background-color .15s ease,color .15s ease,transform .15s ease}
+#app #sidebar .nav:hover{transform:translateX(2px);background:rgba(255,255,255,.10)}
+#app #sidebar .nav.active,#app #sidebar .nav[aria-current="page"]{box-shadow:inset 3px 0 0 #8be0c0;font-weight:800}
+#app .pagehead{gap:10px!important;margin-bottom:10px!important}
+#app .pagehead h2{letter-spacing:-.02em;line-height:1.18}
+#app .pagehead .sub{line-height:1.45;max-width:72ch}
+#app .panel{border-color:var(--malux-line);box-shadow:var(--malux-shadow);border-radius:14px}
+#app .panel-body{min-width:0}
+#app .card,#app .statcard,#app .metric-card{transition:box-shadow .16s ease}
+#app .card:hover,#app .statcard:hover{box-shadow:0 5px 18px rgba(16,55,45,.075)}
+#app button.btn,#app .btn{transition:background-color .14s ease,border-color .14s ease,box-shadow .14s ease}
+#app button.btn:disabled,#app .btn:disabled{opacity:.6;cursor:not-allowed}
+#app :is(button,a,input,select,textarea,summary):focus-visible,
+.mal-ux-panel :is(button,input):focus-visible,.mal-ux-launcher:focus-visible,.mal-ux-top:focus-visible{
+ outline:3px solid #0e9b86!important;outline-offset:2px!important}
+#app .input{border-radius:9px}
+#app input::placeholder,#app textarea::placeholder{opacity:.72}
+#app .toolbar{row-gap:8px}
+#app .toolbar select{max-width:100%}
+#app table.grid{font-variant-numeric:tabular-nums}
+#app table.grid th{letter-spacing:.015em}
+#app table.grid td{overflow-wrap:anywhere}
+#app table.grid tbody tr:hover td{background-color:rgba(3,109,92,.035)}
+#app table.grid .pill,#app .pill{font-weight:750}
+#app .tablewrap{scrollbar-width:thin;scrollbar-color:#9bbeb3 #f1f7f4}
+#app .mal-notice-ticker{border-radius:10px}
+#app .fieldnote{line-height:1.4}
+#app .mal-people-register .mal-id-profile{transition:background-color .12s ease}
+#app .mal-register-toolbar .mal-toggle-filters{border-radius:9px}
+#app .mal-link-summary{box-shadow:var(--malux-shadow)}
+#app .mal-link-archive>summary:focus-visible{outline-offset:-2px}
+#app .empty{border-radius:12px}
+#app .noticeboard .ntc{border-radius:12px}
+#app .pagehead .btn-primary{font-weight:800}
+#app .mal-people-register th .mal-th-text{line-height:1.2}
+#app .modal .body{scrollbar-width:thin}
+#app .mal-people-register tbody td .mal-name-view{line-height:1.3}
+#app .reg-main,#app .shared-grid{min-width:0}
+/* Self-service display modes */
+#app.mal-ux-compact .main{padding-top:10px!important}
+#app.mal-ux-compact .pagehead{margin-bottom:5px!important}
+#app.mal-ux-compact .pagehead .sub{font-size:12px}
+#app.mal-ux-compact .panel-body{padding-top:11px!important;padding-bottom:11px!important}
+#app.mal-ux-compact .toolbar{gap:5px!important}
+#app.mal-ux-compact table.grid td{padding-top:6px!important;padding-bottom:6px!important}
+#app.mal-ux-compact table.grid th{padding-top:7px!important;padding-bottom:7px!important}
+#app.mal-ux-compact .mal-register-tip{padding:4px 8px!important;margin:2px 0 4px!important}
+#app.mal-ux-large .main{font-size:16px}
+#app.mal-ux-large .main :is(.sub,.small,.fieldnote){font-size:14px!important}
+#app.mal-ux-large table.grid{font-size:15px!important}
+#app.mal-ux-large table.grid th{font-size:13px!important}
+#app.mal-ux-contrast{--malux-line:#63877b;--malux-shadow:0 0 0 1px #698f82}
+#app.mal-ux-contrast .panel{border:1px solid #63877b!important}
+#app.mal-ux-contrast .input{border-color:#527b70!important}
+#app.mal-ux-contrast .muted{color:#425950!important}
+#app.mal-ux-hide-hints .pagehead .sub,
+#app.mal-ux-hide-hints .mal-register-tip,
+#app.mal-ux-hide-hints .fieldnote{display:none!important}
+/* Quick toolbar, no login-screen clutter */
+.mal-ux-launcher{position:fixed;bottom:20px;right:20px;z-index:70;background:#087568;color:white;border:1px solid #0d6b5e;border-radius:30px;min-height:44px;padding:0 16px;cursor:pointer;box-shadow:0 6px 20px rgba(8,92,80,.22);font-size:13px;font-weight:800}
+.mal-ux-launcher:hover{background:#086354}
+body:has(#app.hide) .mal-ux-launcher,body:has(#app.hide) .mal-ux-top,body:has(#app.hide) .mal-ux-panel{display:none!important}
+.mal-ux-panel[hidden]{display:none!important}
+.mal-ux-panel{position:fixed;z-index:85;right:20px;bottom:74px;width:min(410px,calc(100vw - 26px));max-height:min(75vh,680px);overflow-y:auto;border-radius:16px;background:#fff;color:#183c34;border:1px solid #cbded5;box-shadow:0 14px 48px rgba(12,43,38,.24);padding:16px;scrollbar-width:thin}
+.mal-ux-panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.mal-ux-panel-head strong{font-size:16px}
+.mal-ux-panel-head button{font-size:24px;line-height:1;background:#f1f7f3;border:0;border-radius:8px;width:35px;height:35px;cursor:pointer}
+.mal-ux-search-label{font-size:12px;font-weight:800;display:block;margin-bottom:5px}
+#malUx20Search{width:100%;padding:11px 12px;border-radius:9px;border:1px solid #aacbc0;font-size:14px;background:#fff;color:#173a32}
+.mal-ux-jump-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;max-height:200px;overflow:auto;margin:10px 0;border-bottom:1px solid #e0ece6;padding-bottom:10px}
+.mal-ux-jump-item{font-size:12px;text-align:left;background:#f2f9f5;color:#205247;border:1px solid #d4e8df;padding:9px;border-radius:8px;cursor:pointer}
+.mal-ux-jump-item:hover{background:#dcf1e7}
+.mal-ux-noresults{font-size:13px;color:#677b71;padding:8px}
+.mal-ux-settings{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.mal-ux-settings button,.mal-ux-panel-foot button{border-radius:8px;border:1px solid #c4ddd0;background:#fff;color:#144b3e;font-size:12px;padding:9px 8px;cursor:pointer;font-weight:700}
+.mal-ux-settings button[aria-pressed="true"]{background:#e1f6eb;border-color:#60ad91}
+.mal-ux-panel-foot{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;align-items:center}
+.mal-ux-panel-foot span{font-size:10px;color:#6b8578;flex-basis:100%}
+.mal-ux-top{position:fixed;bottom:77px;right:26px;z-index:69;display:none;align-items:center;justify-content:center;background:#f0faf6;color:#086d5e;border:1px solid #afcfc1;border-radius:50%;width:38px;height:38px;font-size:21px;box-shadow:0 3px 12px rgba(13,58,50,.12);cursor:pointer}
+.mal-ux-top.is-visible{display:flex}
+@media(max-width:760px){
+ #app .main{padding-bottom:115px!important}
+ #app .pagehead{flex-wrap:wrap}
+ #app .pagehead h2{font-size:clamp(20px,5vw,25px)}
+ #app .topbar .brand{font-size:clamp(14px,3.7vw,18px)}
+ #app .toolbar .btn{max-width:100%}
+ #app table.grid td{line-height:1.45}
+ .mal-ux-launcher{right:12px;bottom:calc(66px + env(safe-area-inset-bottom));padding:0 12px}
+ .mal-ux-top{right:16px;bottom:calc(117px + env(safe-area-inset-bottom))}
+ .mal-ux-panel{right:10px;bottom:calc(118px + env(safe-area-inset-bottom));width:calc(100vw - 20px);max-height:65vh;padding:12px}
+ .mal-ux-jump-list{max-height:170px}
+}
+@media(prefers-reduced-motion:reduce){
+ #app #sidebar .nav,#app .card,#app button.btn,.mal-ux-launcher{transition:none!important;animation:none!important}
+}
+@media print{
+ .mal-ux-launcher,.mal-ux-panel,.mal-ux-top{display:none!important}
+ #app .main{padding:0!important}
+ #app .panel{box-shadow:none!important}
+}
