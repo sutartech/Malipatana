@@ -16,7 +16,8 @@ const cfg={
  density:safeGet(cssKey+'density','comfortable'),
  font:safeGet(cssKey+'font','standard'),
  contrast:safeGet(cssKey+'contrast','normal'),
- hints:safeGet(cssKey+'hints','show')
+ hints:safeGet(cssKey+'hints','show'),
+ sidebar:safeGet(cssKey+'sidebar','wide')
 };
 let panel,search,results,topBtn,navCache=[],scheduled=false;
 function text(v){return String(v==null?'':v).replace(/\s+/g,' ').trim()}
@@ -26,11 +27,12 @@ function apply(){
  a.classList.toggle('mal-ux-large',cfg.font==='large');
  a.classList.toggle('mal-ux-contrast',cfg.contrast==='high');
  a.classList.toggle('mal-ux-hide-hints',cfg.hints==='hide');
+ a.classList.toggle('mal-ux-sidebar-compact',cfg.sidebar==='compact');
  if(panel){
   panel.querySelectorAll('[data-ux-setting]').forEach(btn=>{
     const k=btn.dataset.uxSetting;
-    btn.textContent=btn.dataset.label+': '+(k==='density'?(cfg[k]==='compact'?'Compact':'Comfortable'):k==='font'?(cfg[k]==='large'?'Large':'Standard'):k==='contrast'?(cfg[k]==='high'?'High':'Normal'):cfg[k]==='hide'?'Hidden':'Visible');
-    btn.setAttribute('aria-pressed',String((k==='density'&&cfg[k]==='compact')||(k==='font'&&cfg[k]==='large')||(k==='contrast'&&cfg[k]==='high')||(k==='hints'&&cfg[k]==='hide')));
+    btn.textContent=btn.dataset.label+': '+(k==='density'?(cfg[k]==='compact'?'Compact':'Comfortable'):k==='font'?(cfg[k]==='large'?'Large':'Standard'):k==='contrast'?(cfg[k]==='high'?'High':'Normal'):k==='sidebar'?(cfg[k]==='compact'?'Compact':'Wide'):cfg[k]==='hide'?'Hidden':'Visible');
+    btn.setAttribute('aria-pressed',String((k==='density'&&cfg[k]==='compact')||(k==='font'&&cfg[k]==='large')||(k==='contrast'&&cfg[k]==='high')||(k==='hints'&&cfg[k]==='hide')||(k==='sidebar'&&cfg[k]==='compact')));
   });
  }
 }
@@ -75,7 +77,7 @@ function build(){
  panel.innerHTML='<div class="mal-ux-panel-head"><strong>Village dashboard tools</strong><button type="button" data-ux-close aria-label="Close tools">×</button></div>'+
  '<label class="mal-ux-search-label" for="malUx20Search">Jump to a section</label><input id="malUx20Search" type="search" autocomplete="off" placeholder="Search dashboard sections…">'+
  '<div class="mal-ux-jump-list" id="malUx20Results"></div>'+
- '<div class="mal-ux-settings"><button type="button" data-ux-setting="density" data-label="Spacing"></button><button type="button" data-ux-setting="font" data-label="Text"></button><button type="button" data-ux-setting="contrast" data-label="Contrast"></button><button type="button" data-ux-setting="hints" data-label="Help text"></button></div>'+
+ '<div class="mal-ux-settings"><button type="button" data-ux-setting="density" data-label="Spacing"></button><button type="button" data-ux-setting="font" data-label="Text"></button><button type="button" data-ux-setting="contrast" data-label="Contrast"></button><button type="button" data-ux-setting="hints" data-label="Help text"></button><button type="button" data-ux-setting="sidebar" data-label="Sidebar"></button></div>'+
  '<div class="mal-ux-panel-foot"><button type="button" data-ux-print>Print current view</button><button type="button" data-ux-top>Back to top</button><span>Esc closes · Ctrl/⌘ K opens</span></div>';
  document.body.appendChild(panel);
  search=panel.querySelector('#malUx20Search');results=panel.querySelector('#malUx20Results');
@@ -86,6 +88,7 @@ function build(){
   cfg[key]=key==='density'?(cfg[key]==='compact'?'comfortable':'compact'):
    key==='font'?(cfg[key]==='large'?'standard':'large'):
    key==='contrast'?(cfg[key]==='high'?'normal':'high'):
+   key==='sidebar'?(cfg[key]==='compact'?'wide':'compact'):
    (cfg[key]==='hide'?'show':'hide');
   safeSet(cssKey+key,cfg[key]);apply();
  });
