@@ -117,7 +117,7 @@ button.primary{background:#106653;color:white;width:100%;font-size:17px}button.s
 <div id="backgroundPhotoBanner" hidden role="status"></div><details class="mal-reg-help"><summary>Before you begin · How registration works</summary><div class="banner"><b>Just tell us about yourself or your household.</b> You do not need to decide if you belong to a main family, subfamily, or member record. The village administrator will organize the information after checking it.</div></details>
 <div class="mal-wizard-progress" aria-live="polite"><div class="mal-wizard-progress-top"><strong id="malWizardStepLabel">Step 1 of 4 · Personal details</strong><span id="malWizardPercent">25%</span></div><div class="mal-wizard-track"><span id="malWizardBar"></span></div></div>
 <nav class="mal-register-steps" id="malRegisterSteps" aria-label="Registration steps"><a href="#malRegBasic" data-step="0" aria-current="step">1. Personal</a><a href="#malRegHome" data-step="1">2. Household</a><a href="#malRegOther" data-step="2">3. Details</a><a href="#malRegSubmit" data-step="3">4. Review</a></nav>
-<form id="registration" autocomplete="on">
+<form id="registration" autocomplete="on" novalidate>
 <section class="card mal-wizard-panel is-active" id="malRegBasic" data-wizard-step="0">
 <h2>1. Your name and parents <span class="tag">Basic details</span></h2>
 <details class="mal-reg-help"><summary>Help: parents, existing records and duplicate checking</summary><p class="hint">You may also complete this form for a relative with their permission. If a parent is already registered, enter the same full name. The administrator can link the existing record during approval — do not submit the parent again.</p><div class="mal-duplicate-info" role="note"><strong>Already registered?</strong> You don't need to submit again. Ask the village administrator to correct or link your existing record. If you are unsure, complete this form; Admin will check for possible duplicates before approval. A matching name alone does not mean the same person.</div><div id="malDupStatusBasic" class="mal-dup-status" role="status" aria-live="polite" data-state="unavailable"><strong>Duplicate verification</strong><span id="malDupTextBasic">Enter your name, a parent's name and Sahi to check potential matches. Admin verifies all registrations.</span></div></details>
@@ -223,20 +223,27 @@ function show(text,ok){$('result').className=ok?'success':'error';$('result').te
    $('malWizardPercent').textContent=((wizardStep+1)*25)+'%';
    $('malWizardBar').style.width=((wizardStep+1)*25)+'%';
  }
- function wizardValidateCurrent(){
-   const panel=wizardPanels[wizardStep];
-   for(const field of panel.querySelectorAll('input,select,textarea')){
-     if(field.disabled||!field.willValidate)continue;
-     if(!field.checkValidity()){field.reportValidity();field.focus({preventScroll:true});return false;}
-   }
-   return true;
- }
  function wizardGo(next){
    if(next<0||next>3)return;
-   if(next>wizardStep&&!wizardValidateCurrent())return;
+   // Tabs and Continue buttons navigate freely; incomplete fields are allowed.
    if(next===3)wizardBuildReview();
    wizardStep=next;wizardPaint();
    window.scrollTo({top:$('malRegBasic').getBoundingClientRect().top+window.scrollY-12,behavior:'smooth'});
+ }
+ function wizardValidateAll(){
+   for(const panel of wizardPanels){
+     for(const field of panel.querySelectorAll('input,select,textarea')){
+       if(field.disabled||!field.willValidate)continue;
+       if(!field.checkValidity()){
+         wizardStep=Number(panel.dataset.wizardStep);
+         wizardPaint();
+         field.focus({preventScroll:true});
+         field.reportValidity();
+         return false;
+       }
+     }
+   }
+   return true;
  }
  function wizardBuildReview(){
    const f=$('registration'),rows=[
@@ -256,7 +263,7 @@ function show(text,ok){$('result').className=ok?'success':'error';$('result').te
  }
  document.querySelectorAll('.mal-next').forEach(b=>b.addEventListener('click',()=>wizardGo(Number(b.dataset.next))));
  document.querySelectorAll('.mal-back').forEach(b=>b.addEventListener('click',()=>wizardGo(Number(b.dataset.back))));
- wizardLinks.forEach(link=>link.addEventListener('click',e=>{e.preventDefault();const target=Number(link.dataset.step);if(target<=wizardStep)wizardGo(target);}));
+ wizardLinks.forEach(link=>link.addEventListener('click',e=>{e.preventDefault();wizardGo(Number(link.dataset.step));}));
  wizardPaint();
 function wait(ms){return new Promise(resolve=>setTimeout(resolve,ms))}
 async function sendPost(obj,timeoutMs=30000){
@@ -410,7 +417,7 @@ if(publicMarital&&publicSpouse){const show=()=>{publicSpouse.hidden=!['Married',
 $('registration').addEventListener('submit',async event=>{
  event.preventDefault();if(submitting)return;
  const form=event.currentTarget;
- if(!currentAttempt&&!form.reportValidity())return;
+ if(!currentAttempt&&!wizardValidateAll())return;
  if(!currentAttempt){
   const values=Object.fromEntries(new FormData(form));
   if(values.locality==='__other__')values.locality=String(values.localityOther||'').trim();
