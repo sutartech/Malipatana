@@ -54,18 +54,48 @@ button.primary{background:#106653;color:white;width:100%;font-size:17px}button.s
 #registration .field>input:focus,#registration .field>select:focus,#registration .field>textarea:focus{outline:3px solid #bbe3d3;outline-offset:1px;border-color:#087865;background:#fbfffc;box-shadow:0 0 0 1px #08786522}
 #registration .field:focus-within{color:#076a56}
 #registration .field small{font-size:12.5px;color:#536d62}
+
+/* Compact, progressive-disclosure public registration — presentation only. */
+.mal-reg-help,.mal-reg-photo{margin:10px 0 14px;border:1px solid #c8ded3;border-radius:14px;background:#f7fbf8;overflow:hidden}
+.mal-reg-help>summary,.mal-reg-photo>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;min-height:48px;padding:11px 14px;color:#24594b;font-size:14px;font-weight:750;line-height:1.35}
+.mal-reg-help>summary::-webkit-details-marker,.mal-reg-photo>summary::-webkit-details-marker{display:none}
+.mal-reg-help>summary:after,.mal-reg-photo>summary:after{content:"＋";margin-left:auto;flex:none;color:#087866;font-size:18px}
+.mal-reg-help[open]>summary:after,.mal-reg-photo[open]>summary:after{content:"−"}
+.mal-reg-help[open]>summary,.mal-reg-photo[open]>summary{border-bottom:1px solid #dceae2;background:#edf7f1}
+.mal-reg-help>.banner{margin:10px 12px 12px}
+.mal-reg-help .hint{margin:12px 13px}
+.mal-reg-help .mal-duplicate-info,.mal-reg-help .mal-dup-status{margin:10px 12px 12px}
+.mal-reg-photo{background:#fbfdfb;border-style:dashed}
+.mal-reg-photo>summary{min-height:58px}
+.mal-reg-photo>summary>span:nth-child(2){display:flex;flex-direction:column;gap:2px}
+.mal-reg-photo>summary small{font-size:11px;font-weight:500;color:#698078}
+.mal-reg-photo .mal-photo-mark{display:grid;place-items:center;width:32px;height:32px;border-radius:9px;background:#e4f3eb;color:#116653;font-size:20px}
+.mal-reg-photo>summary .tag{margin-left:auto}
+.mal-reg-photo .photo{margin:10px;padding:11px;gap:10px}
+.mal-reg-photo .photo img{width:48px;height:48px;border-radius:9px}
+.mal-reg-photo .mal-camera-actions{margin:7px 0}
+.mal-reg-photo .mal-camera-actions button{min-height:42px;font-size:13px;padding:8px 10px}
+.mal-reg-photo .photo small{font-size:11px;line-height:1.4}
+.mal-reg-steps{margin-top:8px}
+@media(max-width:600px){
+ .mal-reg-help,.mal-reg-photo{margin:9px 0 12px}
+ .mal-reg-help>summary,.mal-reg-photo>summary{font-size:13px;padding:10px 12px}
+ #registration .field{margin-bottom:12px}
+ #registration .field>input:not([type=file]):not([type=checkbox]):not([type=radio]),#registration .field>select,#registration .field>textarea{min-height:49px;padding:11px 13px;font-size:17px}
+ #registration .field>textarea{min-height:88px}
+ .mal-reg-photo .photo{align-items:flex-start}
+}
 </style>
 </head>
 <body><main>
 <header><img src="icon-180.png" alt="Village emblem"><div><h1>ମାଳିପାଟଣା • Malipatana</h1><p>Simple village details form • No login or Family ID needed</p></div></header>
-<div id="backgroundPhotoBanner" hidden role="status"></div><div class="banner"><b>Just tell us about yourself or your household.</b> You do not need to decide if you belong to a main family, subfamily, or member record. The village administrator will organize the information after checking it.</div>
+<div id="backgroundPhotoBanner" hidden role="status"></div><details class="mal-reg-help"><summary>Before you begin · How registration works</summary><div class="banner"><b>Just tell us about yourself or your household.</b> You do not need to decide if you belong to a main family, subfamily, or member record. The village administrator will organize the information after checking it.</div></details>
 <nav class="mal-register-steps" id="malRegisterSteps" aria-label="Registration steps"><a href="#malRegBasic">1. Name</a><a href="#malRegHome">2. Household</a><a href="#malRegOther">3. Details</a><a href="#malRegSubmit">4. Submit</a></nav>
 <form id="registration" autocomplete="on">
 <section class="card" id="malRegBasic">
 <h2>1. Your name and parents <span class="tag">Basic details</span></h2>
-<p class="hint">You may also complete this form for a relative with their permission. If a parent is already registered, enter the same full name. The administrator can link the existing record during approval — do not submit the parent again.</p>
-<label class="field">Full name / ପୂରା ନାମ <span class="required">*</span><input name="fullName" required maxlength="180" placeholder="e.g. Dhruba Charan Sutar" autocomplete="name"></label><div class="mal-duplicate-info" role="note"><strong>Already registered?</strong> You don't need to submit again. Ask the village administrator to correct or link your existing record. If you are unsure, complete this form; Admin will check for possible duplicates before approval. A matching name alone does not mean the same person.</div>
-<div id="malDupStatusBasic" class="mal-dup-status" role="status" aria-live="polite" data-state="unavailable"><strong>Duplicate verification</strong><span id="malDupTextBasic">Enter your name, a parent's name and Sahi to check potential matches. Admin verifies all registrations.</span></div>
+<details class="mal-reg-help"><summary>Help: parents, existing records and duplicate checking</summary><p class="hint">You may also complete this form for a relative with their permission. If a parent is already registered, enter the same full name. The administrator can link the existing record during approval — do not submit the parent again.</p><div class="mal-duplicate-info" role="note"><strong>Already registered?</strong> You don't need to submit again. Ask the village administrator to correct or link your existing record. If you are unsure, complete this form; Admin will check for possible duplicates before approval. A matching name alone does not mean the same person.</div><div id="malDupStatusBasic" class="mal-dup-status" role="status" aria-live="polite" data-state="unavailable"><strong>Duplicate verification</strong><span id="malDupTextBasic">Enter your name, a parent's name and Sahi to check potential matches. Admin verifies all registrations.</span></div></details>
+<label class="field">Full name / ପୂରା ନାମ <span class="required">*</span><input name="fullName" required maxlength="180" placeholder="e.g. Dhruba Charan Sutar" autocomplete="name"></label>
 <div class="grid"><label class="field">Father's name / ପିତାଙ୍କ ନାମ<input name="fatherName" maxlength="140" placeholder="If known"></label>
 <label class="field">Mother's name / ମାତାଙ୍କ ନାମ<input name="motherName" maxlength="140" placeholder="If known"></label>
 <label class="field">Marital status (optional)<select name="maritalStatus" id="publicMarital"><option value="">Not sure / prefer not to say</option><option>Unmarried</option><option>Married</option><option>Widowed</option><option>Divorced</option><option>Separated</option></select></label>
@@ -86,19 +116,19 @@ button.primary{background:#106653;color:white;width:100%;font-size:17px}button.s
 <label class="field">Current city / town (if living outside)<input name="currentPlace" maxlength="180" placeholder="e.g. Bengaluru, Karnataka"></label>
 <label class="field">Other household members you wish to mention (optional)<textarea name="otherMembers" maxlength="500" placeholder="Their names and relation to you, one per line. No ID or separate family type required."></textarea></label>
 </section>
-<div id="malDupStatusHome" class="mal-dup-status" role="status" aria-live="polite" data-state="unavailable" style="margin:0 0 14px"><strong>Registration verification</strong><span id="malDupTextHome">Admin checks possible duplicates before approving a registration.</span></div>
+<details class="mal-reg-help"><summary>Registration verification · What Admin checks</summary><div id="malDupStatusHome" class="mal-dup-status" role="status" aria-live="polite" data-state="unavailable" style="margin:10px 0 4px"><strong>Registration verification</strong><span id="malDupTextHome">Admin checks possible duplicates before approving a registration.</span></div></details>
 <section class="card" id="malRegOther"><h2>3. Other details (optional)</h2>
 <div class="grid"><label class="field">Education<input name="education" maxlength="100" placeholder="e.g. Graduate, Class 12"></label>
 <label class="field">Occupation<input name="occupation" maxlength="100" placeholder="e.g. Farmer, Student"></label></div>
 <label class="field">Filled by (if on another person's behalf)<input name="submittedBy" maxlength="130" placeholder="Your name"></label>
 <label class="field">Anything else you want the administrator to know<textarea name="note" maxlength="700"></textarea></label>
-<div class="photo"><img id="photoPreview" src="icon-180.png" alt="Selected photo preview"><div class="picker"><div class="field" style="margin:0"><label for="photo">Photo (optional)</label><input id="photo" class="mal-camera-file" type="file" accept="image/jpeg,image/png,image/webp" aria-label="Selected photo"><div class="mal-camera-actions"><button type="button" class="mal-take" id="takeRegistrationPhoto">📷 Take Photo</button><button type="button" id="chooseRegistrationPhoto">🖼 Choose from Gallery</button></div><small>JPEG, PNG or WebP; maximum 20 MB. Photo is optional. Stored privately and reviewed by Admin.</small></div></div></div>
+<details class="mal-reg-photo"><summary><span class="mal-photo-mark">＋</span><span><b>Photo (optional)</b><small>Add a photo only if available · Camera or Gallery</small></span><span class="tag">Optional</span></summary><div class="photo"><img id="photoPreview" src="icon-180.png" alt="Selected photo preview"><div class="picker"><div class="field" style="margin:0"><label for="photo">Choose a photo</label><input id="photo" class="mal-camera-file" type="file" accept="image/jpeg,image/png,image/webp" aria-label="Selected photo"><div class="mal-camera-actions"><button type="button" class="mal-take" id="takeRegistrationPhoto">📷 Take Photo</button><button type="button" id="chooseRegistrationPhoto">🖼 Choose from Gallery</button></div><small>JPEG, PNG or WebP; maximum 20 MB. Stored privately and reviewed by Admin.</small></div></div></div></details>
 </section>
 <section class="card" id="malRegSubmit"><h2>4. Submit for review</h2>
 <div class="consent"><input id="consent" type="checkbox" required><label for="consent">I have permission to submit these details and understand they will be seen by authorised village administrators before being added to the official register.</label></div>
 <label class="honeypot" aria-hidden="true">Website<input name="website" tabindex="-1" autocomplete="off"></label>
 <button id="sendBtn" type="submit" class="primary">Send for Admin Review</button>
-<div id="malDupStatusSubmit" class="mal-dup-status" role="status" aria-live="polite" data-state="unavailable"><strong>Existing record check</strong><span id="malDupTextSubmit">Admin will compare the submitted details with existing records before approval.</span></div>
+<details class="mal-reg-help"><summary>How your submission is verified</summary><div id="malDupStatusSubmit" class="mal-dup-status" role="status" aria-live="polite" data-state="unavailable"><strong>Existing record check</strong><span id="malDupTextSubmit">Admin will compare the submitted details with existing records before approval.</span></div></details>
 <div id="result" role="status" aria-live="polite"></div>
 <p class="hint" style="margin-top:12px">Submitting does <b>not</b> automatically add anyone to the official village register. Admin must first check and approve the details.</p>
 </section></form>
