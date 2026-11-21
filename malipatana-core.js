@@ -71,7 +71,7 @@
    ========================================================================= */
 const CONFIG = {
   API_URL: 'https://script.google.com/macros/s/AKfycbwkweVh5BM35fHP86Uxs2bEjODXq0TpcnP3q665nAG2Z0Z8GIKzSa5Oe6l7KqZZCf6oSA/exec',
-  VERSION: 'FE V3.5.62',
+  VERSION: 'FE V3.6.0',
   EXPECTED_BACKEND: 'BE V1.8.38-MAL6',
   IDLE_MINUTES: 30,
   /* Photo shown when no photo has been set in Settings.
@@ -1758,7 +1758,7 @@ function resetIdle(){
 /* Sheets the backend may not return yet (the bootstrap line has to be added by
    hand in Apps Script). Without this, a record saved here would be wiped by the
    next reload and appear to vanish. */
-const OPTIONAL_SHEETS = ['events', 'recurring'];
+const OPTIONAL_SHEETS = ['events', 'recurring', 'projects', 'projectMilestones'];
 let SERVER_SHEETS = [];
 function cacheKey(k){ return 'mal_local_' + k; }
 function stashLocal(k){
@@ -1923,6 +1923,8 @@ function buildNav(){
     ['PEOPLE', [['families', '⌂', 'Families', 'families'], ['members', '☗', 'Members', 'members'], ['memorial', '✝', 'In memory', 'members', 'members'], ['guidance', '✥', 'Guidance', null, 'families']]],
     ['MONEY', [['contributions', '◈', 'Contributions', 'contributions'], ['income', '↑', 'Income', 'income'],
                ['expenditure', '↓', 'Expenditure', 'expenditure'], ['events', '❋', 'Major expenses', 'events'],
+               ['projects', '🏗', 'Village projects', 'events', 'events'],
+               ['projectMilestones', '◷', 'Project milestones', 'events', 'events'],
                ['recurring', '↻', 'Recurring expenses', 'recurring']]],
     ['WELFARE', [['emergency', '✚', 'Emergency cases', 'emergency'], ['regularSupport', '❤', 'Regular support', 'regularSupport']]],
     ['VILLAGERS', [['grievances', '⚑', 'Grievances', 'grievances'], ['importantDays', '❀', 'Important days', 'importantDays'],
@@ -1933,7 +1935,7 @@ function buildNav(){
      ALL_PAGES and can never be ticked in Access — checking the page key alone
      hid them from everyone with a custom access list. Each now declares the
      permission its own render function enforces. */
-  groups.forEach(g => { g[1] = g[1].filter(it => canSee(it[4] || it[0])); });
+  groups.forEach(g => { g[1] = g[1].filter(it => canSee(it[4] || it[0]) && ((it[0]!=='projects'&&it[0]!=='projectMilestones') || (DB && Array.isArray(DB.projects) && Array.isArray(DB.projectMilestones)))); });
   if(local.get('mal_odia') === '1'){
     groups.forEach(g => g[1].forEach(it => {
       const m = MODULES[it[0]];
@@ -2305,6 +2307,39 @@ const MODULES = {
       { n:'Remarks', t:'textarea' }
     ],
     list: ['Insurance ID','Name','Family ID','Insurance Type','Provider','Policy No','Sum Insured','Premium','Renewal Date','Status']
+  },
+  projects: {
+    sheet: 'Projects', permission: 'events', title: 'Village projects', odia: 'ଗ୍ରାମ ଉନ୍ନୟନ ପ୍ରକଳ୍ପ', idField: 'Project ID', prefix: 'PRJ',
+    blurb: 'Project register, approvals, funding, delivery responsibility and completion evidence',
+    fields: [
+      { n:'Project ID', t:'text', auto:true }, { n:'Project Name', t:'text', req:true },
+      { n:'Category', t:'select', opts:['Infrastructure','Community Hall','Library','Shelter Home','Water & Sanitation','Roads & Drainage','Education','Health','Village Development','Other'] },
+      { n:'Location', t:'text' }, { n:'Description', t:'textarea' },
+      { n:'Status', t:'select', opts:['Proposed','Under Approval','Approved','In Progress','On Hold','Completed','Cancelled'], def:'Proposed' },
+      { n:'Estimated Budget', t:'money' }, { n:'Approved Amount', t:'money' }, { n:'Amount Received', t:'money' },
+      { n:'Actual Expenditure', t:'money' }, { n:'Assigned Committee Member', t:'datalist' },
+      { n:'Target Completion Date', t:'date' }, { n:'Actual Completion Date', t:'date' },
+      { n:'Progress', t:'number', def:0 },
+      { n:'Photo', t:'photo', hint:'Project photograph saved in existing private Drive storage.' },
+      { n:'Supporting Documents', t:'textarea', hint:'Paste restricted Drive document links, one per line.' },
+      { n:'Public Summary', t:'textarea' }, { n:'Publish', t:'select', opts:['No','Yes'], def:'No' }, { n:'Remarks', t:'textarea' }
+    ],
+    list: ['Project ID','Project Name','Category','Status','Progress','Approved Amount','Actual Expenditure','Assigned Committee Member','Target Completion Date','Photo']
+  },
+  projectMilestones: {
+    sheet: 'Project Milestones', permission: 'events', title: 'Project milestones', odia: 'ପ୍ରକଳ୍ପ ପର୍ଯ୍ୟାୟ', idField: 'Milestone ID', prefix: 'MS',
+    blurb: 'Milestone-wise delivery dates, progress, responsibility and evidence',
+    fields: [
+      { n:'Milestone ID', t:'text', auto:true }, { n:'Project ID', t:'datalist', req:true },
+      { n:'Milestone', t:'text', req:true }, { n:'Description', t:'textarea' }, { n:'Assigned To', t:'datalist' },
+      { n:'Planned Start Date', t:'date' }, { n:'Target Date', t:'date', req:true },
+      { n:'Actual Completion Date', t:'date' },
+      { n:'Status', t:'select', opts:['Not Started','In Progress','Completed','On Hold'], def:'Not Started' },
+      { n:'Progress', t:'number', def:0 }, { n:'Actual Expenditure', t:'money' },
+      { n:'Photo', t:'photo' }, { n:'Supporting Documents', t:'textarea', hint:'Paste restricted Drive links, one per line.' },
+      { n:'Remarks', t:'textarea' }
+    ],
+    list: ['Milestone ID','Project ID','Milestone','Assigned To','Target Date','Status','Progress','Actual Expenditure']
   },
   settingsList: {
     sheet: 'Settings', title: 'Settings', odia: 'ସେଟିଂ', idField: 'Setting', blurb: 'Village name, targets and fund opening balance',
@@ -2815,6 +2850,19 @@ function monthWorkHtml(){
   </div>`;
 }
 
+function projectOverviewHtml(){
+  if(!Array.isArray(DB.projects)||!canSee('events'))return '';
+  const projects=DB.projects.filter(p=>String(p.Status||'')!=='Cancelled'),todayISO=today();
+  const overdueMilestones=(DB.projectMilestones||[]).filter(m=>m['Target Date']&&m['Target Date']<todayISO&&String(m.Status)!=='Completed').length;
+  const delayed=projects.filter(p=>p['Target Completion Date']&&p['Target Completion Date']<todayISO&&String(p.Status)!=='Completed').length;
+  const active=projects.filter(p=>['Approved','In Progress','On Hold'].includes(String(p.Status))).length;
+  const completed=projects.filter(p=>String(p.Status)==='Completed').length;
+  const cards=projects.slice(0,4).map(p=>{
+    const pct=Math.max(0,Math.min(100,num(p.Progress))),late=p['Target Completion Date']&&p['Target Completion Date']<todayISO&&String(p.Status)!=='Completed';
+    return '<article class="panel" style="padding:14px;min-width:0"><div style="display:flex;justify-content:space-between;gap:10px;align-items:start"><b>'+esc(p['Project Name']||p['Project ID'])+'</b><span class="pill '+(late?'bad':'')+'">'+esc(late?'Overdue':p.Status||'Proposed')+'</span></div><div class="muted small" style="margin:6px 0">'+esc(p.Category||'Village project')+' · Target '+esc(p['Target Completion Date']||'Not set')+'</div><div class="meter"><i style="width:'+pct+'%"></i></div><div class="small" style="display:flex;justify-content:space-between;margin-top:5px"><b>'+pct+'% complete</b><span>'+money(p['Actual Expenditure'])+' spent</span></div></article>';
+  }).join('');
+  return '<section class="panel" style="margin:14px 0;padding:16px"><div class="panel-head"><h3>Village development projects</h3><button class="btn btn-sm" onclick="go(\'projects\')">View projects →</button></div><div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:10px 0"><div><b>'+projects.length+'</b><div class="muted small">Total</div></div><div><b>'+active+'</b><div class="muted small">Active</div></div><div><b style="color:'+(delayed?'#b45309':'inherit')+'">'+delayed+'</b><div class="muted small">Overdue projects</div></div><div><b>'+overdueMilestones+'</b><div class="muted small">Overdue milestones</div></div></div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px">'+(cards||'<div class="empty">No projects recorded yet.</div>')+'</div><div class="small muted" style="margin-top:8px">'+completed+' completed · '+(DB.projectMilestones||[]).length+' milestones recorded</div></section>';
+}
 function renderDashboard(){
   const s = DB.summary || {};
   const opening = num(setting('Opening Fund', 0));
@@ -2843,6 +2891,7 @@ function renderDashboard(){
   const html = `
     <div class="ux-home" aria-label="Village dashboard overview">
       ${noticesHtml(noticesLocal())}
+      ${projectOverviewHtml()}
       ${fresh ? startPanel() : ''}
   ${banner ? `<div class="hero">
       <img src="${esc(banner)}" alt="${esc(setting('Village Name','Malipatana'))}" onerror="this.remove()">
@@ -3454,7 +3503,7 @@ function renderModule(key){
   if(!m){ $('#main').innerHTML = '<div class="empty"><b>Page not found</b>That link is not part of the dashboard. ' +
     '<button class="btn btn-sm" onclick="go(\'dashboard\')" style="margin-top:12px">Back to dashboard</button></div>'; return; }
   if(m.adminOnly && !isAdmin()){ $('#main').innerHTML = '<div class="empty"><b>Admins only</b>Ask the village admin for access.</div>'; return; }
-  if(!canSee(key)){ $('#main').innerHTML = '<div class="empty"><b>Not available to your account</b>The village admin decides which pages you can open.</div>'; return; }
+  if(!canSee(m.permission || key)){ $('#main').innerHTML = '<div class="empty"><b>Not available to your account</b>The village admin decides which pages you can open.</div>'; return; }
   if(key === 'users' && !DB.users){
     $('#main').innerHTML = '<div class="pagehead"><h2>Users</h2></div><div class="panel"><div class="empty"><b>Not available yet</b>' +
       'The backend does not send the user list. Add users directly in the Users sheet, or apply the optional backend update.</div></div>';
