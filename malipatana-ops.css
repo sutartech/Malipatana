@@ -29,3 +29,12 @@
 @media(max-width:500px){.mal-op-hero{padding:16px}.mal-op-hero .btn{width:100%}.mal-op-kpis{gap:8px}.mal-op-kpi{padding:12px}.mal-op-kpi strong{font-size:14px}.mal-op-item{padding:12px}}
 :where(button,a,input,select,textarea,summary):focus-visible{outline:3px solid #b88b32;outline-offset:3px}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+/* Pending Works status summary — reuses the existing Action Plan register. */
+.mal-pw-kpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:9px;margin:12px 0 16px}
+.mal-pw-kpis button{min-width:0;text-align:left;padding:13px;border:1px solid #dce9e2;border-radius:13px;background:#fff;display:grid;gap:6px;cursor:pointer;color:#244d42}
+.mal-pw-kpis button span{font-size:11px;font-weight:800;color:#59736a}
+.mal-pw-kpis button b{font-size:23px;line-height:1.1}
+.mal-pw-kpis button:focus-visible{outline:3px solid #b88b32;outline-offset:2px}
+@media(max-width:900px){.mal-pw-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:520px){.mal-pw-kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.mal-pw-kpis button{padding:11px}.mal-pw-kpis button b{font-size:20px}}
