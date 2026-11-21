@@ -1923,8 +1923,7 @@ function buildNav(){
     ['PEOPLE', [['families', '⌂', 'Families', 'families'], ['members', '☗', 'Members', 'members'], ['memorial', '✝', 'In memory', 'members', 'members'], ['guidance', '✥', 'Guidance', null, 'families']]],
     ['MONEY', [['contributions', '◈', 'Contributions', 'contributions'], ['income', '↑', 'Income', 'income'],
                ['expenditure', '↓', 'Expenditure', 'expenditure'], ['events', '❋', 'Major expenses', 'events'],
-               ['projects', '🏗', 'Village projects', 'events', 'events'],
-               ['projectMilestones', '◷', 'Project milestones', 'events', 'events'],
+               ['projects', '🏗', 'Village Development', 'projects', 'events'],
                ['recurring', '↻', 'Recurring expenses', 'recurring']]],
     ['WELFARE', [['emergency', '✚', 'Emergency cases', 'emergency'], ['regularSupport', '❤', 'Regular support', 'regularSupport']]],
     ['VILLAGERS', [['grievances', '⚑', 'Grievances', 'grievances'], ['importantDays', '❀', 'Important days', 'importantDays'],
@@ -1935,7 +1934,7 @@ function buildNav(){
      ALL_PAGES and can never be ticked in Access — checking the page key alone
      hid them from everyone with a custom access list. Each now declares the
      permission its own render function enforces. */
-  groups.forEach(g => { g[1] = g[1].filter(it => canSee(it[4] || it[0]) && ((it[0]!=='projects'&&it[0]!=='projectMilestones') || (DB && Array.isArray(DB.projects) && Array.isArray(DB.projectMilestones)))); });
+  groups.forEach(g => { g[1] = g[1].filter(it => canSee(it[4] || it[0])); });
   if(local.get('mal_odia') === '1'){
     groups.forEach(g => g[1].forEach(it => {
       const m = MODULES[it[0]];
@@ -2861,7 +2860,7 @@ function projectOverviewHtml(){
     const pct=Math.max(0,Math.min(100,num(p.Progress))),late=p['Target Completion Date']&&p['Target Completion Date']<todayISO&&String(p.Status)!=='Completed';
     return '<article class="panel" style="padding:14px;min-width:0"><div style="display:flex;justify-content:space-between;gap:10px;align-items:start"><b>'+esc(p['Project Name']||p['Project ID'])+'</b><span class="pill '+(late?'bad':'')+'">'+esc(late?'Overdue':p.Status||'Proposed')+'</span></div><div class="muted small" style="margin:6px 0">'+esc(p.Category||'Village project')+' · Target '+esc(p['Target Completion Date']||'Not set')+'</div><div class="meter"><i style="width:'+pct+'%"></i></div><div class="small" style="display:flex;justify-content:space-between;margin-top:5px"><b>'+pct+'% complete</b><span>'+money(p['Actual Expenditure'])+' spent</span></div></article>';
   }).join('');
-  return '<section class="panel" style="margin:14px 0;padding:16px"><div class="panel-head"><h3>Village development projects</h3><button class="btn btn-sm" onclick="go(\'projects\')">View projects →</button></div><div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:10px 0"><div><b>'+projects.length+'</b><div class="muted small">Total</div></div><div><b>'+active+'</b><div class="muted small">Active</div></div><div><b style="color:'+(delayed?'#b45309':'inherit')+'">'+delayed+'</b><div class="muted small">Overdue projects</div></div><div><b>'+overdueMilestones+'</b><div class="muted small">Overdue milestones</div></div></div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px">'+(cards||'<div class="empty">No projects recorded yet.</div>')+'</div><div class="small muted" style="margin-top:8px">'+completed+' completed · '+(DB.projectMilestones||[]).length+' milestones recorded</div></section>';
+  return '<details class="panel" style="margin:14px 0;padding:0;overflow:hidden"><summary style="display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;list-style:none;padding:16px"><span><b style="font-size:17px">🏗 Village development projects</b><span class="muted small" style="display:block;margin-top:3px">Click to view project progress, milestones and deadlines</span></span><span style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span class="pill">'+projects.length+' projects</span><span class="pill">'+delayed+' overdue</span><b aria-hidden="true">⌄</b></span></summary><div style="padding:0 16px 16px"><div class="toolbar" style="margin:0 0 12px;gap:8px;flex-wrap:wrap"><button class="btn btn-sm btn-primary" onclick="go(\'projects\')">🏗 Open Projects</button><button class="btn btn-sm" onclick="go(\'projectMilestones\')">◷ Manage Milestones</button></div><div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:10px 0"><div><b>'+projects.length+'</b><div class="muted small">Total projects</div></div><div><b>'+active+'</b><div class="muted small">Active</div></div><div><b style="color:'+(delayed?'#b45309':'inherit')+'">'+delayed+'</b><div class="muted small">Overdue projects</div></div><div><b>'+overdueMilestones+'</b><div class="muted small">Overdue milestones</div></div></div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px">'+(cards||'<div class="empty">No projects recorded yet.</div>')+'</div><div class="small muted" style="margin-top:8px">'+completed+' completed · '+(DB.projectMilestones||[]).length+' milestones recorded</div></div></details>';
 }
 function renderDashboard(){
   const s = DB.summary || {};
@@ -3540,6 +3539,11 @@ function renderModule(key){
     <div class="sp"></div>
     ${canEdit() ? `<button class="btn btn-primary" data-act="add">+ Add ${esc(singularOf(m))}</button>` : ''}
   </div>
+  ${['projects','projectMilestones'].includes(key) ? `<div class="toolbar" style="margin:10px 0 14px;gap:8px;flex-wrap:wrap" aria-label="Village development sections">
+    <button type="button" class="btn btn-sm ${key==='projects'?'btn-primary':''}" onclick="go('projects')">🏗 Projects</button>
+    <button type="button" class="btn btn-sm ${key==='projectMilestones'?'btn-primary':''}" onclick="go('projectMilestones')">◷ Milestones</button>
+    <button type="button" class="btn btn-sm" onclick="go('dashboard')">⌂ Dashboard overview</button>
+  </div>` : ''}
 
   <div class="toolbar${malPeople?' mal-register-toolbar'+(v.toolsOpen?' mal-filters-open':''):''}">
     <input class="input grow" id="q" placeholder="Search ${esc(m.title.toLowerCase())}…" value="${esc(v.q)}">
