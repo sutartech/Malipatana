@@ -87,3 +87,86 @@ body{background:linear-gradient(145deg,#f4f8f4 0%,#edf5f0 55%,#f8f5ec 100%);colo
  #app .topbar,#app .sidebar{background:#fff!important;color:#111!important}
  #app .panel,#app .card{box-shadow:none!important}
 }
+
+
+/* HOME SCREEN — clearer hierarchy for the existing live village data.
+   No new metrics, records, endpoints, or permissions are introduced. */
+#app .ux-home{max-width:1240px;gap:16px}
+#app .ux-home-identity{padding:2px 3px 0}
+#app .ux-home-identity strong{font-size:clamp(20px,2vw,25px);color:#16483f;letter-spacing:-.02em}
+#app .ux-home-identity span{font-size:12.5px}
+#app .ux-home .hero{
+ min-height:clamp(165px,20vw,235px);border-radius:20px;
+ box-shadow:0 10px 28px rgba(13,62,54,.13);isolation:isolate
+}
+#app .ux-home .hero img{filter:saturate(.9)}
+#app .ux-home .hero .veil{
+ background:linear-gradient(90deg,rgba(7,43,40,.78),rgba(7,43,40,.24) 75%),
+ linear-gradient(0deg,rgba(5,34,31,.46),transparent 65%)
+}
+#app .ux-home .hero .txt{padding:20px 23px;align-items:flex-end}
+#app .ux-home .hero h2{font-size:clamp(25px,3.3vw,36px);text-shadow:0 2px 12px #0005}
+#app .ux-home .hero .sub{font-size:13px;color:#e1f4eb}
+#app .ux-home .hero .btn{background:#ffffffed;color:#15564a;border-color:#ffffff}
+#app .ux-home .ledger{border-radius:19px;box-shadow:0 8px 24px rgba(15,67,54,.075)}
+#app .ux-home .ledger-top{
+ padding:clamp(18px,2.2vw,26px);gap:18px;
+ background:radial-gradient(circle at 92% 5%,#dff3e8 0,transparent 36%),linear-gradient(110deg,#fff,#f1faf5)
+}
+#app .ux-home .ledger-top .cap{font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:#55766a}
+#app .ux-home .ledger-top .big{font-size:clamp(34px,4.4vw,48px);letter-spacing:-.035em;color:#086d5d}
+#app .ux-home .ledger-top>div:last-child{max-width:390px!important}
+#app .ux-home .meter{height:10px;background:#e3eee8}
+#app .ux-home .meter i{background:linear-gradient(90deg,#0a806d,#57b987)}
+#app .ux-home .ux-kpi-grid{gap:13px}
+#app .ux-home .ux-kpi{
+ min-height:122px;padding:16px;border-radius:16px;
+ border-color:#dcebe2;box-shadow:0 4px 15px rgba(16,66,52,.045);
+ background:linear-gradient(145deg,#fff 0%,#fbfefc 100%)
+}
+#app .ux-home .ux-kpi:hover:not(:disabled){border-color:#9bcbb5;box-shadow:0 9px 22px rgba(16,66,52,.10)}
+#app .ux-home .ux-kpi-icon{width:40px;height:40px;border-radius:13px}
+#app .ux-home .ux-kpi-label{font-size:12.5px;color:#547267}
+#app .ux-home .ux-kpi strong{font-size:clamp(25px,2.5vw,31px);color:#16453d;line-height:1.25}
+#app .ux-home .ux-kpi-foot{font-size:11.5px;color:#267563}
+#app .ux-home .ux-priority-grid{gap:14px}
+#app .ux-home .work{border-radius:16px;border-color:#eadfbe;box-shadow:0 4px 14px rgba(92,67,21,.045)}
+#app .ux-home .work .panel-head{padding:14px 17px}
+#app .ux-home .work .alert{padding:12px 16px;gap:10px}
+#app .ux-home .ux-quick-panel{border-radius:16px}
+#app .ux-home .ux-quick-panel .panel-head{padding:14px 16px}
+#app .ux-home .ux-quick-buttons{grid-template-columns:1fr}
+#app .ux-home .ux-quick-buttons .btn{min-height:45px}
+#app .ux-home-section{border-radius:16px;box-shadow:0 4px 14px rgba(16,66,52,.04)}
+#app .ux-home-section>summary{min-height:72px;padding:14px 18px}
+#app .ux-section-badge{width:40px;height:40px;flex-basis:40px;border-radius:13px}
+#app .ux-section-title{font-size:17px;color:#18483f}
+#app .ux-home-expanded{padding:16px;gap:14px}
+#app .ux-home-expanded .panel{box-shadow:none}
+#app .ux-home .cols{gap:14px}
+#app .ux-home .cols>.panel{min-width:0}
+#app .ux-home .strip{border-radius:13px}
+#app .ux-home .strip>div{padding:13px 14px}
+#app .ux-home .strip .v{color:#174c40}
+@media(min-width:1100px){
+ #app .ux-home .ux-kpi-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+ #app .ux-home .ux-priority-grid{grid-template-columns:minmax(0,1.65fr) minmax(230px,.8fr)}
+}
+@media(max-width:760px){
+ #app .ux-home{gap:12px}
+ #app .ux-home .hero{min-height:155px;border-radius:15px}
+ #app .ux-home .hero .txt{padding:15px}
+ #app .ux-home .ledger-top{padding:17px;align-items:flex-start}
+ #app .ux-home .ledger-top>div:last-child{min-width:100%!important;max-width:none!important}
+ #app .ux-home .ux-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+ #app .ux-home .ux-kpi{min-height:116px;padding:12px;border-radius:13px}
+ #app .ux-home .ux-kpi strong{font-size:25px}
+ #app .ux-home .ux-kpi-foot{font-size:10.5px}
+ #app .ux-home .ux-priority-grid{grid-template-columns:1fr}
+ #app .ux-home-section>summary{min-height:66px;padding:11px 13px}
+ #app .ux-home-expanded{padding:12px}
+}
+@media(max-width:380px){
+ #app .ux-home .ux-kpi-grid{grid-template-columns:1fr}
+ #app .ux-home .ux-kpi{min-height:96px}
+}
