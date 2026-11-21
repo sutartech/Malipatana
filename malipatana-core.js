@@ -70,9 +70,9 @@
    Existing JSONP/GET authentication is not ideal for sensitive user credentials.
    ========================================================================= */
 const CONFIG = {
-  API_URL: 'https://script.google.com/macros/s/AKfycbzKN7T8vWfnqCfwtr_NNw3GWNwowWXxs1yntIjnndX_CnisIP2r1veilwEV3pVBLe9rlw/exec',
+  API_URL: 'https://script.google.com/macros/s/AKfycbwkweVh5BM35fHP86Uxs2bEjODXq0TpcnP3q665nAG2Z0Z8GIKzSa5Oe6l7KqZZCf6oSA/exec',
   VERSION: 'FE V3.5.45',
-  EXPECTED_BACKEND: 'BE V1.8.30',
+  EXPECTED_BACKEND: 'BE V1.8.38-MAL6',
   IDLE_MINUTES: 30,
   /* Photo shown when no photo has been set in Settings.
      village.jpg sits in the same folder as this file on GitHub. */
@@ -6873,7 +6873,7 @@ async function bePing(){
     if(!r||!r.ok)throw healthFailure||new Error('Backend health check failed');
     if(r && r.ok){
       const actual = String(r.version || 'BE ?').trim();
-      const matches = actual === CONFIG.EXPECTED_BACKEND || actual === 'BE V1.8.31' || actual === 'BE V1.8.32' || actual === 'BE V1.8.33' || actual === 'BE V1.8.34' || actual === 'BE V1.8.35' || actual === 'BE V1.8.36' || actual === 'BE V1.8.37';
+      const matches = actual === CONFIG.EXPECTED_BACKEND || actual === 'BE V1.8.31' || actual === 'BE V1.8.32' || actual === 'BE V1.8.33' || actual === 'BE V1.8.34' || actual === 'BE V1.8.35' || actual === 'BE V1.8.36' || actual === 'BE V1.8.37' || actual === 'BE V1.8.38' || actual === 'BE V1.8.38-MAL6';
       chip.textContent = actual;
       chip.className = 'vchip ' + (matches ? 'ok' : 'bad');
       if(!matches && notice){
@@ -7161,7 +7161,7 @@ MODULES.actionUpdates = { sheet:'Action Updates', title:'Action updates', idFiel
     {n:'Note',t:'textarea'}, {n:'Sent To',t:'datalist'}, {n:'Ref No',t:'text'}, {n:'Copy Enclosed',t:'select',opts:['Yes','No']}, {n:'Copy Link',t:'text'},
     {n:'Amount',t:'money'}, {n:'Progress',t:'number'}, {n:'By',t:'text'} ],
   list:['Date','Type','Note'] };
-const PLAN = { tab: 'Short term', open: new Set() };
+const PLAN = { tab: 'Pending', open: new Set() };
 const isDone = r => String(r['Status'] || '').toLowerCase() === 'completed';
 const sameId = (a, b) => String(a ?? '').trim() === String(b ?? '').trim();
 const rankP = r => ({ High: 0, Medium: 1, Low: 2 }[String(r['Priority'])] ?? 1);
@@ -7216,12 +7216,27 @@ function renderActionPlan(){
       <p class="muted">${old ? 'Your Code.gs does not send the Action Plan data yet. Add the few small edits to your current Code.gs (do not replace the whole file) and deploy a new version.' : 'The Action Plan sheets have not been created in your Google Sheet yet.'}</p>
       ${!old && isAdmin() ? '<button class="btn btn-primary" data-pa="runall">Open Run all setup</button>' : ''}</div></div>`;
   } else {
-    const tab = PLAN.tab, list = sortPlan(all.filter(r => inTab(r, tab)), tab), cnt = t => all.filter(r => inTab(r, t)).length;
-    const active = all.filter(r => !isDone(r)), over = active.filter(r => { const d = dueInfo(r); return d && d.cls === 'bad'; }).length;
-    const est = active.reduce((s, r) => s + num(r['Estimated Cost']), 0), spent = active.reduce((s, r) => s + spentOf(r['Action ID']), 0);
-    main.innerHTML = head + `<div class="asum">${pill(active.length + ' active')}${over ? pill(over + ' overdue', 'bad') : ''}${pill(cnt('Completed') + ' completed', 'ok')}${est ? pill(money(spent) + ' spent of ' + money(est) + ' planned') : ''}</div>
-      <div class="apseg">${['Short term', 'Long term', 'Completed'].map(t => `<button data-pa="tab" data-id="${t}" class="${t === tab ? 'on' : ''}">${t} <b>${cnt(t)}</b></button>`).join('')}</div>` +
-      (list.length ? list.map(planCard).join('') : `<div class="empty"><b>${tab === 'Completed' ? 'Nothing completed yet' : 'No ' + tab.toLowerCase() + ' targets yet'}</b>${tab === 'Completed' ? 'Finished targets will appear here with their remark.' : canEdit() ? 'Press “Add target” to record the first one.' : ''}</div>`);
+    const tab = PLAN.tab;
+    const active = all.filter(r => !isDone(r));
+    const pending = active.filter(r => ['not started',''].includes(String(r['Status']||'').toLowerCase()));
+    const underway = active.filter(r => String(r['Status']||'').toLowerCase()==='in progress');
+    const onHold = active.filter(r => String(r['Status']||'').toLowerCase()==='on hold');
+    const overdue = active.filter(r => { const d=dueInfo(r); return d && d.cls==='bad'; });
+    const cnt = t => t==='Pending' ? active.length : t==='Not started' ? pending.length : t==='In progress' ? underway.length : t==='On hold' ? onHold.length : t==='Overdue' ? overdue.length : all.filter(r=>isDone(r)).length;
+    const selected = tab==='Pending' ? active : tab==='Not started' ? pending : tab==='In progress' ? underway : tab==='On hold' ? onHold : tab==='Overdue' ? overdue : all.filter(isDone);
+    const list = sortPlan(selected, tab==='Completed'?'Completed':'Pending');
+    const est = active.reduce((s,r)=>s+num(r['Estimated Cost']),0), spent=active.reduce((s,r)=>s+spentOf(r['Action ID']),0);
+    const tabs=['Pending','Not started','In progress','On hold','Overdue','Completed'];
+    main.innerHTML = head + `<div class="mal-pw-kpis">
+      <button data-pa="tab" data-id="Pending"><span>Pending works</span><b>${active.length}</b></button>
+      <button data-pa="tab" data-id="Not started"><span>Not started</span><b>${pending.length}</b></button>
+      <button data-pa="tab" data-id="In progress"><span>In progress</span><b>${underway.length}</b></button>
+      <button data-pa="tab" data-id="On hold"><span>On hold</span><b>${onHold.length}</b></button>
+      <button data-pa="tab" data-id="Overdue"><span>Overdue</span><b>${overdue.length}</b></button>
+      <button data-pa="tab" data-id="Completed"><span>Completed</span><b>${cnt('Completed')}</b></button>
+    </div><div class="asum">${est ? pill(money(spent)+' spent of '+money(est)+' planned') : ''}</div>
+      <div class="apseg">${tabs.map(t=>`<button data-pa="tab" data-id="${t}" class="${t===tab?'on':''}">${t} <b>${cnt(t)}</b></button>`).join('')}</div>` +
+      (list.length ? list.map(planCard).join('') : `<div class="empty"><b>${tab==='Completed'?'Nothing completed yet':'No '+tab.toLowerCase()+' works'}</b>${tab==='Completed'?'Completed works will appear here with their final remark.':canEdit()?'Press “Add target” to record village work.':'No records in this view.'}</div>`);
   }
   main.onclick = async e => {
     const b = e.target.closest('[data-pa]'); if(!b) return; const a = b.dataset.pa, id = b.dataset.id;
