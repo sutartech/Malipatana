@@ -988,42 +988,68 @@ window.malWirePhotoLibrary_=function(target){
 
 
 <script>
-/* Sidebar folding is presentation only. All existing pages and privileges stay intact.
-   Store names of collapsed groups only; never store a Family/Member record. */
+/* Sidebar navigation: compact, single-open accordion. Presentation only;
+   page handlers, permissions and existing navigation entries remain unchanged. */
 (function(){
   const baseBuildNav=buildNav;
-  const key='mal_nav_sections_v355';
-  function pref(){try{return JSON.parse(local.get(key)||'{}')||{}}catch(e){return {}}}
+  const key='mal_nav_sections_v356';
+  function readOpen(){
+    try{return local.get(key)||'PEOPLE';}catch(e){return 'PEOPLE';}
+  }
+  function saveOpen(value){
+    try{local.set(key,value||'');}catch(e){}
+  }
   buildNav=function(){
     baseBuildNav();
-    const root=document.getElementById('sidebar');if(!root)return;
-    const prefs=pref();
+    const root=document.getElementById('sidebar');
+    if(!root)return;
     const nodes=Array.from(root.children);
-    let grouping=null;
     const fragment=document.createDocumentFragment();
+    let current=null;
+    const activeNode=nodes.find(n=>n.matches&&n.matches('.nav[data-page="'+PAGE+'"]'));
+    let activeGroup='';
+    let scanGroup='';
     for(const node of nodes){
-      if(node.classList && node.classList.contains('navgroup')){
-        const title=node.textContent.trim();
-        grouping=document.createElement('details');grouping.className='ux-navsection';grouping.dataset.group=title;
-        const summary=document.createElement('summary');summary.textContent=title;
-        summary.setAttribute('aria-label',title+' navigation group');grouping.appendChild(summary);
-        const saved=prefs[title];
-        grouping.open=saved===undefined ? title==='PEOPLE' : !!saved;
-        fragment.appendChild(grouping);
-        grouping.addEventListener('toggle',()=>{
-          if(!grouping.isConnected)return;
-          const all=pref();all[title]=grouping.open;
-          local.set(key,JSON.stringify(all));
-        });
-        continue;
+      if(node.classList&&node.classList.contains('navgroup')){
+        scanGroup=node.textContent.trim();
+      }else if(node===activeNode){
+        activeGroup=scanGroup;
       }
-      if(grouping && node.matches && node.matches('.nav'))grouping.appendChild(node);
-      else fragment.appendChild(node);
+    }
+    const desired=activeGroup||readOpen();
+    for(const node of nodes){
+      if(node.classList&&node.classList.contains('navgroup')){
+        const title=node.textContent.trim();
+        current=document.createElement('details');
+        current.className='ux-navsection';
+        current.dataset.group=title;
+        const summary=document.createElement('summary');
+        summary.textContent=title;
+        summary.setAttribute('aria-label',title+' navigation group');
+        summary.setAttribute('role','button');
+        current.appendChild(summary);
+        current.open=title===desired;
+        current.addEventListener('toggle',()=>{
+          if(!current.isConnected||!current.open)return;
+          root.querySelectorAll('.ux-navsection').forEach(section=>{
+            if(section!==current)section.open=false;
+          });
+          saveOpen(title);
+        });
+        fragment.appendChild(current);
+      }else if(current&&node.matches&&node.matches('.nav')){
+        current.appendChild(node);
+      }else{
+        fragment.appendChild(node);
+      }
     }
     root.replaceChildren(fragment);
     const active=root.querySelector('.nav[data-page="'+PAGE+'"]');
-    const group=active && active.closest('.ux-navsection');
-    if(group)group.open=true;
+    const activeSection=active&&active.closest('.ux-navsection');
+    if(activeSection){
+      root.querySelectorAll('.ux-navsection').forEach(section=>{section.open=section===activeSection;});
+      saveOpen(activeSection.dataset.group);
+    }
   };
 })();
 </script>
