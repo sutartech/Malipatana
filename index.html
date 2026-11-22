@@ -1330,7 +1330,10 @@ function renderRegistrations(){
       const r=await api('registrationManage',{operation:'status'});
       if(!r?.ok||typeof r.enabled!=='boolean'||r.canManage!==true)throw Error(r?.error||'The authenticated backend management action is not available.');
       regState.textContent=r.enabled?'Registration: ALLOWED':'Registration: PAUSED';
-      regNote.textContent='Server-confirmed status.';regAllow.disabled=r.enabled;regPause.disabled=!r.enabled;
+      regState.setAttribute('aria-live','polite');
+      regState.style.cssText='display:inline-flex;align-items:center;gap:6px;padding:7px 11px;border-radius:999px;font-weight:800;line-height:1.2;border:1px solid '+(r.enabled?'#a8d9c4':'#efb7a9')+';background:'+(r.enabled?'#e5f7ee':'#fff0ec')+';color:'+(r.enabled?'#087653':'#a53b2d')+';';
+      regNote.textContent=r.enabled?'Server-confirmed: public registration is allowed.':'Server-confirmed: public registration is paused.';
+      regAllow.disabled=r.enabled;regPause.disabled=!r.enabled;
     }catch(e){regState.textContent='Control unavailable';regNote.textContent=e.message+' The form has not been changed.';}
   }
   async function changeRegAccess(operation){
