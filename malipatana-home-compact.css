@@ -101,3 +101,30 @@
 #app .ux-home .ux-kpi strong{color:#16483f!important}
 #app .ux-home .ux-kpi-foot{color:#286d5d!important}
 #app .ux-home .ux-kpi:hover:not(:disabled){filter:saturate(1.06);transform:translateY(-1px)}
+
+
+/* Stronger, clearly distinguishable pastel card fills */
+#app .ux-home .ux-kpi-families{
+ background:linear-gradient(145deg,#d8f1e2 0%,#eaf8ef 100%)!important;
+ border-color:#a9d9bd!important;
+}
+#app .ux-home .ux-kpi-members{
+ background:linear-gradient(145deg,#dceaff 0%,#edf4ff 100%)!important;
+ border-color:#b5cff1!important;
+}
+#app .ux-home .ux-kpi-work{
+ background:linear-gradient(145deg,#ffedc4 0%,#fff7e5 100%)!important;
+ border-color:#e8ce8b!important;
+}
+#app .ux-home .ux-kpi-grievances{
+ background:linear-gradient(145deg,#fbded9 0%,#fff0ed 100%)!important;
+ border-color:#e9b8ae!important;
+}
+#app .ux-home .ux-kpi-emergency{
+ background:linear-gradient(145deg,#ffe1c4 0%,#fff1e3 100%)!important;
+ border-color:#e9c09a!important;
+}
+#app .ux-home .ux-kpi-money{
+ background:linear-gradient(145deg,#d4eee8 0%,#e9f7f3 100%)!important;
+ border-color:#a9d7cc!important;
+}
