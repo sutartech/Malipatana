@@ -2890,7 +2890,6 @@ function renderDashboard(){
   const html = `
     <div class="ux-home" aria-label="Village dashboard overview">
       ${noticesHtml(noticesLocal())}
-      ${projectOverviewHtml()}
       ${fresh ? startPanel() : ''}
   ${banner ? `<div class="hero">
       <img src="${esc(banner)}" alt="${esc(setting('Village Name','Malipatana'))}" onerror="this.remove()">
