@@ -60,3 +60,44 @@
   #app .ux-home .ledger-top{display:flex!important}
   #app .ux-home .ux-kpi-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}
 }
+
+
+/* Distinct semantic colours for dashboard KPI cards */
+#app .ux-home .ux-kpi{
+  border-width:1px!important;
+  box-shadow:0 4px 14px rgba(23,67,55,.07)!important;
+}
+#app .ux-home .ux-kpi-families{
+  background:linear-gradient(145deg,#e5f5ec 0%,#f5fbf7 100%)!important;
+  border-color:#b9dfca!important;
+}
+#app .ux-home .ux-kpi-families .ux-kpi-icon{background:#c9ead7!important;color:#176b4d!important}
+#app .ux-home .ux-kpi-members{
+  background:linear-gradient(145deg,#e7f0ff 0%,#f5f8ff 100%)!important;
+  border-color:#c4d8f5!important;
+}
+#app .ux-home .ux-kpi-members .ux-kpi-icon{background:#d0e2fb!important;color:#315f9b!important}
+#app .ux-home .ux-kpi-work{
+  background:linear-gradient(145deg,#fff3d9 0%,#fffaed 100%)!important;
+  border-color:#ead5a5!important;
+}
+#app .ux-home .ux-kpi-work .ux-kpi-icon{background:#f8e4b4!important;color:#8a641b!important}
+#app .ux-home .ux-kpi-grievances{
+  background:linear-gradient(145deg,#ffebe8 0%,#fff7f5 100%)!important;
+  border-color:#efc7c0!important;
+}
+#app .ux-home .ux-kpi-grievances .ux-kpi-icon{background:#f8d5cf!important;color:#a4473b!important}
+#app .ux-home .ux-kpi-emergency{
+  background:linear-gradient(145deg,#fff0df 0%,#fff8ef 100%)!important;
+  border-color:#edcfad!important;
+}
+#app .ux-home .ux-kpi-emergency .ux-kpi-icon{background:#f8dfbd!important;color:#965c18!important}
+#app .ux-home .ux-kpi-money{
+  background:linear-gradient(145deg,#def3ef 0%,#f1faf8 100%)!important;
+  border-color:#b5ddd4!important;
+}
+#app .ux-home .ux-kpi-money .ux-kpi-icon{background:#c4e8e0!important;color:#087365!important}
+#app .ux-home .ux-kpi-label{color:#45665c!important}
+#app .ux-home .ux-kpi strong{color:#16483f!important}
+#app .ux-home .ux-kpi-foot{color:#286d5d!important}
+#app .ux-home .ux-kpi:hover:not(:disabled){filter:saturate(1.06);transform:translateY(-1px)}
