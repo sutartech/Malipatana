@@ -1,0 +1,62 @@
+/* Malipatana compact home dashboard — mobile-first spacing and card layout.
+   Visual-only overrides; no dashboard data, permissions or actions changed. */
+#app .ux-home{gap:10px!important}
+#app .ux-home .ux-home-identity{margin:0!important;padding:0 2px!important}
+#app .ux-home .ux-home-identity span{margin-top:1px!important}
+#app .ux-home .ledger{margin:0!important}
+#app .ux-home .ledger-top{gap:12px!important}
+#app .ux-home .ux-kpi-grid{gap:10px!important}
+#app .ux-home .ux-priority-grid{margin:0!important}
+#app .ux-home .ux-home-section{margin:0!important}
+#app .ux-home .hero{margin:0!important}
+#app .ux-home>details.panel{margin:0!important}
+#app .ux-home>details.panel>summary{padding:12px 14px!important}
+#app .ux-home>details.panel>div{padding:0 12px 12px!important}
+@media(max-width:760px){
+  #app .ux-home{gap:9px!important}
+  #app .ux-home .ledger-top{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+    align-items:center!important;
+    padding:14px!important;
+    gap:12px!important;
+  }
+  #app .ux-home .ledger-top>div:first-child{min-width:0!important}
+  #app .ux-home .ledger-top>div:last-child{
+    min-width:0!important;max-width:none!important;width:auto!important;
+    flex:initial!important;
+  }
+  #app .ux-home .ledger-top .big{font-size:clamp(25px,7vw,34px)!important}
+  #app .ux-home .ledger-top .small{font-size:11px!important;line-height:1.35!important}
+  #app .ux-home .meter{margin-top:8px!important;height:8px!important}
+  #app .ux-home .ux-kpi-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:9px!important;
+  }
+  #app .ux-home .ux-kpi{
+    min-height:96px!important;
+    padding:10px!important;
+    grid-template-columns:30px minmax(0,1fr)!important;
+    column-gap:8px!important;row-gap:2px!important;
+    border-radius:14px!important;
+  }
+  #app .ux-home .ux-kpi-icon{width:30px!important;height:30px!important;font-size:17px!important}
+  #app .ux-home .ux-kpi-label{font-size:11px!important;line-height:1.25!important}
+  #app .ux-home .ux-kpi strong{font-size:23px!important;line-height:1.2!important}
+  #app .ux-home .ux-kpi-foot{font-size:10px!important;line-height:1.3!important;margin-top:3px!important}
+  #app .ux-home .hero{min-height:140px!important}
+  #app .ux-home .ux-home-section>summary{min-height:58px!important;padding:10px 12px!important}
+  #app .ux-home>details.panel>summary{padding:11px 12px!important}
+  #app .ux-home>details.panel>div{padding:0 10px 10px!important}
+}
+@media(max-width:330px){
+  #app .ux-home .ux-kpi{padding:8px!important;column-gap:6px!important}
+  #app .ux-home .ux-kpi-label{font-size:10px!important}
+  #app .ux-home .ux-kpi strong{font-size:21px!important}
+  #app .ux-home .ux-kpi-foot{font-size:9px!important}
+}
+@media(min-width:761px){
+  #app .ux-home{gap:12px!important}
+  #app .ux-home .ledger-top{display:flex!important}
+  #app .ux-home .ux-kpi-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+}
