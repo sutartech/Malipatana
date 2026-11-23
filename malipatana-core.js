@@ -4398,9 +4398,12 @@ function fieldHtml(key, f, value, editing, rec){
       const opts=[...new Set([...(f.opts||[]),...distinct(key,f.n)])];
       input = `<input class="input" id="${id}" list="${id}_dl" value="${esc(val)}" autocomplete="off"><datalist id="${id}_dl">${opts.map(o=>`<option value="${esc(o)}"></option>`).join('')}</datalist>`;break;
     }
-    case 'family':
-      input = `<select class="input" id="${id}" data-role="family"><option value=""></option>` +
-        (DB.families || []).map(x => { const fid=String(x['Family ID']||'').trim(); const head=String(x['Family Head']||'').trim(); const surname=String(x.Surname||'').trim(); const locality=String(x['Village Locality']||'').trim(); const label=[head,surname && surname.toLowerCase()!==head.toLowerCase()?surname:'',locality].filter(Boolean).join(' · '); return `<option value="${esc(fid)}" ${String(val) === fid ? 'selected' : ''}>${esc(label || 'Family')} (${esc(fid)})</option>`; }).join('') + `</select>`; break;
+    case 'family': {
+      const fam=(DB.families||[]).find(x=>String(x['Family ID']||'').trim()===val);
+      const famLabel=x=>{const head=String(x['Family Head']||'').trim();const surname=String(x.Surname||'').trim();const locality=String(x['Village Locality']||'').trim();return [head,surname&&surname.toLowerCase()!==head.toLowerCase()?surname:'',locality].filter(Boolean).join(' · ')+' ('+String(x['Family ID']||'')+')';};
+      input = `<div class="mal-family-picker"><input class="input" id="${id}_search" type="search" autocomplete="off" placeholder="Search family head, surname, locality or ID" value="${fam?esc(famLabel(fam)):''}" aria-label="Search family"><input type="hidden" id="${id}" data-role="family" value="${esc(val)}"><div class="mal-family-results" id="${id}_results" hidden></div><div class="fieldnote">Type a name, surname, Sahi or Family ID, then select the matching family from the results.</div></div>`;
+      break;
+    }
     case 'member':
       input = `<select class="input" id="${id}" data-role="member"></select>`; break;
     case 'guide': {
@@ -4442,6 +4445,34 @@ function wireForm(key, rec, editing){
   const famEl = $('#formGrid').querySelector('[data-role="family"]');
   const memEl = $('#formGrid').querySelector('[data-role="member"]');
   const memField = m.fields.find(f => f.t === 'member');
+
+  // Searchable family selector: stores the original Family ID, but lets users
+  // find it by family head, surname, locality or ID.
+  (m.fields||[]).filter(f=>f.t==='family').forEach(f=>{
+    const base=fid(f),hidden=document.getElementById(base),search=document.getElementById(base+'_search'),results=document.getElementById(base+'_results');
+    if(!hidden||!search||!results)return;
+    const families=DB.families||[];
+    const label=x=>{const head=String(x['Family Head']||'').trim(),surname=String(x.Surname||'').trim(),loc=String(x['Village Locality']||'').trim(),idv=String(x['Family ID']||'').trim();return {id:idv,text:[head,surname&&surname.toLowerCase()!==head.toLowerCase()?surname:'',loc].filter(Boolean).join(' · ')+' ('+idv+')'};};
+    const selected=families.find(x=>String(x['Family ID']||'').trim()===String(hidden.value||'').trim());
+    if(selected)search.value=label(selected).text;
+    const close=()=>{results.hidden=true;results.innerHTML='';};
+    const show=()=>{
+      const q=search.value.trim().toLocaleLowerCase('en-IN');
+      const matches=families.map(x=>({x,...label(x)})).filter(o=>!q||[o.text,o.id,o.x['Family Head'],o.x.Surname,o.x['Village Locality']].some(v=>String(v||'').toLocaleLowerCase('en-IN').includes(q))).slice(0,30);
+      results.innerHTML='';
+      if(!matches.length){results.innerHTML='<div class="mal-family-empty">No matching family. Check the spelling or Family ID.</div>';results.hidden=false;return;}
+      matches.forEach(o=>{
+        const b=document.createElement('button');b.type='button';b.className='mal-family-result';b.innerHTML='<strong>'+esc(String(o.x['Family Head']||'Family'))+'</strong><span>'+esc([o.x.Surname,o.x['Village Locality'],o.id].filter(Boolean).join(' · '))+'</span>';
+        b.addEventListener('click',()=>{hidden.value=o.id;search.value=o.text;close();hidden.dispatchEvent(new Event('change',{bubbles:true}));});
+        results.append(b);
+      });
+      results.hidden=false;
+    };
+    search.addEventListener('focus',show);
+    search.addEventListener('input',show);
+    search.addEventListener('keydown',e=>{if(e.key==='Escape'){close();search.blur();}else if(e.key==='Enter'&&!results.hidden){e.preventDefault();const first=results.querySelector('button');if(first)first.click();}});
+    document.addEventListener('click',e=>{if(!e.target.closest('.mal-family-picker'))close();});
+  });
 
   function fillMembers(){
     if(!memEl) return;
