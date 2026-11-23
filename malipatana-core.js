@@ -71,7 +71,7 @@
    ========================================================================= */
 const CONFIG = {
   API_URL: 'https://script.google.com/macros/s/AKfycbwkweVh5BM35fHP86Uxs2bEjODXq0TpcnP3q665nAG2Z0Z8GIKzSa5Oe6l7KqZZCf6oSA/exec',
-  VERSION: 'FE V3.6.1-GOVERNANCE-ALIGNED',
+  VERSION: 'FE V3.6.2-GOVERNANCE-DRIVE-DOCUMENTS',
   EXPECTED_BACKEND: 'BE V1.8.42-RECURRING-COMPLIANCE',
   IDLE_MINUTES: 30,
   /* Photo shown when no photo has been set in Settings.
@@ -1554,8 +1554,10 @@ async function renderGovernanceCentre(){
   '<div class="mal-gov-kpis"><div><b>'+done+'/'+active.length+'</b><span>Compliance completed</span></div><div><b>'+pending+'</b><span>Open requirements</span></div><div><b>'+overdue+'</b><span>Overdue</span></div><div><b>'+tasks.filter(x=>!['Completed','Completed and verified'].includes(String(x.Status||''))).length+'</b><span>Open governance tasks</span></div></div>'+
   '<section class="panel mal-gov-panel"><div class="panel-head"><h3>Compliance register</h3><button class="btn btn-primary btn-sm" id="govAddCompliance">＋ Add requirement</button></div><div class="panel-body"><div class="tablewrap"><table class="grid"><thead><tr><th>Requirement</th><th>Applicability</th><th>Frequency</th><th>Next due / last completed</th><th>Status</th><th>Responsible officer</th><th></th></tr></thead><tbody>'+(complianceRows||'<tr><td colspan="7">No requirements recorded.</td></tr>')+'</tbody></table></div></div></section>'+
   '<section class="panel mal-gov-panel"><div class="panel-head"><h3>Office-bearer & governance tasks</h3><button class="btn btn-primary btn-sm" id="govAddTask">＋ Assign task</button></div><div class="panel-body"><div class="small muted">Each task should have one accountable owner. The responsible officer performs the work; approver and reviewer provide oversight.</div><div class="tablewrap" style="margin-top:10px"><table class="grid"><thead><tr><th>Task</th><th>Accountable owner</th><th>Responsible officer</th><th>Due date</th><th>Status</th><th></th></tr></thead><tbody>'+(taskRows||'<tr><td colspan="6">No governance tasks assigned.</td></tr>')+'</tbody></table></div></div></section>'+
+  '<section class="panel mal-gov-panel"><div class="panel-head"><h3>Governance & legal documents</h3><span class="small muted">Private Google Drive</span></div><div class="panel-body" id="govDocuments"><div class="small muted">Loading authorised Drive documents…</div></div></section>'+
   '<section class="panel mal-gov-panel"><div class="panel-head"><h3>Upcoming compliance deadlines</h3></div><div class="panel-body">'+(upcoming.length?'<div class="mal-gov-upcoming">'+upcoming.map(x=>'<div><b>'+escv(x.Requirement)+'</b><span>'+escv(x['Due Date'])+' · '+escv(x['Responsible Officer']||x['Accountable Owner']||'Unassigned')+'</span></div>').join('')+'</div>':'<div class="muted small">No upcoming due dates recorded. Add dates after verifying the applicable statutory or internal schedule.</div>')+'</div></section>'+
   '<div class="fieldnote">The initial checklist is a starting register. Conditional items include tax approvals, donor reporting, TDS/GST and foreign-contribution controls. Verify current form numbers and deadlines before filing.</div>';
+  loadGovernanceDocuments_();
   $('#govReload').onclick=()=>renderGovernanceCentre();
   $('#govAddCompliance').onclick=()=>editGovernanceRecord('compliance',null,compliance);
   $('#govAddTask').onclick=()=>editGovernanceRecord('task',null,tasks);
@@ -1564,6 +1566,20 @@ async function renderGovernanceCentre(){
   host.querySelectorAll('[data-gov-complete]').forEach(b=>b.onclick=async()=>{const id=b.dataset.govComplete;const date=prompt('Completion date (YYYY-MM-DD):',new Date().toISOString().slice(0,10));if(date===null)return;if(!/^\d{4}-\d{2}-\d{2}$/.test(date)){toast('Enter date as YYYY-MM-DD','bad');return;}try{const x=await api('governanceComplete',{id,completedDate:date});if(!x||!x.ok)throw Error(x&&x.error||'Could not complete cycle');toast(x.nextDueDate?'Completed. Next due '+x.nextDueDate:'Marked completed','good');renderGovernanceCentre();}catch(e){toast(e.message||String(e),'bad');}});
 
  }catch(e){host.innerHTML='<div class="panel"><div class="empty"><b>Could not load Governance Centre</b>'+esc(e.message||String(e))+'<div class="small muted">If the tabs have not yet been created, run setupGovernanceCentre() in the Apps Script editor and redeploy the backend.</div></div></div>';}
+}
+
+async function loadGovernanceDocuments_(){
+ const host=document.getElementById('govDocuments');if(!host)return;
+ try{
+  const r=await api('governanceDocuments');
+  if(!r||!r.ok)throw Error(r&&r.error||'Could not load Drive documents.');
+  if(!r.installed){host.innerHTML='<div class="empty">Documents have not yet been installed in Drive. Run <b>installGovernanceDocumentsToDrive()</b> once from the Apps Script editor, then refresh this section.</div>';return;}
+  const files=r.files||[];
+  const labels={'MVWS_MOA_and_Registration_Package_v1.3.docx':'MOA & Registration Package · Version 1.3','MVWS_Detailed_Bylaws_v1.3.docx':'Detailed Bylaws · Version 1.3'};
+  host.innerHTML='<div class="small muted" style="margin-bottom:10px">Stored in your private Malipatana Drive folder. Access follows Google Drive permissions.</div>'+
+   (files.length?files.map(f=>'<div style="display:flex;align-items:center;gap:12px;justify-content:space-between;flex-wrap:wrap;padding:12px 0;border-top:1px solid var(--line)"><div style="min-width:0"><b>▤ '+esc(labels[f.name]||f.name)+'</b><div class="small muted">Updated '+esc(f.updated?new Date(f.updated).toLocaleDateString('en-IN'):'—')+'</div></div><a class="btn btn-sm btn-primary" href="'+esc(f.url)+'" target="_blank" rel="noopener noreferrer">Open in Drive ↗</a></div>').join(''):'<div class="empty">No documents found in the private folder.</div>')+
+   '<div style="margin-top:8px"><a class="btn btn-sm" href="'+esc(r.folderUrl)+'" target="_blank" rel="noopener noreferrer">Open document folder ↗</a></div>';
+ }catch(e){host.innerHTML='<div class="empty">Drive documents unavailable: '+esc(e.message||String(e))+'</div>';}
 }
 async function editGovernanceRecord(kind,id,rows){
  const isC=kind==='compliance',key=isC?'Compliance ID':'Task ID',old=(rows||[]).find(x=>String(x[key])===String(id))||{};
