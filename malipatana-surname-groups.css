@@ -46,3 +46,20 @@
 .mal-family-result strong{font-size:13px;font-weight:800}
 .mal-family-result span,.mal-family-empty{font-size:11px;color:var(--muted,#657b79)}
 .mal-family-empty{padding:12px}
+
+/* Governance single-screen editor */
+.mal-gov-editor{padding:2px}
+.mal-gov-editor-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:2px 2px 16px;border-bottom:1px solid var(--line,#dce7e3)}
+.mal-gov-editor-head h2{margin:4px 0;font-size:21px;color:var(--ink,#183e39)}
+.mal-gov-editor-head p{margin:0;color:var(--muted,#657b79);font-size:12px}
+.mal-gov-editor-head .eyebrow{font-size:10px;font-weight:850;letter-spacing:1.5px;color:var(--accent,#08796d)}
+.mal-gov-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px 16px;padding:18px 2px}
+.mal-gov-field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.mal-gov-field>span{font-size:12px;font-weight:800;color:var(--ink,#23443f)}
+.mal-gov-field>span i{color:#c04d35;font-style:normal}
+.mal-gov-field .input{width:100%;min-height:40px;border:1px solid var(--line,#cbded6);border-radius:10px;padding:9px 11px;background:var(--panel,#fff);color:var(--ink,#183e39);font:inherit;font-size:13px}
+.mal-gov-field textarea.input{resize:vertical;min-height:76px}
+.mal-gov-field.wide{grid-column:1/-1}
+.mal-gov-form-note{padding:10px 12px;background:var(--soft,#eff7f3);border-radius:10px;color:var(--muted,#607771);font-size:11px}
+.mal-gov-editor-actions{display:flex;justify-content:flex-end;gap:9px;padding-top:15px;margin-top:14px;border-top:1px solid var(--line,#dce7e3)}
+@media(max-width:650px){.mal-gov-form-grid{grid-template-columns:1fr;gap:11px}.mal-gov-field.wide{grid-column:auto}.mal-gov-editor-head h2{font-size:18px}}
