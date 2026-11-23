@@ -1998,7 +1998,7 @@ function buildNav(){
                                        ['photos', '❏', 'Photos', null],
                                        ['settingsList', '⚙', 'Settings', 'settingsList'],
                                        ['surnameGroups', '♧', 'Surname groups & duties', null],
-                                       ['governanceCentre', '▤', 'Governance & compliance', null]]);
+                                       ['governanceCentre', '▤', 'Governance & compliance', null]]]);
   let html = '';
   groups.forEach(([title, items]) => {
     if(!items.length) return;   // a heading with nothing under it is just noise
