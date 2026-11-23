@@ -71,8 +71,8 @@
    ========================================================================= */
 const CONFIG = {
   API_URL: 'https://script.google.com/macros/s/AKfycbwkweVh5BM35fHP86Uxs2bEjODXq0TpcnP3q665nAG2Z0Z8GIKzSa5Oe6l7KqZZCf6oSA/exec',
-  VERSION: 'FE V3.6.2-GOVERNANCE-DRIVE-DOCUMENTS',
-  EXPECTED_BACKEND: 'BE V1.8.42-RECURRING-COMPLIANCE',
+  VERSION: 'FE V3.6.3-GOVERNANCE-DOCUMENT-MANAGEMENT',
+  EXPECTED_BACKEND: 'BE V1.8.44-GOVERNANCE-DOCUMENT-MANAGEMENT',
   IDLE_MINUTES: 30,
   /* Photo shown when no photo has been set in Settings.
      village.jpg sits in the same folder as this file on GitHub. */
@@ -1571,14 +1571,25 @@ async function renderGovernanceCentre(){
 async function loadGovernanceDocuments_(){
  const host=document.getElementById('govDocuments');if(!host)return;
  try{
-  const r=await api('governanceDocuments');
-  if(!r||!r.ok)throw Error(r&&r.error||'Could not load Drive documents.');
-  if(!r.installed){host.innerHTML='<div class="empty">Documents have not yet been installed in Drive. Run <b>installGovernanceDocumentsToDrive()</b> once from the Apps Script editor, then refresh this section.</div>';return;}
-  const files=r.files||[];
-  const labels={'MVWS_MOA_and_Registration_Package_v1.3.docx':'MOA & Registration Package · Version 1.3','MVWS_Detailed_Bylaws_v1.3.docx':'Detailed Bylaws · Version 1.3'};
-  host.innerHTML='<div class="small muted" style="margin-bottom:10px">Stored in your private Malipatana Drive folder. Access follows Google Drive permissions.</div>'+
-   (files.length?files.map(f=>'<div style="display:flex;align-items:center;gap:12px;justify-content:space-between;flex-wrap:wrap;padding:12px 0;border-top:1px solid var(--line)"><div style="min-width:0"><b>▤ '+esc(labels[f.name]||f.name)+'</b><div class="small muted">Updated '+esc(f.updated?new Date(f.updated).toLocaleDateString('en-IN'):'—')+'</div></div><a class="btn btn-sm btn-primary" href="'+esc(f.url)+'" target="_blank" rel="noopener noreferrer">Open in Drive ↗</a></div>').join(''):'<div class="empty">No documents found in the private folder.</div>')+
-   '<div style="margin-top:8px"><a class="btn btn-sm" href="'+esc(r.folderUrl)+'" target="_blank" rel="noopener noreferrer">Open document folder ↗</a></div>';
+  const r=await api('governanceDocuments');if(!r||!r.ok)throw Error(r&&r.error||'Could not load Drive documents.');
+  if(!r.installed){host.innerHTML='<div class="empty">Documents are not installed. Run installGovernanceDocumentsToDrive() in Apps Script.</div>';return;}
+  const files=r.files||[],labels={'MVWS_MOA_and_Registration_Package_v1.3.docx':'MOA & Registration Package','MVWS_Detailed_Bylaws_v1.3.docx':'Detailed Bylaws'},statuses=['Draft','Under Review','Approved','Registered','Archived'];
+  host.innerHTML='<div class="small muted">Private Google Drive · Status, version, reviewer, review dates and change history. No additional spreadsheet is created.</div>'+
+  (files.length?files.map(f=>{
+   const h=Array.isArray(f.history)?f.history:[],due=f.reviewDue||'',late=due&&due<today()&&f.status!=='Archived';
+   return '<article data-gov-doc="'+esc(f.id)+'" style="border:1px solid var(--line);border-radius:12px;padding:14px;margin:10px 0"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><div><b>▤ '+esc(labels[f.name]||f.name)+'</b><div class="small muted">'+esc(f.name)+' · Drive updated '+esc(f.updated?new Date(f.updated).toLocaleDateString('en-IN'):'—')+'</div><div style="margin-top:7px"><span class="badge">'+esc(f.status||'Draft')+'</span> <span class="small muted">Version '+esc(f.version||'1.0')+'</span> '+(due?'<span class="small '+(late?'errline':'muted')+'">'+(late?'Review overdue · ':'Review due · ')+esc(fmtDate(due))+'</span>':'<span class="small muted">Review date not set</span>')+'</div></div><div style="display:flex;gap:6px;flex-wrap:wrap"><a class="btn btn-sm btn-primary" href="'+esc(f.url)+'" target="_blank" rel="noopener">Open / Print ↗</a><a class="btn btn-sm" href="https://drive.google.com/uc?export=download&id='+encodeURIComponent(f.id)+'" target="_blank" rel="noopener">Download ↓</a></div></div>'+
+   '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:9px;margin-top:12px"><label class="small">Status<select class="input" data-doc-field="status">'+statuses.map(v=>'<option '+(String(f.status||'Draft')===v?'selected':'')+'>'+v+'</option>').join('')+'</select></label><label class="small">Version<input class="input" data-doc-field="version" value="'+esc(f.version||'1.0')+'"></label><label class="small">Reviewer<input class="input" data-doc-field="reviewer" value="'+esc(f.reviewer||'')+'" placeholder="Name / role"></label><label class="small">Next review date<input class="input" type="date" data-doc-field="reviewDue" value="'+esc(due)+'"></label></div>'+
+   '<label class="small" style="display:block;margin-top:9px">Management remarks<textarea class="input" rows="2" data-doc-field="remarks">'+esc(f.remarks||'')+'</textarea></label><div style="text-align:right;margin-top:8px"><button class="btn btn-sm btn-primary" data-doc-save="'+esc(f.id)+'">Save document record</button></div>'+
+   (f.approvedBy?'<div class="small muted">Approved / registered by '+esc(f.approvedBy)+' · '+esc(f.approvedAt?new Date(f.approvedAt).toLocaleString('en-IN'):'')+'</div>':'')+
+   '<details style="margin-top:9px"><summary class="small">Version & audit history ('+h.length+')</summary><div class="small muted">'+(h.length?h.slice().reverse().map(x=>'<div style="padding:6px 0;border-top:1px solid var(--line)"><b>'+esc(x.action||'Updated')+'</b> · '+esc(x.version||'')+' · '+esc(x.status||'')+'<br>'+esc(x.by||'')+' · '+esc(x.at?new Date(x.at).toLocaleString('en-IN'):'')+(x.remarks?'<br>'+esc(x.remarks):'')+'</div>').join(''):'No changes recorded yet.')+'</div></details></article>';
+  }).join(''):'<div class="empty">No documents found in the private folder.</div>')+
+  '<div style="margin-top:8px"><a class="btn btn-sm" href="'+esc(r.folderUrl)+'" target="_blank" rel="noopener">Open document folder ↗</a></div><div class="fieldnote">Approval status records the administrator and timestamp; it does not certify legal validity. Store signed or registered copies in this private Drive folder.</div>';
+  host.querySelectorAll('[data-doc-save]').forEach(btn=>btn.onclick=async()=>{
+   const card=btn.closest('[data-gov-doc]'),get=k=>card.querySelector('[data-doc-field="'+k+'"]').value.trim(),payload={id:btn.dataset.docSave,status:get('status'),version:get('version'),reviewer:get('reviewer'),reviewDue:get('reviewDue'),remarks:get('remarks')};
+   btn.disabled=true;btn.textContent='Saving…';
+   try{const x=await api('governanceDocSave',payload);if(!x||!x.ok)throw Error(x&&x.error||'Save failed');toast('Document record updated','good');await loadGovernanceDocuments_();}
+   catch(e){toast(e.message||String(e),'bad');btn.disabled=false;btn.textContent='Save document record';}
+  });
  }catch(e){host.innerHTML='<div class="empty">Drive documents unavailable: '+esc(e.message||String(e))+'</div>';}
 }
 async function editGovernanceRecord(kind,id,rows){
