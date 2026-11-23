@@ -1732,22 +1732,26 @@ async function doLogin(){
   const btn = $('#loginBtn'), msg = $('#loginMsg');
   const username = $('#u').value.trim(), password = $('#p').value;
   if(!username || !password){ msg.className = 'msg err'; msg.textContent = 'Enter your username and password.'; return; }
-  btn.disabled = true;
-  msg.className = 'msg info'; msg.textContent = 'Checking with the sheet…';
+  btn.disabled = true; btn.setAttribute('aria-busy','true');
+  msg.className = 'msg info'; msg.textContent = 'Connecting securely to the village register…';
   try {
     const r = await api('login', { username, password });
-    if(!r || !r.ok) throw new Error((r && r.error) || 'Sign in failed.');
+    if(!r || !r.ok) throw new Error((r && r.error) || 'Sign in failed. Check the username, password and account status.');
+    if(!r.user || !r.user.token) throw new Error('The server response was incomplete. Check the deployed Apps Script version.');
     USER = r.user;
     store.set('mal_user', JSON.stringify(USER));
     if($('#rememberMe') && $('#rememberMe').checked) local.set('mal_saved_user', username);
     else { try { localStorage.removeItem('mal_saved_user'); } catch(e){} }
-    msg.textContent = 'Loading village records…';
+    msg.textContent = 'Sign-in accepted. Loading village records…';
     await load();
     enterApp();
   } catch(e){
     msg.className = 'msg err';
-    msg.textContent = e.message;
-  } finally { btn.disabled = false; }
+    const reason=String(e&&e.message||e||'Sign in failed.');
+    msg.textContent = /did not answer in time|Could not reach the sheet|ScriptError|network|Failed to load/i.test(reason)
+      ? 'The village server did not respond. Check the internet connection and Apps Script deployment, then use Repair cache / session and try again. ('+reason+')'
+      : reason;
+  } finally { btn.disabled = false; btn.removeAttribute('aria-busy'); }
 }
 function doLogout(){ store.del('mal_user'); location.reload(); }
 const isAdmin = () => String(USER && USER.role || '').toLowerCase() === 'admin';
@@ -7651,7 +7655,9 @@ async function malRefreshVerificationChip(){
   try{const r=await api('myVerification');if(r&&r.ok)malUpdateVerificationChip(r);}catch(e){}
 }
 
+$('#loginBtn').type = 'button';
 $('#loginBtn').onclick = doLogin;
+$('#loginBtn').addEventListener('click', ev => { ev.preventDefault(); }, {passive:false});
 $('#p').addEventListener('keydown', e => { if(e.key === 'Enter') doLogin(); });
 $('#u').addEventListener('keydown', e => { if(e.key === 'Enter') $('#p').focus(); });
 $('#logoutBtn').onclick = doLogout;
