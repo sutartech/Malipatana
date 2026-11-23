@@ -36,3 +36,13 @@
 .mal-gov-actions{white-space:nowrap;min-width:190px}
 .mal-gov-actions .btn{margin:2px}
 @media(max-width:760px){.mal-gov-panel table{min-width:980px}}
+
+/* Searchable family selector */
+.mal-family-picker{position:relative}
+.mal-family-picker>.input{width:100%}
+.mal-family-results{position:absolute;z-index:1200;top:calc(100% - 24px);left:0;right:0;max-height:260px;overflow:auto;background:var(--panel,#fff);border:1px solid var(--line,#cbd9d8);border-radius:12px;box-shadow:0 12px 28px rgba(10,40,42,.2);padding:5px}
+.mal-family-result{display:flex;flex-direction:column;gap:2px;width:100%;padding:9px 11px;text-align:left;border:0;border-radius:8px;background:transparent;color:var(--ink,#173b3a);cursor:pointer}
+.mal-family-result:hover,.mal-family-result:focus{background:var(--soft,#eaf5f2);outline:none}
+.mal-family-result strong{font-size:13px;font-weight:800}
+.mal-family-result span,.mal-family-empty{font-size:11px;color:var(--muted,#657b79)}
+.mal-family-empty{padding:12px}
