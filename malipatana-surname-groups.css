@@ -32,3 +32,7 @@
 .mal-gov-upcoming>div{border:1px solid var(--line,#dce5e8);border-radius:11px;padding:11px 13px;display:flex;flex-direction:column;gap:4px;background:var(--panel,#fff)}
 .mal-gov-upcoming span{font-size:12px;color:var(--muted,#637780)}
 @media(max-width:700px){.mal-gov-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.mal-gov-panel .panel-body{padding:12px}.mal-gov-panel table{min-width:760px}}
+
+.mal-gov-actions{white-space:nowrap;min-width:190px}
+.mal-gov-actions .btn{margin:2px}
+@media(max-width:760px){.mal-gov-panel table{min-width:980px}}
