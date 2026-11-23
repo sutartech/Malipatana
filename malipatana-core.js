@@ -4400,7 +4400,7 @@ function fieldHtml(key, f, value, editing, rec){
     }
     case 'family':
       input = `<select class="input" id="${id}" data-role="family"><option value=""></option>` +
-        (DB.families || []).map(x => `<option value="${esc(x['Family ID'])}" ${String(val) === String(x['Family ID']) ? 'selected' : ''}>${esc(x['Family ID'])}</option>`).join('') + `</select>`; break;
+        (DB.families || []).map(x => { const fid=String(x['Family ID']||'').trim(); const head=String(x['Family Head']||'').trim(); const surname=String(x.Surname||'').trim(); const locality=String(x['Village Locality']||'').trim(); const label=[head,surname && surname.toLowerCase()!==head.toLowerCase()?surname:'',locality].filter(Boolean).join(' · '); return `<option value="${esc(fid)}" ${String(val) === fid ? 'selected' : ''}>${esc(label || 'Family')} (${esc(fid)})</option>`; }).join('') + `</select>`; break;
     case 'member':
       input = `<select class="input" id="${id}" data-role="member"></select>`; break;
     case 'guide': {
