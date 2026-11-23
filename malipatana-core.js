@@ -1568,6 +1568,19 @@ async function renderGovernanceCentre(){
  }catch(e){host.innerHTML='<div class="panel"><div class="empty"><b>Could not load Governance Centre</b>'+esc(e.message||String(e))+'<div class="small muted">If the tabs have not yet been created, run setupGovernanceCentre() in the Apps Script editor and redeploy the backend.</div></div></div>';}
 }
 
+async function renderMyGovernanceDocs(){
+ const host=$('#main');host.innerHTML='<section class="panel"><div class="panel-head"><h2>Authorised governance documents</h2></div><div class="panel-body"><div id="myGovDocs" class="empty">Checking your document permissions…</div></div></section>';
+ const box=document.getElementById('myGovDocs');
+ try{
+  const r=await api('governanceDocuments');if(!r||!r.ok)throw Error(r&&r.error||'Could not check document access.');
+  const files=r.files||[];
+  if(!files.length){box.innerHTML='<div class="empty">No governance documents have been assigned to your account. Contact the Malipatana Admin if you require access.</div>';return;}
+  box.innerHTML=files.map(f=>'<article style="border:1px solid var(--line);border-radius:12px;padding:14px;margin:10px 0"><b>'+esc(f.name)+'</b><div class="small muted" style="margin:5px 0">Status: '+esc(f.status||'Draft')+' · Version '+esc(f.version||'1.0')+'</div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:9px">'+(f.access&&f.access.canDownload!==false?'<button class="btn btn-sm btn-primary" data-gov-download="'+esc(f.id)+'" data-gov-name="'+esc(f.name)+'">Download document</button>':'<span class="small muted">Download disabled</span>')+(f.access&&f.access.canPrint===true?'<button class="btn btn-sm" data-gov-print="'+esc(f.id)+'" data-gov-name="'+esc(f.name)+'">Download for printing</button>':'')+'</div></article>').join('');
+  const deliver=async(btn,purpose)=>{btn.disabled=true;const old=btn.textContent;btn.textContent='Retrieving securely…';try{const x=await api('governanceDocContent',{id:btn.dataset.govDownload||btn.dataset.govPrint,purpose});if(!x||!x.ok)throw Error(x&&x.error||'Document retrieval failed');const raw=atob(x.base64),bytes=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)bytes[i]=raw.charCodeAt(i);const blob=new Blob([bytes],{type:x.mimeType||'application/octet-stream'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=x.name||btn.dataset.govName||'governance-document.docx';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);toast(purpose==='print'?'Document downloaded for printing':'Document downloaded','good');}catch(e){toast(e.message||String(e),'bad');}finally{btn.disabled=false;btn.textContent=old;}};
+  box.querySelectorAll('[data-gov-download]').forEach(b=>b.onclick=()=>deliver(b,'download'));
+  box.querySelectorAll('[data-gov-print]').forEach(b=>b.onclick=()=>deliver(b,'print'));
+ }catch(e){box.textContent=e.message||String(e);}
+}
 async function loadGovernanceDocuments_(){
  const host=document.getElementById('govDocuments');if(!host)return;
  try{
@@ -2081,6 +2094,7 @@ function buildNav(){
       if(m && m.odia) it[2] = m.odia;
     }));
   }
+  groups.push(['DOCUMENTS', [['myGovernanceDocs', '▤', 'Authorised documents', null]]]);
   if(isAdmin()) groups.push(['GLOBAL ADMINISTRATOR', [['users', '☺', 'Users', 'users'],
                                        ['publicPage', '◉', 'What people see', null],
                                        ['auditLog', '☶', 'Change history', null],
@@ -2120,6 +2134,7 @@ function render(){
   document.querySelectorAll('.nav').forEach(b => b.classList.toggle('active', b.dataset.page === PAGE));
   if(PAGE === 'surnameGroups') return renderSurnameGroups();
   if(PAGE === 'governanceCentre') return renderGovernanceCentre();
+  if(PAGE === 'myGovernanceDocs') return renderMyGovernanceDocs();
   if(PAGE === 'guidance') return renderGuidance();
   if(PAGE === 'household') return renderHousehold();
   if(PAGE === 'memorial') return renderMemorial();
