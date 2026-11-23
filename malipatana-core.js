@@ -2119,7 +2119,7 @@ const MODULES = {
       { n:'Memorial Message', t:'textarea', hidden:true },
       { n:'Memorial Photo', t:'photo', hidden:true }
     ],
-    list: ['Photo','Member ID','Name','Surname','Family ID','Relation to Family Head','Gender','Marital Status','Spouse Name','Residence Status','Date of Birth','Age','Education','Occupation','Earning Member','Monthly Income','Mobile','Life Status']
+    list: ['Photo','Member ID','Name','Surname','Family ID','Marital Family ID','Relation to Family Head','Gender','Marital Status','Spouse Name','Residence Status','Date of Birth','Age','Education','Occupation','Earning Member','Monthly Income','Mobile','Life Status']
   },
   recurring: {
     sheet: 'Recurring Expenses', title: 'Recurring expenses', odia: 'ନିୟମିତ ଖର୍ଚ୍ଚ', idField: 'Recurring ID', prefix: 'REC',
