@@ -3072,6 +3072,7 @@ function renderDashboard(){
         <div class="ux-home-work">${fresh ? '' : monthWorkHtml()}</div>
         ${quickPanel}
       </div>
+      ${projectOverviewHtml()}
       <details class="ux-home-section ux-upcoming" ${importantToday?'open':''}>
         <summary><span class="ux-section-badge">◷</span><span class="ux-section-title">Coming up & remembrance<small>${upcomingCount ? upcomingCount + ' upcoming item' + (upcomingCount===1?'':'s') : 'Dates, festivals and the remembrance calendar'}</small></span><span class="ux-expand-label">Details</span></summary>
         <div class="ux-home-expanded">${daysHtml(upcomingDays)}${remembranceHtml(remembranceDays, true)}</div>
