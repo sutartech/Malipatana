@@ -1,0 +1,20 @@
+/* Surname group dashboard — compact responsive cards */
+.mal-surname-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:12px 0 16px}
+.mal-surname-summary>div{background:var(--panel,#fff);border:1px solid var(--line,#e3e8eb);border-radius:14px;padding:12px 15px;display:flex;flex-direction:column;gap:2px}
+.mal-surname-summary b{font-size:22px;font-weight:800;color:var(--ink,#17313b)}
+.mal-surname-summary span{font-size:12px;color:var(--muted,#637780);font-weight:600}
+.mal-surname-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr));gap:13px}
+.mal-surname-card{min-width:0;border:1px solid #dbe5e8;border-radius:17px;padding:15px;background:linear-gradient(145deg,#f2f8f7 0%,#fff 70%);box-shadow:0 5px 16px #193d4a0d}
+.mal-surname-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.mal-surname-kicker{font-size:10px;letter-spacing:.12em;font-weight:800;color:#66818a}
+.mal-surname-top h3{margin:2px 0 1px;font-size:21px;font-weight:800;color:#173c49}
+.mal-surname-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin:13px 0}
+.mal-surname-stats>div{background:#fff;border:1px solid #e3ebed;border-radius:11px;padding:9px 5px;text-align:center;min-width:0}
+.mal-surname-stats b{display:block;font-size:19px;font-weight:800;color:#1b4653}
+.mal-surname-stats span{display:block;font-size:10px;line-height:1.25;color:#61757d;font-weight:650}
+.mal-surname-meta{display:flex;justify-content:space-between;gap:10px;padding:7px 1px;border-top:1px solid #e5ecee;font-size:12px}
+.mal-surname-meta span{color:#65777d}.mal-surname-meta b{text-align:right;color:#294c57}
+.mal-surname-actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
+.mal-surname-task{display:flex;justify-content:space-between;gap:10px;margin-top:8px;padding:9px 10px;background:#fff;border:1px solid #e6edef;border-radius:10px;font-size:12px}
+.mal-surname-task span{color:#61757d;text-align:right}
+@media(max-width:560px){.mal-surname-summary{gap:7px}.mal-surname-summary>div{padding:10px}.mal-surname-stats{gap:5px}.mal-surname-stats>div{padding:8px 2px}.mal-surname-stats span{font-size:9px}.mal-surname-actions .btn{flex:1}.mal-surname-task{flex-direction:column;gap:2px}.mal-surname-task span{text-align:left}}
