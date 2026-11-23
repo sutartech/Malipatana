@@ -1532,6 +1532,49 @@ function api(action, params){
   });
 }
 
+
+/* Governance & Compliance Centre — admin-only; data stored in two dedicated tabs. */
+async function renderGovernanceCentre(){
+ if(!isAdmin()){ $('#main').innerHTML='<div class="empty"><b>Admins only</b></div>';return; }
+ const host=$('#main');host.innerHTML='<div class="panel"><div class="empty">Loading governance registers…</div></div>';
+ try{
+  const res=await api('governanceData');if(!res||!res.ok)throw Error(res&&res.error||'Could not load governance data.');
+  const compliance=res.compliance||[],tasks=res.tasks||[];
+  const active=compliance.filter(x=>!['Not applicable','N/A'].includes(String(x.Applicability||'')));
+  const done=active.filter(x=>['Completed','Completed and verified'].includes(String(x.Status||''))).length;
+  const overdue=active.filter(x=>x['Due Date']&&x['Due Date']<new Date().toISOString().slice(0,10)&&!['Completed','Completed and verified','Not applicable','N/A'].includes(String(x.Status||''))).length;
+  const pending=active.length-done;
+  const upcoming=active.filter(x=>x['Due Date']&&x['Due Date']>=new Date().toISOString().slice(0,10)&&!['Completed','Completed and verified','Not applicable','N/A'].includes(String(x.Status||''))).sort((a,b)=>String(a['Due Date']).localeCompare(String(b['Due Date']))).slice(0,5);
+  const escv=v=>esc(v==null?'':String(v));
+  const statusCls=v=>['Completed','Completed and verified'].includes(v)?'good':['Overdue','On hold'].includes(v)?'bad':'';
+  const complianceRows=compliance.map(x=>'<tr><td><b>'+escv(x.Requirement)+'</b><div class="small muted">'+escv(x['Compliance ID'])+' · '+escv(x.Category)+'</div></td><td>'+escv(x.Applicability)+'</td><td>'+escv(x['Due Date']||'—')+'</td><td><span class="badge '+statusCls(x.Status)+'">'+escv(x.Status||'Not started')+'</span></td><td>'+escv(x['Responsible Officer']||x['Accountable Owner']||'Unassigned')+'</td><td><button class="btn btn-sm" data-gov-edit="compliance" data-id="'+escv(x['Compliance ID'])+'">Edit</button></td></tr>').join('');
+  const taskRows=tasks.map(x=>'<tr><td><b>'+escv(x['Task Title'])+'</b><div class="small muted">'+escv(x['Task ID'])+' · '+escv(x.Workstream)+'</div></td><td>'+escv(x['Accountable Owner']||'—')+'</td><td>'+escv(x['Responsible Officer']||'—')+'</td><td>'+escv(x['Due Date']||'—')+'</td><td><span class="badge '+statusCls(x.Status)+'">'+escv(x.Status||'Not started')+'</span></td><td><button class="btn btn-sm" data-gov-edit="task" data-id="'+escv(x['Task ID'])+'">Edit</button></td></tr>').join('');
+  host.innerHTML='<div class="pagehead"><div><h2>Governance & compliance</h2><div class="sub">Compliance obligations, office-bearer accountability and committee work in one controlled register.</div></div><div class="sp"></div><button class="btn" id="govReload">↻ Refresh</button></div>'+
+  '<div class="notice"><b>Important:</b> This is an internal management tracker, not a legal opinion. Mark an item “Not applicable” only after confirming the Society’s actual registrations, income, activities and current legal requirements with its CA / society-law adviser. Keep evidence links restricted to authorised officers.</div>'+
+  '<div class="mal-gov-kpis"><div><b>'+done+'/'+active.length+'</b><span>Compliance completed</span></div><div><b>'+pending+'</b><span>Open requirements</span></div><div><b>'+overdue+'</b><span>Overdue</span></div><div><b>'+tasks.filter(x=>!['Completed','Completed and verified'].includes(String(x.Status||''))).length+'</b><span>Open governance tasks</span></div></div>'+
+  '<section class="panel mal-gov-panel"><div class="panel-head"><h3>Compliance register</h3><button class="btn btn-primary btn-sm" id="govAddCompliance">＋ Add requirement</button></div><div class="panel-body"><div class="tablewrap"><table class="grid"><thead><tr><th>Requirement</th><th>Applicability</th><th>Due date</th><th>Status</th><th>Responsible officer</th><th></th></tr></thead><tbody>'+(complianceRows||'<tr><td colspan="6">No requirements recorded.</td></tr>')+'</tbody></table></div></div></section>'+
+  '<section class="panel mal-gov-panel"><div class="panel-head"><h3>Office-bearer & governance tasks</h3><button class="btn btn-primary btn-sm" id="govAddTask">＋ Assign task</button></div><div class="panel-body"><div class="small muted">Each task should have one accountable owner. The responsible officer performs the work; approver and reviewer provide oversight.</div><div class="tablewrap" style="margin-top:10px"><table class="grid"><thead><tr><th>Task</th><th>Accountable owner</th><th>Responsible officer</th><th>Due date</th><th>Status</th><th></th></tr></thead><tbody>'+(taskRows||'<tr><td colspan="6">No governance tasks assigned.</td></tr>')+'</tbody></table></div></div></section>'+
+  '<section class="panel mal-gov-panel"><div class="panel-head"><h3>Upcoming compliance deadlines</h3></div><div class="panel-body">'+(upcoming.length?'<div class="mal-gov-upcoming">'+upcoming.map(x=>'<div><b>'+escv(x.Requirement)+'</b><span>'+escv(x['Due Date'])+' · '+escv(x['Responsible Officer']||x['Accountable Owner']||'Unassigned')+'</span></div>').join('')+'</div>':'<div class="muted small">No upcoming due dates recorded. Add dates after verifying the applicable statutory or internal schedule.</div>')+'</div></section>'+
+  '<div class="fieldnote">The initial checklist is a starting register. Conditional items include tax approvals, donor reporting, TDS/GST and foreign-contribution controls. Verify current form numbers and deadlines before filing.</div>';
+  $('#govReload').onclick=()=>renderGovernanceCentre();
+  $('#govAddCompliance').onclick=()=>editGovernanceRecord('compliance',null,compliance);
+  $('#govAddTask').onclick=()=>editGovernanceRecord('task',null,tasks);
+  host.querySelectorAll('[data-gov-edit]').forEach(b=>b.onclick=()=>editGovernanceRecord(b.dataset.govEdit,b.dataset.id,b.dataset.govEdit==='compliance'?compliance:tasks));
+ }catch(e){host.innerHTML='<div class="panel"><div class="empty"><b>Could not load Governance Centre</b>'+esc(e.message||String(e))+'<div class="small muted">If the tabs have not yet been created, run setupGovernanceCentre() in the Apps Script editor and redeploy the backend.</div></div></div>';}
+}
+async function editGovernanceRecord(kind,id,rows){
+ const isC=kind==='compliance',key=isC?'Compliance ID':'Task ID',old=(rows||[]).find(x=>String(x[key])===String(id))||{};
+ const ask=(label,value)=>{const x=prompt(label,value==null?'':String(value));return x;};
+ const fields=isC?[
+  ['Requirement','Requirement'],['Category','Category'],['Applicability','Applicability (Yes / No / If eligible / If conditional)'],['Legal Reference / Notes','Legal reference / notes'],['Frequency','Frequency'],['Due Date','Due date YYYY-MM-DD'],['Status','Status (Not started / Assigned / In progress / Awaiting document / Awaiting approval / Submitted / Completed / Completed and verified / Not applicable / On hold)'],['Accountable Owner','Accountable owner'],['Responsible Officer','Responsible officer'],['Reviewer','Reviewer'],['Evidence URL','Evidence URL (https://)'],['Last Verified','Last verified YYYY-MM-DD'],['Remarks','Remarks']
+ ]:[
+  ['Task Title','Task title'],['Linked Compliance ID','Linked compliance ID (optional)'],['Workstream','Workstream'],['Accountable Owner','Accountable owner'],['Responsible Officer','Responsible officer'],['Approver','Approver'],['Reviewer','Reviewer'],['Priority','Priority (High / Medium / Low)'],['Status','Status (Not started / Assigned / In progress / Awaiting document / Awaiting approval / Submitted / Completed / Completed and verified / On hold)'],['Start Date','Start date YYYY-MM-DD'],['Due Date','Due date YYYY-MM-DD'],['Completed Date','Completed date YYYY-MM-DD'],['Evidence URL','Evidence URL (https://)'],['Remarks','Remarks']
+ ];
+ const rec={};if(id)rec[key]=id;
+ for(const [field,label] of fields){const v=ask(label+(field==='Requirement'||field==='Task Title'?' *':''),old[field]||'');if(v===null)return;rec[field]=v;}
+ try{const x=await api('governanceSave',{kind,record:JSON.stringify(rec)});if(!x||!x.ok)throw Error(x&&x.error||'Save failed');toast('Governance record saved','good');renderGovernanceCentre();}catch(e){toast(e.message||String(e),'bad');}
+}
+
 /* Optional account recovery. The sender verifies the configured email/phone.
    Never save OTP values or verification challenges in browser storage. */
 let malOtpChallenge='',malOtpPurpose='login',malResetTicket='';
@@ -1947,7 +1990,8 @@ function buildNav(){
                                        ['accessHistory', '◷', 'Access & submissions', null],
                                        ['photos', '❏', 'Photos', null],
                                        ['settingsList', '⚙', 'Settings', 'settingsList'],
-                                       ['surnameGroups', '♧', 'Surname groups & duties', null]]);
+                                       ['surnameGroups', '♧', 'Surname groups & duties', null],
+                                       ['governanceCentre', '▤', 'Governance & compliance', null]]);
   let html = '';
   groups.forEach(([title, items]) => {
     if(!items.length) return;   // a heading with nothing under it is just noise
@@ -1978,6 +2022,7 @@ function render(){
   setTimeout(() => { try { stickyBadge(); paintSticky(); } catch(e){} }, 0);
   document.querySelectorAll('.nav').forEach(b => b.classList.toggle('active', b.dataset.page === PAGE));
   if(PAGE === 'surnameGroups') return renderSurnameGroups();
+  if(PAGE === 'governanceCentre') return renderGovernanceCentre();
   if(PAGE === 'guidance') return renderGuidance();
   if(PAGE === 'household') return renderHousehold();
   if(PAGE === 'memorial') return renderMemorial();
