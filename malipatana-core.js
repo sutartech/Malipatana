@@ -72,7 +72,7 @@
 const CONFIG = {
   API_URL: 'https://script.google.com/macros/s/AKfycbwkweVh5BM35fHP86Uxs2bEjODXq0TpcnP3q665nAG2Z0Z8GIKzSa5Oe6l7KqZZCf6oSA/exec',
   VERSION: 'FE V3.6.0',
-  EXPECTED_BACKEND: 'BE V1.8.40-PROJECTS-FIX',
+  EXPECTED_BACKEND: 'BE V1.8.42-RECURRING-COMPLIANCE',
   IDLE_MINUTES: 30,
   /* Photo shown when no photo has been set in Settings.
      village.jpg sits in the same folder as this file on GitHub. */
@@ -7008,7 +7008,7 @@ async function bePing(){
     if(!r||!r.ok)throw healthFailure||new Error('Backend health check failed');
     if(r && r.ok){
       const actual = String(r.version || 'BE ?').trim();
-      const matches = actual === CONFIG.EXPECTED_BACKEND || actual === 'BE V1.8.31' || actual === 'BE V1.8.32' || actual === 'BE V1.8.33' || actual === 'BE V1.8.34' || actual === 'BE V1.8.35' || actual === 'BE V1.8.36' || actual === 'BE V1.8.37' || actual === 'BE V1.8.38' || actual === 'BE V1.8.38-MAL6';
+      const matches = actual === CONFIG.EXPECTED_BACKEND;
       chip.textContent = actual;
       chip.className = 'vchip ' + (matches ? 'ok' : 'bad');
       if(!matches && notice){
