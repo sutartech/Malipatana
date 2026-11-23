@@ -1587,5 +1587,36 @@ function reviewRequest(id){
 <script src="malipatana-notice-rich.js?v=1.1.0"></script>
 <link rel="stylesheet" href="malipatana-ux20.css?v=1.1.0">
 <script defer src="malipatana-ux20.js?v=1.1.0"></script>
+<script id="malLoginEmergencyHandlers">
+/* Independent login controls: remains available even if a later dashboard
+   enhancement fails during startup. */
+(function(){
+  if(window.__malLoginEmergencyHandlers) return;
+  window.__malLoginEmergencyHandlers=true;
+  document.addEventListener('click',function(ev){
+    const show=ev.target.closest&&ev.target.closest('#pwToggle');
+    if(show){
+      ev.preventDefault();ev.stopImmediatePropagation();
+      const p=document.getElementById('p');if(!p)return;
+      const reveal=p.type!=='text';p.type=reveal?'text':'password';
+      show.textContent=reveal?'Hide':'Show';
+      p.focus();return;
+    }
+    const sign=ev.target.closest&&ev.target.closest('#loginBtn');
+    if(sign){
+      ev.preventDefault();ev.stopImmediatePropagation();
+      if(typeof window.doLogin==='function'){window.doLogin();}
+      else{
+        const msg=document.getElementById('loginMsg');
+        if(msg){msg.className='msg err';msg.textContent='The sign-in script did not finish loading. Reload the page (Ctrl + Shift + R). If this continues, send the FE version and browser console error to the administrator.';}
+      }
+    }
+  },true);
+  window.addEventListener('error',function(ev){
+    const msg=document.getElementById('loginMsg');
+    if(msg&&!window.USER){msg.className='msg err';msg.textContent='A dashboard script failed to load: '+String(ev.message||'JavaScript error');}
+  });
+})();
+</script>
 </body>
 </html>
