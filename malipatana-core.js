@@ -1567,15 +1567,75 @@ async function renderGovernanceCentre(){
 }
 async function editGovernanceRecord(kind,id,rows){
  const isC=kind==='compliance',key=isC?'Compliance ID':'Task ID',old=(rows||[]).find(x=>String(x[key])===String(id))||{};
- const ask=(label,value)=>{const x=prompt(label,value==null?'':String(value));return x;};
+ const choices={
+  category:['Legal','Legal / Tax','Tax registration','Finance','Governance','Donor','Operations','Other'],
+  applicability:['Yes','No','If eligible / applicable','If seeking donor deduction approval','As per bye-laws / law','Yes, subject to applicable exemption','If applicable','Conditional'],
+  frequency:['One-time','Monthly','Quarterly','Half-yearly','Annual','Five-yearly','Event-based','Ongoing','As applicable'],
+  complianceStatus:['Not started','Assigned','In progress','Awaiting document','Awaiting approval','Submitted','Completed','Completed and verified','Not applicable','On hold'],
+  taskStatus:['Not started','Assigned','In progress','Awaiting document','Awaiting approval','Submitted','Completed','Completed and verified','On hold'],
+  priority:['High','Medium','Low']
+ };
+ const field=(name,label,type='text',opts=null,required=false,wide=false)=>{
+  const value=old[name]??'';
+  let control='';
+  if(type==='select'){
+   const list=opts||[];
+   control='<select class="input" name="'+esc(name)+'" '+(required?'required':'')+'><option value="">Select…</option>'+list.map(v=>'<option value="'+esc(v)+'" '+(String(value)===v?'selected':'')+'>'+esc(v)+'</option>').join('')+'</select>';
+  }else if(type==='textarea'){
+   control='<textarea class="input" name="'+esc(name)+'" rows="3" '+(required?'required':'')+'>'+esc(value)+'</textarea>';
+  }else{
+   control='<input class="input" name="'+esc(name)+'" type="'+type+'" value="'+esc(value)+'" '+(required?'required':'')+(type==='url'?' placeholder="https://…"':'')+'>';
+  }
+  return '<label class="mal-gov-field '+(wide?'wide':'')+'"><span>'+esc(label)+(required?' <i>*</i>':'')+'</span>'+control+'</label>';
+ };
  const fields=isC?[
-  ['Requirement','Requirement'],['Category','Category'],['Applicability','Applicability (Yes / No / If eligible / If conditional)'],['Legal Reference / Notes','Legal reference / notes'],['Frequency','Frequency (One-time / Monthly / Quarterly / Half-yearly / Annual / Five-yearly / Event-based / Ongoing)'],['Due Date','Next due date YYYY-MM-DD'],['Status','Status (Not started / Assigned / In progress / Awaiting document / Awaiting approval / Submitted / Completed / Completed and verified / Not applicable / On hold)'],['Accountable Owner','Accountable owner'],['Responsible Officer','Responsible officer'],['Reviewer','Reviewer'],['Evidence URL','Evidence URL (https://)'],['Last Verified','Last verified YYYY-MM-DD'],['Remarks','Remarks']
+  field('Requirement','Compliance requirement','text',null,true,true),
+  field('Category','Category','select',choices.category,true),
+  field('Applicability','Applicability','select',choices.applicability,true),
+  field('Legal Reference / Notes','Legal reference / notes','textarea',null,false,true),
+  field('Frequency','Frequency','select',choices.frequency,true),
+  field('Due Date','Next due date','date'),
+  field('Status','Status','select',choices.complianceStatus,true),
+  field('Accountable Owner','Accountable owner'),
+  field('Responsible Officer','Responsible officer'),
+  field('Reviewer','Reviewer'),
+  field('Evidence URL','Evidence / document URL','url',null,false,true),
+  field('Last Verified','Last verified date','date'),
+  field('Remarks','Remarks','textarea',null,false,true)
  ]:[
-  ['Task Title','Task title'],['Linked Compliance ID','Linked compliance ID (optional)'],['Workstream','Workstream'],['Accountable Owner','Accountable owner'],['Responsible Officer','Responsible officer'],['Approver','Approver'],['Reviewer','Reviewer'],['Priority','Priority (High / Medium / Low)'],['Status','Status (Not started / Assigned / In progress / Awaiting document / Awaiting approval / Submitted / Completed / Completed and verified / On hold)'],['Start Date','Start date YYYY-MM-DD'],['Due Date','Due date YYYY-MM-DD'],['Completed Date','Completed date YYYY-MM-DD'],['Evidence URL','Evidence URL (https://)'],['Remarks','Remarks']
+  field('Task Title','Task title','text',null,true,true),
+  field('Linked Compliance ID','Linked compliance ID'),
+  field('Workstream','Workstream','select',['Compliance','Finance','Governance','Administration','Projects','Community welfare','Other']),
+  field('Accountable Owner','Accountable owner'),
+  field('Responsible Officer','Responsible officer'),
+  field('Approver','Approver'),
+  field('Reviewer','Reviewer'),
+  field('Priority','Priority','select',choices.priority),
+  field('Status','Status','select',choices.taskStatus,true),
+  field('Start Date','Start date','date'),
+  field('Due Date','Due date','date'),
+  field('Completed Date','Completed date','date'),
+  field('Evidence URL','Evidence / document URL','url',null,false,true),
+  field('Remarks','Remarks','textarea',null,false,true)
  ];
- const rec={};if(id)rec[key]=id;
- for(const [field,label] of fields){const v=ask(label+(field==='Requirement'||field==='Task Title'?' *':''),old[field]||'');if(v===null)return;rec[field]=v;}
- try{const x=await api('governanceSave',{kind,record:JSON.stringify(rec)});if(!x||!x.ok)throw Error(x&&x.error||'Save failed');toast('Governance record saved','good');renderGovernanceCentre();}catch(e){toast(e.message||String(e),'bad');}
+ openModal('<div class="mal-gov-editor"><div class="mal-gov-editor-head"><div><div class="eyebrow">GOVERNANCE CENTRE</div><h2>'+(id?'Edit ':'Add ')+(isC?'compliance requirement':'governance task')+'</h2><p>'+(id?esc(id):'New record · Complete the relevant details below')+'</p></div><button type="button" class="btn" id="govEditorClose">Close</button></div>'+
+ '<form id="govEditorForm"><div class="mal-gov-form-grid">'+fields.join('')+'</div><div class="mal-gov-form-note">Fields marked * are required. Use a verified due date and keep supporting documents in the authorised Drive folder.</div><div class="mal-gov-editor-actions"><button type="button" class="btn" id="govEditorCancel">Cancel</button><button type="submit" class="btn btn-primary" id="govEditorSave">Save '+(isC?'requirement':'task')+'</button></div></form></div>');
+ const form=document.getElementById('govEditorForm');
+ document.getElementById('govEditorClose').onclick=closeModal;
+ document.getElementById('govEditorCancel').onclick=closeModal;
+ form.onsubmit=async ev=>{
+  ev.preventDefault();
+  const btn=document.getElementById('govEditorSave');if(btn.disabled)return;
+  const rec={};if(id)rec[key]=id;
+  new FormData(form).forEach((v,k)=>rec[k]=String(v).trim());
+  if(!rec[isC?'Requirement':'Task Title']){toast('Please enter a title.','bad');return;}
+  btn.disabled=true;btn.textContent='Saving…';
+  try{
+   const x=await api('governanceSave',{kind,record:JSON.stringify(rec)});
+   if(!x||!x.ok)throw Error(x&&x.error||'Save failed');
+   closeModal();toast(isC?'Compliance requirement saved':'Governance task saved','good');renderGovernanceCentre();
+  }catch(e){btn.disabled=false;btn.textContent='Save '+(isC?'requirement':'task');toast(e.message||String(e),'bad');}
+ };
 }
 
 /* Optional account recovery. The sender verifies the configured email/phone.
