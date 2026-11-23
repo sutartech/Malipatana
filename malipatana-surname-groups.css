@@ -18,3 +18,17 @@
 .mal-surname-task{display:flex;justify-content:space-between;gap:10px;margin-top:8px;padding:9px 10px;background:#fff;border:1px solid #e6edef;border-radius:10px;font-size:12px}
 .mal-surname-task span{color:#61757d;text-align:right}
 @media(max-width:560px){.mal-surname-summary{gap:7px}.mal-surname-summary>div{padding:10px}.mal-surname-stats{gap:5px}.mal-surname-stats>div{padding:8px 2px}.mal-surname-stats span{font-size:9px}.mal-surname-actions .btn{flex:1}.mal-surname-task{flex-direction:column;gap:2px}.mal-surname-task span{text-align:left}}
+
+
+/* Governance & compliance centre */
+.mal-gov-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:12px 0 16px}
+.mal-gov-kpis>div{background:var(--panel,#fff);border:1px solid var(--line,#dce5e8);border-radius:13px;padding:13px 15px;display:flex;flex-direction:column;gap:3px;min-width:0}
+.mal-gov-kpis b{font-size:23px;font-weight:850;color:var(--ink,#17313b)}
+.mal-gov-kpis span{font-size:12px;color:var(--muted,#637780);font-weight:650}
+.mal-gov-panel{margin:12px 0}
+.mal-gov-panel .panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.mal-gov-panel .panel-head h3{margin:0}
+.mal-gov-upcoming{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:9px}
+.mal-gov-upcoming>div{border:1px solid var(--line,#dce5e8);border-radius:11px;padding:11px 13px;display:flex;flex-direction:column;gap:4px;background:var(--panel,#fff)}
+.mal-gov-upcoming span{font-size:12px;color:var(--muted,#637780)}
+@media(max-width:700px){.mal-gov-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.mal-gov-panel .panel-body{padding:12px}.mal-gov-panel table{min-width:760px}}
