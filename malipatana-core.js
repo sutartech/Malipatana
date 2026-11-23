@@ -1946,7 +1946,8 @@ function buildNav(){
                                        ['auditLog', '☶', 'Change history', null],
                                        ['accessHistory', '◷', 'Access & submissions', null],
                                        ['photos', '❏', 'Photos', null],
-                                       ['settingsList', '⚙', 'Settings', 'settingsList']]]);
+                                       ['settingsList', '⚙', 'Settings', 'settingsList'],
+                                       ['surnameGroups', '♧', 'Surname groups & duties', null]]);
   let html = '';
   groups.forEach(([title, items]) => {
     if(!items.length) return;   // a heading with nothing under it is just noise
@@ -1976,6 +1977,7 @@ function render(){
   buildTabs();
   setTimeout(() => { try { stickyBadge(); paintSticky(); } catch(e){} }, 0);
   document.querySelectorAll('.nav').forEach(b => b.classList.toggle('active', b.dataset.page === PAGE));
+  if(PAGE === 'surnameGroups') return renderSurnameGroups();
   if(PAGE === 'guidance') return renderGuidance();
   if(PAGE === 'household') return renderHousehold();
   if(PAGE === 'memorial') return renderMemorial();
@@ -3495,6 +3497,34 @@ function malBindRegisterWidths(key){
 /* v3.5.18: No click-to-open listener on whole table rows.
    Open a record only via its explicit View button or linked name, so people
    can scroll sideways, select text and use right-hand Edit/Delete safely. */
+
+
+async function renderSurnameGroups(){
+ if(!isAdmin()){ $('#main').innerHTML='<div class="empty"><b>Admins only</b></div>';return; }
+ $('#main').innerHTML='<div class="panel"><div class="empty">Loading surname groups…</div></div>';
+ try{
+  const res=await api('communityData');if(!res||!res.ok)throw Error(res&&res.error||'Could not load groups.');
+  const fam=DB.families||[],mem=DB.members||[],saved=res.groups||[],acts=res.activities||[],map=new Map();
+  fam.forEach(f=>{const s=String(f.Surname||'').trim();if(!s)return;const k=s.toLocaleLowerCase('en-IN');if(!map.has(k))map.set(k,{surname:s,families:[],members:[]});map.get(k).families.push(f);});
+  mem.forEach(m=>{const f=fam.find(x=>String(x['Family ID'])===String(m['Family ID']));if(!f)return;const k=String(f.Surname||'').trim().toLocaleLowerCase('en-IN');if(map.has(k))map.get(k).members.push(m);});
+  const groups=[...map.values()].sort((a,b)=>a.surname.localeCompare(b.surname));
+  const cards=groups.map(g=>{
+   const alive=g.members.filter(m=>String(m['Life Status']||'Alive').toLowerCase()!=='deceased');
+   const resi=alive.filter(m=>m['Residence Status']==='Living in Malipatana').length;
+   const temp=alive.filter(m=>m['Residence Status']==='Outside temporarily').length;
+   const away=alive.filter(m=>m['Residence Status']==='Shifted permanently').length;
+   const unknown=alive.length-resi-temp-away;
+   const sg=saved.find(x=>x['Rule Type']==='Surname'&&String(x['Rule Value']).toLowerCase()===g.surname.toLowerCase());
+   const gid=sg?String(sg['Group ID']):'',tasks=acts.filter(x=>String(x['Group ID'])===gid);
+   return '<article class="mal-surname-card"><div class="mal-surname-top"><div><div class="mal-surname-kicker">SURNAME GROUP</div><h3>'+esc(g.surname)+'</h3><span class="muted small">'+g.families.length+' families · '+alive.length+' living members</span></div><span class="badge">'+esc(sg?sg.Status||'Active':'Not configured')+'</span></div><div class="mal-surname-stats"><div><b>'+resi+'</b><span>In village</span></div><div><b>'+temp+'</b><span>Temporary away</span></div><div><b>'+away+'</b><span>Settled outside</span></div><div><b>'+unknown+'</b><span>Not verified</span></div></div><div class="mal-surname-meta"><span>Coordinator</span><b>'+esc(sg&&sg.Coordinator||'Not assigned')+'</b></div><div class="mal-surname-meta"><span>Responsibilities</span><b>'+tasks.length+' task(s)</b></div><div class="mal-surname-actions"><button class="btn btn-sm btn-primary" data-sg-edit="'+esc(g.surname)+'" data-id="'+esc(gid)+'">Coordinator & duties</button><button class="btn btn-sm" data-sg-task="'+esc(g.surname)+'" data-id="'+esc(gid)+'" '+(gid?'':'disabled')+'>＋ Add duty</button><button class="btn btn-sm" data-sg-view="'+esc(g.surname)+'">View members</button></div>'+tasks.map(t=>'<div class="mal-surname-task"><b>'+esc(t.Title||'')+'</b><span>'+esc(t.Owner||'Unassigned')+' · '+esc(t.Status||'Planned')+(t['Due Date']?' · '+esc(t['Due Date']):'')+'</span></div>').join('')+'</article>';
+  }).join('');
+  $('#main').innerHTML='<div class="pagehead"><div><h2>Surname groups & responsibilities</h2><div class="sub">Automatic grouping from existing Family and Member IDs.</div></div><div class="sp"></div><button class="btn" id="sgRefresh">↻ Refresh</button></div><div class="notice"><b>Marriage association:</b> Link a married woman’s existing Member ID to her husband’s Family ID. Keep her recorded Surname unchanged as her birth surname. The group is derived from the linked family; no second person record is created.</div><div class="mal-surname-summary"><div><b>'+groups.length+'</b><span>Surname groups</span></div><div><b>'+fam.length+'</b><span>Families</span></div><div><b>'+mem.filter(m=>String(m['Life Status']||'Alive').toLowerCase()!=='deceased').length+'</b><span>Living members</span></div></div><div class="mal-surname-grid">'+(cards||'<div class="empty">No family surnames found.</div>')+'</div><div class="fieldnote">Residence counts exclude deceased members. Members without a valid Family ID are not guessed or reassigned.</div>';
+  $('#sgRefresh').onclick=()=>renderSurnameGroups();
+  document.querySelectorAll('[data-sg-edit]').forEach(b=>b.onclick=async()=>{const surname=b.dataset.sgEdit,id=b.dataset.id,old=saved.find(x=>String(x['Group ID'])===id)||{};const coordinator=prompt('Coordinator name or Member ID:',old.Coordinator||'');if(coordinator===null)return;const goal=prompt('Group responsibilities:',old.Goal||'Family coordination, welfare and village activities');if(goal===null)return;try{const rec={'Group ID':id,'Group Name':surname+' Surname Group','Rule Type':'Surname','Rule Value':surname,'Coordinator':coordinator,'Goal':goal,'Start Date':old['Start Date']||'','End Date':old['End Date']||'','Status':old.Status||'Active'};const x=await api('communitySaveGroup',{record:JSON.stringify(rec)});if(!x||!x.ok)throw Error(x&&x.error||'Save failed');toast('Coordinator saved','good');renderSurnameGroups();}catch(e){toast(e.message||String(e),'bad');}});
+  document.querySelectorAll('[data-sg-task]').forEach(b=>b.onclick=async()=>{if(!b.dataset.id)return;const title=prompt('Responsibility / task title:');if(!title)return;const owner=prompt('Person responsible (name or Member ID):','');if(owner===null)return;const due=prompt('Due date YYYY-MM-DD (optional):','');if(due===null)return;try{const x=await api('communitySaveActivity',{record:JSON.stringify({'Group ID':b.dataset.id,'Title':title,'Theme':'Surname group duty','Due Date':due,'Owner':owner,'Target Reach':'','Actual Reach':'','Status':'Planned','Completed On':'','Review Date':'','Outcome Summary':''})});if(!x||!x.ok)throw Error(x&&x.error||'Save failed');toast('Duty added','good');renderSurnameGroups();}catch(e){toast(e.message||String(e),'bad');}});
+  document.querySelectorAll('[data-sg-view]').forEach(b=>b.onclick=()=>{const g=groups.find(x=>x.surname===b.dataset.sgView);if(!g)return;openModal('<header><h3>'+esc(g.surname)+' · members</h3><div class="sp"></div><button class="btn btn-sm" onclick="closeModal()">Close</button></header><div class="body"><div class="tablewrap"><table class="grid"><thead><tr><th>Name</th><th>Family ID</th><th>Recorded surname</th><th>Relation</th><th>Residence</th></tr></thead><tbody>'+g.members.map(m=>'<tr><td>'+esc(m.Name||m['Given Name']||'')+'</td><td>'+esc(m['Family ID']||'')+'</td><td>'+esc(m.Surname||'')+'</td><td>'+esc(m['Relation to Family Head']||'')+'</td><td>'+esc(m['Residence Status']||'Not verified')+'</td></tr>').join('')+'</tbody></table></div></div>');});
+ }catch(e){$('#main').innerHTML='<div class="panel"><div class="empty"><b>Could not load surname groups</b>'+esc(e.message||String(e))+'</div></div>';}
+}
 
 function renderModule(key){
   const m = MODULES[key];
