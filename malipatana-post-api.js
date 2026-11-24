@@ -1,7 +1,7 @@
 /* Malipatana POST transport shared by dashboard and login-free shared-entry forms.
    Credentials, session tokens, edit codes and submitted data stay in POST bodies.
    Response receipt is random, one-use and expires after five minutes. */
-function malPostApi(apiUrl,action,params){
+async function malPostApi(apiUrl,action,params){
  params=params||{};
  const bytes=new Uint8Array(32);
  if(!window.crypto||!window.crypto.getRandomValues) return Promise.reject(Error('Secure browser randomness is unavailable. Update your browser.'));
