@@ -1,0 +1,101 @@
+/* Mobile dashboard refinement — KPI cards, fund summary and noticeboard.
+   Additive CSS only. Keeps existing dashboard data, navigation and actions. */
+#app .ux-home,
+#app .ux-home>*,
+#app .noticeboard,
+#app .mal-notice-detail,
+#app .ledger{min-width:0;max-width:100%;box-sizing:border-box}
+#app .ux-home .ux-kpi{min-width:0;overflow:hidden}
+#app .ux-home .ux-kpi-label,
+#app .ux-home .ux-kpi-foot{min-width:0;overflow-wrap:anywhere}
+#app .ux-home .ux-kpi strong{min-width:0;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+#app .ux-home .ledger-top .big{overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+#app .ux-home .ux-ledger>summary{
+ display:flex;align-items:center;justify-content:space-between;gap:10px;
+ min-width:0;flex-wrap:wrap;
+}
+#app .ux-home .ux-ledger>summary>span{min-width:0;overflow-wrap:anywhere}
+#app .ux-home .ux-ledger .ux-detail-hint{font-size:11px;line-height:1.35}
+#app .ux-home .ledger-rows{min-width:0}
+#app .ux-home .ledger-rows .lrow{min-width:0}
+#app .ux-home .ledger-rows .nm{min-width:0;overflow-wrap:anywhere}
+#app .ux-home .ledger-rows .amt{flex:0 0 auto;max-width:48%;text-align:right;overflow-wrap:anywhere}
+#app .noticeboard{border-radius:14px;overflow:hidden}
+#app .mal-notice-ticker{min-width:0;max-width:100%;box-sizing:border-box}
+#app .mal-notice-lane{min-width:0;max-width:100%;overflow:hidden}
+#app .mal-notice-detail{min-width:0;max-width:calc(100% - 8px)}
+#app .mal-notice-detail>summary{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:42px;overflow-wrap:anywhere}
+#app .mal-notice-detail .ntcs{min-width:0}
+#app .mal-notice-detail .ntc{min-width:0;max-width:100%;overflow:hidden}
+#app .mal-notice-detail .ntc .nbody{min-width:0;overflow-wrap:anywhere}
+#app .mal-notice-detail .ntc p{overflow-wrap:anywhere;word-break:normal}
+@media(max-width:760px){
+ #app .ux-home{gap:10px!important}
+ #app .ux-home .ledger{border-radius:15px!important}
+ #app .ux-home .ledger-top{
+   display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+   align-items:center!important;gap:10px!important;padding:13px!important;
+ }
+ #app .ux-home .ledger-top>div:last-child{width:auto!important;min-width:0!important;max-width:none!important}
+ #app .ux-home .ledger-top .cap{font-size:10.5px!important;line-height:1.3!important}
+ #app .ux-home .ledger-top .big{font-size:clamp(22px,6.5vw,31px)!important;line-height:1.12!important}
+ #app .ux-home .ledger-top .meaning{font-size:10.5px!important;line-height:1.4!important;overflow-wrap:anywhere}
+ #app .ux-home .ledger-top .small{font-size:10.5px!important;line-height:1.35!important}
+ #app .ux-home .ledger-top .meter{height:8px!important;margin-top:7px!important}
+ #app .ux-home .ux-ledger>summary{padding:11px 12px!important;min-height:44px!important}
+ #app .ux-home .ux-ledger .ux-detail-hint{flex:1 1 100%;font-size:10px!important}
+ #app .ux-home .ledger-rows{padding:6px 12px 12px!important}
+ #app .ux-home .ledger-rows .lrow{align-items:flex-start!important;gap:8px!important;padding:9px 0!important}
+ #app .ux-home .ledger-rows .nm{font-size:12px!important;line-height:1.4!important}
+ #app .ux-home .ledger-rows .nm em{font-size:10.5px!important;line-height:1.4!important}
+ #app .ux-home .ledger-rows .amt{font-size:12px!important;max-width:45%!important;line-height:1.4!important}
+ #app .ux-home .ledger-rows .lrow.total .nm{font-size:13px!important}
+ #app .ux-home .ledger-rows .lrow.total .amt{font-size:16px!important}
+ #app .ux-home .ux-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}
+ #app .ux-home .ux-kpi{
+   min-width:0!important;min-height:100px!important;padding:10px!important;
+   grid-template-columns:29px minmax(0,1fr)!important;column-gap:7px!important;
+   row-gap:2px!important;border-radius:13px!important;
+ }
+ #app .ux-home .ux-kpi-icon{width:29px!important;height:29px!important;font-size:16px!important}
+ #app .ux-home .ux-kpi-label{font-size:10.5px!important;line-height:1.25!important}
+ #app .ux-home .ux-kpi strong{font-size:clamp(19px,5.5vw,23px)!important;line-height:1.15!important}
+ #app .ux-home .ux-kpi-foot{font-size:9.5px!important;line-height:1.25!important;margin-top:3px!important}
+ #app .noticeboard{margin-bottom:9px!important;border:1px solid #eadcae!important;border-radius:13px!important;background:#fffdf6!important}
+ #app .mal-notice-ticker{gap:6px!important;padding:7px!important;min-height:46px!important}
+ #app .mal-notice-label{flex:0 0 auto!important;max-width:90px!important;font-size:9px!important;letter-spacing:.01em!important;padding:5px 6px!important}
+ #app .mal-notice-lane{flex:1 1 0!important;width:0!important;min-width:0!important}
+ #app .mal-notice-track{font-size:11px!important;gap:12px!important}
+ #app .mal-notice-item{font-size:11px!important}
+ #app .mal-notice-pause{flex:0 0 34px!important;width:34px!important;min-width:34px!important;height:34px!important;min-height:34px!important}
+ #app .mal-notice-detail{margin:0 5px 7px!important;border-radius:10px!important}
+ #app .mal-notice-detail>summary{font-size:11px!important;padding:9px 10px!important;min-height:40px!important}
+ #app .mal-notice-detail .ntcs{grid-template-columns:minmax(0,1fr)!important;gap:9px!important;padding:9px!important}
+ #app .mal-notice-detail .ntc{display:grid!important;grid-template-columns:minmax(92px,30%) minmax(0,1fr)!important;align-items:stretch!important;border-radius:11px!important}
+ #app .mal-notice-detail .ntc .nimg{width:100%!important;height:100%!important;min-height:100px!important;aspect-ratio:auto!important;object-fit:cover!important}
+ #app .mal-notice-detail .ntc .nbody{padding:9px!important;gap:4px!important}
+ #app .mal-notice-detail .ntc h4{font-size:13px!important;line-height:1.3!important}
+ #app .mal-notice-detail .ntc p{font-size:11px!important;line-height:1.45!important}
+ #app .mal-notice-detail .ntc .nmeta{font-size:9.5px!important;line-height:1.35!important}
+ #app .ux-home .ux-priority-grid{gap:9px!important}
+ #app .ux-home .work,#app .ux-home .ux-quick-panel{min-width:0!important;border-radius:14px!important}
+}
+@media(max-width:380px){
+ #app .ux-home .ux-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ #app .ux-home .ux-kpi{min-height:104px!important;padding:8px!important;column-gap:6px!important}
+ #app .ux-home .ux-kpi-label{font-size:10px!important}
+ #app .ux-home .ux-kpi-foot{font-size:9px!important}
+ #app .ux-home .ledger-top{gap:7px!important;padding:11px!important}
+ #app .ux-home .ledger-top .big{font-size:clamp(20px,6.1vw,25px)!important}
+ #app .mal-notice-label{max-width:76px!important;font-size:8.5px!important}
+ #app .mal-notice-detail .ntc{grid-template-columns:minmax(78px,28%) minmax(0,1fr)!important}
+}
+@media(max-width:330px){
+ #app .ux-home .ux-kpi-grid{grid-template-columns:minmax(0,1fr)!important}
+ #app .ux-home .ux-kpi{min-height:88px!important;grid-template-columns:32px minmax(0,1fr)!important}
+ #app .mal-notice-detail .ntc{grid-template-columns:minmax(0,1fr)!important}
+ #app .mal-notice-detail .ntc .nimg{aspect-ratio:16/9!important;height:auto!important;min-height:0!important}
+}
+@media(prefers-reduced-motion:reduce){
+ #app .mal-notice-track{animation:none!important;transform:none!important}
+}
