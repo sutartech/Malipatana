@@ -1,8 +1,8 @@
 # Malipatana Global-Quality Transformation Roadmap
 
-Status: Approved programme; Phase 1 foundation
+Status: Approved programme; Phase 1 complete, Phase 2 in progress
 Baseline branch: main
-Working branch: transformation/phase-1-foundation
+Working branch: transformation/phase-2-village-operations
 Date: 2026-11-24
 Scope: Full 100-improvement programme
 Preservation rule: No backend URL, Apps Script code, spreadsheet schema, existing record, authentication flow, or permission policy may be changed without a separately reviewed and explicitly approved change.
@@ -13,29 +13,24 @@ Build Malipatana into a dependable village governance and community-management p
 
 A feature is not complete merely because its code is committed. Completion requires source checks, deployed-version verification, relevant workflow regression and user acceptance.
 
-## 2. Baseline and source/live discrepancy (2026-11-24)
+## 2. Baseline and source/live discrepancy (updated 2026-11-24)
 
 Repository: https://github.com/sutartech/Malipatana
-Default branch at inspection: main
-Baseline commit: 4270b6dc77bb9c16df045849ffd0b535c888edbd
-Latest commit message: "Load FE V3.8.3 collapsible navigation groups"
-Current source CONFIG:
-- Frontend: FE V3.8.3-COLLAPSIBLE-NAV-GROUPS
-- Expected backend: BE V1.8.46-GOVERNANCE-READONLY-DOCUMENTS
-index.html loads malipatana-core.js?v=3.8.3-collapsible-nav-groups.
-Latest GitHub Pages workflow run for that commit: completed, conclusion success, run 45326506020 at 2026-11-24T04:27:18Z; completed 04:28:04Z.
-Screenshot supplied for this task displays FE V3.8.2-SIDEBAR-CASCADE-ISOLATION and BE V1.8.46-GOVERNANCE-READONLY-DOCUMENTS.
+Default branch: main
+Current baseline commit before Phase 2: 35a2eeb910793ef64cb7a1707f133bc410e7f62b
+Current frontend: FE V3.8.4-PERSISTENT-COLLAPSIBLE-NAV
+Expected backend: BE V1.8.46-GOVERNANCE-READONLY-DOCUMENTS
+Core asset cache key: 3.8.4-persistent-collapsible-nav
+Latest GitHub Pages deployment for baseline commit: run 45328436188, completed successfully.
+Latest static regression for baseline commit: run 45328436565, completed successfully (41/41 checks).
 
-Interpretation:
-- Screenshot is one frontend patch behind repository source.
-- Backend version shown in screenshot matches the expected backend declared in current source.
-- GitHub Pages build/deployment workflow succeeded for the V3.8.3 main commit.
-- The live page response and browser cache could not be independently fetched in this inspection environment. Therefore the successful workflow is evidence of deployment completion, not proof that every browser has loaded V3.8.3. Verify the visible FE/BE chips in a fresh normal browser session and compare with the source before diagnosing further.
-- The main dashboard and public/shared-entry pages currently use two distinct Apps Script deployment URLs: the public registration, shared entry and Quick Add pages share their own URL. This existing split is preserved; the original static checker incorrectly assumed all four pages used one URL.
-- The V3.8.3 sidebar implementation currently stores collapse state only in an in-memory object and forcibly expands the active page's category whenever buildNav() runs. State is therefore not persistent and can be reset by navigation/rendering. Correct this in Phase 1.
-- The sidebar contrast stylesheet targets legacy .navgroup classes, while current generated category headings use .nav-category-bar. Current category inline styles supply much of the visual treatment, but stylesheet targeting must be unified; do not rely on fragile nth-child selectors.
-- scripts/verify-static.mjs still expects BE V1.8.30, while current core CONFIG expects BE V1.8.46-GOVERNANCE-READONLY-DOCUMENTS. This is a stale regression assertion and must be corrected to validate a declared backend version without pretending to verify the deployed Apps Script version.
-- Existing rollout checklist has unresolved manual checks for OTP, registration pause enforcement, offline queue, duplicate prevention, restore, responsive sizes, Odia, screen reader, Quick Add role access and unchanged workflows.
+Phase 1 status:
+- Persistent sidebar collapse preferences and accessible controls merged.
+- Shared semantic design tokens and stylesheet-owned category navigation merged.
+- Automated static regression runs on main and transformation branches.
+- Apps Script endpoints, sheet schema/data, authentication and permission rules remain unchanged.
+
+The main dashboard and public/shared-entry pages retain their existing separate Apps Script deployment URLs. The public registration, shared entry and Quick Add pages continue to share their existing endpoint. This topology is intentional and preserved.
 
 ## 3. Non-negotiable preservation controls
 
@@ -69,7 +64,8 @@ Interpretation:
 14. Add a privacy-safe diagnostic panel for version, deployment and health status.
 15. Verify no Apps Script endpoint, spreadsheet schema, auth flow or permission rule changed during frontend-only releases.
 
-### Phase 2 — Home dashboard and navigation (15)
+### Phase 2 — Home dashboard and navigation (15) — IN PROGRESS
+Implementation policy: presentation-first; reuse existing DB.summary, existing module data and existing navigation/form actions. No new backend fields, sheets or APIs.
 16. Reorganise the home screen around today's village priorities.
 17. Show verified family and member counts with clear data freshness.
 18. Show available fund and emergency target with a clear calculation explanation.
