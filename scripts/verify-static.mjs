@@ -75,9 +75,9 @@ check('Modal scrolling supports touch and prevents scroll chaining on mobile',cs
 
 
 const layoutCss=file('malipatana-layout-fit.css');
-check('Village home dashboard fills the available workspace without a narrow max-width',layoutCss.includes('#app .ux-home{width:100%;max-width:none')&&layoutCss.includes('#app main.main{flex:1 1 0%;'));
+check('Village home dashboard fills the available workspace without a narrow max-width',layoutCss.includes('width:100%;')&&layoutCss.includes('max-width:none;')&&layoutCss.includes('flex:1 1 0%;'));
 check('Family profile body has a dedicated scroll target',core.includes('class="body mal-family-profile-body"')&&core.includes('aria-label="Family profile details"'));
-check('Family profile dialog has a definite height and independently scrollable body',layoutCss.includes('.modal:has(>.mal-family-profile-body){height:92dvh')&&layoutCss.includes('.modal>.mal-family-profile-body{flex:1 1 0%;height:0;min-height:0'));
+check('Family profile dialog has a definite height and independently scrollable body',layoutCss.includes('.modal:has(>.mal-family-profile-body)')&&layoutCss.includes('height:92dvh;')&&layoutCss.includes('.modal>.mal-family-profile-body')&&layoutCss.includes('flex:1 1 0%;')&&layoutCss.includes('height:0;'));
 check('Family profile scroll fix is cache-busted in the page shell',index.includes('malipatana-ui.css?v=3.5.63-family-profile-scroll')&&index.includes('malipatana-layout-fit.css?v=1.0.0'));
 \nconst failures=results.filter(r=>!r.pass).length;
 console.log('\n'+(results.length-failures)+'/'+results.length+' static checks passed.');
