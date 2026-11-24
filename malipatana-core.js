@@ -71,7 +71,7 @@
    ========================================================================= */
 const CONFIG = {
   API_URL: 'https://script.google.com/macros/s/AKfycbwkweVh5BM35fHP86Uxs2bEjODXq0TpcnP3q665nAG2Z0Z8GIKzSa5Oe6l7KqZZCf6oSA/exec',
-  VERSION: 'FE V3.8.4-PERSISTENT-COLLAPSIBLE-NAV',
+  VERSION: 'FE V3.9.0-VILLAGE-OPERATIONS',
   EXPECTED_BACKEND: 'BE V1.8.46-GOVERNANCE-READONLY-DOCUMENTS',
   IDLE_MINUTES: 30,
   /* Photo shown when no photo has been set in Settings.
@@ -3137,7 +3137,12 @@ function renderDashboard(){
   const remembranceDays = remembranceLocal();
   const upcomingCount = upcomingDays.length + remembranceDays.length;
   const importantToday = upcomingDays.some(x => x.daysAway === 0) || remembranceDays.some(x => x.daysAway === 0);
-  const quickPanel = canEdit() ? `<div class="panel ux-quick-panel"><div class="panel-head"><h3>Quick entry</h3></div><div class="panel-body ux-quick-buttons"><button class="btn btn-primary" onclick="openForm('expenditure')">+ Expense</button><button class="btn" onclick="openForm('contributions')">+ Contribution</button></div></div>` : '';
+  const quickActions = [
+    ['expenditure','Expense','−'],['contributions','Contribution','₹'],
+    ['income','Other income','＋'],['families','Family','⌂'],
+    ['members','Member','♧'],['emergency','Welfare case','✚']
+  ].filter(([key]) => !!MODULES[key] && canSee(key));
+  const quickPanel = canEdit() && quickActions.length ? `<section class="panel ux-quick-panel" aria-label="Quick actions"><div class="panel-head"><div><h3>Quick actions</h3><span class="ux-quick-sub">Create a record in an area available to your account</span></div></div><div class="panel-body ux-quick-buttons">${quickActions.map(([key,label,icon],n) => `<button type="button" class="btn ${n===0?'btn-primary':''}" onclick="openForm('${key}')" aria-label="Add ${esc(label)}"><span aria-hidden="true">${icon}</span><span>+ ${esc(label)}</span></button>`).join('')}</div></section>` : '';
   const html = `
     <div class="ux-home" aria-label="Village dashboard overview">
       ${noticesHtml(noticesLocal())}
@@ -3147,7 +3152,7 @@ function renderDashboard(){
       <div class="veil"></div>
       <div class="txt">
         <div>
-          <h2>${esc(setting('Village Name','Malipatana'))} village fund</h2>
+          <h2>${esc(setting('Village Name','Malipatana'))} village operations</h2>
           <div class="sub">Village code ${esc(setting('Village Code','V001'))} · ${esc(setting('Village Area','Jagatsinghpur, Odisha'))}</div>
         </div>
         <div class="sp"></div>
@@ -3155,12 +3160,12 @@ function renderDashboard(){
       </div>
     </div>`
   : `<div class="pagehead">
-      <div><h2>${esc(setting('Village Name','Malipatana'))} village fund</h2>
+      <div><h2>${esc(setting('Village Name','Malipatana'))} village operations</h2>
       <div class="sub">Village code ${esc(setting('Village Code','V001'))}</div></div>
       <div class="sp"></div><button class="btn btn-sm" onclick="window.print()">Print</button>
     </div>`}
 
-      <div class="ux-home-identity"><div><strong>Village overview</strong><span>Key information and today's priorities</span></div></div>
+      <div class="ux-home-identity"><div><strong>Village operations</strong><span>Community, people, welfare, finance and governance at a glance</span></div><span class="ux-home-live-label"><i></i> Dashboard overview</span></div>
   <div class="ledger">
     <div class="ledger-top">
       <div>
