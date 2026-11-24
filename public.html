@@ -509,20 +509,20 @@ header.top .veil{background:linear-gradient(176deg,#0B2635B8 0%,#123A41A3 45%,#0
 
     <form class="gform" id="gformNew">
       <label for="gName" data-t="Your name" data-mal-en="Your name">Your name</label>
-      <input id="gName" required placeholder="Full name" data-tph="Full name">
+      <input id="gName" required maxlength="120" autocomplete="name" placeholder="Full name" data-tph="Full name">
       <label for="gMobile" data-t="Mobile number" data-mal-en="Mobile number">Mobile number</label>
-      <input id="gMobile" required placeholder="10-digit mobile" inputmode="numeric">
+      <input id="gMobile" type="tel" required inputmode="numeric" autocomplete="tel" pattern="[6-9][0-9]{9}" maxlength="10" placeholder="10-digit mobile" aria-describedby="gMobileHint"><small class="muted" id="gMobileHint">Enter a valid 10-digit Indian mobile number.</small>
       <label for="gCat" data-t="What is this about" data-mal-en="What is this about">What is this about</label>
       <select id="gCat">
         <option>Water</option><option>Road</option><option>Electricity</option><option>Sanitation</option>
         <option>Fund misuse</option><option>Welfare benefit</option><option>Family record error</option><option>Other</option>
       </select>
       <label for="gDesc" data-t="Describe the problem" data-mal-en="Describe the problem">Describe the problem</label>
-      <textarea id="gDesc" required placeholder="What happened, where, and since when"></textarea>
+      <textarea id="gDesc" required minlength="12" maxlength="2200" placeholder="What happened, where, and since when"></textarea>
       <div class="btnrow">
         <button type="submit" class="gbtn" id="gSubmitBtn" data-t="Submit grievance" data-mal-en="Submit grievance">Submit grievance</button>
       </div>
-      <div class="gmsg" id="gMsg"></div>
+      <div class="gmsg" id="gMsg" role="status" aria-live="polite" aria-atomic="true" tabindex="-1"></div>
     </form>
 
     <div class="gform" id="gformTrack" style="display:none">
@@ -861,6 +861,35 @@ Object.keys(tabs).forEach(function(tid){
   };
 });
 
+// Accessible grievance validation and result announcements. Keep existing API payload unchanged.
+var grievanceForm = document.getElementById('gformNew');
+var grievanceFields = ['gName','gMobile','gDesc'].map(function(id){return document.getElementById(id);});
+function announceGrievance(message, tone){
+  var region=document.getElementById('gMsg');
+  region.className='gmsg show '+(tone||'');
+  region.textContent=message;
+  region.focus();
+}
+grievanceForm.addEventListener('invalid',function(ev){
+  var field=ev.target;
+  if(!grievanceFields.includes(field))return;
+  field.setAttribute('aria-invalid','true');
+  var message=field.validity.valueMissing?'This field is required.'
+    :field.validity.patternMismatch?'Enter a valid 10-digit Indian mobile number.'
+    :field.validity.tooShort?'Please provide at least 12 characters.'
+    :'Please check this field.';
+  announceGrievance(message,'bad');
+},true);
+grievanceFields.forEach(function(field){
+  field.addEventListener('input',function(){
+    if(field.checkValidity()){
+      field.removeAttribute('aria-invalid');
+      if(!grievanceFields.some(function(other){return other.hasAttribute('aria-invalid');})){
+        var region=document.getElementById('gMsg');region.className='gmsg';region.textContent='';
+      }
+    }
+  });
+});
 document.getElementById('gformNew').addEventListener('submit', function(ev){
   ev.preventDefault();
   var btn = document.getElementById('gSubmitBtn');
@@ -868,8 +897,14 @@ document.getElementById('gformNew').addEventListener('submit', function(ev){
   var name = document.getElementById('gName').value.trim();
   var mobile = document.getElementById('gMobile').value.trim();
   var desc = document.getElementById('gDesc').value.trim();
-  if(!name || !mobile || !desc){
-    msg.className = 'gmsg show bad'; msg.textContent = 'Please fill your name, mobile number and the problem.'; return;
+  if(!name || !mobile || !desc || !document.getElementById('gMobile').checkValidity() || desc.length<12){
+    if(!name)document.getElementById('gName').setAttribute('aria-invalid','true');
+    if(!mobile || !document.getElementById('gMobile').checkValidity())document.getElementById('gMobile').setAttribute('aria-invalid','true');
+    if(!desc || desc.length<12)document.getElementById('gDesc').setAttribute('aria-invalid','true');
+    var first=grievanceFields.find(function(field){return field.hasAttribute('aria-invalid');});
+    announceGrievance(!name?'Enter your name.':!mobile?'Enter a valid 10-digit Indian mobile number.':!document.getElementById('gMobile').checkValidity()?'Enter a valid 10-digit Indian mobile number.':'Describe the problem in at least 12 characters.','bad');
+    if(first)first.focus();
+    return;
   }
   btn.disabled = true; btn.textContent = 'Submitting…';
   msg.className = 'gmsg';
@@ -881,11 +916,13 @@ document.getElementById('gformNew').addEventListener('submit', function(ev){
     msg.className = 'gmsg show good';
     msg.innerHTML = 'Submitted. Your grievance number is <b>' + esc(r.id) +
       '</b> — write it down to check the status later.';
+    grievanceFields.forEach(function(field){field.removeAttribute('aria-invalid');});
     document.getElementById('gformNew').reset();
+    msg.focus();
   }).catch(function(){
     btn.disabled = false; btn.textContent = 'Submit grievance';
     msg.className = 'gmsg show bad';
-    msg.textContent = 'Could not submit right now. Please try again in a moment, or tell a committee member directly.';
+    msg.textContent = 'Could not submit right now. Please try again in a moment, or tell a committee member directly.'; msg.focus();
   });
 });
 
