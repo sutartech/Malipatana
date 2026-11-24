@@ -71,8 +71,8 @@
    ========================================================================= */
 const CONFIG = {
   API_URL: 'https://script.google.com/macros/s/AKfycbwkweVh5BM35fHP86Uxs2bEjODXq0TpcnP3q665nAG2Z0Z8GIKzSa5Oe6l7KqZZCf6oSA/exec',
-  VERSION: 'FE V3.14.0-COMPLETION-BUNDLE',
-  EXPECTED_BACKEND: 'BE V1.8.46-GOVERNANCE-READONLY-DOCUMENTS',
+  VERSION: 'FE V3.15.0-POST-API-TRANSPORT',
+  EXPECTED_BACKEND: 'BE V1.8.47-POST-API-TRANSPORT',
   IDLE_MINUTES: 30,
   /* Photo shown when no photo has been set in Settings.
      village.jpg sits in the same folder as this file on GitHub. */
@@ -1508,27 +1508,61 @@ async function saveThrough(action, params, label){
   }
 }
 
-/* ---------- API (JSONP — avoids Apps Script CORS problems) ---------- */
-function api(action, params){
-  params = params || {};
-  if(USER && USER.token && action !== 'login') params = Object.assign({}, params, {token:USER.token});
-  return new Promise((resolve, reject) => {
-    const cb = 'mcb_' + Date.now() + '_' + Math.floor(Math.random() * 1e6);
-    const q = new URLSearchParams(Object.assign({ action: action }, params, { callback: cb, _: Date.now() }));
-    const url = CONFIG.API_URL + '?' + q.toString();
-    if(url.length > 7500){
-      reject(new Error('This record is too long to send. Shorten the remarks or description and try again.'));
-      return;
-    }
-    const s = document.createElement('script');
-    const timer = setTimeout(() => { done(); reject(new Error('The sheet did not answer in time. Check your internet and try again.')); }, 28000);
-    function done(){ clearTimeout(timer); try { delete window[cb]; } catch(e){ window[cb] = undefined; } s.remove(); }
-    window[cb] = d => { done(); resolve(d); };
-    s.onerror = () => { done(); reject(new Error('Could not reach the sheet. Check the web app URL and that access is set to Anyone.')); };
-    s.referrerPolicy = 'no-referrer';
-    s.src = url;
-    document.body.appendChild(s);
+/* ---------- API (POST body + short-lived one-time response receipt) ----------
+   Credentials, session tokens and private query parameters never enter a URL.
+   Apps Script POST responses are relayed through a random, one-use receipt so
+   this GitHub Pages origin does not depend on readable cross-origin POST. */
+function malRequestId_(){
+  const bytes=new Uint8Array(32);
+  if(!window.crypto||!window.crypto.getRandomValues)throw new Error('Secure browser randomness is unavailable. Update your browser.');
+  window.crypto.getRandomValues(bytes);
+  return Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join('');
+}
+function malJsonp_(params,timeoutMs){
+  return new Promise((resolve,reject)=>{
+    const cb='mcb_'+Date.now()+'_'+Math.floor(Math.random()*1e6);
+    const q=new URLSearchParams(Object.assign({},params,{callback:cb,_:Date.now()}));
+    const s=document.createElement('script');let settled=false;
+    const timer=setTimeout(()=>finish(new Error('The village server did not return a response in time.')),timeoutMs||12000);
+    function finish(err,value){if(settled)return;settled=true;clearTimeout(timer);try{delete window[cb];}catch(e){window[cb]=undefined;}s.remove();err?reject(err):resolve(value);}
+    window[cb]=value=>finish(null,value);
+    s.onerror=()=>finish(new Error('Could not retrieve the secure response. Check the Apps Script deployment.'));
+    s.referrerPolicy='no-referrer';s.src=CONFIG.API_URL+'?'+q.toString();document.body.appendChild(s);
   });
+}
+async function malReadPostResult_(requestId,part){
+  const started=Date.now();
+  while(Date.now()-started<28000){
+    const r=await malJsonp_({action:'postResult',requestId,part},9000);
+    if(r&&!r.pending){
+      if(!r.ok)throw new Error(r.error||'The secure response expired.');
+      return r;
+    }
+    await new Promise(resolve=>setTimeout(resolve,450));
+  }
+  throw new Error('The server did not confirm this request. Do not repeat a payment or save until you refresh and check the register.');
+}
+async function api(action, params){
+  params=params||{};
+  const payload=Object.assign({action:action,_malAsync:true,_malRequestId:malRequestId_()},params);
+  if(USER&&USER.token&&action!=='login')payload.token=USER.token;
+  const requestId=payload._malRequestId;
+  if(JSON.stringify(payload).length>1800000)throw new Error('This request is too large. Shorten the remarks or description and try again.');
+  try{
+    await fetch(CONFIG.API_URL,{method:'POST',mode:'no-cors',credentials:'omit',cache:'no-store',
+      redirect:'follow',headers:{'Content-Type':'text/plain;charset=UTF-8'},
+      body:JSON.stringify(payload),referrerPolicy:'no-referrer'});
+  }catch(e){
+    // The request may have reached Apps Script before the browser reported a
+    // network error. Poll the unique receipt once; never auto-replay a write.
+  }
+  const first=await malReadPostResult_(requestId,0);
+  let body=first.body||'';
+  for(let part=1;part<first.total;part++){
+    const next=await malReadPostResult_(requestId,part);
+    body+=next.body||'';
+  }
+  try{return JSON.parse(body);}catch(e){throw new Error('The village server returned an unreadable response. Refresh and retry only after checking whether the operation was saved.');}
 }
 
 
