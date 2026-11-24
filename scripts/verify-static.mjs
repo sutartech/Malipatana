@@ -13,7 +13,7 @@ const url=s=>s.match(/https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/
 check('Main, public registration, shared entry and Quick Add use one backend URL',!!url(core)&&url(core)===url(register)&&url(core)===url(entry)&&url(core)===url(quick));
 check('Admin registration control exists',index.includes("api('registrationManage'"));
 check('Public registration checks backend status',register.includes("api('registrationStatus'"));
-check('Public registration has advisory duplicate preview',register.includes("api('registrationDuplicateCheck'"))&&register.includes('malDupStatusBasic'));
+check('Public registration has advisory duplicate preview',register.includes("api('registrationDuplicateCheck'")&&register.includes('malDupStatusBasic'));
 check('Admin registration queue shows duplicate review',index.includes('Duplicate Review'));
 check('Village Suggestions public page exists',existsSync(resolve(root,'suggestions.html')));
 check('Suggestions Admin module exists',existsSync(resolve(root,'malipatana-suggestions.js')));
