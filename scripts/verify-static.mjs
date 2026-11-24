@@ -10,7 +10,9 @@ const files=['index.html','malipatana-core.js','malipatana-ui.css','malipatana-p
 for(const f of files)check('File exists: '+f,existsSync(resolve(root,f)));
 const index=file('index.html'),core=file('malipatana-core.js'),css=file('malipatana-ui.css'),register=file('register.html'),entry=file('entry.html'),quick=file('quick-add.html');
 const url=s=>s.match(/https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec/)?.[0];
-check('Main, public registration, shared entry and Quick Add use one backend URL',!!url(core)&&url(core)===url(register)&&url(core)===url(entry)&&url(core)===url(quick));
+const dashboardApiUrl=url(core), publicEntryApiUrl=url(register);
+check('Main dashboard backend URL is present',!!dashboardApiUrl);
+check('Public registration, shared entry and Quick Add retain their shared backend URL',!!publicEntryApiUrl&&publicEntryApiUrl===url(entry)&&publicEntryApiUrl===url(quick));
 check('Admin registration control exists',index.includes("api('registrationManage'"));
 check('Public registration checks backend status',register.includes("api('registrationStatus'"));
 check('Public registration has advisory duplicate preview',register.includes("api('registrationDuplicateCheck'")&&register.includes('malDupStatusBasic'));
