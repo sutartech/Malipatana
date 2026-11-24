@@ -3852,6 +3852,7 @@ async function renderSurnameGroups(){
 
 function renderModule(key){
   const m = MODULES[key];
+  if(m) $('#main').dataset.module = key;
   if(!m){ $('#main').innerHTML = '<div class="empty"><b>Page not found</b>That link is not part of the dashboard. ' +
     '<button class="btn btn-sm" onclick="go(\'dashboard\')" style="margin-top:12px">Back to dashboard</button></div>'; return; }
   if(m.adminOnly && !isAdmin()){ $('#main').innerHTML = '<div class="empty"><b>Admins only</b>Ask the village admin for access.</div>'; return; }
