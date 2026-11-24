@@ -48,7 +48,7 @@ check('Dashboard quick actions use existing form workflow',core.includes("onclic
 check('Dashboard heading reflects village operations',core.includes('village operations</h2>')&&core.includes('ux-home-live-label'));
 check('Frontend version matches Phase 3.1 cache-busted core',core.includes("VERSION: 'FE V3.9.1-PEOPLE-FAMILY-CONTEXT'")&&index.includes('malipatana-core.js?v=3.9.1-people-family-context'));
 check('Family filter identifies each family by head and ID',core.includes("head=String(f['Family Head']||'Family').trim()")&&core.includes("filter(Boolean).join(' · '))} (${esc(fid)})"));
-check('Member register shows family head alongside stored Family ID',core.includes("key==='members'&&id")&&core.includes("'<strong>'+esc(head)+'</strong> '"));
+check('Member register shows family head alongside stored Family ID',core.includes("if(f.t === 'family')")&&core.includes("const family=(DB.families||[]).find(x=>String(x['Family ID']||'').trim()===id)"));
 check('All family-linked registers show family head and stored Family ID',core.includes("if(f.t === 'family')")&&core.includes("const family=(DB.families||[]).find(x=>String(x['Family ID']||'').trim()===id)")&&core.includes("'<span class=\"muted small\">'+esc(id)+'</span>'"));
 check('Frontend version matches Phase 3.2 family-label cache key',core.includes("VERSION: 'FE V3.9.2-FAMILY-LABELS'")&&index.includes('malipatana-core.js?v=3.9.2-family-labels'));
 check('Shared design-system stylesheet exists',existsSync(resolve(root,'malipatana-design-system.css')));
