@@ -31,10 +31,10 @@ check('Mobile navigation preserved',index.includes("id=\"tabbar\"")&&index.inclu
 check('Four Quick Add options preserved', ['Add member','Add family','Add expense','Add contribution'].every(s=>index.includes(s)));
 check('Odia text present',/[\u0B00-\u0B7F]/u.test(index));
 check('Family and Member resizing preserved',core.includes('MAL_REG_WIDTH_PREFIX'));
-const expectedBackend=core.match(/EXPECTED_BACKEND:\\s*'([^']+)'/)?.[1]||'';
-check('Expected backend version is declared in a recognisable format',/^BE V\\d+\\.\\d+/.test(expectedBackend));
+const expectedBackend=core.match(/EXPECTED_BACKEND:\s*'([^']+)'/)?.[1]||'';
+check('Expected backend version is declared in a recognisable format',/^BE V\d+\.\d+/.test(expectedBackend));
 const declaredFe=core.match(/VERSION:\\s*'FE V([^']+)'/)?.[1]||'';
-const coreAsset=index.match(/malipatana-core\\.js\\?v=([^"' ]+)/)?.[1]||'';
+const coreAsset=index.match(/malipatana-core\.js\?v=([^"' ]+)/)?.[1]||'';
 check('Core script cache-bust matches declared FE version',!!declaredFe&&!!coreAsset&&declaredFe.toLowerCase()===coreAsset.toLowerCase());
 check('Sidebar collapse preference persistence is present',core.includes('mal_nav_collapsed_v1')&&core.includes('navSaveCollapsePrefs'));
 check('Sidebar category controls expose accessible state',core.includes('aria-controls="mal-nav-items-')&&core.includes('aria-expanded='));
