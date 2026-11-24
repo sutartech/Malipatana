@@ -71,8 +71,8 @@
    ========================================================================= */
 const CONFIG = {
   API_URL: 'https://script.google.com/macros/s/AKfycbwkweVh5BM35fHP86Uxs2bEjODXq0TpcnP3q665nAG2Z0Z8GIKzSa5Oe6l7KqZZCf6oSA/exec',
-  VERSION: 'FE V3.14.0-COMPLETION-BUNDLE',
-  EXPECTED_BACKEND: 'BE V1.8.46-GOVERNANCE-READONLY-DOCUMENTS',
+  VERSION: 'FE V3.15.0-POST-API-TRANSPORT',
+  EXPECTED_BACKEND: 'BE V1.8.47-POST-API-TRANSPORT',
   IDLE_MINUTES: 30,
   /* Photo shown when no photo has been set in Settings.
      village.jpg sits in the same folder as this file on GitHub. */
@@ -1508,27 +1508,12 @@ async function saveThrough(action, params, label){
   }
 }
 
-/* ---------- API (JSONP — avoids Apps Script CORS problems) ---------- */
-function api(action, params){
-  params = params || {};
-  if(USER && USER.token && action !== 'login') params = Object.assign({}, params, {token:USER.token});
-  return new Promise((resolve, reject) => {
-    const cb = 'mcb_' + Date.now() + '_' + Math.floor(Math.random() * 1e6);
-    const q = new URLSearchParams(Object.assign({ action: action }, params, { callback: cb, _: Date.now() }));
-    const url = CONFIG.API_URL + '?' + q.toString();
-    if(url.length > 7500){
-      reject(new Error('This record is too long to send. Shorten the remarks or description and try again.'));
-      return;
-    }
-    const s = document.createElement('script');
-    const timer = setTimeout(() => { done(); reject(new Error('The sheet did not answer in time. Check your internet and try again.')); }, 28000);
-    function done(){ clearTimeout(timer); try { delete window[cb]; } catch(e){ window[cb] = undefined; } s.remove(); }
-    window[cb] = d => { done(); resolve(d); };
-    s.onerror = () => { done(); reject(new Error('Could not reach the sheet. Check the web app URL and that access is set to Anyone.')); };
-    s.referrerPolicy = 'no-referrer';
-    s.src = url;
-    document.body.appendChild(s);
-  });
+/* ---------- API (POST body + one-time response receipt) ---------- */
+function api(action,params){
+ params=params||{};
+ const payload=Object.assign({},params);
+ if(USER&&USER.token&&action!=='login')payload.token=USER.token;
+ return malPostApi(CONFIG.API_URL,action,payload);
 }
 
 
