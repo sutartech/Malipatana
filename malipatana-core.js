@@ -71,7 +71,7 @@
    ========================================================================= */
 const CONFIG = {
   API_URL: 'https://script.google.com/macros/s/AKfycbwkweVh5BM35fHP86Uxs2bEjODXq0TpcnP3q665nAG2Z0Z8GIKzSa5Oe6l7KqZZCf6oSA/exec',
-  VERSION: 'FE V3.6.9-DOCX-CROSS-REALM-FIX',
+  VERSION: 'FE V3.7.0-DOCX-READER-CONTROLS',
   EXPECTED_BACKEND: 'BE V1.8.46-GOVERNANCE-READONLY-DOCUMENTS',
   IDLE_MINUTES: 30,
   /* Photo shown when no photo has been set in Settings.
@@ -1599,7 +1599,7 @@ async function renderMyGovernanceDocs(){
     if(x.mimeType==='application/pdf'||lower.endsWith('.pdf')){
      const url=URL.createObjectURL(blob);popup.document.body.innerHTML='<div style="padding:10px 16px;background:#0d514c;color:white;font-weight:600">Viewing: '+esc(name)+'</div><iframe title="Read-only document viewer" style="border:0;width:100%;height:calc(100vh - 44px)" src="'+url+'"></iframe>';popup.addEventListener('beforeunload',()=>URL.revokeObjectURL(url));
     }else if(lower.endsWith('.docx')||x.mimeType==='application/vnd.openxmlformats-officedocument.wordprocessingml.document'){
-     popup.document.body.innerHTML='<div style="padding:10px 16px;background:#0d514c;color:white;font-weight:600">Read-only view · '+esc(name)+'</div><div id="docxViewer" style="max-width:980px;margin:22px auto;padding:24px;background:white;min-height:80vh;box-shadow:0 2px 12px #0002">Loading document preview…</div>';
+     popup.document.body.innerHTML='<header style="position:sticky;top:0;z-index:10;padding:10px 16px;background:#0d514c;color:white;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap"><strong style="font-size:15px">Read-only view · '+esc(name)+'</strong><div style="display:flex;align-items:center;gap:6px"><button id="docZoomOut" style="padding:7px 11px;border:1px solid #ffffff66;border-radius:7px;background:#ffffff18;color:white;cursor:pointer">−</button><span id="docZoomLabel" style="min-width:44px;text-align:center">100%</span><button id="docZoomIn" style="padding:7px 11px;border:1px solid #ffffff66;border-radius:7px;background:#ffffff18;color:white;cursor:pointer">+</button><button id="docZoomReset" style="padding:7px 11px;border:1px solid #ffffff66;border-radius:7px;background:#ffffff18;color:white;cursor:pointer">Reset</button></div></header><main id="docxViewer" style="max-width:980px;margin:22px auto;padding:24px;background:white;min-height:80vh;box-shadow:0 2px 12px #0002">Loading document preview…</main>';
      const viewer=popup.document.getElementById('docxViewer');
      const loadScript=url=>new Promise((resolve,reject)=>{const el=popup.document.createElement('script');el.src=url;el.onload=resolve;el.onerror=()=>reject(new Error('Could not load preview dependency: '+url));popup.document.head.appendChild(el);});
      (async()=>{try{
@@ -1616,6 +1616,10 @@ async function renderMyGovernanceDocs(){
        if(!popupResponse.ok)throw new Error('Could not prepare document bytes for preview.');
        const popupBuffer=await popupResponse.arrayBuffer();
        await api.renderAsync(popupBuffer,viewer,null,{inWrapper:true,ignoreWidth:false,ignoreHeight:false});
+       let zoom=1;const applyZoom=()=>{viewer.style.zoom=String(zoom);popup.document.getElementById('docZoomLabel').textContent=Math.round(zoom*100)+'%';};
+       popup.document.getElementById('docZoomIn').onclick=()=>{zoom=Math.min(1.6,Math.round((zoom+0.1)*10)/10);applyZoom();};
+       popup.document.getElementById('docZoomOut').onclick=()=>{zoom=Math.max(0.6,Math.round((zoom-0.1)*10)/10);applyZoom();};
+       popup.document.getElementById('docZoomReset').onclick=()=>{zoom=1;applyZoom();};
       }finally{URL.revokeObjectURL(previewUrl);}
      }catch(e){viewer.textContent='DOCX preview unavailable: '+(e&&e.message||String(e))+' Please ask the administrator for a PDF viewing copy.';}})();
     }else{
