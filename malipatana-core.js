@@ -71,7 +71,7 @@
    ========================================================================= */
 const CONFIG = {
   API_URL: 'https://script.google.com/macros/s/AKfycbwkweVh5BM35fHP86Uxs2bEjODXq0TpcnP3q665nAG2Z0Z8GIKzSa5Oe6l7KqZZCf6oSA/exec',
-  VERSION: 'FE V3.8.2-SIDEBAR-CASCADE-ISOLATION',
+  VERSION: 'FE V3.8.3-COLLAPSIBLE-NAV-GROUPS',
   EXPECTED_BACKEND: 'BE V1.8.46-GOVERNANCE-READONLY-DOCUMENTS',
   IDLE_MINUTES: 30,
   /* Photo shown when no photo has been set in Settings.
@@ -2133,6 +2133,7 @@ function buildTabs(){
   });
 }
 
+const navCategoryCollapsed = Object.create(null);
 function buildNav(){
   const groups = [
     ['', [['dashboard', '▦', 'Dashboard', null]]],
@@ -2150,7 +2151,14 @@ function buildNav(){
   groups.forEach(([title, items]) => {
     if(!items.length) return;
     const p=palette[title];
-    if(title && p){ const slug=title==='GLOBAL ADMINISTRATOR'?'global-administrator':title.toLowerCase(); html += '<div class="nav-category-bar nav-category-bar-'+slug+'" style="display:flex!important;align-items:center!important;gap:9px!important;min-height:43px!important;margin:12px 3px 7px!important;padding:6px 10px!important;border:1px solid '+p.edge+'!important;border-left:5px solid '+p.edge+'!important;border-radius:11px!important;background:'+p.bg+'!important;background-color:'+p.bg+'!important;color:'+p.fg+'!important;box-shadow:0 2px 8px rgba(0,25,40,.24)!important;font-size:11px!important;font-weight:950!important;letter-spacing:.065em!important;line-height:1.15!important;text-shadow:none!important"><span class="navgroup-symbol" style="font-size:17px!important;flex:0 0 auto!important">'+p.symbol+'</span><span class="navgroup-title" style="display:inline-flex!important;align-items:center!important;min-height:28px!important;font-weight:950!important;color:'+p.fg+'!important">'+title+'</span><span class="navgroup-chevron" style="margin-left:auto!important;font-size:17px!important;font-weight:950!important;color:'+p.fg+'!important">›</span></div>'; }
+    const grouped=!!(title && p);
+    const slug=grouped?(title==='GLOBAL ADMINISTRATOR'?'global-administrator':title.toLowerCase()):'';
+    const activeGroup=items.some(it=>PAGE===it[0]);
+    if(grouped){
+      if(activeGroup) navCategoryCollapsed[slug]=false;
+      const collapsed=!!navCategoryCollapsed[slug];
+      html += '<div class="nav-category-group" data-nav-category-group="'+slug+'"><button type="button" class="nav-category-bar nav-category-bar-'+slug+'" data-nav-category-toggle="'+slug+'" aria-expanded="'+(!collapsed)+'" style="display:flex!important;align-items:center!important;gap:9px!important;width:calc(100% - 6px)!important;min-height:43px!important;margin:12px 3px 7px!important;padding:6px 10px!important;border:1px solid '+p.edge+'!important;border-left:5px solid '+p.edge+'!important;border-radius:11px!important;background:'+p.bg+'!important;background-color:'+p.bg+'!important;color:'+p.fg+'!important;box-shadow:0 2px 8px rgba(0,25,40,.24)!important;font-size:11px!important;font-weight:950!important;letter-spacing:.065em!important;line-height:1.15!important;text-shadow:none!important;text-align:left!important;cursor:pointer!important"><span class="navgroup-symbol" style="font-size:17px!important;flex:0 0 auto!important">'+p.symbol+'</span><span class="navgroup-title" style="display:inline-flex!important;align-items:center!important;min-height:28px!important;font-weight:950!important;color:'+p.fg+'!important">'+title+'</span><span class="navgroup-chevron" style="margin-left:auto!important;font-size:17px!important;font-weight:950!important;color:'+p.fg+'!important;transform:rotate('+(collapsed?-90:90)+'deg)!important;transition:transform .15s ease!important">›</span></button><div class="nav-category-items" data-nav-category-items="'+slug+'"'+(collapsed?' hidden style="display:none!important"':'')+'>'; 
+    }
     html += items.map(([key, ic, label, dataKey]) => {
       const n = key === 'memorial' ? (DB.members || []).filter(isDeceased).length : dataKey ? (rowsOf(dataKey) || []).length : '';
       const active=PAGE===key;
@@ -2158,8 +2166,21 @@ function buildNav(){
       const ink=title==='PEOPLE'?'#075078':title==='MONEY'?'#795000':title==='WELFARE'?'#8a2942':title==='VILLAGERS'?'#35651d':title==='DOCUMENTS'?'#075b51':title==='GLOBAL ADMINISTRATOR'?'#513c88':'#075b48';
       return '<button class="nav" data-page="' + key + '" style="display:flex;align-items:center;gap:10px;width:100%;min-height:40px;margin:3px 0;padding:6px 9px;border-radius:9px;border:1px solid '+(active?'#a4e6c9':'#ffffff12')+';background:'+(active?'linear-gradient(100deg,#d7ffeb,#9be8c8)':'#ffffff08')+';color:'+(active?'#063d36':'#f4f9ff')+';font-size:12.5px;font-weight:'+(active?'950':'700')+';text-align:left;box-shadow:'+(active?'inset 4px 0 #00a579,0 3px 10px #001d2c40':'none')+'"><span class="ic" style="display:inline-flex;align-items:center;justify-content:center;flex:0 0 29px;width:29px;height:29px;border-radius:8px;background:'+(active?'#087b68':tint)+';color:'+(active?'#ffffff':ink)+';font-size:15px;font-weight:950">' + ic + '</span>' + esc(label) + (n !== '' ? '<span class="count">' + n + '</span>' : '') + '</button>';
     }).join('');
+    if(grouped) html += '</div></div>';
   });
   $('#sidebar').innerHTML = html;
+  $('#sidebar').querySelectorAll('[data-nav-category-toggle]').forEach(button => {
+    button.onclick = () => {
+      const slug=button.dataset.navCategoryToggle;
+      const collapsed=!navCategoryCollapsed[slug];
+      navCategoryCollapsed[slug]=collapsed;
+      const panel=$('#sidebar').querySelector('[data-nav-category-items="'+slug+'"]');
+      if(panel){panel.hidden=collapsed;panel.style.setProperty('display',collapsed?'none':'','important');}
+      button.setAttribute('aria-expanded',collapsed?'false':'true');
+      const chevron=button.querySelector('.navgroup-chevron');
+      if(chevron)chevron.style.setProperty('transform','rotate('+(collapsed?-90:90)+'deg)','important');
+    };
+  });
   $('#sidebar').querySelectorAll('.nav').forEach(b => b.onclick = () => go(b.dataset.page));
 }
 function go(page){
@@ -7710,7 +7731,7 @@ buildNav = function(){
     if(anchor) anchor.after(b); else sb.appendChild(b);
     const quick=mk('entryLinks','⚡','Shared entry links','');b.after(quick);
     quick.after(mk('sharedApprovals','✓','Approvals & Corrections',''));
-    const first=sb.querySelector('.nav-category-bar');if(first)first.before(b);
+    const first=sb.querySelector('.nav-category-group');if(first)first.before(b);
   }
 };
 const _malBuildNavVerify = buildNav;
