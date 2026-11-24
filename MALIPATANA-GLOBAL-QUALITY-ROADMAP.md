@@ -1,8 +1,8 @@
 # Malipatana Global-Quality Transformation Roadmap
 
-Status: Approved programme; Phase 1 complete, Phase 2 in progress
+Status: Phases 1–3 implemented; Phase 4.0 in progress
 Baseline branch: main
-Working branch: transformation/phase-2-village-operations
+Working branch: transformation/phase-4-0-governance-control-centre
 Date: 2026-11-24
 Scope: Full 100-improvement programme
 Preservation rule: No backend URL, Apps Script code, spreadsheet schema, existing record, authentication flow, or permission policy may be changed without a separately reviewed and explicitly approved change.
@@ -18,7 +18,7 @@ A feature is not complete merely because its code is committed. Completion requi
 Repository: https://github.com/sutartech/Malipatana
 Default branch: main
 Current baseline commit before Phase 2: 35a2eeb910793ef64cb7a1707f133bc410e7f62b
-Current frontend: FE V3.8.4-PERSISTENT-COLLAPSIBLE-NAV
+Current frontend: FE V3.10.0-GOVERNANCE-CONTROL-CENTRE
 Expected backend: BE V1.8.46-GOVERNANCE-READONLY-DOCUMENTS
 Core asset cache key: 3.8.4-persistent-collapsible-nav
 Latest GitHub Pages deployment for baseline commit: run 45328436188, completed successfully.
@@ -104,7 +104,10 @@ Implementation policy: presentation-first; reuse existing DB.summary, existing m
 49. Provide authorised beneficiary assistance history.
 50. Add export/print controls with role-based privacy safeguards.
 
-### Phase 4 — Governance and documents (15)
+### Phase 4 — Governance and documents (15) — IN PROGRESS
+
+Phase 4.0 implementation: Existing Admin-only Governance & Compliance Centre is enhanced in place. Action queue, due-date KPIs and client-side task search/filter reuse existing governanceData records and server actions. No new tabs, fields, APIs or permissions.
+
 51. Create a committee action centre using existing governance task data.
 52. Improve compliance calendar and upcoming/overdue presentation.
 53. Distinguish mandatory, conditional, recommended and not-applicable requirements.
