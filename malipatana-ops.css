@@ -38,3 +38,26 @@
 .mal-pw-kpis button:focus-visible{outline:3px solid #b88b32;outline-offset:2px}
 @media(max-width:900px){.mal-pw-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:520px){.mal-pw-kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.mal-pw-kpis button{padding:11px}.mal-pw-kpis button b{font-size:20px}}
+
+/* Phase 4.0 — governance action centre */
+.mal-gov-kpis{grid-template-columns:repeat(6,minmax(0,1fr))}
+.mal-gov-kpis>div{min-width:0;padding:15px;border:1px solid #dce9e2;border-radius:14px;background:#f8fbf9;display:grid;gap:6px}
+.mal-gov-kpis>div.is-alert{background:#fff1ef;border-color:#ebc5c0}
+.mal-gov-kpis>div.is-soon{background:#fff8e9;border-color:#ead8a9}
+.mal-gov-kpis>div b{font-size:22px;color:#174e42}
+.mal-gov-kpis>div span{font-size:11px;font-weight:800;color:#536f65}
+.mal-gov-action-centre{border-color:#d6e8df}
+.mal-gov-queue{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.mal-gov-queue-item{display:grid;gap:5px;min-width:0;text-align:left;padding:13px;border:1px solid #e3e9e5;border-radius:13px;background:#fff;color:#244d42;cursor:pointer}
+.mal-gov-queue-item.overdue{border-left:4px solid #c74b40;background:#fffaf9}
+.mal-gov-queue-item.due-soon{border-left:4px solid #c58a28;background:#fffdf7}
+.mal-gov-queue-item b{font-size:13px;overflow-wrap:anywhere}
+.mal-gov-queue-item>span:not(.mal-gov-queue-reason),.mal-gov-queue-item small{font-size:11px;color:#63776e;overflow-wrap:anywhere}
+.mal-gov-queue-reason{font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.06em;color:#a53f36}
+.mal-gov-queue-item.due-soon .mal-gov-queue-reason{color:#8a611b}
+.mal-gov-clear{display:grid;gap:4px;padding:15px;border-radius:12px;background:#f1faf5;color:#225c46}
+.mal-gov-clear span{font-size:12px;color:#61786c}
+.mal-gov-task-tools{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(180px,.7fr);gap:9px;margin-top:12px}
+.mal-gov-task-tools .input{min-width:0}
+@media(max-width:1000px){.mal-gov-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:620px){.mal-gov-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.mal-gov-queue{grid-template-columns:1fr}.mal-gov-task-tools{grid-template-columns:1fr}}
