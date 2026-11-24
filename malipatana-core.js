@@ -71,7 +71,7 @@
    ========================================================================= */
 const CONFIG = {
   API_URL: 'https://script.google.com/macros/s/AKfycbwkweVh5BM35fHP86Uxs2bEjODXq0TpcnP3q665nAG2Z0Z8GIKzSa5Oe6l7KqZZCf6oSA/exec',
-  VERSION: 'FE V3.9.3-CONTRIBUTION-DONOR-CONTEXT',
+  VERSION: 'FE V3.9.4-FAMILY-CONTRIBUTION-HISTORY',
   EXPECTED_BACKEND: 'BE V1.8.46-GOVERNANCE-READONLY-DOCUMENTS',
   IDLE_MINUTES: 30,
   /* Photo shown when no photo has been set in Settings.
@@ -5554,6 +5554,27 @@ function openProfile(id){
                  (DB.medical || []).filter(x => String(x['Family ID']).trim() === String(id).trim()).reduce((a, r) => a + num(r['Assistance']), 0) +
                  (DB.education || []).filter(x => String(x['Family ID']).trim() === String(id).trim()).reduce((a, r) => a + num(r['Village Assistance']), 0);
   const given = give.reduce((a, r) => a + num(r['Amount']), 0);
+  const recentContributions = give.slice().sort((a,b) =>
+    String(toISO(b['Date']) || '').localeCompare(String(toISO(a['Date']) || '')) ||
+    String(b['Contribution ID'] || '').localeCompare(String(a['Contribution ID'] || ''))
+  ).slice(0,5);
+  const contributionHistoryHtml = canSee('contributions') ? `
+    <section class="mal-family-contrib-history" aria-label="Recent contribution history">
+      <div class="mal-subhead"><h4>Recent contributions <span class="muted small">${give.length} recorded</span></h4>
+        <button class="btn btn-sm" type="button" data-family-contributions="${esc(id)}">Open full register</button>
+      </div>
+      ${recentContributions.length ? `<div class="tablewrap" style="max-height:none"><table class="grid">
+        <thead><tr><th>Date</th><th>Month</th><th>Contributor</th><th class="num">Amount</th><th>Receipt</th></tr></thead>
+        <tbody>${recentContributions.map(r=>`<tr>
+          <td data-label="Date">${esc(r['Date'] ? fmtDate(r['Date']) : '—')}</td>
+          <td data-label="Month">${esc(r['Month'] || '—')}</td>
+          <td data-label="Contributor">${esc(r['Contributor'] || memberName(r['Member ID']) || familyName(id) || id)}</td>
+          <td class="num" data-label="Amount">${money(r['Amount'])}</td>
+          <td data-label="Receipt"><button class="btn btn-sm" type="button" data-family-receipt="${esc(r['Contribution ID'])}">Receipt</button></td>
+        </tr>`).join('')}</tbody>
+      </table></div>` : '<div class="subnote">No contribution entries are recorded for this family yet.</div>'}
+    </section>` : '';
+
   const alive=mem.filter(m=>!isDeceased(m));
   const livingHere=alive.filter(m=>String(m['Residence Status']||'')==='Living in Malipatana').length;
   const awayTemp=alive.filter(m=>String(m['Residence Status']||'')==='Outside temporarily').length;
@@ -5581,6 +5602,7 @@ function openProfile(id){
         <div><div class="k">Status</div><div class="v" style="font-size:15px">${esc(f['Family Status'] || 'Active')}</div></div>
       </div>
       <div class="subnote">Living family connections: ${alive.length}. Currently in village: ${livingHere}; temporarily away: ${awayTemp}; settled outside: ${settledAway}; residence to verify: ${unknownHome}. Members remain linked to the family regardless of marriage.</div>
+      ${contributionHistoryHtml}
       ${parent ? `<div class="subnote">Subfamily of <button class="linkish" data-fam="${esc(parentId)}">${esc(parent['Family Head'] || parentId)}</button> · ${esc(parentId)}</div>` : ''}
       <div class="mal-subhead"><h4>Subfamilies <span class="muted small">${subs.length} · ${subMembers} members in all</span></h4>
         ${canEdit()?`<button class="btn btn-primary btn-sm" data-addsub="${esc(id)}">+ Add subfamily</button>`:''}</div>
@@ -5627,6 +5649,15 @@ function openProfile(id){
     </footer>`);
 
   wirePhotoFallbacks(document.getElementById('modalRoot') || document);
+  document.querySelectorAll('[data-family-receipt]').forEach(b => {
+    b.onclick = () => {
+      const rec = (DB.contributions || []).find(r => String(r['Contribution ID'] || '').trim() === String(b.dataset.familyReceipt || '').trim());
+      if(rec) offerReceipt(rec);
+    };
+  });
+  document.querySelectorAll('[data-family-contributions]').forEach(b => {
+    b.onclick = () => { closeModal(); go('contributions'); VIEW.contributions = Object.assign(VIEW.contributions || {}, {fam:String(b.dataset.familyContributions || '')}); renderModule('contributions'); };
+  });
   document.querySelectorAll('[data-member]').forEach(b => {
     b.onclick = () => { closeModal(); openMember(b.dataset.member); };
   });
