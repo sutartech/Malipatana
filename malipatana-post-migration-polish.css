@@ -70,3 +70,12 @@
 
 /* Header cleanup: email verification remains in the sidebar only. */
 @media(min-width:621px){#app .topbar{gap:clamp(6px,.8vw,12px)}}
+
+
+/* Sign-out control — match the supplied reference artwork. */
+#app .topbar #logoutBtn{width:172px;min-width:172px;height:72px;padding:0 22px;gap:11px;border:0;border-radius:24px;background:linear-gradient(135deg,#df4b50 0%,#bd3038 100%)!important;color:#fff!important;font-size:22px;font-weight:800;letter-spacing:.01em;box-shadow:0 7px 16px rgba(153,35,42,.16)}
+#app .topbar #logoutBtn .logout-arrow{font-size:25px;font-weight:900}
+#app .topbar #logoutBtn .logout-label{font-size:22px}
+#app .topbar #logoutBtn:hover{filter:brightness(1.04);transform:translateY(-1px);box-shadow:0 8px 18px rgba(115,20,20,.24)}
+@media(max-width:900px){#app .topbar #logoutBtn{width:150px;min-width:150px;height:58px;padding:0 16px;font-size:19px}#app .topbar #logoutBtn .logout-arrow,#app .topbar #logoutBtn .logout-label{font-size:20px}}
+@media(max-width:620px){#app .topbar #logoutBtn{width:auto;min-width:126px;height:42px;padding:0 12px;gap:7px;border-radius:16px;font-size:15px}#app .topbar #logoutBtn .logout-arrow,#app .topbar #logoutBtn .logout-label{font-size:16px}}
