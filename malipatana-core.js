@@ -1508,61 +1508,12 @@ async function saveThrough(action, params, label){
   }
 }
 
-/* ---------- API (POST body + short-lived one-time response receipt) ----------
-   Credentials, session tokens and private query parameters never enter a URL.
-   Apps Script POST responses are relayed through a random, one-use receipt so
-   this GitHub Pages origin does not depend on readable cross-origin POST. */
-function malRequestId_(){
-  const bytes=new Uint8Array(32);
-  if(!window.crypto||!window.crypto.getRandomValues)throw new Error('Secure browser randomness is unavailable. Update your browser.');
-  window.crypto.getRandomValues(bytes);
-  return Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join('');
-}
-function malJsonp_(params,timeoutMs){
-  return new Promise((resolve,reject)=>{
-    const cb='mcb_'+Date.now()+'_'+Math.floor(Math.random()*1e6);
-    const q=new URLSearchParams(Object.assign({},params,{callback:cb,_:Date.now()}));
-    const s=document.createElement('script');let settled=false;
-    const timer=setTimeout(()=>finish(new Error('The village server did not return a response in time.')),timeoutMs||12000);
-    function finish(err,value){if(settled)return;settled=true;clearTimeout(timer);try{delete window[cb];}catch(e){window[cb]=undefined;}s.remove();err?reject(err):resolve(value);}
-    window[cb]=value=>finish(null,value);
-    s.onerror=()=>finish(new Error('Could not retrieve the secure response. Check the Apps Script deployment.'));
-    s.referrerPolicy='no-referrer';s.src=CONFIG.API_URL+'?'+q.toString();document.body.appendChild(s);
-  });
-}
-async function malReadPostResult_(requestId,part){
-  const started=Date.now();
-  while(Date.now()-started<28000){
-    const r=await malJsonp_({action:'postResult',requestId,part},9000);
-    if(r&&!r.pending){
-      if(!r.ok)throw new Error(r.error||'The secure response expired.');
-      return r;
-    }
-    await new Promise(resolve=>setTimeout(resolve,450));
-  }
-  throw new Error('The server did not confirm this request. Do not repeat a payment or save until you refresh and check the register.');
-}
-async function api(action, params){
-  params=params||{};
-  const payload=Object.assign({action:action,_malAsync:true,_malRequestId:malRequestId_()},params);
-  if(USER&&USER.token&&action!=='login')payload.token=USER.token;
-  const requestId=payload._malRequestId;
-  if(JSON.stringify(payload).length>1800000)throw new Error('This request is too large. Shorten the remarks or description and try again.');
-  try{
-    await fetch(CONFIG.API_URL,{method:'POST',mode:'no-cors',credentials:'omit',cache:'no-store',
-      redirect:'follow',headers:{'Content-Type':'text/plain;charset=UTF-8'},
-      body:JSON.stringify(payload),referrerPolicy:'no-referrer'});
-  }catch(e){
-    // The request may have reached Apps Script before the browser reported a
-    // network error. Poll the unique receipt once; never auto-replay a write.
-  }
-  const first=await malReadPostResult_(requestId,0);
-  let body=first.body||'';
-  for(let part=1;part<first.total;part++){
-    const next=await malReadPostResult_(requestId,part);
-    body+=next.body||'';
-  }
-  try{return JSON.parse(body);}catch(e){throw new Error('The village server returned an unreadable response. Refresh and retry only after checking whether the operation was saved.');}
+/* ---------- API (POST body + one-time response receipt) ---------- */
+function api(action,params){
+ params=params||{};
+ const payload=Object.assign({},params);
+ if(USER&&USER.token&&action!=='login')payload.token=USER.token;
+ return malPostApi(CONFIG.API_URL,action,payload);
 }
 
 
