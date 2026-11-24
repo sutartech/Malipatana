@@ -149,6 +149,10 @@ check('Role-aware navigation checks remain in the module router',core.includes("
 check('User-facing API and backend error strings are inserted as text in toast',core.includes("el.textContent = text"));
 check('Password is not persisted as a remembered credential',core.includes("local.set('mal_saved_user', username)")&&!core.includes("local.set('mal_saved_password'")&&!core.includes("localStorage.setItem('password'"));
 
+check('No literal escaped newline leaks from the document head',!index.includes('\\\\n</head>')&&!index.includes('\\\\n<link rel="stylesheet"'));
+check('Post-migration header and notice responsive polish stylesheet is loaded',index.includes('malipatana-post-migration-polish.css?v=1.0.0'));
+check('Post-migration polish contains constrained clock and overflow-safe notice lane',existsSync(resolve(root,'malipatana-post-migration-polish.css'))&&file('malipatana-post-migration-polish.css').includes('.mal-live-datetime')&&file('malipatana-post-migration-polish.css').includes('.mal-notice-lane'));
+
 const failures=results.filter(r=>!r.pass).length;
 console.log('\n'+(results.length-failures)+'/'+results.length+' static checks passed.');
 if(failures){console.error('Static checks failed. Do not assume this deployment is ready.');process.exitCode=1;}
