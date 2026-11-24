@@ -5656,7 +5656,7 @@ function openProfile(id){
     };
   });
   document.querySelectorAll('[data-family-contributions]').forEach(b => {
-    b.onclick = () => { closeModal(); go('contributions'); VIEW.contributions = Object.assign(VIEW.contributions || {}, {fam:String(b.dataset.familyContributions || '')}); renderModule('contributions'); };
+    b.onclick = () => { closeModal(); VIEW.contributions = Object.assign(VIEW.contributions || {}, {fam:String(b.dataset.familyContributions || '')}); go('contributions'); };
   });
   document.querySelectorAll('[data-member]').forEach(b => {
     b.onclick = () => { closeModal(); openMember(b.dataset.member); };
