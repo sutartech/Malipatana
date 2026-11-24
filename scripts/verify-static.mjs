@@ -69,6 +69,10 @@ check('Family welfare history independently enforces each module permission',cor
 check('Family welfare history adds no backend or sheet contract',!core.includes("api('save',{sheet:'Emergency Cases'")&&!core.includes("api('save',{sheet:'Medical'")&&index.includes('malipatana-family-welfare.css'));
 check('Family welfare responsive stylesheet exists and is loaded',existsSync(resolve(root,'malipatana-family-welfare.css'))&&index.includes('malipatana-family-welfare.css'));
 
+
+check('Modal content has an independently scrollable flex body while header and footer stay fixed',css.includes('.modal>.body{flex:1 1 auto;min-height:0;max-height:100%;overflow-y:auto')&&css.includes('.modal>header,.modal>footer{flex:0 0 auto}'));
+check('Modal scrolling supports touch and prevents scroll chaining on mobile',css.includes('-webkit-overflow-scrolling:touch')&&css.includes('overscroll-behavior-y:contain'));
+
 const failures=results.filter(r=>!r.pass).length;
 console.log('\n'+(results.length-failures)+'/'+results.length+' static checks passed.');
 if(failures){console.error('Static checks failed. Do not assume this deployment is ready.');process.exitCode=1;}
