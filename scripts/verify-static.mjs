@@ -163,6 +163,10 @@ check('Monthly financial close review derives month-wise counts and missing refe
 check('Monthly close review respects existing register visibility permissions',core.includes("const showC=canSee('contributions'), showI=canSee('income'), showE=canSee('expenditure')")&&core.includes("(showC?cRows.length:'—')")&&core.includes("(showI?iRows.length:'—')")&&core.includes("(showE?eRows.length:'—')"));
 check('Keyboard skip links are available on dashboard, public and suggestions pages',index.includes('class="mal-skip-link" href="#main"')&&pub.includes('class="mal-public-skip" href="#main"')&&sugg.includes('class="mal-suggestion-skip" href="#main"'));
 check('Registration page has a keyboard skip link targeting the main form',register.includes('class="mal-register-skip" href="#main"')&&register.includes('<main id="main">'));
+check('Public account card grid can shrink below 320px without horizontal overflow',pub.includes('grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr))'));
+check('Dashboard has dedicated compact-phone layout rules at 330px',file('malipatana-mobile-dashboard-polish.css').includes('@media(max-width:330px)'));
+check('Registration wizard has a narrow-screen step layout and single-column form',register.includes('@media(max-width:480px)')&&register.includes('@media(max-width:600px){.grid{grid-template-columns:1fr'));
+check('Suggestions page has mobile navigation and reduced-motion rules',file('malipatana-public-community.css').includes('@media(max-width:530px)')&&file('suggestions.html').includes('prefers-reduced-motion:reduce'));
 check('Keyboard focus and reduced-motion preferences are supported',welfare.includes(':focus-visible{outline:3px')&&welfare.includes('prefers-reduced-motion:reduce'));
 check('Monthly close and accessibility styles are versioned and loaded',index.includes('malipatana-family-welfare.css?v=3.14.0-monthly-close-accessibility')&&welfare.includes('.mal-fin-month-close{'));
 check('Public and suggestions pages retain their existing form and API contracts',pub.includes("api('publicSummary')")&&sugg.includes("action:'publicSuggestion'")&&sugg.includes("api('suggestionStatus'"));
