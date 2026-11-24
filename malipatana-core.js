@@ -2137,47 +2137,26 @@ function buildNav(){
   const groups = [
     ['', [['dashboard', '▦', 'Dashboard', null]]],
     ['PEOPLE', [['families', '⌂', 'Families', 'families'], ['members', '☗', 'Members', 'members'], ['memorial', '✝', 'In memory', 'members', 'members'], ['guidance', '✥', 'Guidance', null, 'families']]],
-    ['MONEY', [['contributions', '◈', 'Contributions', 'contributions'], ['income', '↑', 'Income', 'income'],
-               ['expenditure', '↓', 'Expenditure', 'expenditure'], ['events', '❋', 'Major expenses', 'events'],
-               ['projects', '🏗', 'Village Development', 'projects', 'events'],
-               ['recurring', '↻', 'Recurring expenses', 'recurring']]],
+    ['MONEY', [['contributions', '◈', 'Contributions', 'contributions'], ['income', '↑', 'Income', 'income'], ['expenditure', '↓', 'Expenditure', 'expenditure'], ['events', '❋', 'Major expenses', 'events'], ['projects', '🏗', 'Village Development', 'projects', 'events'], ['recurring', '↻', 'Recurring expenses', 'recurring']]],
     ['WELFARE', [['emergency', '✚', 'Emergency cases', 'emergency'], ['regularSupport', '❤', 'Regular support', 'regularSupport']]],
-    ['VILLAGERS', [['grievances', '⚑', 'Grievances', 'grievances'], ['importantDays', '❀', 'Important days', 'importantDays'],
-                   ['notices', '▦', 'Notice board', 'notices']]]
+    ['VILLAGERS', [['grievances', '⚑', 'Grievances', 'grievances'], ['importantDays', '❀', 'Important days', 'importantDays'], ['notices', '▦', 'Notice board', 'notices']]]
   ];
-  /* Fifth element is the PERMISSION key, when it differs from the page key.
-     In memory and Guidance are views of other sheets, so they are not in
-     ALL_PAGES and can never be ticked in Access — checking the page key alone
-     hid them from everyone with a custom access list. Each now declares the
-     permission its own render function enforces. */
   groups.forEach(g => { g[1] = g[1].filter(it => canSee(it[4] || it[0])); });
-  if(local.get('mal_odia') === '1'){
-    groups.forEach(g => g[1].forEach(it => {
-      const m = MODULES[it[0]];
-      if(m && m.odia) it[2] = m.odia;
-    }));
-  }
+  if(local.get('mal_odia') === '1') groups.forEach(g => g[1].forEach(it => { const m = MODULES[it[0]]; if(m && m.odia) it[2] = m.odia; }));
   groups.push(['DOCUMENTS', [['myGovernanceDocs', '▤', 'Authorised documents', null]]]);
-  if(isAdmin()) groups.push(['GLOBAL ADMINISTRATOR', [['users', '☺', 'Users', 'users'],
-                                       ['publicPage', '◉', 'What people see', null],
-                                       ['auditLog', '☶', 'Change history', null],
-                                       ['accessHistory', '◷', 'Access & submissions', null],
-                                       ['photos', '❏', 'Photos', null],
-                                       ['settingsList', '⚙', 'Settings', 'settingsList'],
-                                       ['surnameGroups', '♧', 'Surname groups & duties', null],
-                                       ['governanceCentre', '▤', 'Governance & compliance', null]]]);
+  if(isAdmin()) groups.push(['GLOBAL ADMINISTRATOR', [['users', '☺', 'Users', 'users'], ['publicPage', '◉', 'What people see', null], ['auditLog', '☶', 'Change history', null], ['accessHistory', '◷', 'Access & submissions', null], ['photos', '❏', 'Photos', null], ['settingsList', '⚙', 'Settings', 'settingsList'], ['surnameGroups', '♧', 'Surname groups & duties', null], ['governanceCentre', '▤', 'Governance & compliance', null]]]);
+  const palette = {PEOPLE:{bg:'#dff3ff',fg:'#075078',edge:'#35b9ed',symbol:'👥'},MONEY:{bg:'#fff0c9',fg:'#795000',edge:'#efb83d',symbol:'💰'},WELFARE:{bg:'#ffe2e8',fg:'#8a2942',edge:'#ed7893',symbol:'❤️'},VILLAGERS:{bg:'#e7f6d9',fg:'#35651d',edge:'#8ac65d',symbol:'🌿'},DOCUMENTS:{bg:'#d9f5ee',fg:'#075b51',edge:'#25b99b',symbol:'📁'},'GLOBAL ADMINISTRATOR':{bg:'#eee7ff',fg:'#513c88',edge:'#a48ae9',symbol:'⚙️'}};
   let html = '';
   groups.forEach(([title, items]) => {
-    if(!items.length) return;   // a heading with nothing under it is just noise
-    if(title) html += '<div class="navgroup">' + title + '</div>';
+    if(!items.length) return;
+    const p=palette[title];
+    if(title && p) html += '<div class="navgroup" style="display:flex;align-items:center;gap:8px;margin:14px 4px 6px;padding:9px 10px;border-radius:9px;border-left:4px solid '+p.edge+';background:linear-gradient(100deg,'+p.bg+',#ffffff12);color:'+p.fg+';font-size:11px;font-weight:950;letter-spacing:.09em;text-transform:uppercase;box-shadow:0 2px 7px #001d2c20"><span style="font-size:14px">'+p.symbol+'</span>'+title+'<span style="margin-left:auto;opacity:.75">›</span></div>';
     html += items.map(([key, ic, label, dataKey]) => {
-      /* In memory is a view of Members, so it is gated on 'members' — the same
-         key the page itself enforces — but its badge must count the deceased,
-         not repeat the Members total. Keyed on the page, not the permission. */
-      const n = key === 'memorial' ? (DB.members || []).filter(isDeceased).length
-        : dataKey ? (rowsOf(dataKey) || []).length : '';
-      return '<button class="nav" data-page="' + key + '"><span class="ic">' + ic + '</span>' + esc(label) +
-             (n !== '' ? '<span class="count">' + n + '</span>' : '') + '</button>';
+      const n = key === 'memorial' ? (DB.members || []).filter(isDeceased).length : dataKey ? (rowsOf(dataKey) || []).length : '';
+      const active=PAGE===key;
+      const tint=title==='PEOPLE'?'#bceaff':title==='MONEY'?'#ffe3a0':title==='WELFARE'?'#ffd3dd':title==='VILLAGERS'?'#d8f4bd':title==='DOCUMENTS'?'#bdf2e5':title==='GLOBAL ADMINISTRATOR'?'#ddd0ff':'#c7f6e6';
+      const ink=title==='PEOPLE'?'#075078':title==='MONEY'?'#795000':title==='WELFARE'?'#8a2942':title==='VILLAGERS'?'#35651d':title==='DOCUMENTS'?'#075b51':title==='GLOBAL ADMINISTRATOR'?'#513c88':'#075b48';
+      return '<button class="nav" data-page="' + key + '" style="display:flex;align-items:center;gap:10px;width:100%;min-height:40px;margin:3px 0;padding:6px 9px;border-radius:9px;border:1px solid '+(active?'#a4e6c9':'#ffffff12')+';background:'+(active?'linear-gradient(100deg,#d7ffeb,#9be8c8)':'#ffffff08')+';color:'+(active?'#063d36':'#f4f9ff')+';font-size:12.5px;font-weight:'+(active?'950':'700')+';text-align:left;box-shadow:'+(active?'inset 4px 0 #00a579,0 3px 10px #001d2c40':'none')+'"><span class="ic" style="display:inline-flex;align-items:center;justify-content:center;flex:0 0 29px;width:29px;height:29px;border-radius:8px;background:'+(active?'#087b68':tint)+';color:'+(active?'#ffffff':ink)+';font-size:15px;font-weight:950">' + ic + '</span>' + esc(label) + (n !== '' ? '<span class="count">' + n + '</span>' : '') + '</button>';
     }).join('');
   });
   $('#sidebar').innerHTML = html;
