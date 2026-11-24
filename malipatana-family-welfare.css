@@ -32,3 +32,15 @@
 .mal-financial-disclaimer{margin:12px 0 0;color:#73847d;font-size:10px;line-height:1.45}
 @media(max-width:700px){.mal-family-financial{padding:12px}.mal-financial-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.mal-financial-card{padding:10px}.mal-financial-card-title{font-size:11px}.mal-financial-value{font-size:18px}}
 @media(max-width:360px){.mal-financial-grid{grid-template-columns:1fr}}
+
+
+/* Phase 4.3 — financial audit-readiness checklist */
+.mal-fin-audit-readiness{margin-top:14px;padding:15px;border:1px solid #d9e6df;border-radius:14px;background:#f8fbf9}
+.mal-fin-audit-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:9px}
+.mal-fin-audit-head h4{margin:0;color:#17463e;font-size:15px;font-weight:850}
+.mal-fin-audit-head p{margin:3px 0 0;color:#6b7d75;font-size:11px}
+.mal-fin-audit-head>span{padding:5px 8px;border-radius:999px;background:#fff3dc;color:#805810;font-size:10px;font-weight:800}
+.mal-fin-audit-readiness .tablewrap{overflow-x:auto}
+.mal-fin-audit-readiness table{min-width:490px}
+.mal-fin-audit-note{margin:10px 0 0;color:#66786f;font-size:11px;line-height:1.6}
+@media(max-width:600px){.mal-fin-audit-readiness{padding:10px}.mal-fin-audit-head h4{font-size:14px}}

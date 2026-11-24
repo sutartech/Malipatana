@@ -71,7 +71,7 @@
    ========================================================================= */
 const CONFIG = {
   API_URL: 'https://script.google.com/macros/s/AKfycbwkweVh5BM35fHP86Uxs2bEjODXq0TpcnP3q665nAG2Z0Z8GIKzSa5Oe6l7KqZZCf6oSA/exec',
-  VERSION: 'FE V3.12.0-PUBLIC-FINANCIAL-DISCLOSURE',
+  VERSION: 'FE V3.13.0-AUDIT-READINESS',
   EXPECTED_BACKEND: 'BE V1.8.46-GOVERNANCE-READONLY-DOCUMENTS',
   IDLE_MINUTES: 30,
   /* Photo shown when no photo has been set in Settings.
@@ -3435,6 +3435,23 @@ function financialTransparencyHtml(){
   if(showC)(DB.contributions||[]).forEach(r=>{const m=findMonth(monthKey(r['Month']||r['Date']));if(!m)return;const a=num(r['Amount']);m.c+=a;totals.c+=a;});
   if(showI)(DB.income||[]).forEach(r=>{const m=findMonth(monthKey(r['Date']));if(!m)return;const a=num(r['Amount']);m.i+=a;totals.i+=a;const k=String(r['Income Type']||r['Source']||'Unclassified').trim()||'Unclassified';sourceTotals[k]=(sourceTotals[k]||0)+a;});
   if(showE)(DB.expenditure||[]).forEach(r=>{const m=findMonth(monthKey(r['Date']));if(!m)return;const a=num(r['Amount']);m.e+=a;totals.e+=a;const k=String(r['Category']||'Uncategorised').trim()||'Uncategorised';categoryTotals[k]=(categoryTotals[k]||0)+a;expenseRows++;if(String(r['Bill/Receipt']||'').trim())expenseEvidence++;if(String(r['Approved By']||'').trim())expenseApproved++;});
+  /* Phase 4.3: record-completeness indicators only. These count blank
+     reference fields; they do not certify a transaction, approval or receipt. */
+  const fyRows=(rows,dateField)=> (rows||[]).filter(r=>{const m=findMonth(monthKey(r[dateField]));return !!m;});
+  const contributionRows=showC?fyRows(DB.contributions,'Month').filter(r=>{const m=findMonth(monthKey(r['Month']||r['Date']));return !!m;}):[];
+  const incomeRows=showI?fyRows(DB.income,'Date'):[];
+  const expenseFYRows=showE?fyRows(DB.expenditure,'Date'):[];
+  const missing=(rows,field)=>rows.filter(r=>!String(r[field]||'').trim()).length;
+  const auditChecks=[];
+  if(showC){auditChecks.push(['Contributions',contributionRows.length,'Receipt number missing',missing(contributionRows,'Receipt No')]);
+    auditChecks.push(['Contributions',contributionRows.length,'Payment mode missing',missing(contributionRows,'Payment Mode')]);}
+  if(showI){auditChecks.push(['Other income',incomeRows.length,'Received-by entry missing',missing(incomeRows,'Received By')]);
+    auditChecks.push(['Other income',incomeRows.length,'Payment mode missing',missing(incomeRows,'Payment Mode')]);}
+  if(showE){auditChecks.push(['Expenditure',expenseFYRows.length,'Bill/receipt reference missing',missing(expenseFYRows,'Bill/Receipt')]);
+    auditChecks.push(['Expenditure',expenseFYRows.length,'Approver entry missing',missing(expenseFYRows,'Approved By')]);
+    auditChecks.push(['Expenditure',expenseFYRows.length,'Paid-by entry missing',missing(expenseFYRows,'Paid By')]);
+    auditChecks.push(['Expenditure',expenseFYRows.length,'Payment mode missing',missing(expenseFYRows,'Payment Mode')]);}
+  const auditRowsHtml=auditChecks.map(([group,total,label,missingCount])=>'<tr><td>'+esc(group)+'</td><td>'+esc(label)+'</td><td class="num tnum">'+missingCount+'</td><td class="num tnum">'+total+'</td></tr>').join('');
   const tableRows=o=>Object.entries(o).sort((a,b)=>b[1]-a[1]).map(([k,v])=>'<tr><td>'+esc(k)+'</td><td class="num tnum">'+money(v)+'</td></tr>').join('');
   const cards=[];if(showC)cards.push(['Contributions',totals.c]);if(showI)cards.push(['Other income',totals.i]);if(showE)cards.push(['Expenditure',totals.e]);
   if(showC&&showI&&showE)cards.push(['Net recorded movement',totals.c+totals.i-totals.e]);
@@ -3445,7 +3462,7 @@ function financialTransparencyHtml(){
     '<div class="mal-fin-transparency-grid"><div class="mal-fin-transparency-panel"><h4>Month-wise record</h4><div class="tablewrap"><table class="grid"><thead><tr><th>Month</th>'+(showC?'<th class="num">Contributions</th>':'')+(showI?'<th class="num">Other income</th>':'')+(showE?'<th class="num">Expenditure</th>':'')+'</tr></thead><tbody>'+monthRows+'<tr><th>Total</th>'+(showC?'<th class="num">'+money(totals.c)+'</th>':'')+(showI?'<th class="num">'+money(totals.i)+'</th>':'')+(showE?'<th class="num">'+money(totals.e)+'</th>':'')+'</tr></tbody></table></div></div>'+
     (showI?'<div class="mal-fin-transparency-panel"><h4>Other income by type</h4><div class="tablewrap"><table class="grid"><thead><tr><th>Income type / source</th><th class="num">Amount</th></tr></thead><tbody>'+(Object.keys(sourceTotals).length?tableRows(sourceTotals):'<tr><td colspan="2">No other income recorded in this financial year.</td></tr>')+'</tbody></table></div></div>':'')+
     (showE?'<div class="mal-fin-transparency-panel"><h4>Expenditure by category</h4><div class="tablewrap"><table class="grid"><thead><tr><th>Category</th><th class="num">Amount</th></tr></thead><tbody>'+(Object.keys(categoryTotals).length?tableRows(categoryTotals):'<tr><td colspan="2">No expenditure recorded in this financial year.</td></tr>')+'</tbody></table></div><div class="mal-fin-evidence"><span><b>'+expenseEvidence+'</b> of '+expenseRows+' expense rows have a Bill/Receipt reference</span><span><b>'+expenseApproved+'</b> of '+expenseRows+' have an Approved By entry</span></div></div>':'')+
-    '</div><p class="mal-fin-transparency-note">Contributions and Other Income remain separate. Welfare assistance is not added again because linked support may already be recorded as expenditure. Receipt references and approval entries indicate register completeness only; they do not verify the underlying document or approval. This report does not establish cash or bank balances.</p></section>';
+    '</div><div class="mal-fin-audit-readiness"><div class="mal-fin-audit-head"><div><h4>Audit-readiness checks</h4><p>Blank reference fields in this financial year · lower is better</p></div><span>Record completeness only</span></div><div class="tablewrap"><table class="grid"><thead><tr><th>Register</th><th>Check</th><th class="num">Missing</th><th class="num">Rows</th></tr></thead><tbody>'+auditRowsHtml+'</tbody></table></div><p class="mal-fin-audit-note">A populated field is not proof that a receipt is genuine, a payment was authorised, or funds reached the intended recipient. Verify original documents and approvals separately. The current registers do not provide bank-statement lines, statement closing balances or transaction references for automated cash/bank matching.</p></div><p class="mal-fin-transparency-note">Contributions and Other Income remain separate. Welfare assistance is not added again because linked support may already be recorded as expenditure. Receipt references and approval entries indicate register completeness only; they do not verify the underlying document or approval. This report does not establish cash or bank balances.</p></section>';
 }
 
 function attentionList(){
