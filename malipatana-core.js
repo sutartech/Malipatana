@@ -71,7 +71,7 @@
    ========================================================================= */
 const CONFIG = {
   API_URL: 'https://script.google.com/macros/s/AKfycbwkweVh5BM35fHP86Uxs2bEjODXq0TpcnP3q665nAG2Z0Z8GIKzSa5Oe6l7KqZZCf6oSA/exec',
-  VERSION: 'FE V3.6.4-GOVERNANCE-DOCUMENT-ACCESS-CONTROL',
+  VERSION: 'FE V3.6.5-UX98-RELEASE-1',
   EXPECTED_BACKEND: 'BE V1.8.45-GOVERNANCE-DOCUMENT-ACCESS-CONTROL',
   IDLE_MINUTES: 30,
   /* Photo shown when no photo has been set in Settings.
