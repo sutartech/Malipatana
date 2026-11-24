@@ -14,3 +14,21 @@
 .mal-family-welfare .tablewrap{overflow-x:auto}
 .mal-family-welfare table{min-width:620px}
 @media(max-width:700px){.mal-family-welfare{padding:12px;margin-top:16px}.mal-family-welfare-section{padding:10px}.mal-welfare-title h4,.mal-welfare-heading h4{font-size:15px}.mal-welfare-lock{font-size:10px}}
+
+
+/* Phase 3.6 — permission-aware family financial snapshot */
+.mal-family-financial{margin:18px 0;padding:17px;border:1px solid #d7e8e1;border-radius:17px;background:linear-gradient(145deg,#f2faf6,#fff 75%);box-shadow:0 7px 22px rgba(18,65,54,.05)}
+.mal-financial-title{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.mal-financial-title h4{margin:0;color:#17463e;font-size:17px;font-weight:850}
+.mal-financial-title p{margin:4px 0 0;color:#657c74;font-size:12px}
+.mal-financial-title>span{padding:5px 9px;border-radius:999px;background:#e5f3ed;color:#276a58;font-size:10px;font-weight:800}
+.mal-financial-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:10px}
+.mal-financial-card{min-width:0;padding:13px;border:1px solid #e1ebe6;border-radius:13px;background:#fff}
+.mal-financial-card-title{min-height:30px;color:#506b62;font-size:12px;font-weight:800}
+.mal-financial-value{margin-top:5px;color:#087e69;font-size:21px;font-weight:850;font-variant-numeric:tabular-nums}
+.mal-financial-secondary{margin-top:3px;color:#365e54;font-size:12px;font-weight:750}
+.mal-financial-meta{margin-top:7px;color:#345b50;font-size:11px;font-weight:800}
+.mal-financial-note{margin-top:3px;color:#788982;font-size:10px;line-height:1.4}
+.mal-financial-disclaimer{margin:12px 0 0;color:#73847d;font-size:10px;line-height:1.45}
+@media(max-width:700px){.mal-family-financial{padding:12px}.mal-financial-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.mal-financial-card{padding:10px}.mal-financial-card-title{font-size:11px}.mal-financial-value{font-size:18px}}
+@media(max-width:360px){.mal-financial-grid{grid-template-columns:1fr}}

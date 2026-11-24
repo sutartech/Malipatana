@@ -8,7 +8,7 @@ const results=[];
 function check(label,pass){results.push({label,pass:!!pass});console.log((pass?'PASS ':'FAIL ')+label)}
 const files=['index.html','malipatana-core.js','malipatana-ui.css','malipatana-layout-fit.css','malipatana-phase-design.css','register.html','entry.html','quick-add.html','manifest.webmanifest','quick-add.webmanifest','quick-add-sw.js'];
 for(const f of files)check('File exists: '+f,existsSync(resolve(root,f)));
-const index=file('index.html'),core=file('malipatana-core.js'),css=file('malipatana-ui.css'),register=file('register.html'),entry=file('entry.html'),quick=file('quick-add.html');
+const index=file('index.html'),core=file('malipatana-core.js'),css=file('malipatana-ui.css'),welfare=file('malipatana-family-welfare.css'),register=file('register.html'),entry=file('entry.html'),quick=file('quick-add.html');
 const url=s=>s.match(/https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec/)?.[0];
 const dashboardApiUrl=url(core), publicEntryApiUrl=url(register);
 check('Main dashboard backend URL is present',!!dashboardApiUrl);
@@ -51,7 +51,7 @@ check('Contribution register exposes linked member identity',core.includes("list
 check('Receipt falls back to linked member name before family name',core.includes("rec['Contributor'] || memberName(rec['Member ID']) || familyName(rec['Family ID'])"));
 check('Family profile includes permission-gated recent contribution history',core.includes("const contributionHistoryHtml = canSee('contributions')")&&core.includes('data-family-receipt='));
 check('Family contribution history opens the existing receipt and filtered register',core.includes("offerReceipt(rec)")&&core.includes("VIEW.contributions = Object.assign"));
-check('Phase 3.4 family contribution history remains in the current FE build',core.includes('const contributionHistoryHtml = canSee(\'contributions\')')&&core.includes('data-family-receipt=')&&core.includes("VERSION: 'FE V3.9.5-FAMILY-WELFARE-HISTORY'"));
+check('Phase 3.4 family contribution history remains in the current FE build',core.includes('const contributionHistoryHtml = canSee(\'contributions\')')&&core.includes('data-family-receipt=')&&core.includes("VERSION: 'FE V3.9.6-FAMILY-FINANCIAL-SUMMARY'"));
 
 check('Family filter identifies each family by head and ID',core.includes("head=String(f['Family Head']||'Family').trim()")&&core.includes("filter(Boolean).join(' · '))} (${esc(fid)})"));
 check('Member register shows family head alongside stored Family ID',core.includes("if(f.t === 'family')")&&core.includes("const family=(DB.families||[]).find(x=>String(x['Family ID']||'').trim()===id)"));
@@ -63,7 +63,7 @@ check('Sidebar category headings use stylesheet classes, not inline presentation
 check('Accessibility styling enabled',index.includes('malipatana-phase-design.css'));
 check('Privacy: no plaintext secrets in test file',true);
 
-check('Phase 3.5 family welfare history is present and versioned',core.includes("VERSION: 'FE V3.9.5-FAMILY-WELFARE-HISTORY'")&&index.includes('malipatana-core.js?v=3.9.5-family-welfare-history'));
+check('Phase 3.5 family welfare history is present and versioned',core.includes("VERSION: 'FE V3.9.6-FAMILY-FINANCIAL-SUMMARY'")&&index.includes('malipatana-core.js?v=3.9.6-family-financial-summary'));
 check('Family welfare history reuses existing emergency, medical, education and support records',core.includes("familyRows('emergency')")&&core.includes("familyRows('medical')")&&core.includes("familyRows('education')")&&core.includes("familyRows('regularSupport')"));
 check('Family welfare history independently enforces each module permission',core.includes("welfareTable('Emergency assistance','emergency'")&&core.includes("welfareTable('Medical assistance','medical'")&&core.includes("welfareTable('Education assistance','education'")&&core.includes("welfareTable('Regular support','regularSupport'"));
 check('Family welfare history adds no backend or sheet contract',!core.includes("api('save',{sheet:'Emergency Cases'")&&!core.includes("api('save',{sheet:'Medical'")&&index.includes('malipatana-family-welfare.css'));
@@ -79,6 +79,13 @@ check('Village home dashboard fills the available workspace without a narrow max
 check('Family profile body has a dedicated scroll target',core.includes('class="body mal-family-profile-body"')&&core.includes('aria-label="Family profile details"'));
 check('Family profile dialog has a definite height and independently scrollable body',layoutCss.includes('.modal:has(>.mal-family-profile-body)')&&layoutCss.includes('height:92dvh;')&&layoutCss.includes('.modal>.mal-family-profile-body')&&layoutCss.includes('flex:1 1 0%;')&&layoutCss.includes('height:0;'));
 check('Family profile scroll fix is cache-busted in the page shell',index.includes('malipatana-ui.css?v=3.5.63-family-profile-scroll')&&index.includes('malipatana-layout-fit.css?v=1.0.0'));
+
+
+check('Phase 3.6 family financial summary is versioned and cache-busted',core.includes("VERSION: 'FE V3.9.6-FAMILY-FINANCIAL-SUMMARY'")&&index.includes('malipatana-core.js?v=3.9.6-family-financial-summary')&&index.includes('malipatana-family-welfare.css?v=3.6.0-family-financial-summary'));
+check('Family financial summary shows contribution, emergency, medical, education and regular support categories',core.includes("label:'Contributions made'")&&core.includes("label:'Emergency assistance paid'")&&core.includes("label:'Medical assistance'")&&core.includes("label:'Education assistance'")&&core.includes("label:'Regular support'"));
+check('Family financial summary enforces existing module permissions',core.includes("if(canSee('contributions')) financialItems.push")&&core.includes("if(canSee('emergency')) financialItems.push")&&core.includes("if(canSee('medical')) financialItems.push")&&core.includes("if(canSee('education')) financialItems.push")&&core.includes("if(canSee('regularSupport')) financialItems.push"));
+check('Family financial summary avoids combining potentially overlapping assistance totals',core.includes('They are not added into one grand total')&&core.includes('secondary:familyMedicalRows.reduce'));
+check('Family financial summary has responsive presentation styles',welfare.includes('.mal-financial-grid{display:grid')&&welfare.includes('@media(max-width:700px){.mal-family-financial'));
 
 const failures=results.filter(r=>!r.pass).length;
 console.log('\n'+(results.length-failures)+'/'+results.length+' static checks passed.');

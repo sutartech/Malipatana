@@ -71,7 +71,7 @@
    ========================================================================= */
 const CONFIG = {
   API_URL: 'https://script.google.com/macros/s/AKfycbwkweVh5BM35fHP86Uxs2bEjODXq0TpcnP3q665nAG2Z0Z8GIKzSa5Oe6l7KqZZCf6oSA/exec',
-  VERSION: 'FE V3.9.5-FAMILY-WELFARE-HISTORY',
+  VERSION: 'FE V3.9.6-FAMILY-FINANCIAL-SUMMARY',
   EXPECTED_BACKEND: 'BE V1.8.46-GOVERNANCE-READONLY-DOCUMENTS',
   IDLE_MINUTES: 30,
   /* Photo shown when no photo has been set in Settings.
@@ -5611,6 +5611,45 @@ function openProfile(id){
       ['Beneficiary','Support Type','Amount','Frequency','Start Date','End Date','Active'],null,0)
   ].join('');
   const welfareVisible = canSee('emergency') || canSee('medical') || canSee('education') || canSee('regularSupport');
+  /* Phase 3.6 — family financial snapshot. Register-wise figures are shown
+     separately; no combined grand total is calculated because an emergency
+     case may also have linked medical/education assistance records. */
+  const familyMedicalRows = canSee('medical') ? familyRows('medical') : [];
+  const familyEducationRows = canSee('education') ? familyRows('education') : [];
+  const familySupportRows = canSee('regularSupport') ? familyRows('regularSupport') : [];
+  const financialItems = [];
+  if(canSee('contributions')) financialItems.push({
+    label:'Contributions made', count:give.length, amount:given,
+    note:'Recorded family contributions'
+  });
+  if(canSee('emergency')) financialItems.push({
+    label:'Emergency assistance paid', count:cases.length,
+    amount:cases.reduce((a,r)=>a+num(r['Total Paid']),0),
+    note:'Total paid across emergency case records'
+  });
+  if(canSee('medical')) financialItems.push({
+    label:'Medical assistance', count:familyMedicalRows.length,
+    amount:familyMedicalRows.reduce((a,r)=>a+num(r['Assistance']),0),
+    secondary:familyMedicalRows.reduce((a,r)=>a+num(r['Paid']),0),
+    note:'Assistance recorded · paid amount shown separately'
+  });
+  if(canSee('education')) financialItems.push({
+    label:'Education assistance', count:familyEducationRows.length,
+    amount:familyEducationRows.reduce((a,r)=>a+num(r['Village Assistance']),0),
+    note:'Village assistance recorded'
+  });
+  if(canSee('regularSupport')) financialItems.push({
+    label:'Regular support', count:familySupportRows.filter(r=>String(r['Active']).toLowerCase()!=='no').length,
+    note:'Active records · amount and frequency remain per record'
+  });
+  const financialSummaryHtml = financialItems.length ? '<section class="mal-family-financial" aria-label="Family financial summary">'+
+    '<div class="mal-financial-title"><div><h4>Family financial summary</h4><p>Register-wise totals · permission controlled</p></div><span>Read only</span></div>'+
+    '<div class="mal-financial-grid">'+financialItems.map(item=>
+      '<article class="mal-financial-card"><div class="mal-financial-card-title">'+esc(item.label)+'</div>'+
+      '<div class="mal-financial-value">'+(item.amount==null?'':money(item.amount))+'</div>'+
+      (item.secondary==null?'':'<div class="mal-financial-secondary">Paid: '+money(item.secondary)+'</div>')+
+      '<div class="mal-financial-meta">'+esc(String(item.count))+' records</div><div class="mal-financial-note">'+esc(item.note)+'</div></article>'
+    ).join('')+'</div><p class="mal-financial-disclaimer">Figures are shown separately by register. They are not added into one grand total, to avoid double-counting assistance recorded in linked cases.</p></section>' : '';
   const alive=mem.filter(m=>!isDeceased(m));
   const livingHere=alive.filter(m=>String(m['Residence Status']||'')==='Living in Malipatana').length;
   const awayTemp=alive.filter(m=>String(m['Residence Status']||'')==='Outside temporarily').length;
@@ -5639,6 +5678,7 @@ function openProfile(id){
       </div>
       <div class="subnote">Living family connections: ${alive.length}. Currently in village: ${livingHere}; temporarily away: ${awayTemp}; settled outside: ${settledAway}; residence to verify: ${unknownHome}. Members remain linked to the family regardless of marriage.</div>
       ${contributionHistoryHtml}
+      ${financialSummaryHtml}
       ${welfareVisible ? '<section class="mal-family-welfare"><div class="mal-welfare-title"><div><h4>Welfare &amp; assistance history</h4><p>Existing village support records linked to this family</p></div><span class="mal-welfare-lock">Permission controlled</span></div>'+welfareHistoryHtml+'</section>' : ''}
       ${parent ? `<div class="subnote">Subfamily of <button class="linkish" data-fam="${esc(parentId)}">${esc(parent['Family Head'] || parentId)}</button> · ${esc(parentId)}</div>` : ''}
       <div class="mal-subhead"><h4>Subfamilies <span class="muted small">${subs.length} · ${subMembers} members in all</span></h4>
