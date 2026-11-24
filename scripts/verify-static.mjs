@@ -6,7 +6,7 @@ const root=resolve(import.meta.dirname,'..');
 const file=p=>readFileSync(resolve(root,p),'utf8');
 const results=[];
 function check(label,pass){results.push({label,pass:!!pass});console.log((pass?'PASS ':'FAIL ')+label)}
-const files=['index.html','malipatana-core.js','malipatana-ui.css','malipatana-phase-design.css','register.html','entry.html','quick-add.html','manifest.webmanifest','quick-add.webmanifest','quick-add-sw.js'];
+const files=['index.html','malipatana-core.js','malipatana-ui.css','malipatana-layout-fit.css','malipatana-phase-design.css','register.html','entry.html','quick-add.html','manifest.webmanifest','quick-add.webmanifest','quick-add-sw.js'];
 for(const f of files)check('File exists: '+f,existsSync(resolve(root,f)));
 const index=file('index.html'),core=file('malipatana-core.js'),css=file('malipatana-ui.css'),register=file('register.html'),entry=file('entry.html'),quick=file('quick-add.html');
 const url=s=>s.match(/https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec/)?.[0];
@@ -73,7 +73,13 @@ check('Family welfare responsive stylesheet exists and is loaded',existsSync(res
 check('Modal content has an independently scrollable flex body while header and footer stay fixed',css.includes('.modal>.body{flex:1 1 auto;min-height:0;max-height:100%;overflow-y:auto')&&css.includes('.modal>header,.modal>footer{flex:0 0 auto}'));
 check('Modal scrolling supports touch and prevents scroll chaining on mobile',css.includes('-webkit-overflow-scrolling:touch')&&css.includes('overscroll-behavior-y:contain'));
 
-const failures=results.filter(r=>!r.pass).length;
+
+const layoutCss=file('malipatana-layout-fit.css');
+check('Village home dashboard fills the available workspace without a narrow max-width',layoutCss.includes('#app .ux-home{width:100%;max-width:none')&&layoutCss.includes('#app main.main{flex:1 1 0%;'));
+check('Family profile body has a dedicated scroll target',core.includes('class="body mal-family-profile-body"')&&core.includes('aria-label="Family profile details"'));
+check('Family profile dialog has a definite height and independently scrollable body',layoutCss.includes('.modal:has(>.mal-family-profile-body){height:92dvh')&&layoutCss.includes('.modal>.mal-family-profile-body{flex:1 1 0%;height:0;min-height:0'));
+check('Family profile scroll fix is cache-busted in the page shell',index.includes('malipatana-ui.css?v=3.5.63-family-profile-scroll')&&index.includes('malipatana-layout-fit.css?v=1.0.0'));
+\nconst failures=results.filter(r=>!r.pass).length;
 console.log('\n'+(results.length-failures)+'/'+results.length+' static checks passed.');
 if(failures){console.error('Static checks failed. Do not assume this deployment is ready.');process.exitCode=1;}
 else console.log('Static checks passed. Live registration, permissions, mobile and backup tests remain required.');
