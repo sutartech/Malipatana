@@ -62,6 +62,8 @@ check('Shared design-system stylesheet is loaded',index.includes('malipatana-des
 check('Sidebar category headings use stylesheet classes, not inline presentation',core.includes('class="nav-category-bar nav-category-bar-')&&!/nav-category-bar-[^"]+"[^>]*style=/.test(core)&&!core.includes('navgroup-symbol" style=')&&!core.includes('navgroup-title" style=')&&!core.includes('navgroup-chevron" style='));
 check('Accessibility styling enabled',index.includes('malipatana-phase-design.css'));
 check('Privacy: no plaintext secrets in test file',true);
+
+check('Family modal scroll fix stylesheet is cache-busted in the page shell',index.includes('malipatana-ui.css?v=3.5.62-family-modal-scroll')&&css.includes('Family profile and long-form modal usability'));
 const failures=results.filter(r=>!r.pass).length;
 console.log('\n'+(results.length-failures)+'/'+results.length+' static checks passed.');
 if(failures){console.error('Static checks failed. Do not assume this deployment is ready.');process.exitCode=1;}
