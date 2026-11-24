@@ -71,7 +71,7 @@
    ========================================================================= */
 const CONFIG = {
   API_URL: 'https://script.google.com/macros/s/AKfycbwkweVh5BM35fHP86Uxs2bEjODXq0TpcnP3q665nAG2Z0Z8GIKzSa5Oe6l7KqZZCf6oSA/exec',
-  VERSION: 'FE V3.9.0-VILLAGE-OPERATIONS',
+  VERSION: 'FE V3.9.1-PEOPLE-FAMILY-CONTEXT',
   EXPECTED_BACKEND: 'BE V1.8.46-GOVERNANCE-READONLY-DOCUMENTS',
   IDLE_MINUTES: 30,
   /* Photo shown when no photo has been set in Settings.
@@ -3588,6 +3588,12 @@ function cellHtml(key, row, col){
   if(f.t === 'number'){ return { cls: 'num', html: '<span class="tnum">' + esc(raw) + '</span>' }; }
   if(f.t === 'date'){ return { cls: 'tnum', html: esc(fmtDate(raw)) }; }
   if(f.t === 'family'){
+    const id=String(raw||'').trim();
+    if(key==='members'&&id){
+      const family=(DB.families||[]).find(x=>String(x['Family ID']||'').trim()===id);
+      const head=family?String(family['Family Head']||'').trim():'';
+      return { cls: '', html: (head?'<strong>'+esc(head)+'</strong> ':'')+'<span class="muted small">'+esc(id)+'</span>' };
+    }
     return { cls: '', html: esc(raw || '') };
   }
   if(f.t === 'member'){
@@ -3834,7 +3840,7 @@ function renderModule(key){
     ${malPeople?`<button type="button" class="btn btn-sm mal-toggle-filters" aria-expanded="${v.toolsOpen?'true':'false'}">☷ Filters & tools</button>`:''}
     ${hasFamily ? `<select class="input" id="famFilter" style="max-width:230px">
       <option value="">All families</option>
-      ${(DB.families || []).map(f => `<option value="${esc(f['Family ID'])}" ${v.fam === String(f['Family ID']) ? 'selected' : ''}>${esc(f['Family ID'])}</option>`).join('')}
+      ${(DB.families || []).map(f => { const fid=String(f['Family ID']||'').trim(); const head=String(f['Family Head']||'Family').trim(); const surname=String(f.Surname||'').trim(); return `<option value="${esc(fid)}" ${v.fam === fid ? 'selected' : ''}>${esc([head,surname&&surname.toLowerCase()!==head.toLowerCase()?surname:''].filter(Boolean).join(' · '))} (${esc(fid)})</option>`; }).join('')}
     </select>` : ''}
     ${['families','members'].includes(key)?`<select class="input" id="surnameFilter" aria-label="Filter by surname"><option value="">All surnames</option>${[...new Set(rowsOf(key).map(r=>String(r.Surname||'').trim()).filter(Boolean))].sort().map(n=>`<option value="${esc(n)}" ${v.surname===n?'selected':''}>${esc(n)}</option>`).join('')}</select><select class="input" id="sahiFilter" aria-label="Filter by village locality"><option value="">All village localities</option>${[...new Set([...malConfiguredSahis_(),...(DB.families||[]).map(r=>String(r['Village Locality']||'').trim()).filter(Boolean)])].sort().map(n=>`<option value="${esc(n)}" ${v.locality===n?'selected':''}>${esc(n)}</option>`).join('')}</select>${key==='members'?`<select class="input" id="residenceFilter" aria-label="Filter by residence"><option value="">All residences</option>${['Living in Malipatana','Outside temporarily','Shifted permanently','Not verified'].map(n=>`<option ${v.residence===n?'selected':''}>${esc(n)}</option>`).join('')}</select><select class="input" id="maritalFilter" aria-label="Filter by marital status"><option value="">All marital statuses</option>${['Unknown','Unmarried','Married','Widowed','Divorced','Separated'].map(n=>`<option ${v.marital===n?'selected':''}>${esc(n)}</option>`).join('')}</select><select class="input" id="lifeFilter" aria-label="Filter by life status"><option value="">All life statuses</option><option value="Alive" ${v.life==='Alive'?'selected':''}>Living only</option><option value="Deceased" ${v.life==='Deceased'?'selected':''}>In memory</option></select>`:''}`:''}
     ${key === 'members' && canEdit() ? '<button class="btn btn-sm" data-act="heads">Add missing family heads</button>' : ''}    ${compactDefaults[key] ? '<button class="btn btn-sm" data-act="compact" title="Switch between essential columns and all columns">'+(compactOn?'Show all columns':'Essential columns')+'</button>' : ''}
