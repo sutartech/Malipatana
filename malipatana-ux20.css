@@ -124,3 +124,104 @@ body:has(#app.hide) .mal-ux-launcher,body:has(#app.hide) .mal-ux-top,body:has(#a
 }
 @media(max-width:860px){#app.mal-ux-sidebar-compact .sidebar{width:min(84vw,300px)!important}}
 #app .mal-ux-settings button{min-width:0}
+
+
+/* =========================================================================
+   MALIPATANA UX 9.8 PROGRAMME — RELEASE 1
+   Consolidated finishing layer: consistent visual rhythm, legibility,
+   responsive layouts and accessible interaction. Visual-only; no data/API
+   contracts or permissions are changed.
+   ========================================================================= */
+#app{
+ --mp-ink:#173b36;
+ --mp-muted:#5d746b;
+ --mp-line:#d6e5dd;
+ --mp-line-soft:#eaf1ed;
+ --mp-paper:#f3f7f4;
+ --mp-surface:#fff;
+ --mp-accent:#087568;
+ --mp-accent-dark:#075c52;
+ --mp-focus:#b77b20;
+ --mp-radius:14px;
+ --mp-shadow:0 3px 13px rgba(18,58,47,.055);
+ color:var(--mp-ink);
+}
+#app .main{min-width:0}
+#app .pagehead{align-items:center}
+#app .pagehead h2{font-weight:800;letter-spacing:-.025em}
+#app .pagehead .sub{max-width:76ch}
+#app .panel,#app .ux-home-section,#app .ux-kpi,#app .card,#app .statcard,#app .metric-card{
+ border-color:var(--mp-line);
+ box-shadow:var(--mp-shadow);
+}
+#app .panel{border-radius:var(--mp-radius)}
+#app .panel-head{gap:10px;flex-wrap:wrap}
+#app .panel-head h3{font-weight:800;letter-spacing:-.01em}
+#app .btn,#app button.btn{min-height:36px;font-weight:700}
+#app .btn-primary,#app button.btn-primary{background:var(--mp-accent)!important;border-color:var(--mp-accent)!important}
+#app .btn-primary:hover,#app button.btn-primary:hover{background:var(--mp-accent-dark)!important}
+#app .input,#app input.input,#app select.input,#app textarea.input{
+ min-height:40px;border-color:#c6d9cf;border-radius:9px;color:var(--mp-ink)
+}
+#app textarea.input{min-height:84px}
+#app :is(button,a,input,select,textarea,summary):focus-visible{
+ outline:3px solid var(--mp-focus)!important;outline-offset:2px!important
+}
+#app .tablewrap,#app .tblwrap,#app .table-scroll{max-width:100%;overscroll-behavior-x:contain}
+#app table.grid{font-size:13px}
+#app table.grid th{font-size:11.5px;font-weight:800}
+#app table.grid td{line-height:1.4}
+#app .empty{line-height:1.5}
+#app .small,#app .fieldnote{line-height:1.45}
+#app .ux-home{max-width:1320px;margin-inline:auto}
+#app .ux-home .ux-kpi-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+#app .ux-home .ux-kpi{
+ min-width:0;min-height:112px;padding:14px;border-radius:14px;
+ display:grid;grid-template-columns:36px minmax(0,1fr);column-gap:10px;row-gap:3px;
+ align-content:center;
+}
+#app .ux-home .ux-kpi-icon{grid-row:1 / span 3;align-self:start}
+#app .ux-home .ux-kpi-label,#app .ux-home .ux-kpi strong,#app .ux-home .ux-kpi-foot{min-width:0;overflow-wrap:anywhere}
+#app .ux-home .ux-kpi strong{font-variant-numeric:tabular-nums}
+#app .ux-home .ux-priority-grid{align-items:start}
+#app .ux-home-section>summary{cursor:pointer}
+#app .ux-home-section>summary:focus-visible{outline-offset:-3px!important}
+#app .ux-home .ledger-top{border-radius:inherit}
+#app .mal-gov-panel .tablewrap{margin-top:8px}
+#app .modal{max-width:min(96vw,900px)}
+@media(min-width:1200px){
+ #app .main{padding-left:clamp(22px,2.2vw,38px)!important;padding-right:clamp(22px,2.2vw,38px)!important}
+ #app .ux-home .ux-kpi-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:900px){
+ #app .ux-home .ux-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ #app .ux-home .ux-priority-grid{grid-template-columns:minmax(0,1fr)}
+ #app .pagehead{align-items:flex-start}
+}
+@media(max-width:600px){
+ #app .main{padding-left:10px!important;padding-right:10px!important}
+ #app .pagehead{gap:8px!important}
+ #app .pagehead .sub{font-size:12px}
+ #app .panel-body{padding:12px!important}
+ #app .ux-home{gap:9px}
+ #app .ux-home .ux-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ #app .ux-home .ux-kpi{min-height:100px;padding:10px;grid-template-columns:30px minmax(0,1fr);column-gap:7px}
+ #app .ux-home .ux-kpi-icon{width:30px;height:30px}
+ #app .ux-home .ux-kpi strong{font-size:clamp(19px,5.4vw,24px)}
+ #app .ux-home .ux-kpi-label{font-size:10.5px}
+ #app .ux-home .ux-kpi-foot{font-size:9.5px}
+ #app .toolbar{display:flex;flex-wrap:wrap}
+ #app .toolbar>*{max-width:100%;min-width:0}
+ #app table.grid{font-size:12px}
+}
+@media(max-width:360px){
+ #app .ux-home .ux-kpi{grid-template-columns:1fr;min-height:92px}
+ #app .ux-home .ux-kpi-icon{display:none}
+ #app .ux-home .ux-kpi strong{font-size:21px}
+}
+@media(prefers-reduced-motion:reduce){
+ #app *,#app *::before,#app *::after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}
+}
+@media print{
+ #app .ux-home .ux-kpi,#app .panel,#app .ux-home-section{box-shadow:none!important;break-inside:avoid}
+}
