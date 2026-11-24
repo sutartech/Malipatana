@@ -2,13 +2,13 @@
 #app .topbar{gap:clamp(5px,.7vw,10px);padding-inline:clamp(8px,1vw,14px);min-width:0}
 #app .topbar>.brand{flex:0 1 auto;min-width:0;max-width:min(34vw,360px)}
 #app .topbar>.brand small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
-#app .topbar>.sp{flex:1 1 12px;min-width:0}
-#app .mal-live-datetime{flex:0 1 190px;min-width:0;max-width:190px;overflow:hidden}
-#app .mal-live-datetime time{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;font-size:clamp(10px,.78vw,12px);font-variant-numeric:tabular-nums}
+#app .topbar>.sp{flex:1 1 20px;min-width:12px}
+#app .mal-live-datetime{flex:0 1 238px;min-width:190px;max-width:238px;overflow:hidden;text-align:center;padding:0 5px;box-sizing:border-box}
+#app .mal-live-datetime time{display:block;overflow:visible;text-overflow:clip;white-space:nowrap;max-width:100%;font-size:clamp(10px,.82vw,12px);font-weight:700;line-height:1.2;font-variant-numeric:tabular-nums}
 #app .topbar .whochip{flex:0 1 auto;min-width:0;max-width:132px;overflow:hidden}
 #app .topbar .whochip>span:last-child{min-width:0;overflow:hidden}
 #app .topbar .whochip b,#app .topbar .whochip .role{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#app .topbar .iconbtn,#app .topbar .myverify-head{flex:0 0 auto}
+#app .topbar .iconbtn,#app .topbar .myverify-head{flex:0 0 auto}\n#app .topbar #logoutBtn{width:34px;height:34px;min-width:34px;padding:0;border:1px solid #ffb4a8;background:linear-gradient(145deg,#c9362b,#a91f24)!important;color:#fff!important;border-radius:10px;font-size:17px;box-shadow:0 3px 9px rgba(115,20,20,.2)}\n#app .topbar #logoutBtn:hover{background:linear-gradient(145deg,#e34a3d,#bd252b)!important;box-shadow:0 4px 12px rgba(115,20,20,.3)}\n#app .topbar #logoutBtn:focus-visible{outline:3px solid #ffd2a8!important;outline-offset:2px}
 #app .noticeboard{width:100%;max-width:100%;min-width:0;overflow:hidden}
 #app .mal-notice-ticker{display:flex;align-items:center;gap:10px;width:100%;max-width:100%;min-width:0;box-sizing:border-box;overflow:hidden}
 #app .mal-notice-label{flex:0 0 auto;max-width:28%;white-space:nowrap}
@@ -21,7 +21,7 @@
 @media(max-width:900px){
  #app .topbar{gap:6px;padding-inline:8px}
  #app .topbar>.brand{max-width:24vw}
- #app .mal-live-datetime{max-width:145px;flex-basis:145px}
+ #app .mal-live-datetime{max-width:185px;min-width:150px;flex-basis:185px}
  #app .topbar .whochip{max-width:94px;padding-inline:5px}
  #app .topbar .whochip .role{display:none}
  #app .topbar .myverify-head{max-width:70px;padding-inline:7px;font-size:10px}
@@ -30,7 +30,7 @@
  #app .topbar{gap:5px;padding-inline:7px}
  #app .topbar>.brand{font-size:16px;max-width:26vw}
  #app .topbar>.brand small{font-size:8px;letter-spacing:.04em}
- #app .mal-live-datetime{display:none}
+ #app .mal-live-datetime{display:none}\n #app .topbar #logoutBtn{width:32px;height:32px;min-width:32px}
  #app .topbar .whochip{max-width:82px}
  #app .topbar .whochip .role{display:none}
  #app .topbar .myverify-head{max-width:38px;overflow:hidden;white-space:nowrap}
