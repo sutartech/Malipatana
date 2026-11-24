@@ -153,15 +153,15 @@
     <button class="iconbtn" id="menuBtn" title="Menu" aria-label="Menu">&#9776;</button>
     <div class="brand">ମାଳିପାଟଣା<small id="brandSub">MALIPATANA VILLAGE</small></div>
     <div class="sp"></div>
-    <!-- Live India date/time sits directly LEFT of the language selector. -->
-    <div class="mal-live-datetime" id="malLiveDateBar" role="status" aria-label="Current date and time in India">
-      <time id="malLiveDateTime" aria-live="off">◆ Date &amp; time loading…</time>
-    </div>
     <a class="iconbtn pubjump" href="public.html" target="_blank" rel="noreferrer" title="Open the public page" aria-label="Open the public page">&#127760;</a>
     <button class="iconbtn" id="refreshBtn" title="Reload data from the sheet" aria-label="Reload">&#8635;</button>
     <button type="button" class="myverify-head" id="malMyVerifyBtn" title="Verify my email" aria-label="Verify email address">✓ Verify email</button>
     <div class="whochip"><span class="avatar" id="avatar">–</span><span><b id="whoName"></b><span class="role" id="whoRole"></span></span></div>
-    <button class="iconbtn" id="logoutBtn" title="Sign out" aria-label="Sign out">&#9099;</button>
+    <!-- Live India date/time is anchored at the far right of the header. -->
+    <div class="mal-live-datetime" id="malLiveDateBar" role="status" aria-label="Current date and time in India">
+      <time id="malLiveDateTime" aria-live="off">◆ Date &amp; time loading…</time>
+    </div>
+    <button class="iconbtn" id="logoutBtn" title="Sign out" aria-label="Sign out"><span class="logout-arrow" aria-hidden="true">↪</span><span class="logout-label">Sign out</span></button>
   </header>
   <div class="shell">
     <aside class="sidebar" id="sidebar"></aside>
