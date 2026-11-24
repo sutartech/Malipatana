@@ -167,6 +167,12 @@ check('Keyboard focus and reduced-motion preferences are supported',welfare.incl
 check('Monthly close and accessibility styles are versioned and loaded',index.includes('malipatana-family-welfare.css?v=3.14.0-monthly-close-accessibility')&&welfare.includes('.mal-fin-month-close{'));
 check('Public and suggestions pages retain their existing form and API contracts',pub.includes("api('publicSummary')")&&sugg.includes("action:'publicSuggestion'")&&sugg.includes("api('suggestionStatus'"));
 
+
+check('Dashboard Odia branding is language-tagged for assistive technology',index.includes('<b lang="or">ମାଳିପାଟଣା</b>')&&index.includes('<h1 lang="or">ଆମ ଗାଁ ମାଳିପାଟଣା</h1>'));
+check('Public page Odia headings and generated notices carry Odia language metadata',pub.includes('<h1 id="title" lang="or">')&&pub.includes('<span lang="or">ଆସୁଥିବା ଦିନ</span>')&&pub.includes('<span lang="or">ସୂଚନା</span>'));
+check('Registration form Odia labels are individually language-tagged',register.includes('<span lang="or">ପୂରା ନାମ</span>')&&register.includes('<span lang="or">ପିତାଙ୍କ ନାମ</span>')&&register.includes('<span lang="or">ମାତାଙ୍କ ନାମ</span>'));
+check('Suggestions page Odia heading is language-tagged',sugg.includes('<span lang="or">ଗ୍ରାମ ଉନ୍ନତି ପରାମର୍ଶ</span>'));
+
 const failures=results.filter(r=>!r.pass).length;
 console.log('\n'+(results.length-failures)+'/'+results.length+' static checks passed.');
 if(failures){console.error('Static checks failed. Do not assume this deployment is ready.');process.exitCode=1;}
