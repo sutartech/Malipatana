@@ -140,8 +140,8 @@ check('Password is not persisted as a remembered credential',core.includes("loca
    These checks do not replace server-side authorization or penetration testing. */
 check('Password recovery submits the new password through POST, not a URL query',core.includes("fetch(CONFIG.API_URL,{method:'POST'")&&core.includes("body,referrerPolicy:'no-referrer'")&&core.includes('Password is submitted in a POST body'));
 check('Private register cache migration removes legacy persistent copies',core.includes("k==='mal_db_cache'||k==='mal_queue'||k==='mal_login_photo'||k.startsWith('mal_local_')")&&core.includes("sessionStorage.setItem('mal_queue',keepQueue)"));
-check('Authenticated API sends session tokens only in POST bodies',core.includes("mode:'no-cors'")&&core.includes("body:JSON.stringify(payload)")&&core.includes("payload.token=USER.token")&&!core.includes("params = Object.assign({}, params, {token:USER.token})"));
-check('API response retrieval uses a random short-lived receipt, not the session token',core.includes('function malRequestId_()')&&core.includes("action:'postResult'")&&core.includes('requestId,part'));
+check('Authenticated API sends session tokens only in POST bodies',postApi.includes("mode:'no-cors'")&&postApi.includes("body:JSON.stringify(payload)")&&core.includes('return malPostApi(CONFIG.API_URL,action,payload)')&&!core.includes("params = Object.assign({}, params, {token:USER.token})"));
+check('API response retrieval uses a random short-lived receipt, not the session token',postApi.includes('function malPostApi(')&&postApi.includes("action:'postResult'")&&postApi.includes('requestId,part'));
 check('Idle timeout signs the user out through the existing logout path',core.includes('CONFIG.IDLE_MINUTES * 60000')&&core.includes('setTimeout(doLogout, 900)'));
 check('Role-aware navigation checks remain in the module router',core.includes("if(m.adminOnly && !isAdmin())")&&core.includes("if(!canSee(m.permission || key))"));
 check('User-facing API and backend error strings are inserted as text in toast',core.includes("el.textContent = text"));
