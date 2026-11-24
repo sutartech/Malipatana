@@ -1,8 +1,8 @@
 # Malipatana Regression and Release Plan
 
 Date: 2026-11-24
-Baseline: main commit 4270b6dc77bb9c16df045849ffd0b535c888edbd
-Working branch: transformation/phase-1-foundation
+Baseline before Phase 2: main commit 35a2eeb910793ef64cb7a1707f133bc410e7f62b (FE V3.8.4; expected BE V1.8.46)
+Working branch: transformation/phase-2-village-operations
 
 ## 1. Test principles
 
@@ -56,6 +56,24 @@ The live URL could not be independently retrieved in this inspection environment
 | REG-03 | Preservation | Compare backend URLs | Main dashboard URL remains unchanged; registration, shared entry and Quick Add retain their shared URL | Static |
 | REG-04 | Preservation | Compare backend schema/API names | No unapproved changes | Source diff |
 | REG-05 | Preservation | Inspect auth/permission sections in diff | No auth or permission changes | Source diff |
+
+
+## 5A. Phase 2 dashboard and navigation regression
+
+| ID | Area | Test | Expected result |
+|---|---|---|---|
+| HOME-01 | Dashboard | Render with existing populated DB | Existing notices, fund, KPIs, work, projects, calendar, demographics, trends and attention sections remain present |
+| HOME-02 | Dashboard | Render with empty DB | Existing onboarding/empty-state messaging remains; no fabricated totals |
+| HOME-03 | Fund | Compare available balance and target to DB.summary/settings | Exact same calculations as baseline |
+| HOME-04 | KPIs | Compare family/member/task/grievance/emergency/income values | Values and existing navigation destinations unchanged |
+| HOME-05 | Quick actions | Admin and Editor with visible pages | Only actions for visible existing modules appear; existing openForm workflow is used |
+| HOME-06 | Quick actions | Viewer/no edit permission | Quick actions are not rendered |
+| HOME-07 | Quick actions | Restricted page access | No shortcut for a page absent from user's access list |
+| HOME-08 | Mobile | 320–600 px | No horizontal overflow; KPI and quick-action grids remain readable |
+| HOME-09 | Tablet/Desktop | 601–1440 px | Main content and priority panels align without clipping |
+| HOME-10 | Sidebar | Mobile drawer and scrim | Existing open/close behaviour and keyboard focus remain usable |
+| HOME-11 | Print | Dashboard print | Navigation/actions are omitted; report sections are readable |
+| HOME-12 | Preservation | Compare API URL, API calls, MODULES fields and permission functions | No changes |
 
 ## 5. Cross-module regression gates (before later phases)
 
