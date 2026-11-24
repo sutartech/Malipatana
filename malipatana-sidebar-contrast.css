@@ -26,3 +26,25 @@ body .sidebar .navgroup:nth-of-type(6) > span:nth-child(2){background:#e7dcff!im
  body .sidebar .navgroup{min-height:40px!important;margin:9px 2px 5px!important}
  body .sidebar .navgroup > span:nth-child(2){min-height:29px!important}
 }
+
+
+/* V3.7.9: category colours are applied to the actual heading element.
+   Explicit category classes avoid fragile nth-of-type selectors. */
+#sidebar .navgroup{
+ display:flex!important;align-items:center!important;gap:9px!important;
+ min-height:43px!important;margin:12px 3px 7px!important;padding:6px 10px!important;
+ border:1px solid transparent!important;border-left-width:5px!important;
+ border-radius:11px!important;box-shadow:0 2px 8px rgba(0,25,40,.24)!important;
+ font-size:11px!important;font-weight:950!important;letter-spacing:.065em!important;
+ line-height:1.15!important;text-shadow:none!important;
+}
+#sidebar .navgroup .navgroup-symbol{font-size:17px!important;flex:0 0 auto!important}
+#sidebar .navgroup .navgroup-title{display:inline-flex!important;align-items:center!important;min-height:28px!important;font-weight:950!important}
+#sidebar .navgroup .navgroup-chevron{margin-left:auto!important;font-size:17px!important;font-weight:950!important}
+#sidebar .navgroup-people{background:#dff3ff!important;color:#075078!important;border-color:#35b9ed!important}
+#sidebar .navgroup-money{background:#fff0c9!important;color:#795000!important;border-color:#efb83d!important}
+#sidebar .navgroup-welfare{background:#ffe2e8!important;color:#8a2942!important;border-color:#ed7893!important}
+#sidebar .navgroup-villagers{background:#e7f6d9!important;color:#35651d!important;border-color:#8ac65d!important}
+#sidebar .navgroup-documents{background:#d9f5ee!important;color:#075b51!important;border-color:#25b99b!important}
+#sidebar .navgroup-global-administrator{background:#eee7ff!important;color:#513c88!important;border-color:#a48ae9!important}
+@media(max-width:860px){#sidebar .navgroup{min-height:40px!important;margin:9px 2px 5px!important}}
