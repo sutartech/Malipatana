@@ -173,6 +173,10 @@ check('Public page Odia headings and generated notices carry Odia language metad
 check('Registration form Odia labels are individually language-tagged',register.includes('<span lang="or">ପୂରା ନାମ</span>')&&register.includes('<span lang="or">ପିତାଙ୍କ ନାମ</span>')&&register.includes('<span lang="or">ମାତାଙ୍କ ନାମ</span>'));
 check('Suggestions page Odia heading is language-tagged',sugg.includes('<span lang="or">ଗ୍ରାମ ଉନ୍ନତି ପରାମର୍ଶ</span>'));
 
+check('Dashboard dialogs announce their actual heading to assistive technology',core.includes("const heading=dialog&&dialog.querySelector('h1,h2,h3,h4,h5,h6')")&&core.includes("dialog.setAttribute('aria-labelledby',heading.id)")&&core.includes("dialog.removeAttribute('aria-label')"));
+check('Dialog keyboard focus containment includes summary and editable controls',core.includes("area[href],button,input,select,textarea,summary,[contenteditable=\"true\"]")&&core.includes("if(!modal.contains(active))"));
+check('Dialog close restores focus to the invoking control',core.includes("if(malPreviousFocus&&malPreviousFocus.isConnected)malPreviousFocus.focus({preventScroll:true})"));
+
 const failures=results.filter(r=>!r.pass).length;
 console.log('\n'+(results.length-failures)+'/'+results.length+' static checks passed.');
 if(failures){console.error('Static checks failed. Do not assume this deployment is ready.');process.exitCode=1;}
