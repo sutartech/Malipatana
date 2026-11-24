@@ -1,0 +1,117 @@
+/* Malipatana shared design system — Phase 1.2
+   Semantic tokens and current navigation component styles.
+   Keep business logic and backend behaviour out of this file. */
+
+:root{
+  --mal-color-ink:#173c36;
+  --mal-color-muted:#61766e;
+  --mal-color-primary:#087568;
+  --mal-color-primary-hover:#066457;
+  --mal-color-focus:#0e9b86;
+  --mal-color-border:#d8e9e2;
+  --mal-color-surface:#ffffff;
+  --mal-color-canvas:#f3f7f3;
+  --mal-color-success:#19704b;
+  --mal-color-success-bg:#e4f5ea;
+  --mal-color-warning:#93600c;
+  --mal-color-warning-bg:#fff1d6;
+  --mal-color-danger:#a13d53;
+  --mal-color-danger-bg:#fce6ea;
+  --mal-color-info:#12619b;
+  --mal-color-info-bg:#e3f2ff;
+  --mal-nav-people-bg:#dff3ff;
+  --mal-nav-people-fg:#075078;
+  --mal-nav-people-edge:#35b9ed;
+  --mal-nav-money-bg:#fff0c9;
+  --mal-nav-money-fg:#795000;
+  --mal-nav-money-edge:#efb83d;
+  --mal-nav-welfare-bg:#ffe2e8;
+  --mal-nav-welfare-fg:#8a2942;
+  --mal-nav-welfare-edge:#ed7893;
+  --mal-nav-villagers-bg:#e7f6d9;
+  --mal-nav-villagers-fg:#35651d;
+  --mal-nav-villagers-edge:#8ac65d;
+  --mal-nav-documents-bg:#d9f5ee;
+  --mal-nav-documents-fg:#075b51;
+  --mal-nav-documents-edge:#25b99b;
+  --mal-nav-admin-bg:#eee7ff;
+  --mal-nav-admin-fg:#513c88;
+  --mal-nav-admin-edge:#a48ae9;
+}
+#app{
+  --malux-accent:var(--mal-color-primary);
+  --malux-ink:var(--mal-color-ink);
+  --malux-line:var(--mal-color-border);
+  --malux-pale:var(--mal-color-canvas);
+  --malux-shadow:0 2px 10px rgba(16,55,45,.045);
+}
+#app .btn-primary{
+  background:var(--mal-color-primary);
+  border-color:var(--mal-color-primary);
+  color:#fff;
+}
+#app .btn-primary:hover:not(:disabled){
+  background:var(--mal-color-primary-hover);
+  border-color:var(--mal-color-primary-hover);
+}
+#app .panel,
+#app .ledger,
+#app .mal-authorised-shell{
+  border-color:var(--mal-color-border);
+}
+#app :is(button,a,input,select,textarea,summary):focus-visible,
+#sidebar :is(button,a):focus-visible{
+  outline:3px solid var(--mal-color-focus);
+  outline-offset:2px;
+}
+
+/* Collapsible sidebar category component */
+#sidebar .nav-category-bar{
+  box-sizing:border-box;
+  display:flex;
+  align-items:center;
+  gap:9px;
+  width:calc(100% - 6px);
+  min-height:43px;
+  margin:12px 3px 7px;
+  padding:6px 10px;
+  border:1px solid transparent;
+  border-left-width:5px;
+  border-radius:11px;
+  box-shadow:0 2px 8px rgba(0,25,40,.20);
+  font:950 11px/1.15 var(--body,system-ui,sans-serif);
+  letter-spacing:.065em;
+  text-align:left;
+  text-shadow:none;
+  cursor:pointer;
+  transition:filter .15s ease,box-shadow .15s ease;
+}
+#sidebar .nav-category-bar:hover{
+  filter:brightness(.97);
+  box-shadow:0 3px 10px rgba(0,25,40,.24);
+}
+#sidebar .nav-category-bar-people{background:var(--mal-nav-people-bg);color:var(--mal-nav-people-fg);border-color:var(--mal-nav-people-edge)}
+#sidebar .nav-category-bar-money{background:var(--mal-nav-money-bg);color:var(--mal-nav-money-fg);border-color:var(--mal-nav-money-edge)}
+#sidebar .nav-category-bar-welfare{background:var(--mal-nav-welfare-bg);color:var(--mal-nav-welfare-fg);border-color:var(--mal-nav-welfare-edge)}
+#sidebar .nav-category-bar-villagers{background:var(--mal-nav-villagers-bg);color:var(--mal-nav-villagers-fg);border-color:var(--mal-nav-villagers-edge)}
+#sidebar .nav-category-bar-documents{background:var(--mal-nav-documents-bg);color:var(--mal-nav-documents-fg);border-color:var(--mal-nav-documents-edge)}
+#sidebar .nav-category-bar-global-administrator{background:var(--mal-nav-admin-bg);color:var(--mal-nav-admin-fg);border-color:var(--mal-nav-admin-edge)}
+#sidebar .nav-category-bar .navgroup-symbol{font-size:17px;flex:0 0 auto}
+#sidebar .nav-category-bar .navgroup-title{display:inline-flex;align-items:center;min-height:28px;font-weight:950}
+#sidebar .nav-category-bar .navgroup-chevron{
+  margin-left:auto;
+  font-size:17px;
+  font-weight:950;
+  transition:transform .15s ease;
+}
+#sidebar .nav-category-bar[aria-expanded="true"] .navgroup-chevron{transform:rotate(90deg)}
+#sidebar .nav-category-bar[aria-expanded="false"] .navgroup-chevron{transform:rotate(-90deg)}
+#sidebar .nav-category-items[hidden]{display:none!important}
+#sidebar .nav-category-items{min-width:0}
+@media(max-width:860px){
+  #sidebar .nav-category-bar{min-height:42px;margin:9px 2px 5px;width:calc(100% - 4px)}
+}
+@media(prefers-reduced-motion:reduce){
+  #sidebar .nav-category-bar{transition:none}
+  #sidebar .nav-category-bar .navgroup-chevron{transition:none}
+}
