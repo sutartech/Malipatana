@@ -1,8 +1,8 @@
 # Malipatana Global-Quality Transformation Roadmap
 
-Status: Phases 1–3 implemented; Phase 4.0 merged; Phase 4.1 in progress
+Status: Phases 1–3 implemented; Phases 4.0–4.1 merged; Phase 4.2 in progress
 Baseline branch: main
-Working branch: transformation/phase-4-1-financial-transparency
+Working branch: transformation/phase-4-2-public-financial-disclosure
 Date: 2026-11-24
 Scope: Full 100-improvement programme
 Preservation rule: No backend URL, Apps Script code, spreadsheet schema, existing record, authentication flow, or permission policy may be changed without a separately reviewed and explicitly approved change.
@@ -191,3 +191,10 @@ A read-only financial-year report is being added to the existing Financial trend
 Controls: contributions and Other Income remain separate; linked welfare assistance is not added again; evidence/approval completeness is not represented as verification; no cash/bank balance or reconciliation is inferred. The report follows existing per-register visibility permissions. No Apps Script endpoint, spreadsheet tab/column, stored record, authentication flow or role policy is changed.
 
 Cash/bank reconciliation, restricted/committed fund accounting and public-facing financial statements remain deferred until source records and approval rules can be verified.
+
+
+## Phase 4.2 — Public financial disclosure (in review)
+
+The public fund page receives an additional disclosure-basis panel explaining source/date, the register nature of the displayed balance, separate treatment of contribution/income/expenditure/support entries, and privacy exclusions. Admin publication controls now describe aggregate-only financial lines and recent spending descriptions.
+
+Preservation: uses the existing totals-only publicSummary endpoint; does not call bootstrap or add an API, expose new record fields, or alter backend/schema/permissions. It explicitly warns that the displayed register balance is not independently bank-confirmed and that support entries may overlap expenditure. No annual or audited statement is claimed because the public endpoint does not provide date-scoped financial-year aggregates or reconciliation evidence.
