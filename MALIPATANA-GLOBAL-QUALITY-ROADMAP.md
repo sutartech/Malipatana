@@ -1,8 +1,8 @@
 # Malipatana Global-Quality Transformation Roadmap
 
-Status: Phases 1–3 implemented; Phase 4.0 in progress
+Status: Phases 1–3 implemented; Phase 4.0 merged; Phase 4.1 in progress
 Baseline branch: main
-Working branch: transformation/phase-4-0-governance-control-centre
+Working branch: transformation/phase-4-1-financial-transparency
 Date: 2026-11-24
 Scope: Full 100-improvement programme
 Preservation rule: No backend URL, Apps Script code, spreadsheet schema, existing record, authentication flow, or permission policy may be changed without a separately reviewed and explicitly approved change.
@@ -182,3 +182,12 @@ Phase 4.0 implementation: Existing Admin-only Governance & Compliance Centre is 
 - Do not claim a live test passed unless it was actually performed.
 - Merge/deploy only after the phase's acceptance criteria are met.
 - Preserve the previous known-good commit for rollback.
+
+
+## Phase 4.1 — Financial transparency (in review)
+
+A read-only financial-year report is being added to the existing Financial trends & insights section. It derives month-wise totals from the existing Contributions, Income and Expenditure registers; presents Other Income by type and expenditure by category; and reports whether existing Bill/Receipt and Approved By fields are populated.
+
+Controls: contributions and Other Income remain separate; linked welfare assistance is not added again; evidence/approval completeness is not represented as verification; no cash/bank balance or reconciliation is inferred. The report follows existing per-register visibility permissions. No Apps Script endpoint, spreadsheet tab/column, stored record, authentication flow or role policy is changed.
+
+Cash/bank reconciliation, restricted/committed fund accounting and public-facing financial statements remain deferred until source records and approval rules can be verified.
