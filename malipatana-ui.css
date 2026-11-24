@@ -2614,3 +2614,15 @@ table.grid tbody tr:hover td:first-child{background:#EEF8F5}
 .ux-kpi-money .ux-kpi-foot{color:#087568}
 @media(max-width:760px){.ux-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.ux-kpi{padding:11px 12px;min-height:102px;border-radius:14px}.ux-kpi strong{font-size:24px}}
 @media(max-width:390px){.ux-kpi-grid{grid-template-columns:1fr}}
+
+
+/* Family profile and long-form modal usability: keep chrome fixed while
+   the content pane owns vertical scrolling on desktop and mobile. */
+.modal{min-height:0}
+.modal>.body{flex:1 1 auto;min-height:0;max-height:100%;overflow-y:auto;overflow-x:hidden;
+  overscroll-behavior:contain;-webkit-overflow-scrolling:touch;scrollbar-gutter:stable}
+.modal>header,.modal>footer{flex:0 0 auto}
+@media(max-width:760px){
+ .modal>.body{min-height:0;overscroll-behavior-y:contain;touch-action:pan-y}
+ .modal>footer{position:sticky;bottom:0;z-index:2}
+}
