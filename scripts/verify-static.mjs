@@ -6,9 +6,9 @@ const root=resolve(import.meta.dirname,'..');
 const file=p=>readFileSync(resolve(root,p),'utf8');
 const results=[];
 function check(label,pass){results.push({label,pass:!!pass});console.log((pass?'PASS ':'FAIL ')+label)}
-const files=['index.html','malipatana-core.js','malipatana-ui.css','malipatana-layout-fit.css','malipatana-phase-design.css','malipatana-ops.css','register.html','entry.html','quick-add.html','manifest.webmanifest','quick-add.webmanifest','quick-add-sw.js'];
+const files=['index.html','malipatana-core.js','malipatana-post-api.js','malipatana-ui.css','malipatana-layout-fit.css','malipatana-phase-design.css','malipatana-ops.css','register.html','entry.html','quick-add.html','manifest.webmanifest','quick-add.webmanifest','quick-add-sw.js'];
 for(const f of files)check('File exists: '+f,existsSync(resolve(root,f)));
-const index=file('index.html'),core=file('malipatana-core.js'),pub=file('public.html'),sugg=file('suggestions.html'),css=file('malipatana-ui.css'),ops=file('malipatana-ops.css'),welfare=file('malipatana-family-welfare.css'),register=file('register.html'),entry=file('entry.html'),quick=file('quick-add.html');
+const index=file('index.html'),core=file('malipatana-core.js'),postApi=file('malipatana-post-api.js'),pub=file('public.html'),sugg=file('suggestions.html'),css=file('malipatana-ui.css'),ops=file('malipatana-ops.css'),welfare=file('malipatana-family-welfare.css'),register=file('register.html'),entry=file('entry.html'),quick=file('quick-add.html');
 const url=s=>s.match(/https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec/)?.[0];
 const dashboardApiUrl=url(core), publicEntryApiUrl=url(register);
 check('Main dashboard backend URL is present',!!dashboardApiUrl);
@@ -127,8 +127,8 @@ check('Audit-readiness styling is responsive and loaded through existing stylesh
    These checks do not replace server-side authorization or penetration testing. */
 check('Password recovery submits the new password through POST, not a URL query',core.includes("fetch(CONFIG.API_URL,{method:'POST'")&&core.includes("body,referrerPolicy:'no-referrer'")&&core.includes('Password is submitted in a POST body'));
 check('Private register cache migration removes legacy persistent copies',core.includes("k==='mal_db_cache'||k==='mal_queue'||k==='mal_login_photo'||k.startsWith('mal_local_')")&&core.includes("sessionStorage.setItem('mal_queue',keepQueue)"));
-check('Authenticated API sends session tokens only in POST bodies',core.includes("mode:'no-cors'")&&core.includes("body:JSON.stringify(payload)")&&core.includes("payload.token=USER.token")&&!core.includes("params = Object.assign({}, params, {token:USER.token})"));
-check('API response retrieval uses a random short-lived receipt, not the session token',core.includes('function malRequestId_()')&&core.includes("action:'postResult'")&&core.includes('requestId,part'));
+check('Authenticated API sends session tokens only in POST bodies',postApi.includes("mode:'no-cors'")&&postApi.includes("body:JSON.stringify(payload)")&&core.includes('return malPostApi(CONFIG.API_URL,action,payload)')&&!core.includes("params = Object.assign({}, params, {token:USER.token})"));
+check('API response retrieval uses a random short-lived receipt, not the session token',postApi.includes('function malPostApi(')&&postApi.includes("action:'postResult'")&&postApi.includes('requestId,part'));
 check('Idle timeout signs the user out through the existing logout path',core.includes('CONFIG.IDLE_MINUTES * 60000')&&core.includes('setTimeout(doLogout, 900)'));
 check('Role-aware navigation checks remain in the module router',core.includes("if(m.adminOnly && !isAdmin())")&&core.includes("if(!canSee(m.permission || key))"));
 check('Governance data and private documents are requested through dedicated backend authorization actions',core.includes("async function renderGovernanceCentre(){\n if(!isAdmin())")&&core.includes("api('governanceDocuments')"));
