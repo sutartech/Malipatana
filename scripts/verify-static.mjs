@@ -23,6 +23,8 @@ check('Suggestions linked on public and login pages',file('public.html').include
 check('Suggestions module loaded for authenticated Admin',index.includes('malipatana-suggestions.js'));
 check('Existing Grievance UI preserved',file('public.html').includes('gFab')&&core.includes('grievances'));
 check('Public registration uses dedicated submission endpoint',register.includes("action:'registrationSubmit'"));
+check('Shared POST helper is loaded by dashboard and shared-entry pages',index.includes('malipatana-post-api.js')&&entry.includes('malipatana-post-api.js')&&quick.includes('malipatana-post-api.js'));
+check('Shared entry and Quick Add route API calls through POST helper',entry.includes('return malPostApi(API_URL,action')&&quick.includes('return malPostApi(API_URL,action'));
 check('Shareable entry validates link access',entry.includes("api('linkInfo'"));
 check('Shareable entry submits via linkSubmit',entry.includes("api('linkSubmit'"));
 check('Installed Quick Add validates link access',quick.includes("api('linkInfo'"));
