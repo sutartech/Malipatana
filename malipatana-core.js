@@ -4164,11 +4164,17 @@ function exportCsv(key, rows){
 let malPreviousFocus=null;
 function openModal(html){
   malPreviousFocus=document.activeElement instanceof HTMLElement?document.activeElement:null;
-  $('#modalRoot').innerHTML = '<div class="overlay" id="overlay"><div class="modal" role="dialog" aria-modal="true" aria-label="Record details" tabindex="-1">' + html + '</div></div>';
+  $('#modalRoot').innerHTML = '<div class="overlay" id="overlay"><div class="modal" role="dialog" aria-modal="true" aria-label="Dialog" tabindex="-1">' + html + '</div></div>';
   document.body.classList.add('modalOpen');
   $('#overlay').onclick = e => { if(e.target.id === 'overlay') closeModal(); };
   document.addEventListener('keydown', escClose);
   const dialog=document.querySelector('#overlay .modal');
+  const heading=dialog&&dialog.querySelector('h1,h2,h3,h4,h5,h6');
+  if(heading){
+    if(!heading.id)heading.id='malDialogTitle';
+    dialog.setAttribute('aria-labelledby',heading.id);
+    dialog.removeAttribute('aria-label');
+  }
   const initial=dialog&&dialog.querySelector('input:not([disabled]),select:not([disabled]),button:not([disabled])');
   (initial||dialog)?.focus({preventScroll:true});
 }
@@ -4185,10 +4191,12 @@ function escClose(e){
   if(e.key==='Escape'){e.preventDefault();closeModal();return;}
   if(e.key!=='Tab')return;
   const modal=document.querySelector('#overlay .modal');if(!modal)return;
-  const items=[...modal.querySelectorAll('a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])')].filter(el=>el.getClientRects().length);
+  const items=[...modal.querySelectorAll('a[href],area[href],button,input,select,textarea,summary,[contenteditable="true"],[tabindex]:not([tabindex="-1"])')].filter(el=>!el.disabled&&el.getAttribute('aria-hidden')!=='true'&&el.getClientRects().length);
   if(!items.length){e.preventDefault();modal.focus();return;}
-  if(e.shiftKey&&document.activeElement===items[0]){e.preventDefault();items.at(-1).focus();}
-  else if(!e.shiftKey&&document.activeElement===items.at(-1)){e.preventDefault();items[0].focus();}
+  const first=items[0],last=items.at(-1),active=document.activeElement;
+  if(!modal.contains(active)){e.preventDefault();(e.shiftKey?last:first).focus();}
+  else if(e.shiftKey&&active===first){e.preventDefault();last.focus();}
+  else if(!e.shiftKey&&active===last){e.preventDefault();first.focus();}
 }
 
 /* =========================================================================
