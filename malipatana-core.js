@@ -71,7 +71,7 @@
    ========================================================================= */
 const CONFIG = {
   API_URL: 'https://script.google.com/macros/s/AKfycbwkweVh5BM35fHP86Uxs2bEjODXq0TpcnP3q665nAG2Z0Z8GIKzSa5Oe6l7KqZZCf6oSA/exec',
-  VERSION: 'FE V3.8.0-SIDEBAR-INLINE-COLOURS',
+  VERSION: 'FE V3.8.1-SIDEBAR-IMPORTANT-COLOURS',
   EXPECTED_BACKEND: 'BE V1.8.46-GOVERNANCE-READONLY-DOCUMENTS',
   IDLE_MINUTES: 30,
   /* Photo shown when no photo has been set in Settings.
@@ -2150,7 +2150,7 @@ function buildNav(){
   groups.forEach(([title, items]) => {
     if(!items.length) return;
     const p=palette[title];
-    if(title && p){ const slug=title==='GLOBAL ADMINISTRATOR'?'global-administrator':title.toLowerCase(); html += '<div class="navgroup navgroup-'+slug+'" style="display:flex;align-items:center;gap:9px;min-height:43px;margin:12px 3px 7px;padding:6px 10px;border:1px solid '+p.edge+';border-left:5px solid '+p.edge+';border-radius:11px;background-color:'+p.bg+';color:'+p.fg+';box-shadow:0 2px 8px rgba(0,25,40,.24);font-size:11px;font-weight:950;letter-spacing:.065em;line-height:1.15;text-shadow:none"><span class="navgroup-symbol" style="font-size:17px;flex:0 0 auto">'+p.symbol+'</span><span class="navgroup-title" style="display:inline-flex;align-items:center;min-height:28px;font-weight:950;color:'+p.fg+'">'+title+'</span><span class="navgroup-chevron" style="margin-left:auto;font-size:17px;font-weight:950;color:'+p.fg+'">›</span></div>'; }
+    if(title && p){ const slug=title==='GLOBAL ADMINISTRATOR'?'global-administrator':title.toLowerCase(); html += '<div class="navgroup navgroup-'+slug+'" style="display:flex!important;align-items:center!important;gap:9px!important;min-height:43px!important;margin:12px 3px 7px!important;padding:6px 10px!important;border:1px solid '+p.edge+'!important;border-left:5px solid '+p.edge+'!important;border-radius:11px!important;background:'+p.bg+'!important;background-color:'+p.bg+'!important;color:'+p.fg+'!important;box-shadow:0 2px 8px rgba(0,25,40,.24)!important;font-size:11px!important;font-weight:950!important;letter-spacing:.065em!important;line-height:1.15!important;text-shadow:none!important"><span class="navgroup-symbol" style="font-size:17px!important;flex:0 0 auto!important">'+p.symbol+'</span><span class="navgroup-title" style="display:inline-flex!important;align-items:center!important;min-height:28px!important;font-weight:950!important;color:'+p.fg+'!important">'+title+'</span><span class="navgroup-chevron" style="margin-left:auto!important;font-size:17px!important;font-weight:950!important;color:'+p.fg+'!important">›</span></div>'; }
     html += items.map(([key, ic, label, dataKey]) => {
       const n = key === 'memorial' ? (DB.members || []).filter(isDeceased).length : dataKey ? (rowsOf(dataKey) || []).length : '';
       const active=PAGE===key;
