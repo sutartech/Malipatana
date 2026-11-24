@@ -63,7 +63,7 @@ check('Sidebar category headings use stylesheet classes, not inline presentation
 check('Accessibility styling enabled',index.includes('malipatana-phase-design.css'));
 check('Privacy: no plaintext secrets in test file',true);
 
-check('Phase 3.5 family welfare history is present and versioned',core.includes("VERSION: 'FE V3.9.6-FAMILY-FINANCIAL-SUMMARY'")&&index.includes('malipatana-core.js?v=3.10.0-governance-control-centre'));
+check('Phase 3.5 family welfare history is present and versioned',core.includes("VERSION: 'FE V3.10.0-GOVERNANCE-CONTROL-CENTRE'")&&index.includes('malipatana-core.js?v=3.10.0-governance-control-centre'));
 check('Family welfare history reuses existing emergency, medical, education and support records',core.includes("familyRows('emergency')")&&core.includes("familyRows('medical')")&&core.includes("familyRows('education')")&&core.includes("familyRows('regularSupport')"));
 check('Family welfare history independently enforces each module permission',core.includes("welfareTable('Emergency assistance','emergency'")&&core.includes("welfareTable('Medical assistance','medical'")&&core.includes("welfareTable('Education assistance','education'")&&core.includes("welfareTable('Regular support','regularSupport'"));
 check('Family welfare history adds no backend or sheet contract',!core.includes("api('save',{sheet:'Emergency Cases'")&&!core.includes("api('save',{sheet:'Medical'")&&index.includes('malipatana-family-welfare.css'));
@@ -85,7 +85,7 @@ check('Family profile dialog has a definite height and independently scrollable 
 check('Family profile scroll fix is cache-busted in the page shell',index.includes('malipatana-ui.css?v=3.5.63-family-profile-scroll')&&index.includes('malipatana-layout-fit.css?v=1.0.0'));
 
 
-check('Phase 3.6 family financial summary is versioned and cache-busted',core.includes("VERSION: 'FE V3.9.6-FAMILY-FINANCIAL-SUMMARY'")&&index.includes('malipatana-core.js?v=3.9.6-family-financial-summary')&&index.includes('malipatana-family-welfare.css?v=3.6.0-family-financial-summary'));
+check('Phase 3.6 family financial summary is versioned and cache-busted',core.includes("VERSION: 'FE V3.10.0-GOVERNANCE-CONTROL-CENTRE'")&&index.includes('malipatana-core.js?v=3.10.0-governance-control-centre')&&index.includes('malipatana-family-welfare.css?v=3.6.0-family-financial-summary'));
 check('Family financial summary shows contribution, emergency, medical, education and regular support categories',core.includes("label:'Contributions made'")&&core.includes("label:'Emergency assistance paid'")&&core.includes("label:'Medical assistance'")&&core.includes("label:'Education assistance'")&&core.includes("label:'Regular support'"));
 check('Family financial summary enforces existing module permissions',core.includes("if(canSee('contributions')) financialItems.push")&&core.includes("if(canSee('emergency')) financialItems.push")&&core.includes("if(canSee('medical')) financialItems.push")&&core.includes("if(canSee('education')) financialItems.push")&&core.includes("if(canSee('regularSupport')) financialItems.push"));
 check('Family financial summary avoids combining potentially overlapping assistance totals',core.includes('They are not added into one grand total')&&core.includes('secondary:familyMedicalRows.reduce'));
