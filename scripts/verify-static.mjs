@@ -177,6 +177,17 @@ check('Dashboard dialogs announce their actual heading to assistive technology',
 check('Dialog keyboard focus containment includes summary and editable controls',core.includes("area[href],button,input,select,textarea,summary,[contenteditable=\"true\"]")&&core.includes("if(!modal.contains(active))"));
 check('Dialog close restores focus to the invoking control',core.includes("if(malPreviousFocus&&malPreviousFocus.isConnected)malPreviousFocus.focus({preventScroll:true})"));
 
+check('Registration wizard exposes its current step as a labelled progress indicator',register.includes('role="progressbar" aria-label="Registration progress"')&&register.includes("progress.setAttribute('aria-valuenow',String(wizardStep+1))")&&register.includes("progress.setAttribute('aria-valuetext',stepText)"));
+check('Registration wizard step links identify their controlled panels',register.includes('aria-controls="malRegBasic"')&&register.includes('aria-controls="malRegHome"')&&register.includes('aria-controls="malRegOther"')&&register.includes('aria-controls="malRegSubmit"'));
+check('Registration wizard moves focus to the active step heading on navigation and validation',register.includes('function wizardFocusCurrentPanel()')&&register.includes('wizardPaint();wizardFocusCurrentPanel();')&&register.includes('wizardFocusCurrentPanel();\n         field.focus'));
+check('Suggestions form validation announces required, length and mobile errors accessibly',sugg.includes("field.setAttribute('aria-invalid','true')")&&sugg.includes("field.validity.valueMissing")&&sugg.includes("field.validity.tooShort")&&sugg.includes("field.validity.patternMismatch"));
+check('Suggestions form clears stale validation state after correction',sugg.includes("e.target.removeAttribute('aria-invalid')")&&sugg.includes("ideaForm.querySelector('[aria-invalid=\"true\"]')"));
+check('Suggestions form retains its existing submission and receipt-tracking contract',sugg.includes("action:'publicSuggestion'")&&sugg.includes("api('suggestionStatus'")&&sugg.includes("receipt:a.receipt"));
+check('Public grievance fields expose mobile pattern and bounded description validation',pub.includes('pattern="[6-9][0-9]{9}"')&&pub.includes('minlength="12" maxlength="2200"'));
+check('Public grievance result region announces status and accepts focus',pub.includes('id="gMsg" role="status" aria-live="polite"')&&pub.includes("region.focus()"));
+check('Public grievance validation marks invalid fields and clears corrected state',pub.includes("field.setAttribute('aria-invalid','true')")&&pub.includes("field.removeAttribute('aria-invalid')"));
+check('Public grievance submission keeps its existing API action and payload contract',pub.includes("apiPost('publicGrievance', { record: JSON.stringify(payload) })")&&pub.includes("Status: 'Received'"));
+
 const failures=results.filter(r=>!r.pass).length;
 console.log('\n'+(results.length-failures)+'/'+results.length+' static checks passed.');
 if(failures){console.error('Static checks failed. Do not assume this deployment is ready.');process.exitCode=1;}
