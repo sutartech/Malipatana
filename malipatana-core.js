@@ -71,7 +71,7 @@
    ========================================================================= */
 const CONFIG = {
   API_URL: 'https://script.google.com/macros/s/AKfycbwkweVh5BM35fHP86Uxs2bEjODXq0TpcnP3q665nAG2Z0Z8GIKzSa5Oe6l7KqZZCf6oSA/exec',
-  VERSION: 'FE V3.9.4-FAMILY-CONTRIBUTION-HISTORY',
+  VERSION: 'FE V3.9.5-FAMILY-WELFARE-HISTORY',
   EXPECTED_BACKEND: 'BE V1.8.46-GOVERNANCE-READONLY-DOCUMENTS',
   IDLE_MINUTES: 30,
   /* Photo shown when no photo has been set in Settings.
@@ -5575,6 +5575,42 @@ function openProfile(id){
       </table></div>` : '<div class="subnote">No contribution entries are recorded for this family yet.</div>'}
     </section>` : '';
 
+  /* Phase 3.5 — family welfare history. Read-only presentation of existing
+     Emergency Cases, Medical, Education and Regular Support records. Each
+     section is independently permission-gated; no new API or sheet is used. */
+  const familyRows = key => (DB[key] || []).filter(r =>
+    String(r['Family ID'] || '').trim() === String(id).trim());
+  const welfareTable = (title, permission, rows, columns, totalLabel, totalValue) => {
+    if(!canSee(permission)) return '';
+    const body = rows.length ? rows.map(r => '<tr>' + columns.map(c => {
+      const v = r[c] == null || r[c] === '' ? '—' :
+        (['Amount','Total Approved','Total Paid','Balance','Assistance','Paid','Estimated Cost','Annual Fee','Village Assistance'].includes(c) ? money(r[c]) :
+         (['Date','Event Date','Start Date','End Date'].includes(c) ? fmtDate(r[c]) : String(r[c])));
+      return '<td data-label="'+esc(c)+'">'+esc(v)+'</td>';
+    }).join('') + '</tr>').join('') :
+      '<tr><td colspan="'+columns.length+'" class="mal-welfare-empty">No '+title.toLowerCase()+' records are recorded for this family.</td></tr>';
+    return '<section class="mal-family-welfare-section"><div class="mal-welfare-heading"><div><h4>'+esc(title)+'</h4><span>'+rows.length+' recorded</span></div>'+
+      (totalLabel ? '<div class="mal-welfare-total"><small>'+esc(totalLabel)+'</small><b>'+money(totalValue)+'</b></div>' : '')+
+      '</div><div class="tablewrap" style="max-height:none"><table class="grid"><thead><tr>'+columns.map(c=>'<th>'+esc(c)+'</th>').join('')+'</tr></thead><tbody>'+body+'</tbody></table></div></section>';
+  };
+  const welfareEmergency = canSee('emergency') ? familyRows('emergency') : [];
+  const welfareMedical = canSee('medical') ? familyRows('medical') : [];
+  const welfareEducation = canSee('education') ? familyRows('education') : [];
+  const welfareSupport = canSee('regularSupport') ? familyRows('regularSupport') : [];
+  const welfareHistoryHtml = [
+    welfareTable('Emergency assistance','emergency',welfareEmergency,
+      ['Event Date','Affected Person','Case Type','Total Approved','Total Paid','Balance','Status'],
+      'Total paid',welfareEmergency.reduce((a,r)=>a+num(r['Total Paid']),0)),
+    welfareTable('Medical assistance','medical',welfareMedical,
+      ['Date','Patient','Medical Issue','Hospital','Estimated Cost','Assistance','Paid','Status'],
+      'Village assistance',welfareMedical.reduce((a,r)=>a+num(r['Assistance']),0)),
+    welfareTable('Education assistance','education',welfareEducation,
+      ['Student Name','School/College','Class/Course','Annual Fee','Village Assistance'],
+      'Village assistance',welfareEducation.reduce((a,r)=>a+num(r['Village Assistance']),0)),
+    welfareTable('Regular support','regularSupport',welfareSupport,
+      ['Beneficiary','Support Type','Amount','Frequency','Start Date','End Date','Active'],null,0)
+  ].join('');
+  const welfareVisible = canSee('emergency') || canSee('medical') || canSee('education') || canSee('regularSupport');
   const alive=mem.filter(m=>!isDeceased(m));
   const livingHere=alive.filter(m=>String(m['Residence Status']||'')==='Living in Malipatana').length;
   const awayTemp=alive.filter(m=>String(m['Residence Status']||'')==='Outside temporarily').length;
@@ -5592,7 +5628,7 @@ function openProfile(id){
       <div class="sub">${esc(id)} · Malipatana ${f['Mobile'] ? '· ' + esc(f['Mobile']) : ''}</div><div class="mal-sahi-line"><span>📍 Village Locality (Sahi): <b>${esc(f['Village Locality']||'Not entered')}</b></span><span>Surname: <b>${esc(f.Surname||'Not verified')}</b></span>${canEdit()?`<button type="button" class="btn btn-sm" data-editsub="${esc(id)}">Quick edit</button>`:''}</div></div>
       <div class="sp"></div><button class="btn btn-sm" onclick="closeModal()">Close</button>
     </header>
-    <div class="body">
+    <div class="body mal-family-profile-body" tabindex="0" aria-label="Family profile details">
       <div class="strip" style="margin-top:0">
         <div><div class="k">Registered living</div><div class="v tnum">${alive.length}</div></div><div><div class="k">Living in village</div><div class="v tnum">${livingHere}</div></div>
         <div><div class="k">Contributed</div><div class="v tnum" style="font-size:17px">${money(given)}</div></div>
@@ -5603,6 +5639,7 @@ function openProfile(id){
       </div>
       <div class="subnote">Living family connections: ${alive.length}. Currently in village: ${livingHere}; temporarily away: ${awayTemp}; settled outside: ${settledAway}; residence to verify: ${unknownHome}. Members remain linked to the family regardless of marriage.</div>
       ${contributionHistoryHtml}
+      ${welfareVisible ? '<section class="mal-family-welfare"><div class="mal-welfare-title"><div><h4>Welfare &amp; assistance history</h4><p>Existing village support records linked to this family</p></div><span class="mal-welfare-lock">Permission controlled</span></div>'+welfareHistoryHtml+'</section>' : ''}
       ${parent ? `<div class="subnote">Subfamily of <button class="linkish" data-fam="${esc(parentId)}">${esc(parent['Family Head'] || parentId)}</button> · ${esc(parentId)}</div>` : ''}
       <div class="mal-subhead"><h4>Subfamilies <span class="muted small">${subs.length} · ${subMembers} members in all</span></h4>
         ${canEdit()?`<button class="btn btn-primary btn-sm" data-addsub="${esc(id)}">+ Add subfamily</button>`:''}</div>

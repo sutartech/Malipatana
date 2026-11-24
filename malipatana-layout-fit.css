@@ -1,0 +1,65 @@
+/* Malipatana layout correction — full-width workspace and deterministic family modal scrolling.
+   Presentation only: no data, permissions, navigation or backend changes. */
+#app .shell{width:100%;min-width:0}
+#app main.main{
+  flex:1 1 0%;
+  width:0;
+  min-width:0;
+  max-width:none;
+  box-sizing:border-box;
+}
+#app .ux-home{
+  display:grid;
+  width:100%;
+  max-width:none;
+  margin:0;
+  min-width:0;
+  box-sizing:border-box;
+}
+#app .ux-home>.hero,
+#app .ux-home>.ledger,
+#app .ux-home>.ux-home-identity,
+#app .ux-home>.ux-kpi-grid,
+#app .ux-home>.ux-priority-grid,
+#app .ux-home>.ux-home-section,
+#app .ux-home>details{
+  width:100%;
+  min-width:0;
+  box-sizing:border-box;
+}
+#app .ux-home .ux-kpi-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+#app .ux-home .ux-priority-grid{grid-template-columns:minmax(0,1.65fr) minmax(230px,.8fr)}
+/* Give the family-profile dialog a definite flex height. max-height alone
+   does not consistently establish a shrinkable flex scroll region. */
+.modal:has(>.mal-family-profile-body){
+  height:92dvh;
+  max-height:92dvh;
+  min-height:0;
+  overflow:hidden;
+}
+.modal>.mal-family-profile-body{
+  flex:1 1 0%;
+  height:0;
+  min-height:0;
+  max-height:none;
+  overflow-x:hidden;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-gutter:stable;
+  touch-action:pan-y;
+}
+.modal:has(>.mal-family-profile-body)>header,
+.modal:has(>.mal-family-profile-body)>footer{flex:0 0 auto}
+@media(max-width:980px){
+ #app .ux-home .ux-priority-grid{grid-template-columns:minmax(0,1fr)}
+}
+@media(max-width:760px){
+ #app .ux-home .ux-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .modal:has(>.mal-family-profile-body){height:96dvh;max-height:96dvh}
+ .modal>.mal-family-profile-body{padding:16px 14px;overscroll-behavior-y:contain}
+ .modal:has(>.mal-family-profile-body)>footer{position:sticky;bottom:0;z-index:2}
+}
+@media(max-width:380px){
+ #app .ux-home .ux-kpi-grid{grid-template-columns:minmax(0,1fr)}
+}
