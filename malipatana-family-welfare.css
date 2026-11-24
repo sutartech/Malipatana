@@ -1,0 +1,16 @@
+/* Phase 3.5 — family welfare history presentation */
+.mal-family-welfare{margin:22px 0 8px;padding:18px;border:1px solid #d6e6df;border-radius:18px;background:linear-gradient(145deg,#f4faf7,#fff 72%);box-shadow:0 8px 24px rgba(20,65,55,.06)}
+.mal-welfare-title,.mal-welfare-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.mal-welfare-title h4,.mal-welfare-heading h4{margin:0;font-size:17px;font-weight:800;color:#17463e}
+.mal-welfare-title p{margin:4px 0 0;color:#647a73;font-size:12px}
+.mal-welfare-lock{padding:6px 10px;border-radius:999px;background:#e5f3ed;color:#276a58;font-size:11px;font-weight:800}
+.mal-family-welfare-section{margin-top:15px;padding:14px;border:1px solid #e1ebe6;border-radius:14px;background:#fff}
+.mal-welfare-heading{margin-bottom:10px}
+.mal-welfare-heading span{display:block;margin-top:3px;color:#71827c;font-size:11px}
+.mal-welfare-total{text-align:right}
+.mal-welfare-total small{display:block;color:#72827c;font-size:10px}
+.mal-welfare-total b{color:#087e69;font-size:16px;font-variant-numeric:tabular-nums}
+.mal-welfare-empty{text-align:center;padding:18px!important;color:#71827c!important}
+.mal-family-welfare .tablewrap{overflow-x:auto}
+.mal-family-welfare table{min-width:620px}
+@media(max-width:700px){.mal-family-welfare{padding:12px;margin-top:16px}.mal-family-welfare-section{padding:10px}.mal-welfare-title h4,.mal-welfare-heading h4{font-size:15px}.mal-welfare-lock{font-size:10px}}
