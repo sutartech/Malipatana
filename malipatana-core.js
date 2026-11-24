@@ -71,7 +71,7 @@
    ========================================================================= */
 const CONFIG = {
   API_URL: 'https://script.google.com/macros/s/AKfycbwkweVh5BM35fHP86Uxs2bEjODXq0TpcnP3q665nAG2Z0Z8GIKzSa5Oe6l7KqZZCf6oSA/exec',
-  VERSION: 'FE V3.9.2-FAMILY-LABELS',
+  VERSION: 'FE V3.9.3-CONTRIBUTION-DONOR-CONTEXT',
   EXPECTED_BACKEND: 'BE V1.8.46-GOVERNANCE-READONLY-DOCUMENTS',
   IDLE_MINUTES: 30,
   /* Photo shown when no photo has been set in Settings.
@@ -1309,7 +1309,7 @@ function waNumber(raw){
 }
 function receiptText(rec){
   const village = setting('Village Name', 'Malipatana');
-  const who = rec['Contributor'] || familyName(rec['Family ID']) || rec['Family ID'] || '';
+  const who = rec['Contributor'] || memberName(rec['Member ID']) || familyName(rec['Family ID']) || rec['Family ID'] || '';
   return [
     village + ' ଗାଁ ପାଣ୍ଠି · Village Fund',
     '',
@@ -2419,7 +2419,7 @@ const MODULES = {
       { n:'Receipt No', t:'text' },
       { n:'Remarks', t:'textarea' }
     ],
-    list: ['Contribution ID','Date','Month','Family ID','Contributor','Amount','Payment Mode','Receipt No']
+    list: ['Contribution ID','Date','Month','Family ID','Member ID','Contributor','Amount','Payment Mode','Receipt No']
   },
   income: {
     sheet: 'Income', title: 'Income', odia: 'ଆୟ', idField: 'Income ID', prefix: 'INC',
