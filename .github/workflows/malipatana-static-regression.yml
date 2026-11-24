@@ -1,8 +1,10 @@
 name: Malipatana static regression
 
 on:
+  workflow_dispatch:
   push:
     branches:
+      - main
       - "transformation/**"
     paths:
       - "index.html"
