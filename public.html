@@ -382,6 +382,15 @@ a{color:#09695F}a:hover{color:#07584F}
 header.top{background:linear-gradient(152deg,#102F3C,#155660 55%,#876332)}
 header.top .veil{background:linear-gradient(176deg,#0B2635B8 0%,#123A41A3 45%,#0E2C39EE 100%)}
 :focus-visible{outline:3px solid #D5A23E;outline-offset:2px}
+
+/* Phase 4.2 — public financial disclosure basis */
+.public-fin-disclosure{border-color:#e7d9b7;background:linear-gradient(160deg,#fffdf7,#fffaf0)}
+.public-fin-disclosure h2{color:#71500d}
+.public-fin-disclosure-body{padding:12px 22px 17px;display:grid;gap:8px}
+.public-fin-disclosure-body p{margin:0;color:#514a39;font-size:13px;line-height:1.65}
+.public-fin-disclosure-body b{color:#263c35}
+@media(max-width:560px){.public-fin-disclosure-body{padding:10px 16px 15px}}
+@media print{.public-fin-disclosure{break-inside:avoid;box-shadow:none}}
 </style>
 
 <style id="mal-notice-links-css">.ntc .mal-notice-link,.noticeboard .mal-notice-link{color:#075f70;text-decoration:underline;text-underline-offset:3px;font-weight:700;overflow-wrap:anywhere}.ntc .mal-notice-link:hover,.noticeboard .mal-notice-link:hover{color:#ad441f}</style>
@@ -538,7 +547,8 @@ header.top .veil{background:linear-gradient(176deg,#0B2635B8 0%,#123A41A3 45%,#0
 
 <script src="or.js"></script>
 <script>
-/* Reads ONE endpoint: publicSummary, which returns totals only. It must never
+/* Phase 4.2 public disclosure view. Reads ONE endpoint: publicSummary,
+   which returns totals only. It must never
    call 'bootstrap' — that payload carries names, mobile numbers and logins. */
 var API_URL = 'https://script.google.com/macros/s/AKfycbzKN7T8vWfnqCfwtr_NNw3GWNwowWXxs1yntIjnndX_CnisIP2r1veilwEV3pVBLe9rlw/exec';
 
@@ -739,7 +749,19 @@ function render(d){
   /* A lone card stretched across the grid looks stranded, so it spans. */
   if(cards.length === 1) cards[0] = cards[0].replace('class="card"', 'class="card span2"');
 
-  var html = lead + (cards.length ? '<div class="cols">' + cards.join('') + '</div>' : '');
+  /* Public disclosure is deliberately a register snapshot, not an audit
+     or bank reconciliation. Never derive a combined outflow from emergency
+     and regular-support fields because those may overlap the expenditure
+     register. The API payload remains the existing totals-only publicSummary. */
+  var disclosure = f ? '<section class="card public-fin-disclosure" aria-label="Financial disclosure basis">' +
+    '<h2>' + t('How to read this fund statement') + '</h2>' +
+    '<div class="public-fin-disclosure-body">' +
+    '<p><b>' + t('Source and date') + ':</b> ' + t('Figures are drawn from the committee fund register') + ' (' + t('as on') + ' ' + esc(fmtDate(d.asOf)) + ').</p>' +
+    '<p><b>' + t('Balance status') + ':</b> ' + t('Balance in hand is the recorded register figure. It is not independently confirmed against a bank statement or cash count.') + '</p>' +
+    '<p><b>' + t('Separate entries') + ':</b> ' + t('Contributions, other income, expenditure, emergency help and regular support are shown as separate register values. Some support entries may also be reflected in expenditure, so do not add these lines into a second spending total.') + '</p>' +
+    '<p><b>' + t('Privacy') + ':</b> ' + t('This public page does not display contributor names, household-level payments, recipient names, mobile numbers or private welfare case details.') + '</p>' +
+    '</div></section>' : '';
+  var html = lead + disclosure + (cards.length ? '<div class="cols">' + cards.join('') + '</div>' : '');
 
   if(!html) html = '<div class="card"><div class="state"><b>Nothing is published at the moment</b>' +
     'The village committee has not chosen anything to show here yet.</div></div>';
