@@ -46,7 +46,9 @@ check('Phase 2 dashboard stylesheet is loaded',index.includes('malipatana-phase2
 check('Dashboard quick actions are role and page filtered',core.includes('const quickActions = [')&&core.includes('canEdit() && quickActions.length'));
 check('Dashboard quick actions use existing form workflow',core.includes("onclick=\"openForm('${key}')\""));
 check('Dashboard heading reflects village operations',core.includes('village operations</h2>')&&core.includes('ux-home-live-label'));
-check('Previous family-context release was superseded by Phase 3.2',core.includes("VERSION: 'FE V3.9.2-FAMILY-LABELS'")&&index.includes('malipatana-core.js?v=3.9.2-family-labels'));
+check('Phase 3.3 contribution donor context is versioned and cache-busted',core.includes("VERSION: 'FE V3.9.3-CONTRIBUTION-DONOR-CONTEXT'")&&index.includes('malipatana-core.js?v=3.9.3-contribution-donor-context'));
+check('Contribution register exposes linked member identity',core.includes("list: ['Contribution ID','Date','Month','Family ID','Member ID','Contributor','Amount','Payment Mode','Receipt No']"));
+check('Receipt falls back to linked member name before family name',core.includes("rec['Contributor'] || memberName(rec['Member ID']) || familyName(rec['Family ID'])"));
 check('Family filter identifies each family by head and ID',core.includes("head=String(f['Family Head']||'Family').trim()")&&core.includes("filter(Boolean).join(' · '))} (${esc(fid)})"));
 check('Member register shows family head alongside stored Family ID',core.includes("if(f.t === 'family')")&&core.includes("const family=(DB.families||[]).find(x=>String(x['Family ID']||'').trim()===id)"));
 check('All family-linked registers show family head and stored Family ID',core.includes("if(f.t === 'family')")&&core.includes("const family=(DB.families||[]).find(x=>String(x['Family ID']||'').trim()===id)")&&core.includes("'<span class=\"muted small\">'+esc(id)+'</span>'"));
