@@ -8,7 +8,7 @@ const results=[];
 function check(label,pass){results.push({label,pass:!!pass});console.log((pass?'PASS ':'FAIL ')+label)}
 const files=['index.html','malipatana-core.js','malipatana-ui.css','malipatana-layout-fit.css','malipatana-phase-design.css','register.html','entry.html','quick-add.html','manifest.webmanifest','quick-add.webmanifest','quick-add-sw.js'];
 for(const f of files)check('File exists: '+f,existsSync(resolve(root,f)));
-const index=file('index.html'),core=file('malipatana-core.js'),css=file('malipatana-ui.css'),register=file('register.html'),entry=file('entry.html'),quick=file('quick-add.html');
+const index=file('index.html'),core=file('malipatana-core.js'),css=file('malipatana-ui.css'),welfare=file('malipatana-family-welfare.css'),register=file('register.html'),entry=file('entry.html'),quick=file('quick-add.html');
 const url=s=>s.match(/https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec/)?.[0];
 const dashboardApiUrl=url(core), publicEntryApiUrl=url(register);
 check('Main dashboard backend URL is present',!!dashboardApiUrl);
@@ -63,7 +63,7 @@ check('Sidebar category headings use stylesheet classes, not inline presentation
 check('Accessibility styling enabled',index.includes('malipatana-phase-design.css'));
 check('Privacy: no plaintext secrets in test file',true);
 
-check('Phase 3.5 family welfare history is present and versioned',core.includes("VERSION: 'FE V3.9.5-FAMILY-WELFARE-HISTORY'")&&index.includes('malipatana-core.js?v=3.9.5-family-welfare-history'));
+check('Phase 3.5 family welfare history is present and versioned',core.includes("VERSION: 'FE V3.9.6-FAMILY-FINANCIAL-SUMMARY'")&&index.includes('malipatana-core.js?v=3.9.6-family-financial-summary'));
 check('Family welfare history reuses existing emergency, medical, education and support records',core.includes("familyRows('emergency')")&&core.includes("familyRows('medical')")&&core.includes("familyRows('education')")&&core.includes("familyRows('regularSupport')"));
 check('Family welfare history independently enforces each module permission',core.includes("welfareTable('Emergency assistance','emergency'")&&core.includes("welfareTable('Medical assistance','medical'")&&core.includes("welfareTable('Education assistance','education'")&&core.includes("welfareTable('Regular support','regularSupport'"));
 check('Family welfare history adds no backend or sheet contract',!core.includes("api('save',{sheet:'Emergency Cases'")&&!core.includes("api('save',{sheet:'Medical'")&&index.includes('malipatana-family-welfare.css'));
