@@ -71,7 +71,7 @@
    ========================================================================= */
 const CONFIG = {
   API_URL: 'https://script.google.com/macros/s/AKfycbwkweVh5BM35fHP86Uxs2bEjODXq0TpcnP3q665nAG2Z0Z8GIKzSa5Oe6l7KqZZCf6oSA/exec',
-  VERSION: 'FE V3.6.8-DOCX-PREVIEW-FIX',
+  VERSION: 'FE V3.6.9-DOCX-CROSS-REALM-FIX',
   EXPECTED_BACKEND: 'BE V1.8.46-GOVERNANCE-READONLY-DOCUMENTS',
   IDLE_MINUTES: 30,
   /* Photo shown when no photo has been set in Settings.
@@ -1608,7 +1608,15 @@ async function renderMyGovernanceDocs(){
       await loadScript('https://cdn.jsdelivr.net/npm/docx-preview@0.3.6/dist/docx-preview.min.js');
       const api=popup.docx||popup.window&&popup.window.docx;
       if(!api||typeof api.renderAsync!=='function')throw new Error('The DOCX preview library did not initialise correctly.');
-      await api.renderAsync(bytes.buffer,viewer,null,{inWrapper:true,ignoreWidth:false,ignoreHeight:false});
+      // Create the ArrayBuffer inside the popup's own JavaScript realm. Passing
+      // the opener's ArrayBuffer can fail JSZip's cross-realm type checks.
+      const previewUrl=URL.createObjectURL(blob);
+      try{
+       const popupResponse=await popup.fetch(previewUrl);
+       if(!popupResponse.ok)throw new Error('Could not prepare document bytes for preview.');
+       const popupBuffer=await popupResponse.arrayBuffer();
+       await api.renderAsync(popupBuffer,viewer,null,{inWrapper:true,ignoreWidth:false,ignoreHeight:false});
+      }finally{URL.revokeObjectURL(previewUrl);}
      }catch(e){viewer.textContent='DOCX preview unavailable: '+(e&&e.message||String(e))+' Please ask the administrator for a PDF viewing copy.';}})();
     }else{
      const url=URL.createObjectURL(blob);popup.location.href=url;
