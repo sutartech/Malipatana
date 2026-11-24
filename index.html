@@ -66,16 +66,16 @@
         <span class="chip">
           <img src="icon-512.png" alt="" width="34" height="34">
         </span>
-        <b>ମାଳିପାଟଣା</b>
+        <b lang="or">ମାଳିପାଟଣା</b>
       </div>
 
       <div class="photoframe"><img id="loginPhoto" src="village.jpg" alt="Malipatana village temple"
         onerror="var f=this.closest('.photoframe');if(f)f.remove();var c=document.querySelector('.photocap');if(c)c.remove()"></div>
-      <div class="photocap">ଗାଁ ମନ୍ଦିର · the village temple</div>
+      <div class="photocap"><span lang="or">ଗାଁ ମନ୍ଦିର</span> · the village temple</div>
 
       <div class="brandtext">
       <div class="eyebrow">JAGATSINGHPUR · ODISHA</div>
-      <h1>ଆମ ଗାଁ ମାଳିପାଟଣା</h1>
+      <h1 lang="or">ଆମ ଗାଁ ମାଳିପାଟଣା</h1>
       <h2>Malipatana Village Welfare</h2>
       <p>One register for every family, every rupee and every case of help the village fund has given.</p>
       <div class="pills">
@@ -156,7 +156,7 @@
 <div id="app" class="hide">
   <header class="topbar">
     <button class="iconbtn" id="menuBtn" title="Menu" aria-label="Menu">&#9776;</button>
-    <div class="brand">ମାଳିପାଟଣା<small id="brandSub">MALIPATANA VILLAGE</small></div>
+    <div class="brand"><span lang="or">ମାଳିପାଟଣା</span><small id="brandSub">MALIPATANA VILLAGE</small></div>
     <div class="sp"></div>
     <!-- Live India date/time is aligned at the far right of the signed-in header. -->
     <div class="mal-live-datetime" id="malLiveDateBar" role="status" aria-label="Current date and time in India">
@@ -677,7 +677,7 @@ async function renderSharedApprovals(){
   }
   function shell(){
     const k=kpis(),progress=k.all?Math.round(k.covered/k.all*100):0;
-    return `<div class="pagehead"><div><h2>Village improvement groups <span class="muted" style="font-size:15px">ଗ୍ରାମ ଉନ୍ନତି ଦଳ</span></h2><div class="sub">Organise living residents by area, age or selected members; plan respectful, time-bound activities.</div></div></div>
+    return `<div class="pagehead"><div><h2>Village improvement groups <span class="muted" lang="or" style="font-size:15px">ଗ୍ରାମ ଉନ୍ନତି ଦଳ</span></h2><div class="sub">Organise living residents by area, age or selected members; plan respectful, time-bound activities.</div></div></div>
       <div class="mcg-overview"><div class="mcg-kpi"><strong>${k.all}</strong><span>Living members</span></div><div class="mcg-kpi"><strong>${k.covered}</strong><span>Covered by groups</span></div><div class="mcg-kpi"><strong>${k.uncovered.length}</strong><span>Not assigned</span></div><div class="mcg-kpi"><strong>${k.overlap}</strong><span>In multiple groups</span></div></div>
       <div class="mcg-progress" role="progressbar" aria-valuenow="${progress}" aria-valuemin="0" aria-valuemax="100" aria-label="Residents covered"><span style="width:${progress}%"></span></div>
       <div class="mcg-note">${progress}% covered across active/planned groups. People can join more than one group. Deceased records are excluded automatically.</div>
