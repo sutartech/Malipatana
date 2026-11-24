@@ -92,3 +92,7 @@ header.top .tools select,header.top .tools a{min-height:42px}
  .grid4 .v{font-size:25px}
  .wrap .card h2{padding:13px 16px 12px}
 }
+
+/* Registration skip link: visible on keyboard focus, unobtrusive otherwise. */
+.mal-register-skip{position:absolute;z-index:1000;top:8px;left:8px;transform:translateY(-160%);padding:10px 14px;border-radius:9px;background:#123f38;color:#fff;font-weight:700;text-decoration:none;box-shadow:0 3px 14px #0003}
+.mal-register-skip:focus{transform:translateY(0);outline:3px solid #d6a341;outline-offset:3px}
