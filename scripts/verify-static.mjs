@@ -6,9 +6,9 @@ const root=resolve(import.meta.dirname,'..');
 const file=p=>readFileSync(resolve(root,p),'utf8');
 const results=[];
 function check(label,pass){results.push({label,pass:!!pass});console.log((pass?'PASS ':'FAIL ')+label)}
-const files=['index.html','malipatana-core.js','malipatana-ui.css','malipatana-layout-fit.css','malipatana-phase-design.css','register.html','entry.html','quick-add.html','manifest.webmanifest','quick-add.webmanifest','quick-add-sw.js'];
+const files=['index.html','malipatana-core.js','malipatana-ui.css','malipatana-layout-fit.css','malipatana-phase-design.css','malipatana-ops.css','register.html','entry.html','quick-add.html','manifest.webmanifest','quick-add.webmanifest','quick-add-sw.js'];
 for(const f of files)check('File exists: '+f,existsSync(resolve(root,f)));
-const index=file('index.html'),core=file('malipatana-core.js'),css=file('malipatana-ui.css'),welfare=file('malipatana-family-welfare.css'),register=file('register.html'),entry=file('entry.html'),quick=file('quick-add.html');
+const index=file('index.html'),core=file('malipatana-core.js'),css=file('malipatana-ui.css'),ops=file('malipatana-ops.css'),welfare=file('malipatana-family-welfare.css'),register=file('register.html'),entry=file('entry.html'),quick=file('quick-add.html');
 const url=s=>s.match(/https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec/)?.[0];
 const dashboardApiUrl=url(core), publicEntryApiUrl=url(register);
 check('Main dashboard backend URL is present',!!dashboardApiUrl);
@@ -51,7 +51,7 @@ check('Contribution register exposes linked member identity',core.includes("list
 check('Receipt falls back to linked member name before family name',core.includes("rec['Contributor'] || memberName(rec['Member ID']) || familyName(rec['Family ID'])"));
 check('Family profile includes permission-gated recent contribution history',core.includes("const contributionHistoryHtml = canSee('contributions')")&&core.includes('data-family-receipt='));
 check('Family contribution history opens the existing receipt and filtered register',core.includes("offerReceipt(rec)")&&core.includes("VIEW.contributions = Object.assign"));
-check('Phase 3.4 family contribution history remains in the current FE build',core.includes('const contributionHistoryHtml = canSee(\'contributions\')')&&core.includes('data-family-receipt=')&&core.includes("VERSION: 'FE V3.9.6-FAMILY-FINANCIAL-SUMMARY'"));
+check('Phase 3.4 family contribution history remains in the current FE build',core.includes('const contributionHistoryHtml = canSee(\'contributions\')')&&core.includes('data-family-receipt=')&&core.includes("VERSION: 'FE V3.10.0-GOVERNANCE-CONTROL-CENTRE'"));
 
 check('Family filter identifies each family by head and ID',core.includes("head=String(f['Family Head']||'Family').trim()")&&core.includes("filter(Boolean).join(' · '))} (${esc(fid)})"));
 check('Member register shows family head alongside stored Family ID',core.includes("if(f.t === 'family')")&&core.includes("const family=(DB.families||[]).find(x=>String(x['Family ID']||'').trim()===id)"));
@@ -63,7 +63,7 @@ check('Sidebar category headings use stylesheet classes, not inline presentation
 check('Accessibility styling enabled',index.includes('malipatana-phase-design.css'));
 check('Privacy: no plaintext secrets in test file',true);
 
-check('Phase 3.5 family welfare history is present and versioned',core.includes("VERSION: 'FE V3.9.6-FAMILY-FINANCIAL-SUMMARY'")&&index.includes('malipatana-core.js?v=3.9.6-family-financial-summary'));
+check('Phase 3.5 family welfare history is present and versioned',core.includes("VERSION: 'FE V3.9.6-FAMILY-FINANCIAL-SUMMARY'")&&index.includes('malipatana-core.js?v=3.10.0-governance-control-centre'));
 check('Family welfare history reuses existing emergency, medical, education and support records',core.includes("familyRows('emergency')")&&core.includes("familyRows('medical')")&&core.includes("familyRows('education')")&&core.includes("familyRows('regularSupport')"));
 check('Family welfare history independently enforces each module permission',core.includes("welfareTable('Emergency assistance','emergency'")&&core.includes("welfareTable('Medical assistance','medical'")&&core.includes("welfareTable('Education assistance','education'")&&core.includes("welfareTable('Regular support','regularSupport'"));
 check('Family welfare history adds no backend or sheet contract',!core.includes("api('save',{sheet:'Emergency Cases'")&&!core.includes("api('save',{sheet:'Medical'")&&index.includes('malipatana-family-welfare.css'));
