@@ -1,0 +1,117 @@
+/* Phase 3.7 — workspace width and family-profile scroll correction.
+   CSS-only: no data, permissions, navigation, API or backend changes. */
+
+/* Let the dashboard consume the complete space beside the application sidebar. */
+#app .shell{
+  display:flex!important;
+  width:100%!important;
+  max-width:none!important;
+  min-width:0!important;
+}
+#app .shell>main.main{
+  flex:1 1 0%!important;
+  width:0!important;
+  min-width:0!important;
+  max-width:none!important;
+  margin:0!important;
+  box-sizing:border-box!important;
+}
+#app main.main>.page,
+#app main.main>#main,
+#app main.main .ux-home{
+  width:100%!important;
+  max-width:none!important;
+  min-width:0!important;
+  box-sizing:border-box!important;
+}
+#app .ux-home{
+  margin:0!important;
+  justify-items:stretch!important;
+  align-items:stretch!important;
+}
+#app .ux-home>.hero,
+#app .ux-home>.ledger,
+#app .ux-home>.ux-home-identity,
+#app .ux-home>.ux-kpi-grid,
+#app .ux-home>.ux-priority-grid,
+#app .ux-home>.ux-home-section,
+#app .ux-home>details{
+  width:100%!important;
+  max-width:none!important;
+  min-width:0!important;
+  box-sizing:border-box!important;
+}
+#app .ux-home .ux-kpi-grid{
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+}
+#app .ux-home .ux-priority-grid{
+  grid-template-columns:minmax(0,1.65fr) minmax(230px,.8fr)!important;
+}
+#app .ux-home .ledger-top{
+  width:100%!important;
+  box-sizing:border-box!important;
+}
+@media(max-width:1100px){
+  #app .ux-home .ux-priority-grid{
+    grid-template-columns:minmax(0,1fr)!important;
+  }
+}
+@media(max-width:760px){
+  #app .shell>main.main{
+    width:100%!important;
+    flex:1 1 100%!important;
+  }
+  #app .ux-home .ux-kpi-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  }
+  #app .ux-home .ux-priority-grid{
+    grid-template-columns:minmax(0,1fr)!important;
+  }
+}
+
+/* Deterministic scroll region: header/footer stay visible; profile content scrolls. */
+#modalRoot .overlay:has(.mal-family-profile-body){
+  align-items:center!important;
+  overflow-y:auto!important;
+  overscroll-behavior:contain!important;
+}
+#modalRoot .modal:has(.mal-family-profile-body){
+  display:flex!important;
+  flex-direction:column!important;
+  height:92dvh!important;
+  max-height:92dvh!important;
+  min-height:0!important;
+  overflow:hidden!important;
+}
+#modalRoot .modal:has(.mal-family-profile-body)>header,
+#modalRoot .modal:has(.mal-family-profile-body)>footer{
+  flex:0 0 auto!important;
+}
+#modalRoot .modal>.mal-family-profile-body{
+  display:block!important;
+  flex:1 1 auto!important;
+  height:auto!important;
+  min-height:0!important;
+  max-height:none!important;
+  overflow-x:hidden!important;
+  overflow-y:auto!important;
+  overscroll-behavior-y:contain!important;
+  -webkit-overflow-scrolling:touch!important;
+  touch-action:pan-y!important;
+  scrollbar-gutter:stable!important;
+}
+@media(max-width:760px){
+  #modalRoot .overlay:has(.mal-family-profile-body){
+    align-items:flex-end!important;
+    padding:0!important;
+  }
+  #modalRoot .modal:has(.mal-family-profile-body){
+    width:100%!important;
+    height:96dvh!important;
+    max-height:96dvh!important;
+    border-radius:20px 20px 0 0!important;
+  }
+  #modalRoot .modal>.mal-family-profile-body{
+    padding:14px!important;
+  }
+}

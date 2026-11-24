@@ -74,6 +74,10 @@ check('Modal content has an independently scrollable flex body while header and 
 check('Modal scrolling supports touch and prevents scroll chaining on mobile',css.includes('-webkit-overflow-scrolling:touch')&&css.includes('overscroll-behavior-y:contain'));
 
 
+const workspaceCss=file('malipatana-workspace-polish.css');
+check('Workspace polish stylesheet exists and is loaded',existsSync(resolve(root,'malipatana-workspace-polish.css'))&&index.includes('malipatana-workspace-polish.css?v=1.0.0-phase-3-7'));
+check('Workspace content is full-width beside the navigation rail',workspaceCss.includes('#app .shell>main.main')&&workspaceCss.includes('max-width:none!important')&&workspaceCss.includes('#app .ux-home>.ledger'));
+check('Family profile scroll uses a shrinkable content region with fixed header and footer',workspaceCss.includes('#modalRoot .modal:has(.mal-family-profile-body)>header')&&workspaceCss.includes('#modalRoot .modal>.mal-family-profile-body')&&workspaceCss.includes('overflow-y:auto!important')&&workspaceCss.includes('height:92dvh!important'));
 const layoutCss=file('malipatana-layout-fit.css');
 check('Village home dashboard fills the available workspace without a narrow max-width',layoutCss.includes('width:100%;')&&layoutCss.includes('max-width:none;')&&layoutCss.includes('flex:1 1 0%;'));
 check('Family profile body has a dedicated scroll target',core.includes('class="body mal-family-profile-body"')&&core.includes('aria-label="Family profile details"'));
