@@ -43,6 +43,7 @@ jobs:
           node-version: "22"
       - name: Check JavaScript syntax
         run: |
+          node --check malipatana-post-api.js
           node --check malipatana-core.js
           node --check malipatana-ops.js
           node --check malipatana-connectivity.js
