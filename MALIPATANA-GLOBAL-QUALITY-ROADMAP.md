@@ -1,8 +1,8 @@
 # Malipatana Global-Quality Transformation Roadmap
 
-Status: Phases 1–3 implemented; Phases 4.0–4.1 merged; Phase 4.2 in progress
+Status: Phases 1–3 implemented; Phases 4.0–4.2 merged; Phase 4.3 in progress
 Baseline branch: main
-Working branch: transformation/phase-4-2-public-financial-disclosure
+Working branch: transformation/phase-4-3-audit-readiness
 Date: 2026-11-24
 Scope: Full 100-improvement programme
 Preservation rule: No backend URL, Apps Script code, spreadsheet schema, existing record, authentication flow, or permission policy may be changed without a separately reviewed and explicitly approved change.
@@ -198,3 +198,10 @@ Cash/bank reconciliation, restricted/committed fund accounting and public-facing
 The public fund page receives an additional disclosure-basis panel explaining source/date, the register nature of the displayed balance, separate treatment of contribution/income/expenditure/support entries, and privacy exclusions. Admin publication controls now describe aggregate-only financial lines and recent spending descriptions.
 
 Preservation: uses the existing totals-only publicSummary endpoint; does not call bootstrap or add an API, expose new record fields, or alter backend/schema/permissions. It explicitly warns that the displayed register balance is not independently bank-confirmed and that support entries may overlap expenditure. No annual or audited statement is claimed because the public endpoint does not provide date-scoped financial-year aggregates or reconciliation evidence.
+
+
+## Phase 4.3 — Financial audit-readiness (in review)
+
+Adds read-only financial-year completeness checks using existing fields only: contribution receipt number and payment mode; income received-by and payment mode; expenditure bill/receipt reference, approver, paid-by and payment mode. Results count missing fields by register without displaying transaction-level personal data.
+
+Controls: a populated field is not treated as proof of a genuine receipt or valid approval. Original evidence still requires human verification. The current register schemas do not provide bank statement lines, closing balances or transaction references for automated bank matching; no cash/bank reconciliation is claimed. No new accounting field, API, Apps Script deployment, sheet schema or stored record is introduced.
