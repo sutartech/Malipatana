@@ -71,7 +71,7 @@
    ========================================================================= */
 const CONFIG = {
   API_URL: 'https://script.google.com/macros/s/AKfycbwkweVh5BM35fHP86Uxs2bEjODXq0TpcnP3q665nAG2Z0Z8GIKzSa5Oe6l7KqZZCf6oSA/exec',
-  VERSION: 'FE V3.7.8-SIDEBAR-COLOUR-VERIFY',
+  VERSION: 'FE V3.7.9-SIDEBAR-COLOUR-BARS',
   EXPECTED_BACKEND: 'BE V1.8.46-GOVERNANCE-READONLY-DOCUMENTS',
   IDLE_MINUTES: 30,
   /* Photo shown when no photo has been set in Settings.
@@ -2150,7 +2150,7 @@ function buildNav(){
   groups.forEach(([title, items]) => {
     if(!items.length) return;
     const p=palette[title];
-    if(title && p) html += '<div class="navgroup" style="display:flex!important;align-items:center!important;gap:8px!important;min-height:42px!important;margin:12px 3px 7px!important;padding:5px 9px!important;border:1px solid '+p.edge+'!important;border-left:5px solid '+p.edge+'!important;border-radius:10px!important;background:'+p.bg+'!important;box-shadow:0 2px 8px #001d2c35!important;color:'+p.fg+'!important;font-size:11px!important;font-weight:950!important;letter-spacing:.07em!important;text-shadow:none!important"><span style="font-size:16px!important">'+p.symbol+'</span><span style="font-weight:950!important;color:'+p.fg+'!important">'+title+'</span><span style="margin-left:auto!important;color:'+p.fg+'!important;font-weight:950!important">›</span></div>';
+    if(title && p){ const slug=title==='GLOBAL ADMINISTRATOR'?'global-administrator':title.toLowerCase(); html += '<div class="navgroup navgroup-'+slug+'"><span class="navgroup-symbol">'+p.symbol+'</span><span class="navgroup-title">'+title+'</span><span class="navgroup-chevron">›</span></div>'; }
     html += items.map(([key, ic, label, dataKey]) => {
       const n = key === 'memorial' ? (DB.members || []).filter(isDeceased).length : dataKey ? (rowsOf(dataKey) || []).length : '';
       const active=PAGE===key;
