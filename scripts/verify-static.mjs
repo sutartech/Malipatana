@@ -134,6 +134,18 @@ check('Admin-only governance and private document views retain explicit guards',
 check('User-facing API and backend error strings are inserted as text in toast',core.includes("el.textContent = text"));
 check('Password is not persisted as a remembered credential',core.includes("local.set('mal_saved_user', username)")&&!core.includes("local.set('mal_saved_password'")&&!core.includes("localStorage.setItem('password'"));
 
+
+/* Phase 6 security/reliability guardrails: static assertions only.
+   These checks do not replace server-side authorization or penetration testing. */
+check('Password recovery submits the new password through POST, not a URL query',core.includes("fetch(CONFIG.API_URL,{method:'POST'")&&core.includes("body,referrerPolicy:'no-referrer'")&&core.includes('Password is submitted in a POST body'));
+check('Private register cache migration removes legacy persistent copies',core.includes("k==='mal_db_cache'||k==='mal_queue'||k==='mal_login_photo'||k.startsWith('mal_local_')")&&core.includes("sessionStorage.setItem('mal_queue',keepQueue)"));
+check('Authenticated API attaches the session token and login does not reuse a stale token',core.includes("if(USER && USER.token && action !== 'login')")&&core.includes("params = Object.assign({}, params, {token:USER.token})"));
+check('Idle timeout signs the user out through the existing logout path',core.includes('CONFIG.IDLE_MINUTES * 60000')&&core.includes('setTimeout(doLogout, 900)'));
+check('Role-aware navigation checks remain in the module router',core.includes("if(m.adminOnly && !isAdmin())")&&core.includes("if(!canSee(m.permission || key))"));
+check('Admin-only governance and private document views retain explicit guards',core.includes("async function renderGovernanceCentre(){\n if(!isAdmin())")&&core.includes("async function renderMyGovernanceDocs(){\n if(!isAdmin()"));
+check('User-facing API and backend error strings are inserted as text in toast',core.includes("el.textContent = text"));
+check('Password is not persisted as a remembered credential',core.includes("local.set('mal_saved_user', username)")&&!core.includes("local.set('mal_saved_password'")&&!core.includes("localStorage.setItem('password'"));
+
 const failures=results.filter(r=>!r.pass).length;
 console.log('\n'+(results.length-failures)+'/'+results.length+' static checks passed.');
 if(failures){console.error('Static checks failed. Do not assume this deployment is ready.');process.exitCode=1;}
