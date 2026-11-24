@@ -61,3 +61,25 @@
 .mal-gov-task-tools .input{min-width:0}
 @media(max-width:1000px){.mal-gov-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:620px){.mal-gov-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.mal-gov-queue{grid-template-columns:1fr}.mal-gov-task-tools{grid-template-columns:1fr}}
+
+/* Phase 4.1 — read-only financial-year transparency report */
+.mal-fin-transparency{margin:14px 0 18px;padding:16px;border:1px solid #d8e7df;border-radius:16px;background:#fbfdfb}
+.mal-fin-transparency-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.mal-fin-eyebrow{font-size:10px;font-weight:900;letter-spacing:.1em;color:#8a641c}
+.mal-fin-transparency-head h3{margin:3px 0;font-size:19px;color:#174e42}
+.mal-fin-transparency-head p{margin:0;font-size:12px;color:#63776e}
+.mal-fin-transparency-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:12px 0}
+.mal-fin-transparency-kpis article{min-width:0;padding:12px;border:1px solid #e0eae4;border-radius:12px;background:#fff;display:grid;gap:6px}
+.mal-fin-transparency-kpis span{font-size:11px;font-weight:800;color:#5a7167}
+.mal-fin-transparency-kpis b{font-size:17px;color:#174e42;overflow-wrap:anywhere}
+.mal-fin-transparency-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.mal-fin-transparency-panel{min-width:0;padding:12px;border:1px solid #e3ebe6;border-radius:12px;background:#fff}
+.mal-fin-transparency-panel h4{margin:0 0 9px;color:#244d42;font-size:14px}
+.mal-fin-transparency-panel .tablewrap{max-height:340px;overflow:auto}
+.mal-fin-transparency-panel table{min-width:100%;font-size:12px}
+.mal-fin-evidence{display:grid;gap:6px;margin-top:10px;padding:10px;border-radius:9px;background:#f5f8f6;color:#50685d;font-size:11px}
+.mal-fin-evidence b{color:#174e42}
+.mal-fin-transparency-note{margin:12px 0 0;padding:10px 12px;border-left:3px solid #c9a451;background:#fffaf0;color:#665a40;font-size:11px;line-height:1.55}
+@media(max-width:800px){.mal-fin-transparency-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.mal-fin-transparency-grid{grid-template-columns:1fr}}
+@media(max-width:480px){.mal-fin-transparency{padding:11px}.mal-fin-transparency-kpis b{font-size:15px}.mal-fin-transparency-panel{padding:9px}}
+@media print{.mal-fin-transparency{break-inside:avoid;border:1px solid #aaa;background:#fff}.mal-fin-transparency-head button{display:none}.mal-fin-transparency-panel .tablewrap{max-height:none;overflow:visible}}
