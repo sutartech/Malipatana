@@ -173,6 +173,11 @@ check('Public page Odia headings and generated notices carry Odia language metad
 check('Registration form Odia labels are individually language-tagged',register.includes('<span lang="or">ପୂରା ନାମ</span>')&&register.includes('<span lang="or">ପିତାଙ୍କ ନାମ</span>')&&register.includes('<span lang="or">ମାତାଙ୍କ ନାମ</span>'));
 check('Suggestions page Odia heading is language-tagged',sugg.includes('<span lang="or">ଗ୍ରାମ ଉନ୍ନତି ପରାମର୍ଶ</span>'));
 
+check('Suggestions form validation announces required, length and mobile errors accessibly',sugg.includes("field.setAttribute('aria-invalid','true')")&&sugg.includes("field.validity.valueMissing")&&sugg.includes("field.validity.tooShort")&&sugg.includes("field.validity.patternMismatch"));
+check('Suggestions form clears stale validation state after correction',sugg.includes("e.target.removeAttribute('aria-invalid')")&&sugg.includes("ideaForm.querySelector('[aria-invalid=\"true\"]')"));
+check('Suggestions form retains its existing submission and receipt-tracking contract',sugg.includes("action:'publicSuggestion'")&&sugg.includes("api('suggestionStatus'")&&sugg.includes("receipt:a.receipt"));
+
+
 const failures=results.filter(r=>!r.pass).length;
 console.log('\n'+(results.length-failures)+'/'+results.length+' static checks passed.');
 if(failures){console.error('Static checks failed. Do not assume this deployment is ready.');process.exitCode=1;}
