@@ -167,6 +167,12 @@ check('Keyboard focus and reduced-motion preferences are supported',welfare.incl
 check('Monthly close and accessibility styles are versioned and loaded',index.includes('malipatana-family-welfare.css?v=3.14.0-monthly-close-accessibility')&&welfare.includes('.mal-fin-month-close{'));
 check('Public and suggestions pages retain their existing form and API contracts',pub.includes("api('publicSummary')")&&sugg.includes("action:'publicSuggestion'")&&sugg.includes("api('suggestionStatus'"));
 
+check('Public grievance fields expose mobile pattern and bounded description validation',pub.includes('pattern="[6-9][0-9]{9}"')&&pub.includes('minlength="12" maxlength="2200"'));
+check('Public grievance result region announces status and accepts focus',pub.includes('id="gMsg" role="status" aria-live="polite"')&&pub.includes("region.focus()"));
+check('Public grievance validation marks invalid fields and clears corrected state',pub.includes("field.setAttribute('aria-invalid','true')")&&pub.includes("field.removeAttribute('aria-invalid')"));
+check('Public grievance submission keeps its existing API action and payload contract',pub.includes("apiPost('publicGrievance', { record: JSON.stringify(payload) })")&&pub.includes("Status: 'Received'"));
+
+
 
 check('Dashboard Odia branding is language-tagged for assistive technology',index.includes('<b lang="or">ମାଳିପାଟଣା</b>')&&index.includes('<h1 lang="or">ଆମ ଗାଁ ମାଳିପାଟଣା</h1>'));
 check('Public page Odia headings and generated notices carry Odia language metadata',pub.includes('<h1 id="title" lang="or">')&&pub.includes('<span lang="or">ଆସୁଥିବା ଦିନ</span>')&&pub.includes('<span lang="or">ସୂଚନା</span>'));
