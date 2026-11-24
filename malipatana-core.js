@@ -2133,7 +2133,29 @@ function buildTabs(){
   });
 }
 
-const navCategoryCollapsed = Object.create(null);
+const MAL_NAV_COLLAPSE_KEY = 'mal_nav_collapsed_v1';
+function navReadCollapsePrefs(){
+  try {
+    const raw = local.get(MAL_NAV_COLLAPSE_KEY);
+    const saved = raw ? JSON.parse(raw) : {};
+    return saved && typeof saved === 'object' && !Array.isArray(saved)
+      ? Object.assign(Object.create(null), saved) : Object.create(null);
+  } catch(e) { return Object.create(null); }
+}
+let navCategoryCollapsed = navReadCollapsePrefs();
+function navSaveCollapsePrefs(){
+  try { local.set(MAL_NAV_COLLAPSE_KEY, JSON.stringify(navCategoryCollapsed)); } catch(e){}
+}
+const NAV_PAGE_GROUP = Object.freeze({
+  families:'people', members:'people', memorial:'people', guidance:'people',
+  contributions:'money', income:'money', expenditure:'money', events:'money', projects:'money', recurring:'money',
+  emergency:'welfare', regularSupport:'welfare',
+  grievances:'villagers', importantDays:'villagers', notices:'villagers',
+  myGovernanceDocs:'documents',
+  users:'global-administrator', publicPage:'global-administrator', auditLog:'global-administrator',
+  accessHistory:'global-administrator', photos:'global-administrator', settingsList:'global-administrator',
+  surnameGroups:'global-administrator', governanceCentre:'global-administrator'
+});
 function buildNav(){
   const groups = [
     ['', [['dashboard', '▦', 'Dashboard', null]]],
@@ -2153,11 +2175,9 @@ function buildNav(){
     const p=palette[title];
     const grouped=!!(title && p);
     const slug=grouped?(title==='GLOBAL ADMINISTRATOR'?'global-administrator':title.toLowerCase()):'';
-    const activeGroup=items.some(it=>PAGE===it[0]);
     if(grouped){
-      if(activeGroup) navCategoryCollapsed[slug]=false;
-      const collapsed=!!navCategoryCollapsed[slug];
-      html += '<div class="nav-category-group" data-nav-category-group="'+slug+'"><button type="button" class="nav-category-bar nav-category-bar-'+slug+'" data-nav-category-toggle="'+slug+'" aria-expanded="'+(!collapsed)+'" style="display:flex!important;align-items:center!important;gap:9px!important;width:calc(100% - 6px)!important;min-height:43px!important;margin:12px 3px 7px!important;padding:6px 10px!important;border:1px solid '+p.edge+'!important;border-left:5px solid '+p.edge+'!important;border-radius:11px!important;background:'+p.bg+'!important;background-color:'+p.bg+'!important;color:'+p.fg+'!important;box-shadow:0 2px 8px rgba(0,25,40,.24)!important;font-size:11px!important;font-weight:950!important;letter-spacing:.065em!important;line-height:1.15!important;text-shadow:none!important;text-align:left!important;cursor:pointer!important"><span class="navgroup-symbol" style="font-size:17px!important;flex:0 0 auto!important">'+p.symbol+'</span><span class="navgroup-title" style="display:inline-flex!important;align-items:center!important;min-height:28px!important;font-weight:950!important;color:'+p.fg+'!important">'+title+'</span><span class="navgroup-chevron" style="margin-left:auto!important;font-size:17px!important;font-weight:950!important;color:'+p.fg+'!important;transform:rotate('+(collapsed?-90:90)+'deg)!important;transition:transform .15s ease!important">›</span></button><div class="nav-category-items" data-nav-category-items="'+slug+'"'+(collapsed?' hidden style="display:none!important"':'')+'>'; 
+      const collapsed=navCategoryCollapsed[slug]===true;
+      html += '<div class="nav-category-group" data-nav-category-group="'+slug+'"><button type="button" class="nav-category-bar nav-category-bar-'+slug+'" data-nav-category-toggle="'+slug+'" aria-controls="mal-nav-items-'+slug+'" aria-expanded="'+(!collapsed)+'" style="display:flex!important;align-items:center!important;gap:9px!important;width:calc(100% - 6px)!important;min-height:43px!important;margin:12px 3px 7px!important;padding:6px 10px!important;border:1px solid '+p.edge+'!important;border-left:5px solid '+p.edge+'!important;border-radius:11px!important;background:'+p.bg+'!important;background-color:'+p.bg+'!important;color:'+p.fg+'!important;box-shadow:0 2px 8px rgba(0,25,40,.24)!important;font-size:11px!important;font-weight:950!important;letter-spacing:.065em!important;line-height:1.15!important;text-shadow:none!important;text-align:left!important;cursor:pointer!important"><span class="navgroup-symbol" style="font-size:17px!important;flex:0 0 auto!important">'+p.symbol+'</span><span class="navgroup-title" style="display:inline-flex!important;align-items:center!important;min-height:28px!important;font-weight:950!important;color:'+p.fg+'!important">'+title+'</span><span class="navgroup-chevron" style="margin-left:auto!important;font-size:17px!important;font-weight:950!important;color:'+p.fg+'!important;transform:rotate('+(collapsed?-90:90)+'deg)!important;transition:transform .15s ease!important">›</span></button><div id="mal-nav-items-'+slug+'" class="nav-category-items" data-nav-category-items="'+slug+'"'+(collapsed?' hidden style="display:none!important"':'')+'>'; 
     }
     html += items.map(([key, ic, label, dataKey]) => {
       const n = key === 'memorial' ? (DB.members || []).filter(isDeceased).length : dataKey ? (rowsOf(dataKey) || []).length : '';
@@ -2174,6 +2194,7 @@ function buildNav(){
       const slug=button.dataset.navCategoryToggle;
       const collapsed=!navCategoryCollapsed[slug];
       navCategoryCollapsed[slug]=collapsed;
+      navSaveCollapsePrefs();
       const panel=$('#sidebar').querySelector('[data-nav-category-items="'+slug+'"]');
       if(panel){panel.hidden=collapsed;panel.style.setProperty('display',collapsed?'none':'','important');}
       button.setAttribute('aria-expanded',collapsed?'false':'true');
@@ -2184,6 +2205,13 @@ function buildNav(){
   $('#sidebar').querySelectorAll('.nav').forEach(b => b.onclick = () => go(b.dataset.page));
 }
 function go(page){
+  if(PAGE !== page){
+    const group=NAV_PAGE_GROUP[page];
+    if(group && navCategoryCollapsed[group]===true){
+      navCategoryCollapsed[group]=false;
+      navSaveCollapsePrefs();
+    }
+  }
   PAGE = page;
   document.querySelectorAll('.nav').forEach(b => b.classList.toggle('active', b.dataset.page === page));
   closeDrawer();

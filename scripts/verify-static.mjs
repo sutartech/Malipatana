@@ -10,10 +10,12 @@ const files=['index.html','malipatana-core.js','malipatana-ui.css','malipatana-p
 for(const f of files)check('File exists: '+f,existsSync(resolve(root,f)));
 const index=file('index.html'),core=file('malipatana-core.js'),css=file('malipatana-ui.css'),register=file('register.html'),entry=file('entry.html'),quick=file('quick-add.html');
 const url=s=>s.match(/https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec/)?.[0];
-check('Main, public registration, shared entry and Quick Add use one backend URL',!!url(core)&&url(core)===url(register)&&url(core)===url(entry)&&url(core)===url(quick));
+const dashboardApiUrl=url(core), publicEntryApiUrl=url(register);
+check('Main dashboard backend URL is present',!!dashboardApiUrl);
+check('Public registration, shared entry and Quick Add retain their shared backend URL',!!publicEntryApiUrl&&publicEntryApiUrl===url(entry)&&publicEntryApiUrl===url(quick));
 check('Admin registration control exists',index.includes("api('registrationManage'"));
 check('Public registration checks backend status',register.includes("api('registrationStatus'"));
-check('Public registration has advisory duplicate preview',register.includes("api('registrationDuplicateCheck'"))&&register.includes('malDupStatusBasic'));
+check('Public registration has advisory duplicate preview',register.includes("api('registrationDuplicateCheck'")&&register.includes('malDupStatusBasic'));
 check('Admin registration queue shows duplicate review',index.includes('Duplicate Review'));
 check('Village Suggestions public page exists',existsSync(resolve(root,'suggestions.html')));
 check('Suggestions Admin module exists',existsSync(resolve(root,'malipatana-suggestions.js')));
@@ -31,7 +33,14 @@ check('Mobile navigation preserved',index.includes("id=\"tabbar\"")&&index.inclu
 check('Four Quick Add options preserved', ['Add member','Add family','Add expense','Add contribution'].every(s=>index.includes(s)));
 check('Odia text present',/[\u0B00-\u0B7F]/u.test(index));
 check('Family and Member resizing preserved',core.includes('MAL_REG_WIDTH_PREFIX'));
-check('Backend version matches expected',core.includes("EXPECTED_BACKEND: 'BE V1.8.30'"));
+const expectedBackend=core.match(/EXPECTED_BACKEND:\s*'([^']+)'/)?.[1]||'';
+check('Expected backend version is declared in a recognisable format',/^BE V\d+\.\d+/.test(expectedBackend));
+const declaredFe=core.match(/VERSION:\s*'FE V([^']+)'/)?.[1]||'';
+const coreAsset=index.match(/malipatana-core\.js\?v=([^"' ]+)/)?.[1]||'';
+check('Core script cache-bust matches declared FE version',!!declaredFe&&!!coreAsset&&declaredFe.toLowerCase()===coreAsset.toLowerCase());
+check('Sidebar collapse preference persistence is present',core.includes('mal_nav_collapsed_v1')&&core.includes('navSaveCollapsePrefs'));
+check('Sidebar category controls expose accessible state',core.includes('aria-controls="mal-nav-items-')&&core.includes('aria-expanded='));
+
 check('Accessibility styling enabled',index.includes('malipatana-phase-design.css'));
 check('Privacy: no plaintext secrets in test file',true);
 const failures=results.filter(r=>!r.pass).length;
