@@ -71,7 +71,7 @@
    ========================================================================= */
 const CONFIG = {
   API_URL: 'https://script.google.com/macros/s/AKfycbwkweVh5BM35fHP86Uxs2bEjODXq0TpcnP3q665nAG2Z0Z8GIKzSa5Oe6l7KqZZCf6oSA/exec',
-  VERSION: 'FE V3.9.1-PEOPLE-FAMILY-CONTEXT',
+  VERSION: 'FE V3.9.2-FAMILY-LABELS',
   EXPECTED_BACKEND: 'BE V1.8.46-GOVERNANCE-READONLY-DOCUMENTS',
   IDLE_MINUTES: 30,
   /* Photo shown when no photo has been set in Settings.
@@ -3589,12 +3589,12 @@ function cellHtml(key, row, col){
   if(f.t === 'date'){ return { cls: 'tnum', html: esc(fmtDate(raw)) }; }
   if(f.t === 'family'){
     const id=String(raw||'').trim();
-    if(key==='members'&&id){
+    if(id){
       const family=(DB.families||[]).find(x=>String(x['Family ID']||'').trim()===id);
       const head=family?String(family['Family Head']||'').trim():'';
       return { cls: '', html: (head?'<strong>'+esc(head)+'</strong> ':'')+'<span class="muted small">'+esc(id)+'</span>' };
     }
-    return { cls: '', html: esc(raw || '') };
+    return { cls: '', html: '' };
   }
   if(f.t === 'member'){
     const nm = memberName(raw);
