@@ -62,6 +62,13 @@ check('Shared design-system stylesheet is loaded',index.includes('malipatana-des
 check('Sidebar category headings use stylesheet classes, not inline presentation',core.includes('class="nav-category-bar nav-category-bar-')&&!/nav-category-bar-[^"]+"[^>]*style=/.test(core)&&!core.includes('navgroup-symbol" style=')&&!core.includes('navgroup-title" style=')&&!core.includes('navgroup-chevron" style='));
 check('Accessibility styling enabled',index.includes('malipatana-phase-design.css'));
 check('Privacy: no plaintext secrets in test file',true);
+
+check('Phase 3.5 family welfare history is present and versioned',core.includes("VERSION: 'FE V3.9.5-FAMILY-WELFARE-HISTORY'")&&index.includes('malipatana-core.js?v=3.9.5-family-welfare-history'));
+check('Family welfare history reuses existing emergency, medical, education and support records',core.includes("familyRows('emergency')")&&core.includes("familyRows('medical')")&&core.includes("familyRows('education')")&&core.includes("familyRows('regularSupport')"));
+check('Family welfare history independently enforces each module permission',core.includes("welfareTable('Emergency assistance','emergency'")&&core.includes("welfareTable('Medical assistance','medical'")&&core.includes("welfareTable('Education assistance','education'")&&core.includes("welfareTable('Regular support','regularSupport'"));
+check('Family welfare history adds no backend or sheet contract',!core.includes("api('save',{sheet:'Emergency Cases'")&&!core.includes("api('save',{sheet:'Medical'")&&index.includes('malipatana-family-welfare.css'));
+check('Family welfare responsive stylesheet exists and is loaded',existsSync(resolve(root,'malipatana-family-welfare.css'))&&index.includes('malipatana-family-welfare.css'));
+
 const failures=results.filter(r=>!r.pass).length;
 console.log('\n'+(results.length-failures)+'/'+results.length+' static checks passed.');
 if(failures){console.error('Static checks failed. Do not assume this deployment is ready.');process.exitCode=1;}
