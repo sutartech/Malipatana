@@ -9,9 +9,9 @@
 #app .topbar .whochip>span:last-child{min-width:0;overflow:hidden}
 #app .topbar .whochip b,#app .topbar .whochip .role{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #app .topbar .iconbtn,#app .topbar .myverify-head{flex:0 0 auto}
-#app .topbar #logoutBtn{width:34px;height:34px;min-width:34px;padding:0;border:1px solid #ffb4a8;background:linear-gradient(145deg,#c9362b,#a91f24)!important;color:#fff!important;border-radius:10px;font-size:17px;box-shadow:0 3px 9px rgba(115,20,20,.2)}
-#app .topbar #logoutBtn:hover{background:linear-gradient(145deg,#e34a3d,#bd252b)!important;box-shadow:0 4px 12px rgba(115,20,20,.3)}
-#app .topbar #logoutBtn:focus-visible{outline:3px solid #ffd2a8!important;outline-offset:2px}
+#app .topbar #logoutBtn{display:inline-flex;align-items:center;justify-content:center;gap:9px;flex:0 0 auto;width:auto;min-width:154px;height:48px;padding:0 20px;border:1px solid #ef7778;background:linear-gradient(135deg,#df4b50,#bd3038)!important;color:#fff!important;border-radius:999px;font-size:16px;font-weight:800;line-height:1;white-space:nowrap;box-shadow:0 5px 14px rgba(153,35,42,.22);transition:transform .16s ease,box-shadow .16s ease,filter .16s ease}
+#app .topbar #logoutBtn:hover{filter:brightness(1.06);transform:translateY(-1px);box-shadow:0 7px 17px rgba(115,20,20,.3)}
+#app .topbar #logoutBtn:focus-visible{outline:3px solid #ffd2a8!important;outline-offset:2px}\n#app .topbar #logoutBtn .logout-arrow{font-size:21px;font-weight:900;line-height:1}\n#app .topbar #logoutBtn .logout-label{display:inline}
 #app .noticeboard{width:100%;max-width:100%;min-width:0;overflow:hidden}
 #app .mal-notice-ticker{display:flex;align-items:center;gap:10px;width:100%;max-width:100%;min-width:0;box-sizing:border-box;overflow:hidden}
 #app .mal-notice-label{flex:0 0 auto;max-width:28%;white-space:nowrap}
@@ -34,7 +34,7 @@
  #app .topbar>.brand{font-size:16px;max-width:26vw}
  #app .topbar>.brand small{font-size:8px;letter-spacing:.04em}
  #app .mal-live-datetime{display:none}
- #app .topbar #logoutBtn{width:32px;height:32px;min-width:32px}
+ #app .topbar #logoutBtn{min-width:112px;height:38px;padding:0 12px;gap:6px;font-size:13px}\n #app .topbar #logoutBtn .logout-arrow{font-size:18px}
  #app .topbar .whochip{max-width:82px}
  #app .topbar .whochip .role{display:none}
  #app .topbar .myverify-head{max-width:38px;overflow:hidden;white-space:nowrap}
