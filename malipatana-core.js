@@ -2180,7 +2180,7 @@ function buildNav(){
     el.style.setProperty('padding','9px 10px','important');
     el.style.setProperty('border-radius','9px','important');
     el.style.setProperty('border-left','5px solid '+p.edge,'important');
-    el.style.setProperty('background','linear-gradient(100deg,'+p.bg+',#ffffff)!important','important');
+    el.style.setProperty('background','linear-gradient(100deg,'+p.bg+',#ffffff)','important');
     el.style.setProperty('color',p.fg,'important');
     el.style.setProperty('font-size','11.5px','important');
     el.style.setProperty('font-weight','950','important');
