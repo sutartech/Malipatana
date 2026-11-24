@@ -91,6 +91,13 @@ check('Family financial summary enforces existing module permissions',core.inclu
 check('Family financial summary avoids combining potentially overlapping assistance totals',core.includes('They are not added into one grand total')&&core.includes('secondary:familyMedicalRows.reduce'));
 check('Family financial summary has responsive presentation styles',welfare.includes('.mal-financial-grid{display:grid')&&welfare.includes('@media(max-width:700px){.mal-family-financial'));
 
+
+check('Phase 4.0 derives overdue, due-soon and unassigned governance work from existing records',core.includes('const taskOverdue=taskOpen.filter')&&core.includes('const taskDueSoon=taskOpen.filter')&&core.includes('const taskUnassigned=taskOpen.filter'));
+check('Governance action queue reuses existing task and compliance registers',core.includes('const actionQueue=[')&&core.includes("kind:'task'")&&core.includes("kind:'compliance'")&&core.includes('data-gov-edit='));
+check('Governance task search and filters are client-side',core.includes('id="govTaskSearch"')&&core.includes('id="govTaskFilter"')&&core.includes('const filterTasks=')&&core.includes('taskSearch.oninput=filterTasks'));
+check('Phase 4.0 frontend version is cache-busted',core.includes("VERSION: 'FE V3.10.0-GOVERNANCE-CONTROL-CENTRE'")&&index.includes('malipatana-core.js?v=3.10.0-governance-control-centre'));
+check('Governance action centre has responsive layout styles',ops.includes('.mal-gov-queue{display:grid')&&ops.includes('@media(max-width:620px){.mal-gov-kpis'));
+
 const failures=results.filter(r=>!r.pass).length;
 console.log('\n'+(results.length-failures)+'/'+results.length+' static checks passed.');
 if(failures){console.error('Static checks failed. Do not assume this deployment is ready.');process.exitCode=1;}
