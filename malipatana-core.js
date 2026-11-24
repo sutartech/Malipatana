@@ -5628,7 +5628,7 @@ function openProfile(id){
       <div class="sub">${esc(id)} · Malipatana ${f['Mobile'] ? '· ' + esc(f['Mobile']) : ''}</div><div class="mal-sahi-line"><span>📍 Village Locality (Sahi): <b>${esc(f['Village Locality']||'Not entered')}</b></span><span>Surname: <b>${esc(f.Surname||'Not verified')}</b></span>${canEdit()?`<button type="button" class="btn btn-sm" data-editsub="${esc(id)}">Quick edit</button>`:''}</div></div>
       <div class="sp"></div><button class="btn btn-sm" onclick="closeModal()">Close</button>
     </header>
-    <div class="body">
+    <div class="body mal-family-profile-body" tabindex="0" aria-label="Family profile details">
       <div class="strip" style="margin-top:0">
         <div><div class="k">Registered living</div><div class="v tnum">${alive.length}</div></div><div><div class="k">Living in village</div><div class="v tnum">${livingHere}</div></div>
         <div><div class="k">Contributed</div><div class="v tnum" style="font-size:17px">${money(given)}</div></div>
