@@ -106,6 +106,14 @@ check('Financial report avoids double-counting welfare and does not infer bank b
 check('Financial evidence checks reuse existing Bill/Receipt and Approved By fields',core.includes("r['Bill/Receipt']")&&core.includes("r['Approved By']"));
 check('Financial report follows existing per-register visibility permissions',core.includes("const showC=canSee('contributions'), showI=canSee('income'), showE=canSee('expenditure')"));
 
+
+check('Phase 4.2 public financial disclosure is versioned and cache-busted',core.includes("VERSION: 'FE V3.12.0-PUBLIC-FINANCIAL-DISCLOSURE'")&&index.includes('malipatana-core.js?v=3.12.0-public-financial-disclosure'));
+check('Public financial disclosure reuses the totals-only publicSummary endpoint',pub.includes("api('publicSummary')")&&pub.includes("API_URL + '?action=' + encodeURIComponent(action)")&&!pub.includes("api('bootstrap')"));
+check('Public financial disclosure labels balance as not independently bank-confirmed',pub.includes('not independently confirmed against a bank statement or cash count'));
+check('Public disclosure warns against adding potentially overlapping assistance entries',pub.includes('Some support entries may also be reflected in expenditure'));
+check('Public disclosure explicitly excludes personal and household-level finance data',pub.includes('does not display contributor names, household-level payments, recipient names, mobile numbers'));
+check('Admin publication controls explain aggregate-only financial disclosure',core.includes('Aggregate financial register lines')&&core.includes('Contributor names, recipient names, mobile numbers, household-level payments'));
+
 const failures=results.filter(r=>!r.pass).length;
 console.log('\n'+(results.length-failures)+'/'+results.length+' static checks passed.');
 if(failures){console.error('Static checks failed. Do not assume this deployment is ready.');process.exitCode=1;}
