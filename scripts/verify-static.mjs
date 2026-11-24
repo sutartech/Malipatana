@@ -153,10 +153,6 @@ check('No literal escaped newline leaks from the document head',!index.includes(
 check('Post-migration header and notice responsive polish stylesheet is loaded',index.includes('malipatana-post-migration-polish.css?v=1.0.0'));
 check('Post-migration polish contains constrained clock and overflow-safe notice lane',existsSync(resolve(root,'malipatana-post-migration-polish.css'))&&file('malipatana-post-migration-polish.css').includes('.mal-live-datetime')&&file('malipatana-post-migration-polish.css').includes('.mal-notice-lane'));
 
-const failures=results.filter(r=>!r.pass).length;
-console.log('\n'+(results.length-failures)+'/'+results.length+' static checks passed.');
-if(failures){console.error('Static checks failed. Do not assume this deployment is ready.');process.exitCode=1;}
-else console.log('Static checks passed. Live registration, permissions, mobile and backup tests remain required.');
 
 
 check('Monthly financial close review derives month-wise counts and missing references without persisting a close',core.includes('Monthly financial close review')&&core.includes('const closeRows=monthly.map')&&core.includes('no close status is saved')&&core.includes('no approved close register'));
@@ -170,3 +166,8 @@ check('Suggestions page has mobile navigation and reduced-motion rules',file('ma
 check('Keyboard focus and reduced-motion preferences are supported',welfare.includes(':focus-visible{outline:3px')&&welfare.includes('prefers-reduced-motion:reduce'));
 check('Monthly close and accessibility styles are versioned and loaded',index.includes('malipatana-family-welfare.css?v=3.14.0-monthly-close-accessibility')&&welfare.includes('.mal-fin-month-close{'));
 check('Public and suggestions pages retain their existing form and API contracts',pub.includes("api('publicSummary')")&&sugg.includes("action:'publicSuggestion'")&&sugg.includes("api('suggestionStatus'"));
+
+const failures=results.filter(r=>!r.pass).length;
+console.log('\n'+(results.length-failures)+'/'+results.length+' static checks passed.');
+if(failures){console.error('Static checks failed. Do not assume this deployment is ready.');process.exitCode=1;}
+else console.log('Static checks passed. Live registration, permissions, mobile and backup tests remain required.');
