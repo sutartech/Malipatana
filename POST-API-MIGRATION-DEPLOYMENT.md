@@ -39,7 +39,7 @@ Use a test account and non-production test records where possible:
 
 ## Data and compatibility
 
-The migration changes API transport only. It does not add, rename, delete or migrate spreadsheet columns; it does not reset existing records, user accounts, permissions, sessions or shared links. Existing public read-only GET routes and current public form POST routes remain supported.
+The migration changes API transport only. It does not add, rename, delete or migrate spreadsheet columns; it does not reset existing records, user accounts, permissions, sessions or shared links. Existing anonymous read-only public GET routes and current public form POST routes remain supported. Shared-entry lookups, duplicate checks, submissions, corrections and photo-status calls now use POST bodies as well.
 
 The response relay uses a random 256-bit request receipt, split response chunks in Apps Script CacheService, and a five-minute expiry. Credentials and session tokens are carried in the POST body, not in the URL. The request receipt is a short-lived bearer capability for retrieving that specific response and must not be logged or shared.
 
