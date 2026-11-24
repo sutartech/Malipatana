@@ -71,7 +71,7 @@
    ========================================================================= */
 const CONFIG = {
   API_URL: 'https://script.google.com/macros/s/AKfycbwkweVh5BM35fHP86Uxs2bEjODXq0TpcnP3q665nAG2Z0Z8GIKzSa5Oe6l7KqZZCf6oSA/exec',
-  VERSION: 'FE V3.7.2-GOVERNANCE-MASTER-DETAIL',
+  VERSION: 'FE V3.7.3-AUTHORISED-DOCS-REDESIGN',
   EXPECTED_BACKEND: 'BE V1.8.46-GOVERNANCE-READONLY-DOCUMENTS',
   IDLE_MINUTES: 30,
   /* Photo shown when no photo has been set in Settings.
@@ -1569,70 +1569,65 @@ async function renderGovernanceCentre(){
 }
 
 async function renderMyGovernanceDocs(){
- const host=$('#main');host.innerHTML='<section class="panel"><div class="panel-head"><h2>Authorised governance documents</h2></div><div class="panel-body"><div id="myGovDocs" class="empty">Checking your document permissions…</div></div></section>';
+ const host=$('#main');
+ host.innerHTML='<section class="panel mal-authorised-shell"><div class="panel-head"><div><div class="mal-doc-eyebrow">PRIVATE GOVERNANCE LIBRARY</div><h2>Authorised documents</h2><p class="small muted">Official bylaws, policies, minutes and village governance records</p></div><span class="mal-doc-lock">🔒 Restricted access</span></div><div class="panel-body"><div id="myGovDocs" class="empty">Checking your document permissions…</div></div></section>';
  const box=document.getElementById('myGovDocs');
  try{
   const r=await api('governanceDocuments');if(!r||!r.ok)throw Error(r&&r.error||'Could not check document access.');
-  const files=r.files||[],admin=isAdmin();
-  if(!files.length){box.innerHTML='<div class="empty">No governance documents have been assigned to your account. Contact the Malipatana Admin if you require access.</div>';return;}
-  box.innerHTML='<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px"><input id="govDocSearch" class="input" style="flex:1;min-width:190px" placeholder="Search document name…"><select id="govDocStatus" class="input" style="max-width:190px"><option value="">All statuses</option><option>Draft</option><option>Under Review</option><option>Approved</option><option>Registered</option><option>Archived</option></select><span id="govDocCount" class="small muted" style="align-self:center"></span></div><div id="govDocCards">'+files.map(f=>{
-   const canDownload=admin||(f.access&&f.access.canDownload===true);
-   return '<article data-gov-card="1" data-search="'+esc((f.name||'').toLowerCase())+'" data-status="'+esc(f.status||'Draft')+'" style="border:1px solid var(--line);border-radius:12px;padding:14px;margin:10px 0"><b>'+esc(f.name)+'</b><div class="small muted" style="margin:5px 0">Status: '+esc(f.status||'Draft')+' · Version '+esc(f.version||'1.0')+'</div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:9px"><button class="btn btn-sm btn-primary" data-gov-view="'+esc(f.id)+'" data-gov-name="'+esc(f.name)+'">View document</button>'+(canDownload?'<button class="btn btn-sm" data-gov-download="'+esc(f.id)+'" data-gov-name="'+esc(f.name)+'">Download document</button>':'<span class="small muted" style="align-self:center">View only · Download disabled</span>')+'</div></article>';
-  }).join('')+'</div>';
-  const filterDocs=()=>{const q=document.getElementById('govDocSearch').value.toLowerCase(),st=document.getElementById('govDocStatus').value;let n=0;box.querySelectorAll('[data-gov-card]').forEach(card=>{const show=(!q||card.dataset.search.includes(q))&&(!st||card.dataset.status===st);card.hidden=!show;if(show)n++;});document.getElementById('govDocCount').textContent=n+' of '+files.length+' documents';};
-  document.getElementById('govDocSearch').oninput=filterDocs;document.getElementById('govDocStatus').onchange=filterDocs;filterDocs();
-  const retrieve=async(btn,purpose)=>{
+  const files=r.files||[],admin=isAdmin(),statuses=['Draft','Under Review','Approved','Registered','Archived'];
+  if(!files.length){box.innerHTML='<div class="mal-doc-empty"><div>▤</div><h3>No documents assigned</h3><p>No governance documents have been assigned to your account. Contact the Malipatana Admin if you require access.</p></div>';return;}
+  let selected=String(files[0].id);
+  box.innerHTML='<div class="mal-doc-toolbar"><label class="mal-doc-search"><span>⌕</span><input id="govDocSearch" class="input" placeholder="Search document name or keyword…"></label><select id="govDocStatus" class="input"><option value="">All statuses</option>'+statuses.map(v=>'<option>'+v+'</option>').join('')+'</select><select id="govDocAccess" class="input"><option value="">All access types</option><option value="view">View only</option><option value="download">View + Download</option></select><button id="govDocReset" class="btn">↻ Reset</button></div>'+
+  '<div class="mal-doc-summary"><b>Total: '+files.length+' document'+(files.length===1?'':'s')+'</b><span id="govDocShowing"></span></div>'+
+  '<div class="mal-doc-workspace"><section class="mal-doc-register"><div class="mal-doc-register-head"><b>▤ Document register</b><span>SELECT A DOCUMENT</span></div><div class="mal-doc-table-scroll"><table class="mal-doc-table"><thead><tr><th>#</th><th>Document name</th><th>Version</th><th>Status</th><th>Access</th><th>Updated</th><th>Action</th></tr></thead><tbody id="govDocRows"></tbody></table></div><div class="mal-doc-register-foot">Select any row to see document details and available actions.</div></section><aside id="govDocSelected" class="mal-doc-selected" aria-live="polite"></aside></div>'+
+  '<div class="mal-doc-feature-strip"><div><i>☷</i><span><b>Clear document register</b><small>Easy selection and status visibility</small></span></div><div><i>⌕</i><span><b>Search & filter</b><small>Find documents quickly</small></span></div><div><i>♙</i><span><b>Permission-based access</b><small>View and download kept separate</small></span></div><div><i>▱</i><span><b>Version tracking</b><small>Status and update information</small></span></div></div>';
+  const rows=box.querySelector('#govDocRows'),detail=box.querySelector('#govDocSelected');
+  const canDl=f=>admin||(f.access&&f.access.canDownload===true);
+  const canView=f=>admin||!f.access||f.access.canView!==false;
+  const filtered=()=>{const q=box.querySelector('#govDocSearch').value.toLowerCase(),st=box.querySelector('#govDocStatus').value,ac=box.querySelector('#govDocAccess').value;return files.filter(f=>(!q||String(f.name||'').toLowerCase().includes(q))&&(!st||String(f.status||'Draft')===st)&&(!ac||(ac==='download'?canDl(f):!canDl(f))));};
+  const statusClass=v=>v==='Approved'||v==='Registered'?'approved':v==='Archived'?'archived':v==='Under Review'?'review':'draft';
+  function drawList(){
+   const list=filtered();if(!list.some(f=>String(f.id)===selected))selected=list.length?String(list[0].id):'';
+   rows.innerHTML=list.map((f,i)=>'<tr data-gov-row="'+esc(f.id)+'" class="'+(String(f.id)===selected?'selected':'')+'" tabindex="0" aria-selected="'+(String(f.id)===selected?'true':'false')+'"><td>'+(i+1)+'</td><td><b>'+esc(f.name)+'</b><small>'+esc(f.description||'Governance document')+'</small></td><td><span class="mal-doc-version">'+esc(f.version||'1.0')+'</span></td><td><span class="mal-doc-status '+statusClass(f.status||'Draft')+'">'+esc(f.status||'Draft')+'</span></td><td><span class="mal-doc-access '+(canDl(f)?'has-download':'view-only')+'">'+(canDl(f)?'↓ View + Download':'◉ View only')+'</span></td><td>'+esc(f.updated?new Date(f.updated).toLocaleDateString('en-IN'):'—')+'</td><td><button type="button" class="mal-doc-row-view" data-row-view="'+esc(f.id)+'" title="View details" aria-label="View details">◉</button></td></tr>').join('')||'<tr><td colspan="7" class="mal-doc-no-results">No documents match these filters.</td></tr>';
+   box.querySelector('#govDocShowing').textContent='Showing: '+list.length;
+   rows.querySelectorAll('[data-gov-row]').forEach(tr=>{const choose=()=>{selected=tr.dataset.govRow;drawList();drawDetail();};tr.onclick=choose;tr.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();choose();}};});
+   rows.querySelectorAll('[data-row-view]').forEach(btn=>btn.onclick=e=>{e.stopPropagation();selected=btn.dataset.rowView;drawList();drawDetail();});
+   if(!selected)detail.innerHTML='<div class="mal-doc-empty"><div>▤</div><h3>No document selected</h3><p>Change your search or filters to find a document.</p></div>';
+  }
+  const retrieve=async(btn,purpose,id,name)=>{
    const popup=purpose==='view'?window.open('about:blank','_blank'):null;
    if(purpose==='view'&&!popup){toast('Allow pop-ups for this site to view the document.','bad');return;}
-   btn.disabled=true;const old=btn.textContent;btn.textContent=purpose==='view'?'Opening secure viewer…':'Preparing download…';
+   btn.disabled=true;const old=btn.textContent;btn.textContent=purpose==='view'?'Opening…':'Preparing…';
    try{
-    const x=await api('governanceDocContent',{id:btn.dataset.govId||btn.dataset.govView||btn.dataset.govDownload,purpose});
-    if(!x||!x.ok)throw Error(x&&x.error||'Document retrieval failed');
+    const x=await api('governanceDocContent',{id,purpose});if(!x||!x.ok)throw Error(x&&x.error||'Document retrieval failed');
     const raw=atob(x.base64),bytes=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)bytes[i]=raw.charCodeAt(i);
     const blob=new Blob([bytes],{type:x.mimeType||'application/octet-stream'});
-    if(purpose==='download'){
-     const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=x.name||btn.dataset.govName||'governance-document';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);toast('Document downloaded','good');return;
-    }
-    const name=x.name||btn.dataset.govName||'Governance document',lower=name.toLowerCase();
-    popup.document.title=name;
-    popup.document.body.style='margin:0;background:#f3f6f5;font:15px Arial,sans-serif;color:#173b36';
-    if(x.mimeType==='application/pdf'||lower.endsWith('.pdf')){
-     const url=URL.createObjectURL(blob);popup.document.body.innerHTML='<div style="padding:10px 16px;background:#0d514c;color:white;font-weight:600">Viewing: '+esc(name)+'</div><iframe title="Read-only document viewer" style="border:0;width:100%;height:calc(100vh - 44px)" src="'+url+'"></iframe>';popup.addEventListener('beforeunload',()=>URL.revokeObjectURL(url));
-    }else if(lower.endsWith('.docx')||x.mimeType==='application/vnd.openxmlformats-officedocument.wordprocessingml.document'){
-     popup.document.body.innerHTML='<header style="position:sticky;top:0;z-index:10;padding:10px 16px;background:#0d514c;color:white;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap"><strong style="font-size:15px">Read-only view · '+esc(name)+'</strong><div style="display:flex;align-items:center;gap:6px"><button id="docZoomOut" style="padding:7px 11px;border:1px solid #ffffff66;border-radius:7px;background:#ffffff18;color:white;cursor:pointer">−</button><span id="docZoomLabel" style="min-width:44px;text-align:center">100%</span><button id="docZoomIn" style="padding:7px 11px;border:1px solid #ffffff66;border-radius:7px;background:#ffffff18;color:white;cursor:pointer">+</button><button id="docZoomReset" style="padding:7px 11px;border:1px solid #ffffff66;border-radius:7px;background:#ffffff18;color:white;cursor:pointer">Reset</button></div></header><main id="docxViewer" style="max-width:980px;margin:22px auto;padding:24px;background:white;min-height:80vh;box-shadow:0 2px 12px #0002">Loading document preview…</main>';
-     const viewer=popup.document.getElementById('docxViewer');
-     const loadScript=url=>new Promise((resolve,reject)=>{const el=popup.document.createElement('script');el.src=url;el.onload=resolve;el.onerror=()=>reject(new Error('Could not load preview dependency: '+url));popup.document.head.appendChild(el);});
-     (async()=>{try{
-      // docx-preview relies on JSZip. Load the dependency explicitly in the popup first.
-      await loadScript('https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js');
-      await loadScript('https://cdn.jsdelivr.net/npm/docx-preview@0.3.6/dist/docx-preview.min.js');
-      const api=popup.docx||popup.window&&popup.window.docx;
-      if(!api||typeof api.renderAsync!=='function')throw new Error('The DOCX preview library did not initialise correctly.');
-      // Create the ArrayBuffer inside the popup's own JavaScript realm. Passing
-      // the opener's ArrayBuffer can fail JSZip's cross-realm type checks.
-      const previewUrl=URL.createObjectURL(blob);
-      try{
-       const popupResponse=await popup.fetch(previewUrl);
-       if(!popupResponse.ok)throw new Error('Could not prepare document bytes for preview.');
-       const popupBuffer=await popupResponse.arrayBuffer();
-       await api.renderAsync(popupBuffer,viewer,null,{inWrapper:true,ignoreWidth:false,ignoreHeight:false});
-       let zoom=1;const applyZoom=()=>{viewer.style.zoom=String(zoom);popup.document.getElementById('docZoomLabel').textContent=Math.round(zoom*100)+'%';};
-       popup.document.getElementById('docZoomIn').onclick=()=>{zoom=Math.min(1.6,Math.round((zoom+0.1)*10)/10);applyZoom();};
-       popup.document.getElementById('docZoomOut').onclick=()=>{zoom=Math.max(0.6,Math.round((zoom-0.1)*10)/10);applyZoom();};
-       popup.document.getElementById('docZoomReset').onclick=()=>{zoom=1;applyZoom();};
-      }finally{URL.revokeObjectURL(previewUrl);}
-     }catch(e){viewer.textContent='DOCX preview unavailable: '+(e&&e.message||String(e))+' Please ask the administrator for a PDF viewing copy.';}})();
-    }else{
-     const url=URL.createObjectURL(blob);popup.location.href=url;
-    }
+    if(purpose==='download'){const url=URL.createObjectURL(blob),el=document.createElement('a');el.href=url;el.download=x.name||name||'governance-document';document.body.appendChild(el);el.click();el.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);toast('Document downloaded','good');return;}
+    const docName=x.name||name||'Governance document',lower=docName.toLowerCase();popup.document.title=docName;popup.document.body.style='margin:0;background:#f3f6f5;font:15px Arial,sans-serif;color:#173b36';
+    if(x.mimeType==='application/pdf'||lower.endsWith('.pdf')){const url=URL.createObjectURL(blob);popup.document.body.innerHTML='<div style="padding:10px 16px;background:#0d514c;color:white;font-weight:600">Read-only view · '+esc(docName)+'</div><iframe title="Read-only document viewer" style="border:0;width:100%;height:calc(100vh - 44px)" src="'+url+'"></iframe>';popup.addEventListener('beforeunload',()=>URL.revokeObjectURL(url));}
+    else if(lower.endsWith('.docx')||x.mimeType==='application/vnd.openxmlformats-officedocument.wordprocessingml.document'){
+     popup.document.body.innerHTML='<header style="position:sticky;top:0;z-index:10;padding:10px 16px;background:#0d514c;color:white;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap"><strong>Read-only view · '+esc(docName)+'</strong><div><button id="docZoomOut">−</button> <span id="docZoomLabel">100%</span> <button id="docZoomIn">+</button> <button id="docZoomReset">Reset</button></div></header><main id="docxViewer" style="max-width:980px;margin:22px auto;padding:24px;background:white;min-height:80vh">Loading…</main>';
+     const viewer=popup.document.getElementById('docxViewer'),loadScript=url=>new Promise((resolve,reject)=>{const el=popup.document.createElement('script');el.src=url;el.onload=resolve;el.onerror=()=>reject(new Error('Could not load preview dependency'));popup.document.head.appendChild(el);});
+     (async()=>{try{await loadScript('https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js');await loadScript('https://cdn.jsdelivr.net/npm/docx-preview@0.3.6/dist/docx-preview.min.js');const api=popup.docx||popup.window&&popup.window.docx;if(!api||typeof api.renderAsync!=='function')throw Error('DOCX preview library unavailable');const u=URL.createObjectURL(blob);try{const response=await popup.fetch(u),buffer=await response.arrayBuffer();await api.renderAsync(buffer,viewer,null,{inWrapper:true,ignoreWidth:false,ignoreHeight:false});let z=1;const apply=()=>{viewer.style.zoom=String(z);popup.document.getElementById('docZoomLabel').textContent=Math.round(z*100)+'%';};popup.document.getElementById('docZoomIn').onclick=()=>{z=Math.min(1.6,Math.round((z+.1)*10)/10);apply();};popup.document.getElementById('docZoomOut').onclick=()=>{z=Math.max(.6,Math.round((z-.1)*10)/10);apply();};popup.document.getElementById('docZoomReset').onclick=()=>{z=1;apply();};}finally{URL.revokeObjectURL(u);}}catch(e){viewer.textContent='DOCX preview unavailable: '+(e.message||String(e));}})();
+    }else{const url=URL.createObjectURL(blob);popup.location.href=url;}
     toast('Opened read-only document viewer','good');
    }catch(e){if(popup&&!popup.closed)popup.close();toast(e.message||String(e),'bad');}
    finally{btn.disabled=false;btn.textContent=old;}
   };
-  box.querySelectorAll('[data-gov-view]').forEach(b=>b.onclick=()=>retrieve(b,'view'));
-  box.querySelectorAll('[data-gov-download]').forEach(b=>b.onclick=()=>retrieve(b,'download'));
+  function drawDetail(){
+   const f=files.find(x=>String(x.id)===selected);if(!f){detail.innerHTML='';return;}
+   detail.innerHTML='<div class="mal-doc-detail-head"><div class="mal-doc-file-icon">'+(String(f.name||'').toLowerCase().endsWith('.pdf')?'PDF':'W')+'</div><div class="mal-doc-detail-title"><div class="mal-doc-eyebrow">DOCUMENT ACCESS & DETAILS</div><h3>'+esc(f.name)+'</h3><p>Version '+esc(f.version||'1.0')+' · Updated '+esc(f.updated?new Date(f.updated).toLocaleDateString('en-IN'):'—')+'</p></div><span class="mal-doc-status '+statusClass(f.status||'Draft')+'">'+esc(f.status||'Draft')+'</span></div>'+
+   '<div class="mal-doc-detail-body"><div class="mal-doc-info-grid"><div><small>ACCESS LEVEL</small><b>'+(canDl(f)?'View + Download':'View only')+'</b></div><div><small>DOCUMENT STATUS</small><b>'+esc(f.status||'Draft')+'</b></div></div><div class="mal-doc-access-note">'+(admin?'Admin access: View + Download are automatically authorised.':'Your access is controlled by the village administrator. '+(canDl(f)?'Download is permitted for this document.':'This document is available for read-only viewing.'))+'</div><div class="mal-doc-actions">'+(canView(f)?'<button type="button" class="btn btn-primary" id="malDocView">◉ View document</button>':'<span class="small muted">View access is disabled. Contact Admin.</span>')+(canDl(f)?'<button type="button" class="btn" id="malDocDownload">↓ Download</button>':'<span class="mal-doc-viewonly">🔒 Download not permitted</span>')+'</div></div>'+
+   '<div class="mal-doc-detail-foot">Private governance record · Access is checked again by the server when a document is opened or downloaded.</div>';
+   const v=detail.querySelector('#malDocView');if(v)v.onclick=()=>retrieve(v,'view',f.id,f.name);
+   const d=detail.querySelector('#malDocDownload');if(d)d.onclick=()=>retrieve(d,'download',f.id,f.name);
+  }
+  box.querySelector('#govDocSearch').oninput=()=>{drawList();drawDetail();};box.querySelector('#govDocStatus').onchange=()=>{drawList();drawDetail();};box.querySelector('#govDocAccess').onchange=()=>{drawList();drawDetail();};
+  box.querySelector('#govDocReset').onclick=()=>{box.querySelector('#govDocSearch').value='';box.querySelector('#govDocStatus').value='';box.querySelector('#govDocAccess').value='';drawList();drawDetail();};
+  drawList();drawDetail();
  }catch(e){box.textContent=e.message||String(e);}
 }
+
 async function loadGovernanceDocuments_(){
  const host=document.getElementById('govDocuments');if(!host)return;
  try{
