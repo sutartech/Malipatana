@@ -41,6 +41,8 @@ check('Core script cache-bust matches declared FE version',!!declaredFe&&!!coreA
 check('Sidebar collapse preference persistence is present',core.includes('mal_nav_collapsed_v1')&&core.includes('navSaveCollapsePrefs'));
 check('Sidebar category controls expose accessible state',core.includes('aria-controls="mal-nav-items-')&&core.includes('aria-expanded='));
 
+check('Shared design-system stylesheet is loaded',index.includes('malipatana-design-system.css'));
+check('Sidebar category headings use stylesheet classes, not inline presentation',core.includes('class="nav-category-bar nav-category-bar-')&&!/nav-category-bar-[^"]+"[^>]*style="display:flex!important/.test(core));
 check('Accessibility styling enabled',index.includes('malipatana-phase-design.css'));
 check('Privacy: no plaintext secrets in test file',true);
 const failures=results.filter(r=>!r.pass).length;
