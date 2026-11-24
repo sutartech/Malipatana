@@ -31,6 +31,7 @@ Interpretation:
 - Backend version shown in screenshot matches the expected backend declared in current source.
 - GitHub Pages build/deployment workflow succeeded for the V3.8.3 main commit.
 - The live page response and browser cache could not be independently fetched in this inspection environment. Therefore the successful workflow is evidence of deployment completion, not proof that every browser has loaded V3.8.3. Verify the visible FE/BE chips in a fresh normal browser session and compare with the source before diagnosing further.
+- The main dashboard and public/shared-entry pages currently use two distinct Apps Script deployment URLs: the public registration, shared entry and Quick Add pages share their own URL. This existing split is preserved; the original static checker incorrectly assumed all four pages used one URL.
 - The V3.8.3 sidebar implementation currently stores collapse state only in an in-memory object and forcibly expands the active page's category whenever buildNav() runs. State is therefore not persistent and can be reset by navigation/rendering. Correct this in Phase 1.
 - The sidebar contrast stylesheet targets legacy .navgroup classes, while current generated category headings use .nav-category-bar. Current category inline styles supply much of the visual treatment, but stylesheet targeting must be unified; do not rely on fragile nth-child selectors.
 - scripts/verify-static.mjs still expects BE V1.8.30, while current core CONFIG expects BE V1.8.46-GOVERNANCE-READONLY-DOCUMENTS. This is a stale regression assertion and must be corrected to validate a declared backend version without pretending to verify the deployed Apps Script version.
@@ -38,7 +39,7 @@ Interpretation:
 
 ## 3. Non-negotiable preservation controls
 
-1. Keep the current Apps Script endpoint unchanged.
+1. Keep every existing Apps Script endpoint unchanged, including the separate main-dashboard and public/shared-entry deployments.
 2. Do not edit or deploy Apps Script during frontend-only phases.
 3. Keep current Google Sheets tab names, column order, IDs and row semantics unchanged.
 4. Keep current Google Drive document storage and file permissions.
