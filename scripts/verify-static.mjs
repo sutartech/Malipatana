@@ -47,7 +47,7 @@ check('Dashboard quick actions are role and page filtered',core.includes('const 
 check('Dashboard quick actions use existing form workflow',core.includes("onclick=\"openForm('${key}')\""));
 check('Dashboard heading reflects village operations',core.includes('village operations</h2>')&&core.includes('ux-home-live-label'));
 check('Frontend version matches Phase 3.1 cache-busted core',core.includes("VERSION: 'FE V3.9.1-PEOPLE-FAMILY-CONTEXT'")&&index.includes('malipatana-core.js?v=3.9.1-people-family-context'));
-check('Family filter identifies each family by head and ID',core.includes("head=String(f['Family Head']||'Family').trim()")&&core.includes("filter(Boolean).join(' · '))} (${esc(fid})"));
+check('Family filter identifies each family by head and ID',core.includes("head=String(f['Family Head']||'Family').trim()")&&core.includes("filter(Boolean).join(' · '))} (${esc(fid)})"));
 check('Member register shows family head alongside stored Family ID',core.includes("key==='members'&&id")&&core.includes("'<strong>'+esc(head)+'</strong> '"));
 check('Shared design-system stylesheet exists',existsSync(resolve(root,'malipatana-design-system.css')));
 check('Shared design-system stylesheet is loaded',index.includes('malipatana-design-system.css'));
