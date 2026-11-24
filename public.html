@@ -443,7 +443,7 @@ header.top .veil{background:linear-gradient(176deg,#0B2635B8 0%,#123A41A3 45%,#0
     <img class="crest" src="icon-180.png" alt="" aria-hidden="true">
     <div class="who">
       <div class="eyebrow" id="place">JAGATSINGHPUR · ODISHA</div>
-      <h1 id="title">ଆମ ଗାଁ ମାଳିପାଟଣା</h1>
+      <h1 id="title" lang="or">ଆମ ଗାଁ ମାଳିପାଟଣା</h1>
       <div class="rule"></div>
       <div class="sub"><span data-t="Village fund · public account">Village fund &middot; public account</span> &middot; <span id="asof">loading&hellip;</span></div>
     </div>
@@ -451,7 +451,7 @@ header.top .veil{background:linear-gradient(176deg,#0B2635B8 0%,#123A41A3 45%,#0
 </header>
 
 <div class="topright">
-  <select class="langbtn mal-public-language" id="langSelect" aria-label="Public page language"><option value="en">English</option><option value="or">ଓଡ଼ିଆ</option><option value="both">Both / ଉଭୟ</option></select>
+  <select class="langbtn mal-public-language" id="langSelect" aria-label="Public page language"><option value="en">English</option><option value="or" lang="or">ଓଡ଼ିଆ</option><option value="both">Both / ଉଭୟ</option></select>
   <a class="signin" href="index.html"><span data-t="Committee sign-in">Committee sign-in</span> &rarr;</a>
 </div>
 
@@ -465,7 +465,7 @@ header.top .veil{background:linear-gradient(176deg,#0B2635B8 0%,#123A41A3 45%,#0
 
   <div class="goverlay sugoverlay noprint" id="malSuggestionOverlay" role="presentation">
   <div class="gmodal smodal" role="dialog" aria-modal="true" aria-labelledby="malSuggestionHeading">
-    <div class="gmhead"><h3 id="malSuggestionHeading">💡 Village Suggestions · ଗ୍ରାମ ପରାମର୍ଶ</h3><button type="button" class="gmclose" id="malSuggestionClose" aria-label="Close suggestions">×</button></div>
+    <div class="gmhead"><h3 id="malSuggestionHeading">💡 Village Suggestions · <span lang="or">ଗ୍ରାମ ପରାମର୍ଶ</span></h3><button type="button" class="gmclose" id="malSuggestionClose" aria-label="Close suggestions">×</button></div>
     <div class="gtabs" role="tablist" aria-label="Village suggestion options">
       <button type="button" class="on" id="sTabNew" data-mal-en="Give suggestion">Give suggestion</button>
       <button type="button" id="sTabTrack" data-mal-en="Track suggestion">Track suggestion</button>
@@ -990,7 +990,7 @@ function renderDays(d){
   var box = document.createElement('div');
   box.className = 'daysband';
   box.id = 'pubDays';
-  box.innerHTML = '<div class="dhead"><b>ଆସୁଥିବା ଦିନ · Coming up</b><span>' + d.days.length +
+  box.innerHTML = '<div class="dhead"><b><span lang="or">ଆସୁଥିବା ଦିନ</span> · Coming up</b><span>' + d.days.length +
     '</span><i class="drule"></i></div><div class="dlist">' + cards + '</div>';
   var wrap = document.querySelector('.wrap') || document.body;
   var head = wrap.querySelector('.head');
@@ -1025,7 +1025,7 @@ function renderRemembrance(r){
   var box = document.createElement('div');
   box.className = 'remem';
   box.id = 'pubRemem';
-  box.innerHTML = '<div class="rhead"><b>ସ୍ମୃତି · In remembrance</b><span>' + people.length +
+  box.innerHTML = '<div class="rhead"><b><span lang="or">ସ୍ମୃତି</span> · In remembrance</b><span>' + people.length +
     '</span><i class="rrule"></i></div><div class="rlist">' + cards + '</div>';
   var foot = document.querySelector('.foot');
   if(foot && foot.parentNode) foot.parentNode.insertBefore(box, foot);
@@ -1098,7 +1098,7 @@ function renderNotices(n){
   box.id='pubNotices';
   box.setAttribute('aria-label','Village Notice Board');
   box.innerHTML='<div class="mal-notice-ticker" role="group" aria-label="Village announcements">'+
-    '<span class="mal-notice-label">ସୂଚନା · NOTICE</span>'+
+    '<span class="mal-notice-label"><span lang="or">ସୂଚନା</span> · NOTICE</span>'+
     '<div class="mal-notice-lane" aria-hidden="true"><div class="mal-notice-track" style="--mal-notice-duration:'+duration+'s"><span class="mal-notice-set">'+clips+'</span><span class="mal-notice-set">'+clips+'</span></div></div>'+
     '<span class="mal-notice-screen-reader">'+esc(announcement)+'</span>'+
     '<button type="button" class="mal-notice-pause" onclick="malToggleTicker(this)" aria-label="Pause scrolling notices" aria-pressed="false" title="Pause notices">Ⅱ</button></div>'+
