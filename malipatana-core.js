@@ -71,7 +71,7 @@
    ========================================================================= */
 const CONFIG = {
   API_URL: 'https://script.google.com/macros/s/AKfycbwkweVh5BM35fHP86Uxs2bEjODXq0TpcnP3q665nAG2Z0Z8GIKzSa5Oe6l7KqZZCf6oSA/exec',
-  VERSION: 'FE V3.6.7-GOVERNANCE-DOC-FILTERS',
+  VERSION: 'FE V3.6.8-DOCX-PREVIEW-FIX',
   EXPECTED_BACKEND: 'BE V1.8.46-GOVERNANCE-READONLY-DOCUMENTS',
   IDLE_MINUTES: 30,
   /* Photo shown when no photo has been set in Settings.
@@ -1600,7 +1600,16 @@ async function renderMyGovernanceDocs(){
      const url=URL.createObjectURL(blob);popup.document.body.innerHTML='<div style="padding:10px 16px;background:#0d514c;color:white;font-weight:600">Viewing: '+esc(name)+'</div><iframe title="Read-only document viewer" style="border:0;width:100%;height:calc(100vh - 44px)" src="'+url+'"></iframe>';popup.addEventListener('beforeunload',()=>URL.revokeObjectURL(url));
     }else if(lower.endsWith('.docx')||x.mimeType==='application/vnd.openxmlformats-officedocument.wordprocessingml.document'){
      popup.document.body.innerHTML='<div style="padding:10px 16px;background:#0d514c;color:white;font-weight:600">Read-only view · '+esc(name)+'</div><div id="docxViewer" style="max-width:980px;margin:22px auto;padding:24px;background:white;min-height:80vh;box-shadow:0 2px 12px #0002">Loading document preview…</div>';
-     const script=popup.document.createElement('script');script.src='https://cdn.jsdelivr.net/npm/docx-preview@0.3.6/dist/docx-preview.min.js';script.onload=()=>popup.docx.renderAsync(bytes.buffer,popup.document.getElementById('docxViewer'),null,{inWrapper:true,ignoreWidth:false,ignoreHeight:false}).catch(e=>{popup.document.getElementById('docxViewer').textContent='Preview could not be rendered: '+e.message;});script.onerror=()=>{popup.document.getElementById('docxViewer').textContent='The document preview library could not be loaded. Ask the administrator to provide a PDF copy.';};popup.document.head.appendChild(script);
+     const viewer=popup.document.getElementById('docxViewer');
+     const loadScript=url=>new Promise((resolve,reject)=>{const el=popup.document.createElement('script');el.src=url;el.onload=resolve;el.onerror=()=>reject(new Error('Could not load preview dependency: '+url));popup.document.head.appendChild(el);});
+     (async()=>{try{
+      // docx-preview relies on JSZip. Load the dependency explicitly in the popup first.
+      await loadScript('https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js');
+      await loadScript('https://cdn.jsdelivr.net/npm/docx-preview@0.3.6/dist/docx-preview.min.js');
+      const api=popup.docx||popup.window&&popup.window.docx;
+      if(!api||typeof api.renderAsync!=='function')throw new Error('The DOCX preview library did not initialise correctly.');
+      await api.renderAsync(bytes.buffer,viewer,null,{inWrapper:true,ignoreWidth:false,ignoreHeight:false});
+     }catch(e){viewer.textContent='DOCX preview unavailable: '+(e&&e.message||String(e))+' Please ask the administrator for a PDF viewing copy.';}})();
     }else{
      const url=URL.createObjectURL(blob);popup.location.href=url;
     }
