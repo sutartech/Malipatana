@@ -173,6 +173,10 @@ check('Public page Odia headings and generated notices carry Odia language metad
 check('Registration form Odia labels are individually language-tagged',register.includes('<span lang="or">ପୂରା ନାମ</span>')&&register.includes('<span lang="or">ପିତାଙ୍କ ନାମ</span>')&&register.includes('<span lang="or">ମାତାଙ୍କ ନାମ</span>'));
 check('Suggestions page Odia heading is language-tagged',sugg.includes('<span lang="or">ଗ୍ରାମ ଉନ୍ନତି ପରାମର୍ଶ</span>'));
 
+check('Registration wizard exposes its current step as a labelled progress indicator',register.includes('role="progressbar" aria-label="Registration progress"')&&register.includes("progress.setAttribute('aria-valuenow',String(wizardStep+1))")&&register.includes("progress.setAttribute('aria-valuetext',stepText)"));
+check('Registration wizard step links identify their controlled panels',register.includes('aria-controls="malRegBasic"')&&register.includes('aria-controls="malRegHome"')&&register.includes('aria-controls="malRegOther"')&&register.includes('aria-controls="malRegSubmit"'));
+check('Registration wizard moves focus to the active step heading on navigation and validation',register.includes('function wizardFocusCurrentPanel()')&&register.includes('wizardPaint();wizardFocusCurrentPanel();')&&register.includes('wizardFocusCurrentPanel();\n         field.focus'));
+
 const failures=results.filter(r=>!r.pass).length;
 console.log('\n'+(results.length-failures)+'/'+results.length+' static checks passed.');
 if(failures){console.error('Static checks failed. Do not assume this deployment is ready.');process.exitCode=1;}
