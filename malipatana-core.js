@@ -71,7 +71,7 @@
    ========================================================================= */
 const CONFIG = {
   API_URL: 'https://script.google.com/macros/s/AKfycbwkweVh5BM35fHP86Uxs2bEjODXq0TpcnP3q665nAG2Z0Z8GIKzSa5Oe6l7KqZZCf6oSA/exec',
-  VERSION: 'FE V3.10.0-GOVERNANCE-CONTROL-CENTRE',
+  VERSION: 'FE V3.11.0-FINANCIAL-TRANSPARENCY',
   EXPECTED_BACKEND: 'BE V1.8.46-GOVERNANCE-READONLY-DOCUMENTS',
   IDLE_MINUTES: 30,
   /* Photo shown when no photo has been set in Settings.
@@ -3251,7 +3251,7 @@ function renderDashboard(){
 
       <p class="small muted">Resident figures include only living persons marked “Living in Malipatana”. Marriage does not remove anyone from the ancestral family register. Blank residence needs verification. These are village-register figures, not certified Census counts.</p></div></details>
       <details class="ux-home-section ux-insights"><summary><span class="ux-section-badge">₹</span><span class="ux-section-title">Financial trends & insights<small>12-month chart, recurring bills and recent records</small></span><span class="ux-expand-label">Reports</span></summary>
-        <div class="ux-home-expanded"><div class="cols"><div class="panel"><div class="panel-head"><h3>Money in and out, last 12 months</h3></div><div class="panel-body" style="padding-bottom:6px">${barChart()}</div><div class="legend"><span><i style="background:var(--green)"></i>In</span><span><i style="background:var(--brick)"></i>Out</span></div></div><div class="panel"><div class="panel-head"><h3>Latest entries</h3></div>${recentList()}</div></div><div class="ux-recurring-wrap">${recurringPanel()}</div></div>
+        <div class="ux-home-expanded">${financialTransparencyHtml()}<div class="cols"><div class="panel"><div class="panel-head"><h3>Money in and out, last 12 months</h3></div><div class="panel-body" style="padding-bottom:6px">${barChart()}</div><div class="legend"><span><i style="background:var(--green)"></i>In</span><span><i style="background:var(--brick)"></i>Out</span></div></div><div class="panel"><div class="panel-head"><h3>Latest entries</h3></div>${recentList()}</div></div><div class="ux-recurring-wrap">${recurringPanel()}</div></div>
       </details>
       <details class="ux-home-section ux-attention"><summary><span class="ux-section-badge">!</span><span class="ux-section-title">Data checks & needs attention<small>Missing entries and register checks</small></span><span class="ux-expand-label">View</span></summary><div class="ux-home-expanded"><div class="panel"><div class="panel-head"><h3>Needs attention</h3></div>${attentionList()}</div></div></details>
     </div>`;
@@ -3418,6 +3418,35 @@ function barChart(){
     <line x1="${pad}" y1="${H-28}" x2="${W-pad}" y2="${H-28}" stroke="#dbe2db"/>
     <text x="${pad}" y="16" font-size="11" fill="#5c6b62">peak ${money(max)}</text>
     ${bars}${labels}</svg>`;
+}
+
+
+/* PHASE 4.1 — read-only financial-year transparency report.
+   Contributions remain separate from Other Income; welfare registers are
+   excluded to avoid adding linked assistance a second time. */
+function financialTransparencyHtml(){
+  const showC=canSee('contributions'), showI=canSee('income'), showE=canSee('expenditure');
+  if(!showC&&!showI&&!showE)return '';
+  const now=new Date(), y=now.getFullYear(), fyStart=now.getMonth()>=3?y:y-1, fyEnd=fyStart+1;
+  const fyLabel='FY '+fyStart+'–'+String(fyEnd).slice(-2);
+  const monthly=Array.from({length:12},(_,i)=>{const d=new Date(fyStart,3+i,1);return {key:localISO(d).slice(0,7),c:0,i:0,e:0};});
+  const findMonth=k=>monthly.find(m=>m.key===k), totals={c:0,i:0,e:0};
+  const sourceTotals=Object.create(null), categoryTotals=Object.create(null);
+  let expenseEvidence=0,expenseApproved=0,expenseRows=0;
+  if(showC)(DB.contributions||[]).forEach(r=>{const m=findMonth(monthKey(r['Month']||r['Date']));if(!m)return;const a=num(r['Amount']);m.c+=a;totals.c+=a;});
+  if(showI)(DB.income||[]).forEach(r=>{const m=findMonth(monthKey(r['Date']));if(!m)return;const a=num(r['Amount']);m.i+=a;totals.i+=a;const k=String(r['Income Type']||r['Source']||'Unclassified').trim()||'Unclassified';sourceTotals[k]=(sourceTotals[k]||0)+a;});
+  if(showE)(DB.expenditure||[]).forEach(r=>{const m=findMonth(monthKey(r['Date']));if(!m)return;const a=num(r['Amount']);m.e+=a;totals.e+=a;const k=String(r['Category']||'Uncategorised').trim()||'Uncategorised';categoryTotals[k]=(categoryTotals[k]||0)+a;expenseRows++;if(String(r['Bill/Receipt']||'').trim())expenseEvidence++;if(String(r['Approved By']||'').trim())expenseApproved++;});
+  const tableRows=o=>Object.entries(o).sort((a,b)=>b[1]-a[1]).map(([k,v])=>'<tr><td>'+esc(k)+'</td><td class="num tnum">'+money(v)+'</td></tr>').join('');
+  const cards=[];if(showC)cards.push(['Contributions',totals.c]);if(showI)cards.push(['Other income',totals.i]);if(showE)cards.push(['Expenditure',totals.e]);
+  if(showC&&showI&&showE)cards.push(['Net recorded movement',totals.c+totals.i-totals.e]);
+  const monthRows=monthly.map(m=>'<tr><td>'+new Date(Number(m.key.slice(0,4)),Number(m.key.slice(5,7))-1,1).toLocaleDateString('en-IN',{month:'short',year:'2-digit'})+'</td>'+
+    (showC?'<td class="num tnum">'+money(m.c)+'</td>':'')+(showI?'<td class="num tnum">'+money(m.i)+'</td>':'')+(showE?'<td class="num tnum">'+money(m.e)+'</td>':'')+'</tr>').join('');
+  return '<section class="mal-fin-transparency" aria-label="Financial transparency report"><div class="mal-fin-transparency-head"><div><span class="mal-fin-eyebrow">FINANCIAL YEAR REPORT</span><h3>'+fyLabel+'</h3><p>Read-only summary from existing registers · not bank-reconciled</p></div><button type="button" class="btn btn-sm" onclick="window.print()">Print report</button></div>'+
+    '<div class="mal-fin-transparency-kpis">'+cards.map(([k,v])=>'<article><span>'+esc(k)+'</span><b class="tnum">'+money(v)+'</b></article>').join('')+'</div>'+
+    '<div class="mal-fin-transparency-grid"><div class="mal-fin-transparency-panel"><h4>Month-wise record</h4><div class="tablewrap"><table class="grid"><thead><tr><th>Month</th>'+(showC?'<th class="num">Contributions</th>':'')+(showI?'<th class="num">Other income</th>':'')+(showE?'<th class="num">Expenditure</th>':'')+'</tr></thead><tbody>'+monthRows+'<tr><th>Total</th>'+(showC?'<th class="num">'+money(totals.c)+'</th>':'')+(showI?'<th class="num">'+money(totals.i)+'</th>':'')+(showE?'<th class="num">'+money(totals.e)+'</th>':'')+'</tr></tbody></table></div></div>'+
+    (showI?'<div class="mal-fin-transparency-panel"><h4>Other income by type</h4><div class="tablewrap"><table class="grid"><thead><tr><th>Income type / source</th><th class="num">Amount</th></tr></thead><tbody>'+(Object.keys(sourceTotals).length?tableRows(sourceTotals):'<tr><td colspan="2">No other income recorded in this financial year.</td></tr>')+'</tbody></table></div></div>':'')+
+    (showE?'<div class="mal-fin-transparency-panel"><h4>Expenditure by category</h4><div class="tablewrap"><table class="grid"><thead><tr><th>Category</th><th class="num">Amount</th></tr></thead><tbody>'+(Object.keys(categoryTotals).length?tableRows(categoryTotals):'<tr><td colspan="2">No expenditure recorded in this financial year.</td></tr>')+'</tbody></table></div><div class="mal-fin-evidence"><span><b>'+expenseEvidence+'</b> of '+expenseRows+' expense rows have a Bill/Receipt reference</span><span><b>'+expenseApproved+'</b> of '+expenseRows+' have an Approved By entry</span></div></div>':'')+
+    '</div><p class="mal-fin-transparency-note">Contributions and Other Income remain separate. Welfare assistance is not added again because linked support may already be recorded as expenditure. Receipt references and approval entries indicate register completeness only; they do not verify the underlying document or approval. This report does not establish cash or bank balances.</p></section>';
 }
 
 function attentionList(){
