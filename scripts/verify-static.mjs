@@ -8,7 +8,7 @@ const results=[];
 function check(label,pass){results.push({label,pass:!!pass});console.log((pass?'PASS ':'FAIL ')+label)}
 const files=['index.html','malipatana-core.js','malipatana-ui.css','malipatana-layout-fit.css','malipatana-phase-design.css','malipatana-ops.css','register.html','entry.html','quick-add.html','manifest.webmanifest','quick-add.webmanifest','quick-add-sw.js'];
 for(const f of files)check('File exists: '+f,existsSync(resolve(root,f)));
-const index=file('index.html'),core=file('malipatana-core.js'),pub=file('public.html'),css=file('malipatana-ui.css'),ops=file('malipatana-ops.css'),welfare=file('malipatana-family-welfare.css'),register=file('register.html'),entry=file('entry.html'),quick=file('quick-add.html');
+const index=file('index.html'),core=file('malipatana-core.js'),pub=file('public.html'),sugg=file('suggestions.html'),css=file('malipatana-ui.css'),ops=file('malipatana-ops.css'),welfare=file('malipatana-family-welfare.css'),register=file('register.html'),entry=file('entry.html'),quick=file('quick-add.html');
 const url=s=>s.match(/https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec/)?.[0];
 const dashboardApiUrl=url(core), publicEntryApiUrl=url(register);
 check('Main dashboard backend URL is present',!!dashboardApiUrl);
@@ -51,7 +51,7 @@ check('Contribution register exposes linked member identity',core.includes("list
 check('Receipt falls back to linked member name before family name',core.includes("rec['Contributor'] || memberName(rec['Member ID']) || familyName(rec['Family ID'])"));
 check('Family profile includes permission-gated recent contribution history',core.includes("const contributionHistoryHtml = canSee('contributions')")&&core.includes('data-family-receipt='));
 check('Family contribution history opens the existing receipt and filtered register',core.includes("offerReceipt(rec)")&&core.includes("VIEW.contributions = Object.assign"));
-check('Phase 3.4 family contribution history remains in the current FE build',core.includes('const contributionHistoryHtml = canSee(\'contributions\')')&&core.includes('data-family-receipt=')&&core.includes("VERSION: 'FE V3.13.0-AUDIT-READINESS'"));
+check('Phase 3.4 family contribution history remains in the current FE build',core.includes('const contributionHistoryHtml = canSee(\'contributions\')')&&core.includes('data-family-receipt=')&&core.includes("VERSION: 'FE V3.14.0-COMPLETION-BUNDLE'"));
 
 check('Family filter identifies each family by head and ID',core.includes("head=String(f['Family Head']||'Family').trim()")&&core.includes("filter(Boolean).join(' · '))} (${esc(fid)})"));
 check('Member register shows family head alongside stored Family ID',core.includes("if(f.t === 'family')")&&core.includes("const family=(DB.families||[]).find(x=>String(x['Family ID']||'').trim()===id)"));
@@ -63,7 +63,7 @@ check('Sidebar category headings use stylesheet classes, not inline presentation
 check('Accessibility styling enabled',index.includes('malipatana-phase-design.css'));
 check('Privacy: no plaintext secrets in test file',true);
 
-check('Phase 3.5 family welfare history is present and versioned',core.includes("VERSION: 'FE V3.13.0-AUDIT-READINESS'")&&index.includes('malipatana-core.js?v=3.13.0-audit-readiness'));
+check('Phase 3.5 family welfare history is present and versioned',core.includes("VERSION: 'FE V3.14.0-COMPLETION-BUNDLE'")&&index.includes('malipatana-core.js?v=3.14.0-completion-bundle'));
 check('Family welfare history reuses existing emergency, medical, education and support records',core.includes("familyRows('emergency')")&&core.includes("familyRows('medical')")&&core.includes("familyRows('education')")&&core.includes("familyRows('regularSupport')"));
 check('Family welfare history independently enforces each module permission',core.includes("welfareTable('Emergency assistance','emergency'")&&core.includes("welfareTable('Medical assistance','medical'")&&core.includes("welfareTable('Education assistance','education'")&&core.includes("welfareTable('Regular support','regularSupport'"));
 check('Family welfare history adds no backend or sheet contract',!core.includes("api('save',{sheet:'Emergency Cases'")&&!core.includes("api('save',{sheet:'Medical'")&&index.includes('malipatana-family-welfare.css'));
@@ -85,7 +85,7 @@ check('Family profile dialog has a definite height and independently scrollable 
 check('Family profile scroll fix is cache-busted in the page shell',index.includes('malipatana-ui.css?v=3.5.63-family-profile-scroll')&&index.includes('malipatana-layout-fit.css?v=1.0.0'));
 
 
-check('Phase 3.6 family financial summary is versioned and cache-busted',core.includes("VERSION: 'FE V3.13.0-AUDIT-READINESS'")&&index.includes('malipatana-core.js?v=3.13.0-audit-readiness')&&index.includes('malipatana-family-welfare.css?v=3.6.0-family-financial-summary'));
+check('Phase 3.6 family financial summary is versioned and cache-busted',core.includes("VERSION: 'FE V3.14.0-COMPLETION-BUNDLE'")&&index.includes('malipatana-core.js?v=3.14.0-completion-bundle')&&index.includes('malipatana-family-welfare.css?v=3.14.0-monthly-close-accessibility'));
 check('Family financial summary shows contribution, emergency, medical, education and regular support categories',core.includes("label:'Contributions made'")&&core.includes("label:'Emergency assistance paid'")&&core.includes("label:'Medical assistance'")&&core.includes("label:'Education assistance'")&&core.includes("label:'Regular support'"));
 check('Family financial summary enforces existing module permissions',core.includes("if(canSee('contributions')) financialItems.push")&&core.includes("if(canSee('emergency')) financialItems.push")&&core.includes("if(canSee('medical')) financialItems.push")&&core.includes("if(canSee('education')) financialItems.push")&&core.includes("if(canSee('regularSupport')) financialItems.push"));
 check('Family financial summary avoids combining potentially overlapping assistance totals',core.includes('They are not added into one grand total')&&core.includes('secondary:familyMedicalRows.reduce'));
@@ -95,11 +95,11 @@ check('Family financial summary has responsive presentation styles',welfare.incl
 check('Phase 4.0 derives overdue, due-soon and unassigned governance work from existing records',core.includes('const taskOverdue=taskOpen.filter')&&core.includes('const taskDueSoon=taskOpen.filter')&&core.includes('const taskUnassigned=taskOpen.filter'));
 check('Governance action queue reuses existing task and compliance registers',core.includes('const actionQueue=[')&&core.includes("kind:'task'")&&core.includes("kind:'compliance'")&&core.includes('data-gov-edit='));
 check('Governance task search and filters are client-side',core.includes('id="govTaskSearch"')&&core.includes('id="govTaskFilter"')&&core.includes('const filterTasks=')&&core.includes('taskSearch.oninput=filterTasks'));
-check('Phase 4.0 frontend version is cache-busted',core.includes("VERSION: 'FE V3.13.0-AUDIT-READINESS'")&&index.includes('malipatana-core.js?v=3.13.0-audit-readiness'));
+check('Phase 4.0 frontend version is cache-busted',core.includes("VERSION: 'FE V3.14.0-COMPLETION-BUNDLE'")&&index.includes('malipatana-core.js?v=3.14.0-completion-bundle'));
 check('Governance action centre has responsive layout styles',ops.includes('.mal-gov-queue{display:grid')&&ops.includes('@media(max-width:620px){.mal-gov-kpis'));
 
 
-check('Phase 4.1 financial transparency is versioned and cache-busted',core.includes("VERSION: 'FE V3.13.0-AUDIT-READINESS'")&&index.includes('malipatana-core.js?v=3.13.0-audit-readiness'));
+check('Phase 4.1 financial transparency is versioned and cache-busted',core.includes("VERSION: 'FE V3.14.0-COMPLETION-BUNDLE'")&&index.includes('malipatana-core.js?v=3.14.0-completion-bundle'));
 check('Financial-year report derives from existing contribution, income and expenditure registers',core.includes('function financialTransparencyHtml()')&&core.includes('DB.contributions||[]')&&core.includes('DB.income||[]')&&core.includes('DB.expenditure||[]'));
 check('Financial report keeps contributions and other income separate',core.includes('Contributions and Other Income remain separate')&&core.includes('Net recorded movement'));
 check('Financial report avoids double-counting welfare and does not infer bank balance',core.includes('Welfare assistance is not added again')&&core.includes('does not establish cash or bank balances'));
@@ -107,7 +107,7 @@ check('Financial evidence checks reuse existing Bill/Receipt and Approved By fie
 check('Financial report follows existing per-register visibility permissions',core.includes("const showC=canSee('contributions'), showI=canSee('income'), showE=canSee('expenditure')"));
 
 
-check('Phase 4.2 public financial disclosure is versioned and cache-busted',core.includes("VERSION: 'FE V3.13.0-AUDIT-READINESS'")&&index.includes('malipatana-core.js?v=3.13.0-audit-readiness'));
+check('Phase 4.2 public financial disclosure is versioned and cache-busted',core.includes("VERSION: 'FE V3.14.0-COMPLETION-BUNDLE'")&&index.includes('malipatana-core.js?v=3.14.0-completion-bundle'));
 check('Public financial disclosure reuses the totals-only publicSummary endpoint',pub.includes("api('publicSummary')")&&pub.includes("API_URL + '?action=' + encodeURIComponent(action)")&&!pub.includes("api('bootstrap')"));
 check('Public financial disclosure labels balance as not independently bank-confirmed',pub.includes('not independently confirmed against a bank statement or cash count'));
 check('Public disclosure warns against adding potentially overlapping assistance entries',pub.includes('Some support entries may also be reflected in expenditure'));
@@ -115,14 +115,22 @@ check('Public disclosure explicitly excludes personal and household-level financ
 check('Admin publication controls explain aggregate-only financial disclosure',core.includes('Aggregate financial register lines')&&core.includes('Contributor names, recipient names, mobile numbers, household-level payments'));
 
 
-check('Phase 4.3 audit-readiness panel is versioned and cache-busted',core.includes("VERSION: 'FE V3.13.0-AUDIT-READINESS'")&&index.includes('malipatana-core.js?v=3.13.0-audit-readiness'));
+check('Phase 4.3 audit-readiness panel is versioned and cache-busted',core.includes("VERSION: 'FE V3.14.0-COMPLETION-BUNDLE'")&&index.includes('malipatana-core.js?v=3.14.0-completion-bundle'));
 check('Audit-readiness checks derive only from existing FY financial register rows',core.includes('const auditChecks=[]')&&core.includes("missing(contributionRows,'Receipt No')")&&core.includes("missing(incomeRows,'Received By')")&&core.includes("missing(expenseFYRows,'Bill/Receipt')"));
 check('Audit-readiness report does not expose personal transaction names or amounts',core.includes('Audit-readiness checks')&&core.includes('Record completeness only')&&core.includes('auditRowsHtml'));
 check('Audit-readiness distinguishes field completeness from genuine evidence and approval',core.includes('not proof that a receipt is genuine')&&core.includes('Verify original documents and approvals separately'));
 check('No automated bank matching is claimed without statement data',core.includes('do not provide bank-statement lines, statement closing balances or transaction references'));
-check('Audit-readiness styling is responsive and loaded through existing stylesheet',index.includes('malipatana-family-welfare.css?v=3.6.0-family-financial-summary')&&welfare.includes('.mal-fin-audit-readiness{'));
+check('Audit-readiness styling is responsive and loaded through existing stylesheet',index.includes('malipatana-family-welfare.css?v=3.14.0-monthly-close-accessibility')&&welfare.includes('.mal-fin-audit-readiness{'));
 
 const failures=results.filter(r=>!r.pass).length;
 console.log('\n'+(results.length-failures)+'/'+results.length+' static checks passed.');
 if(failures){console.error('Static checks failed. Do not assume this deployment is ready.');process.exitCode=1;}
 else console.log('Static checks passed. Live registration, permissions, mobile and backup tests remain required.');
+
+
+check('Monthly financial close review derives month-wise counts and missing references without persisting a close',core.includes('Monthly financial close review')&&core.includes('const closeRows=monthly.map')&&core.includes('no close status is saved')&&core.includes('no approved close register'));
+check('Monthly close review respects existing register visibility permissions',core.includes("const showC=canSee('contributions'), showI=canSee('income'), showE=canSee('expenditure')")&&core.includes("(showC?cRows.length:'—')")&&core.includes("(showI?iRows.length:'—')")&&core.includes("(showE?eRows.length:'—')"));
+check('Keyboard skip links are available on dashboard, public and suggestions pages',index.includes('class="mal-skip-link" href="#main"')&&pub.includes('class="mal-public-skip" href="#main"')&&sugg.includes('class="mal-suggestion-skip" href="#main"'));
+check('Keyboard focus and reduced-motion preferences are supported',welfare.includes(':focus-visible{outline:3px')&&welfare.includes('prefers-reduced-motion:reduce'));
+check('Monthly close and accessibility styles are versioned and loaded',index.includes('malipatana-family-welfare.css?v=3.14.0-monthly-close-accessibility')&&welfare.includes('.mal-fin-month-close{'));
+check('Public and suggestions pages retain their existing form and API contracts',pub.includes("api('publicSummary')")&&sugg.includes("action:'publicSuggestion'")&&sugg.includes("api('suggestionStatus'"));

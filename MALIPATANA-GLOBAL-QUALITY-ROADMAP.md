@@ -1,8 +1,8 @@
 # Malipatana Global-Quality Transformation Roadmap
 
-Status: Phases 1–3 implemented; Phases 4.0–4.2 merged; Phase 4.3 in progress
+Status: Phase 4.3 merged; completion bundle in review; remaining acceptance work tracked explicitly below
 Baseline branch: main
-Working branch: transformation/phase-4-3-audit-readiness
+Working branch: transformation/phase-4-6-completion-bundle
 Date: 2026-11-24
 Scope: Full 100-improvement programme
 Preservation rule: No backend URL, Apps Script code, spreadsheet schema, existing record, authentication flow, or permission policy may be changed without a separately reviewed and explicitly approved change.
@@ -18,9 +18,9 @@ A feature is not complete merely because its code is committed. Completion requi
 Repository: https://github.com/sutartech/Malipatana
 Default branch: main
 Current baseline commit before Phase 2: 35a2eeb910793ef64cb7a1707f133bc410e7f62b
-Current frontend: FE V3.10.0-GOVERNANCE-CONTROL-CENTRE
+Current frontend: FE V3.14.0-COMPLETION-BUNDLE
 Expected backend: BE V1.8.46-GOVERNANCE-READONLY-DOCUMENTS
-Core asset cache key: 3.8.4-persistent-collapsible-nav
+Core asset cache key: 3.14.0-completion-bundle
 Latest GitHub Pages deployment for baseline commit: run 45328436188, completed successfully.
 Latest static regression for baseline commit: run 45328436565, completed successfully (41/41 checks).
 
@@ -205,3 +205,20 @@ Preservation: uses the existing totals-only publicSummary endpoint; does not cal
 Adds read-only financial-year completeness checks using existing fields only: contribution receipt number and payment mode; income received-by and payment mode; expenditure bill/receipt reference, approver, paid-by and payment mode. Results count missing fields by register without displaying transaction-level personal data.
 
 Controls: a populated field is not treated as proof of a genuine receipt or valid approval. Original evidence still requires human verification. The current register schemas do not provide bank statement lines, closing balances or transaction references for automated bank matching; no cash/bank reconciliation is claimed. No new accounting field, API, Apps Script deployment, sheet schema or stored record is introduced.
+
+
+## Consolidated completion bundle — Phase 4.4 through Phase 6 (in review)
+
+Frontend implementation in this bundle:
+- Monthly financial close review table, grouped by financial month, showing contribution/income/expenditure row counts and missing reference counts. It is explicitly a review aid; no close, sign-off or lock is stored because no approved close-register schema exists.
+- Keyboard skip links on the authenticated dashboard, public account page and suggestions page; visible focus treatment and reduced-motion support.
+- Static regression assertions for the new financial review, privacy/permission boundaries, public submission contract and accessibility hooks.
+
+Still requiring external evidence before these backlog items can be marked complete:
+- Cash/bank reconciliation, restricted/committed fund accounting and formal monthly sign-off require approved accounting rules, source documents and a reviewed data model.
+- Committee meeting, attendance, minutes and resolution workflows require approved fields and governance decisions.
+- Real-device/mobile user sessions, screen-reader and keyboard acceptance, live role-matrix tests, Playwright CRUD/finance/welfare tests, and actual Core Web Vitals measurements require a safe test environment and authorised test accounts.
+- Backup restore must be demonstrated against an independent test spreadsheet; no production restore was attempted.
+- Security review and modularisation of the large frontend require dedicated test coverage and review; no broad refactor was included in this release.
+
+No Apps Script URL/code, API contract, spreadsheet schema, stored record, authentication flow, permission policy or Drive permission is changed by this bundle. Existing manual acceptance requirements remain open and are not represented as passed by static checks.
