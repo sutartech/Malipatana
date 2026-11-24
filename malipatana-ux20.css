@@ -225,3 +225,17 @@ body:has(#app.hide) .mal-ux-launcher,body:has(#app.hide) .mal-ux-top,body:has(#a
 @media print{
  #app .ux-home .ux-kpi,#app .panel,#app .ux-home-section{box-shadow:none!important;break-inside:avoid}
 }
+
+
+/* UX 9.8 — sidebar navigation refinement */
+#app #sidebar{padding:12px 10px 22px!important;background:linear-gradient(180deg,#103b63 0%,#103858 48%,#0d334f 100%)!important;scrollbar-width:thin;scrollbar-color:rgba(190,225,222,.55) transparent}
+#app #sidebar .navgroup{display:flex;align-items:center;gap:8px;margin:18px 8px 7px!important;padding:0 7px 6px!important;color:#a9d4d0!important;font-size:10.5px!important;font-weight:850!important;letter-spacing:.105em!important;text-transform:uppercase;border-bottom:1px solid rgba(222,245,240,.13)}
+#app #sidebar .navgroup:first-child{margin-top:5px!important}
+#app #sidebar .nav{position:relative;display:flex;align-items:center;gap:10px;width:100%;min-height:40px;margin:3px 0!important;padding:8px 10px!important;border:1px solid transparent!important;border-radius:10px!important;color:#edf7fa!important;font-size:12.5px!important;font-weight:620!important;line-height:1.25!important;text-align:left;transition:background .16s ease,border-color .16s ease,transform .16s ease}
+#app #sidebar .nav .ic{display:inline-flex;align-items:center;justify-content:center;flex:0 0 27px;width:27px;height:27px;border-radius:8px;background:rgba(255,255,255,.105);color:#b8eee0;font-size:15px}
+#app #sidebar .nav:hover{background:rgba(255,255,255,.105)!important;border-color:rgba(255,255,255,.12)!important;transform:translateX(2px)}
+#app #sidebar .nav.active,#app #sidebar .nav[aria-current="page"]{color:#083f3a!important;background:linear-gradient(100deg,#c9f2e3,#aee5d4)!important;border-color:#a1dfcb!important;box-shadow:inset 3px 0 0 #087568,0 3px 12px rgba(0,0,0,.12)!important;font-weight:850!important}
+#app #sidebar .nav.active .ic,#app #sidebar .nav[aria-current="page"] .ic{background:#087568;color:white}
+#app #sidebar .nav .count{margin-left:auto;min-width:22px;padding:2px 6px;border-radius:20px;background:rgba(255,255,255,.13);color:#e5f6f2;font-size:10px;font-weight:800;text-align:center}
+#app #sidebar .nav.active .count{background:#087568;color:white}
+@media(max-width:760px){#app #sidebar{padding:9px 8px 18px!important}#app #sidebar .nav{min-height:42px;padding:8px!important;font-size:12px!important}#app #sidebar .navgroup{margin-top:14px!important}}
