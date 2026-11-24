@@ -63,6 +63,10 @@ body>main footer{padding:14px 2px calc(18px + env(safe-area-inset-bottom))}
  body>main section.card{box-shadow:none!important;break-inside:avoid}
 }
 
+/* Prevent the public account's two-column card grid from forcing horizontal overflow
+   when the viewport is narrower than its former 320px minimum track. */
+.cols{grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr))}
+
 /* Public account page: retain its existing visual language while tightening mobile hierarchy. */
 header.top .in{gap:14px}
 header.top .who{min-width:0}
