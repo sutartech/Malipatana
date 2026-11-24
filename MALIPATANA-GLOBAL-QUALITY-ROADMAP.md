@@ -222,3 +222,25 @@ Still requiring external evidence before these backlog items can be marked compl
 - Security review and modularisation of the large frontend require dedicated test coverage and review; no broad refactor was included in this release.
 
 No Apps Script URL/code, API contract, spreadsheet schema, stored record, authentication flow, permission policy or Drive permission is changed by this bundle. Existing manual acceptance requirements remain open and are not represented as passed by static checks.
+
+
+## Phase 6.1 — Static security and reliability review (in review)
+
+Scope: read-only inspection of the current frontend source plus CI guardrails. No production API, Apps Script code, spreadsheet, authentication flow or permission rule is modified.
+
+Static review observations:
+1. The dashboard login calls the existing JSONP API helper with username and password parameters. This sends the credentials in the HTTPS request URL. HTTPS protects transport, but URLs can be retained in browser/network/proxy logs. This is a security-hardening item requiring a coordinated backend-compatible authentication change; do not change it in the frontend alone.
+2. Authenticated API calls append the session token to the JSONP URL. This is also a URL exposure surface. A future POST-based authenticated API transport should be designed and tested with the Apps Script backend, then migrated in a separately approved release.
+3. Password recovery already sends the new password in a POST body; a static guard protects that behaviour.
+4. The frontend contains role/page visibility checks, but these are not security boundaries. Server-side authorization must be verified independently for every sensitive endpoint. Backend source was not part of this repository review.
+5. Legacy persistent private-register cache cleanup is present; the offline queue is moved to session storage. This does not establish that every browser, extension, backup or prior exported copy has been cleared.
+6. Dynamic HTML rendering uses escaping in many paths, but this source review is not a complete XSS audit. DOM sink review, malicious input tests and backend output validation remain required.
+7. No live credentials, real member records, payment records or production endpoints were exercised during this review.
+
+Added CI checks protect selected existing controls: password-recovery POST transport, legacy private-cache cleanup, authenticated token attachment, idle logout, role-aware routing, admin-only governance/document guards and text-only toast output. Static checks cannot establish backend authorization, secure cookie/token handling, absence of all XSS, or penetration-test readiness.
+
+Open remediation requiring a coordinated backend plan:
+- Replace credential-bearing JSONP login and token-bearing JSONP calls with POST transport and server-side token validation without weakening current sessions or Apps Script access controls.
+- Audit all Apps Script actions for server-side role and record-level authorization.
+- Perform synthetic-data XSS/injection/file-upload tests and independent backup restore.
+- Establish test accounts and a non-production spreadsheet for Playwright role, CRUD, finance, welfare, public registration, duplicate-submit and offline-recovery tests.
