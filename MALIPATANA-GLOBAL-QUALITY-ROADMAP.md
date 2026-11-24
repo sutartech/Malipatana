@@ -244,3 +244,25 @@ Open remediation requiring a coordinated backend plan:
 - Audit all Apps Script actions for server-side role and record-level authorization.
 - Perform synthetic-data XSS/injection/file-upload tests and independent backup restore.
 - Establish test accounts and a non-production spreadsheet for Playwright role, CRUD, finance, welfare, public registration, duplicate-submit and offline-recovery tests.
+
+
+## Phase 6.1 — Static security and reliability review (in review)
+
+Scope: read-only inspection of current frontend source plus CI guardrails. No production API, Apps Script code, spreadsheet, authentication flow or permission rule is modified.
+
+Static review observations:
+1. Dashboard login calls the existing JSONP API helper with username and password parameters. This sends credentials in the HTTPS request URL. HTTPS protects transport, but URLs can be retained in browser/network/proxy logs. This requires a coordinated backend-compatible authentication change; do not change it in the frontend alone.
+2. Authenticated API calls append the session token to the JSONP URL. This is another URL exposure surface. A future POST-based authenticated API transport should be designed and tested with Apps Script before migration.
+3. Password recovery already sends the new password in a POST body; a static guard protects that behaviour.
+4. Frontend role/page visibility checks are not security boundaries. Server-side authorization must be verified independently for sensitive endpoints. Backend source was not part of this repository review.
+5. Legacy persistent private-register cache cleanup is present; the offline queue is moved to session storage. This does not establish that every browser, extension, backup or prior exported copy has been cleared.
+6. Dynamic HTML rendering uses escaping in many paths, but this is not a complete XSS audit. DOM sink review, malicious-input tests and backend output validation remain required.
+7. No live credentials, real member records, payment records or production endpoints were exercised.
+
+Added CI checks protect selected existing controls: password-recovery POST transport, legacy private-cache cleanup, authenticated token attachment, idle logout, role-aware routing, admin-only governance/document guards and text-only toast output. Static checks cannot establish backend authorization, secure token handling, absence of all XSS or penetration-test readiness.
+
+Open remediation requiring a coordinated backend plan:
+- Replace credential-bearing JSONP login and token-bearing JSONP calls with POST transport and server-side token validation without weakening sessions or Apps Script access controls.
+- Audit all Apps Script actions for server-side role and record-level authorization.
+- Perform synthetic-data XSS/injection/file-upload tests and independent backup restore.
+- Establish test accounts and a non-production spreadsheet for Playwright role, CRUD, finance, welfare, public registration, duplicate-submit and offline-recovery tests.
