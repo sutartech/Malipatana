@@ -30,7 +30,8 @@ The live URL could not be independently retrieved in this inspection environment
 2. buildNav() forcibly sets the active page's category to expanded every time it rebuilds navigation, overriding a user's explicit collapse choice.
 3. Current generated heading classes are nav-category-bar and nav-category-bar-<slug>, while parts of malipatana-sidebar-contrast.css target legacy .navgroup selectors. Inline styles currently supply much of the visual treatment; stylesheet targeting must be unified.
 4. scripts/verify-static.mjs expects BE V1.8.30, but current core CONFIG is BE V1.8.46-GOVERNANCE-READONLY-DOCUMENTS. This is stale and should be replaced with a syntax/format check of the declared version. It must not imply that the live Apps Script deployment was contacted.
-5. Existing rollout checklist has unresolved manual checks for OTP, registration pause enforcement, offline queue, duplicate prevention, restore, responsive sizes, Odia, screen reader, Quick Add role access and unchanged workflows.
+5. The dashboard core and the public registration/shared-entry/Quick Add pages use two separate Apps Script deployment URLs. The public pages share one URL among themselves. Preserve this topology; do not unify endpoints as part of a frontend-only change.
+6. Existing rollout checklist has unresolved manual checks for OTP, registration pause enforcement, offline queue, duplicate prevention, restore, responsive sizes, Odia, screen reader, Quick Add role access and unchanged workflows.
 
 ## 4. Phase 1 test matrix
 
@@ -52,7 +53,7 @@ The live URL could not be independently retrieved in this inspection environment
 | CSS-02 | Design | Contrast and focus | Text/focus meet WCAG contrast requirements | Automated + manual |
 | REG-01 | Static | Run node scripts/verify-static.mjs | All valid source assertions pass; no stale BE hard-code | Local/CI |
 | REG-02 | Static | JavaScript syntax check | No syntax errors in changed JS | Local/CI |
-| REG-03 | Preservation | Compare backend URL in core/register/entry/quick-add | All remain unchanged and consistent | Static |
+| REG-03 | Preservation | Compare backend URLs | Main dashboard URL remains unchanged; registration, shared entry and Quick Add retain their shared URL | Static |
 | REG-04 | Preservation | Compare backend schema/API names | No unapproved changes | Source diff |
 | REG-05 | Preservation | Inspect auth/permission sections in diff | No auth or permission changes | Source diff |
 
