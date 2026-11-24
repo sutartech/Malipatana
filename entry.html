@@ -203,6 +203,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 #malQuickActions .mal-action-grid{margin:8px 0}
 #malQuickActions .mal-action-grid button{min-height:64px}
 </style>
+<script src="malipatana-post-api.js?v=1.0.0"></script>
 </head><body><main>
 <header class="head"><img src="icon-180.png" alt="Malipatana emblem"><div><h1>ମାଳିପାଟଣା • Malipatana</h1><p>Simple village registration • No login needed</p></div></header>
 <details class="box" id="malEntryHelp"><summary style="cursor:pointer;font-weight:800;color:#0c685d;min-height:40px;display:flex;align-items:center">ℹ How to use this shared entry link</summary><div class="sub" style="margin-top:10px;line-height:1.7"><p>1. Check the link information and its allowed entry type.</p><p>2. Fill in the required fields. Use <strong>Take Photo</strong> or <strong>Choose Gallery</strong> only if a photo is needed.</p><p>3. Submit once, then keep your <strong>saved receipt / record ID</strong>. For a new person, use the cleared form and submit again.</p><p>4. Tap <strong>Save this link</strong>, then <strong>Install Quick Add</strong> to reopen it without logging in. An installed shortcut does not override Admin pause or expiry.</p><p><strong>Shared-phone caution:</strong> anyone using this device can open links saved here. Remove saved links when finished on a borrowed phone.</p></div></details>
@@ -466,14 +467,7 @@ let masterFamilies=[];
 let familyOptionsLoaded=false, familyOptionsLoading=null, familyOptionsMessage='';
 try {createdFamilies=JSON.parse(sessionStorage.getItem(familyCacheKey)||'[]').filter(x=>x&&x.id&&x.head).slice(-20);}catch(e){}
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-function api(action,params={}){return new Promise((resolve,reject)=>{
- const cb='malentry_'+Date.now()+'_'+Math.random().toString(36).slice(2),script=document.createElement('script');
- let timeout=setTimeout(()=>{end();reject(Error('The server did not respond. Please check your connection.'))},28000);
- function end(){clearTimeout(timeout);delete window[cb];script.remove()}
- window[cb]=r=>{end();resolve(r)};script.onerror=()=>{end();reject(Error('Cannot reach the Malipatana backend.'))};
- script.referrerPolicy='no-referrer';script.src=API_URL+'?'+new URLSearchParams({...params,...(action.startsWith('link')?{key}:{}),action,callback:cb,_:Date.now()});
- document.body.append(script);
-})}
+function api(action,params={}){return malPostApi(API_URL,action,{...params,...(action.startsWith('link')?{key}:{})})}
 
 /* A shared entry key can list parent names ONLY within the selected existing family.
    The public registration page never exposes this list. */
