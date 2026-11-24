@@ -41,6 +41,12 @@ check('Core script cache-bust matches declared FE version',!!declaredFe&&!!coreA
 check('Sidebar collapse preference persistence is present',core.includes('mal_nav_collapsed_v1')&&core.includes('navSaveCollapsePrefs'));
 check('Sidebar category controls expose accessible state',core.includes('aria-controls="mal-nav-items-')&&core.includes('aria-expanded='));
 
+check('Phase 2 dashboard stylesheet exists',existsSync(resolve(root,'malipatana-phase2-dashboard.css')));
+check('Phase 2 dashboard stylesheet is loaded',index.includes('malipatana-phase2-dashboard.css'));
+check('Dashboard quick actions are role and page filtered',core.includes('const quickActions = [')&&core.includes('canEdit() && quickActions.length'));
+check('Dashboard quick actions use existing form workflow',core.includes('onclick="openForm(\'\\${key}\\')"'));
+check('Dashboard heading reflects village operations',core.includes('village operations</h2>')&&core.includes('ux-home-live-label'));
+check('Frontend version matches Phase 2 cache-busted core',core.includes("VERSION: 'FE V3.9.0-VILLAGE-OPERATIONS'")&&index.includes('malipatana-core.js?v=3.9.0-village-operations'));
 check('Shared design-system stylesheet exists',existsSync(resolve(root,'malipatana-design-system.css')));
 check('Shared design-system stylesheet is loaded',index.includes('malipatana-design-system.css'));
 check('Sidebar category headings use stylesheet classes, not inline presentation',core.includes('class="nav-category-bar nav-category-bar-')&&!/nav-category-bar-[^"]+"[^>]*style=/.test(core)&&!core.includes('navgroup-symbol" style=')&&!core.includes('navgroup-title" style=')&&!core.includes('navgroup-chevron" style='));
