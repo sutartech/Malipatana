@@ -69,3 +69,11 @@
  #app .topbar .pubjump{display:none}
  #app .topbar .whochip{max-width:70px}
 }
+
+/* Compact single-line sign-out button: prominent red, without stretching the header. */
+#app .topbar #logoutBtn{width:116px;min-width:116px;height:38px;padding:0 13px;gap:8px;border:1px solid rgba(255,255,255,.24);border-radius:12px;background:linear-gradient(135deg,#e34b50 0%,#bd2632 100%)!important;color:#fff!important;font-size:15px;font-weight:850;letter-spacing:.01em;line-height:1;white-space:nowrap;box-shadow:0 3px 10px rgba(159,25,39,.28),inset 0 1px 0 rgba(255,255,255,.18)}
+#app .topbar #logoutBtn .logout-arrow{font-size:18px;line-height:1}
+#app .topbar #logoutBtn .logout-label{display:inline;font-size:15px;white-space:nowrap}
+#app .topbar #logoutBtn:hover{filter:brightness(1.08);transform:translateY(-1px);box-shadow:0 5px 13px rgba(159,25,39,.34),inset 0 1px 0 rgba(255,255,255,.2)}
+@media(max-width:900px){#app .topbar #logoutBtn{width:108px;min-width:108px;height:36px;padding:0 10px;gap:7px;font-size:14px}#app .topbar #logoutBtn .logout-arrow,#app .topbar #logoutBtn .logout-label{font-size:14px}}
+@media(max-width:620px){#app .topbar #logoutBtn{width:96px;min-width:96px;height:32px;padding:0 8px;gap:6px;border-radius:10px;font-size:13px}#app .topbar #logoutBtn .logout-arrow,#app .topbar #logoutBtn .logout-label{font-size:13px}}
