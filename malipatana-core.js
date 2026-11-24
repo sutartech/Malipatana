@@ -1573,12 +1573,41 @@ async function renderMyGovernanceDocs(){
  const box=document.getElementById('myGovDocs');
  try{
   const r=await api('governanceDocuments');if(!r||!r.ok)throw Error(r&&r.error||'Could not check document access.');
-  const files=r.files||[];
+  const files=r.files||[],admin=isAdmin();
   if(!files.length){box.innerHTML='<div class="empty">No governance documents have been assigned to your account. Contact the Malipatana Admin if you require access.</div>';return;}
-  box.innerHTML=files.map(f=>'<article style="border:1px solid var(--line);border-radius:12px;padding:14px;margin:10px 0"><b>'+esc(f.name)+'</b><div class="small muted" style="margin:5px 0">Status: '+esc(f.status||'Draft')+' · Version '+esc(f.version||'1.0')+'</div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:9px">'+(f.access&&f.access.canDownload!==false?'<button class="btn btn-sm btn-primary" data-gov-download="'+esc(f.id)+'" data-gov-name="'+esc(f.name)+'">Download document</button>':'<span class="small muted">Download disabled</span>')+(f.access&&f.access.canPrint===true?'<button class="btn btn-sm" data-gov-print="'+esc(f.id)+'" data-gov-name="'+esc(f.name)+'">Download for printing</button>':'')+'</div></article>').join('');
-  const deliver=async(btn,purpose)=>{btn.disabled=true;const old=btn.textContent;btn.textContent='Retrieving securely…';try{const x=await api('governanceDocContent',{id:btn.dataset.govDownload||btn.dataset.govPrint,purpose});if(!x||!x.ok)throw Error(x&&x.error||'Document retrieval failed');const raw=atob(x.base64),bytes=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)bytes[i]=raw.charCodeAt(i);const blob=new Blob([bytes],{type:x.mimeType||'application/octet-stream'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=x.name||btn.dataset.govName||'governance-document.docx';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);toast(purpose==='print'?'Document downloaded for printing':'Document downloaded','good');}catch(e){toast(e.message||String(e),'bad');}finally{btn.disabled=false;btn.textContent=old;}};
-  box.querySelectorAll('[data-gov-download]').forEach(b=>b.onclick=()=>deliver(b,'download'));
-  box.querySelectorAll('[data-gov-print]').forEach(b=>b.onclick=()=>deliver(b,'print'));
+  box.innerHTML=files.map(f=>{
+   const canDownload=admin||(f.access&&f.access.canDownload!==false);
+   return '<article style="border:1px solid var(--line);border-radius:12px;padding:14px;margin:10px 0"><b>'+esc(f.name)+'</b><div class="small muted" style="margin:5px 0">Status: '+esc(f.status||'Draft')+' · Version '+esc(f.version||'1.0')+'</div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:9px"><button class="btn btn-sm btn-primary" data-gov-view="'+esc(f.id)+'" data-gov-name="'+esc(f.name)+'">View document</button>'+(canDownload?'<button class="btn btn-sm" data-gov-download="'+esc(f.id)+'" data-gov-name="'+esc(f.name)+'">Download document</button>':'<span class="small muted" style="align-self:center">View only · Download disabled</span>')+'</div></article>';
+  }).join('');
+  const retrieve=async(btn,purpose)=>{
+   const popup=purpose==='view'?window.open('about:blank','_blank'):null;
+   if(purpose==='view'&&!popup){toast('Allow pop-ups for this site to view the document.','bad');return;}
+   btn.disabled=true;const old=btn.textContent;btn.textContent=purpose==='view'?'Opening secure viewer…':'Preparing download…';
+   try{
+    const x=await api('governanceDocContent',{id:btn.dataset.govId||btn.dataset.govView||btn.dataset.govDownload,purpose});
+    if(!x||!x.ok)throw Error(x&&x.error||'Document retrieval failed');
+    const raw=atob(x.base64),bytes=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)bytes[i]=raw.charCodeAt(i);
+    const blob=new Blob([bytes],{type:x.mimeType||'application/octet-stream'});
+    if(purpose==='download'){
+     const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=x.name||btn.dataset.govName||'governance-document';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);toast('Document downloaded','good');return;
+    }
+    const name=x.name||btn.dataset.govName||'Governance document',lower=name.toLowerCase();
+    popup.document.title=name;
+    popup.document.body.style='margin:0;background:#f3f6f5;font:15px Arial,sans-serif;color:#173b36';
+    if(x.mimeType==='application/pdf'||lower.endsWith('.pdf')){
+     const url=URL.createObjectURL(blob);popup.document.body.innerHTML='<div style="padding:10px 16px;background:#0d514c;color:white;font-weight:600">Viewing: '+esc(name)+'</div><iframe title="Read-only document viewer" style="border:0;width:100%;height:calc(100vh - 44px)" src="'+url+'"></iframe>';popup.addEventListener('beforeunload',()=>URL.revokeObjectURL(url));
+    }else if(lower.endsWith('.docx')||x.mimeType==='application/vnd.openxmlformats-officedocument.wordprocessingml.document'){
+     popup.document.body.innerHTML='<div style="padding:10px 16px;background:#0d514c;color:white;font-weight:600">Read-only view · '+esc(name)+'</div><div id="docxViewer" style="max-width:980px;margin:22px auto;padding:24px;background:white;min-height:80vh;box-shadow:0 2px 12px #0002">Loading document preview…</div>';
+     const script=popup.document.createElement('script');script.src='https://cdn.jsdelivr.net/npm/docx-preview@0.3.6/dist/docx-preview.min.js';script.onload=()=>popup.docx.renderAsync(bytes.buffer,popup.document.getElementById('docxViewer'),null,{inWrapper:true,ignoreWidth:false,ignoreHeight:false}).catch(e=>{popup.document.getElementById('docxViewer').textContent='Preview could not be rendered: '+e.message;});script.onerror=()=>{popup.document.getElementById('docxViewer').textContent='The document preview library could not be loaded. Ask the administrator to provide a PDF copy.';};popup.document.head.appendChild(script);
+    }else{
+     const url=URL.createObjectURL(blob);popup.location.href=url;
+    }
+    toast('Opened read-only document viewer','good');
+   }catch(e){if(popup&&!popup.closed)popup.close();toast(e.message||String(e),'bad');}
+   finally{btn.disabled=false;btn.textContent=old;}
+  };
+  box.querySelectorAll('[data-gov-view]').forEach(b=>b.onclick=()=>retrieve(b,'view'));
+  box.querySelectorAll('[data-gov-download]').forEach(b=>b.onclick=()=>retrieve(b,'download'));
  }catch(e){box.textContent=e.message||String(e);}
 }
 async function loadGovernanceDocuments_(){
