@@ -98,6 +98,14 @@ check('Governance task search and filters are client-side',core.includes('id="go
 check('Phase 4.0 frontend version is cache-busted',core.includes("VERSION: 'FE V3.10.0-GOVERNANCE-CONTROL-CENTRE'")&&index.includes('malipatana-core.js?v=3.10.0-governance-control-centre'));
 check('Governance action centre has responsive layout styles',ops.includes('.mal-gov-queue{display:grid')&&ops.includes('@media(max-width:620px){.mal-gov-kpis'));
 
+
+check('Phase 4.1 financial transparency is versioned and cache-busted',core.includes("VERSION: 'FE V3.11.0-FINANCIAL-TRANSPARENCY'")&&index.includes('malipatana-core.js?v=3.11.0-financial-transparency'));
+check('Financial-year report derives from existing contribution, income and expenditure registers',core.includes('function financialTransparencyHtml()')&&core.includes('DB.contributions||[]')&&core.includes('DB.income||[]')&&core.includes('DB.expenditure||[]'));
+check('Financial report keeps contributions and other income separate',core.includes('Contributions and Other Income remain separate')&&core.includes('Net recorded movement'));
+check('Financial report avoids double-counting welfare and does not infer bank balance',core.includes('Welfare assistance is not added again')&&core.includes('does not establish cash or bank balances'));
+check('Financial evidence checks reuse existing Bill/Receipt and Approved By fields',core.includes("r['Bill/Receipt']")&&core.includes("r['Approved By']"));
+check('Financial report follows existing per-register visibility permissions',core.includes("const showC=canSee('contributions'), showI=canSee('income'), showE=canSee('expenditure')"));
+
 const failures=results.filter(r=>!r.pass).length;
 console.log('\n'+(results.length-failures)+'/'+results.length+' static checks passed.');
 if(failures){console.error('Static checks failed. Do not assume this deployment is ready.');process.exitCode=1;}
