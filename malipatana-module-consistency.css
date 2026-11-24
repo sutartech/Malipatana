@@ -1,0 +1,51 @@
+/* Module consistency system — presentation only, scoped by the active register.
+   The data, register schema, actions and permission checks remain in malipatana-core.js. */
+#app #main[data-module]{--mal-module-accent:#087568;--mal-module-soft:#e7f5ee;--mal-module-border:#cfe7dc}
+#app #main[data-module="families"],#app #main[data-module="members"],#app #main[data-module="memorial"],#app #main[data-module="guidance"]{--mal-module-accent:#0875a5;--mal-module-soft:#e6f4fb;--mal-module-border:#cce6f3}
+#app #main[data-module="contributions"],#app #main[data-module="income"],#app #main[data-module="expenditure"],#app #main[data-module="events"],#app #main[data-module="projects"],#app #main[data-module="projectMilestones"],#app #main[data-module="recurring"]{--mal-module-accent:#9a650b;--mal-module-soft:#fff4d9;--mal-module-border:#f0dfb8}
+#app #main[data-module="emergency"],#app #main[data-module="regularSupport"]{--mal-module-accent:#a23f59;--mal-module-soft:#fff0f3;--mal-module-border:#f1d5dd}
+#app #main[data-module="grievances"],#app #main[data-module="importantDays"],#app #main[data-module="notices"]{--mal-module-accent:#39752d;--mal-module-soft:#edf7e9;--mal-module-border:#d8e9cf}
+#app #main[data-module="myGovernanceDocs"],#app #main[data-module="governanceCentre"],#app #main[data-module="auditLog"],#app #main[data-module="accessHistory"],#app #main[data-module="users"],#app #main[data-module="publicPage"],#app #main[data-module="settingsList"],#app #main[data-module="surnameGroups"],#app #main[data-module="photos"]{--mal-module-accent:#6550a0;--mal-module-soft:#f1edfb;--mal-module-border:#ded6f2}
+#app #main[data-module]>.pagehead{position:relative;padding:0 0 12px 13px;margin:0 0 15px!important;border-bottom:1px solid var(--mal-module-border);border-left:4px solid var(--mal-module-accent);border-radius:2px 0 0 2px;align-items:center}
+#app #main[data-module]>.pagehead h2{color:#183d38;font-size:clamp(21px,2vw,27px);letter-spacing:-.018em}
+#app #main[data-module]>.pagehead h2 .muted{color:var(--mal-module-accent)!important;font-weight:750}
+#app #main[data-module]>.pagehead .sub{max-width:76ch;color:#62766e;line-height:1.55;margin-top:4px}
+#app #main[data-module]>.pagehead .btn-primary{background:var(--mal-module-accent)!important;border-color:var(--mal-module-accent)!important;box-shadow:0 5px 13px color-mix(in srgb,var(--mal-module-accent) 18%,transparent)}
+#app #main[data-module]>.toolbar{padding:10px;background:#fff;border:1px solid #e1ebe5;border-radius:13px;box-shadow:0 2px 8px rgba(20,60,48,.035)}
+#app #main[data-module]>.toolbar .input{background:#fbfdfb;border-color:#dce8e1}
+#app #main[data-module]>.toolbar .input:focus{border-color:var(--mal-module-accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--mal-module-accent) 14%,transparent)}
+#app #main[data-module]>.toolbar .btn-primary{background:var(--mal-module-accent)!important;border-color:var(--mal-module-accent)!important}
+#app #main[data-module]>.notice{border-left:4px solid var(--mal-module-accent);background:var(--mal-module-soft);border-color:var(--mal-module-border);color:#405e54}
+#app #main[data-module]>.tablewrap{border-color:#dce8e1;box-shadow:0 3px 12px rgba(20,60,48,.035)}
+#app #main[data-module] table.grid th{background:#f2f7f4;color:#526a60;font-weight:800}
+#app #main[data-module] table.grid tbody tr:hover{background:#f6faf7}
+#app #main[data-module] table.grid td{line-height:1.5}
+#app #main[data-module] .tfoot{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;padding:11px 13px;background:#f7faf8;border-top:1px solid #e7efea;color:#61746b;font-size:12px}
+#app #main[data-module] .tfoot b{color:#23483d}
+#app #main[data-module] .empty{border:1px dashed var(--mal-module-border);border-radius:14px;background:linear-gradient(145deg,var(--mal-module-soft),#fff 75%);padding:25px 18px}
+#app #main[data-module] .empty b{color:var(--mal-module-accent)}
+#app #main[data-module] .mal-register-tip{border:1px solid var(--mal-module-border);background:var(--mal-module-soft);border-radius:10px;padding:9px 12px;color:#526b60}
+#app #main[data-module] .mal-register-nav{display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin:7px 0 10px}
+#app #main[data-module] .pill{font-weight:750}
+#app #main[data-module] .btn:not(.btn-primary):not(.btn-danger){border-color:#d8e5dd}
+#app #main[data-module] .btn:not(:disabled):focus-visible{outline-color:var(--mal-module-accent)!important}
+#app #main[data-module] .toolbar .btn-sm{min-height:38px}
+#app #main[data-module] .fieldnote{line-height:1.55;color:#61766d}
+#app #main[data-module] .mal-family-welfare,#app #main[data-module] .mal-family-financial{border-color:var(--mal-module-border)}
+#app #main[data-module="governanceCentre"] .mal-gov-kpis,
+#app #main[data-module="accessHistory"] .mal-ah-kpis{margin-bottom:14px}
+#app #main[data-module="governanceCentre"] .mal-gov-kpis>div,
+#app #main[data-module="accessHistory"] .mal-ah-kpi{border-radius:13px}
+#app #main[data-module="myGovernanceDocs"] .mal-doc-toolbar{gap:9px}
+#app #main[data-module="myGovernanceDocs"] .mal-doc-workspace{min-width:0}
+@media(max-width:700px){
+ #app #main[data-module]>.pagehead{padding-left:10px;padding-bottom:10px;margin-bottom:12px!important}
+ #app #main[data-module]>.pagehead h2{font-size:21px}
+ #app #main[data-module]>.toolbar{padding:8px;border-radius:11px}
+ #app #main[data-module]>.toolbar .btn{min-height:40px}
+ #app #main[data-module] .mal-register-nav{padding:7px 0}
+ #app #main[data-module] .tfoot{border:1px solid #e3ece6;border-radius:0 0 12px 12px}
+}
+@media(prefers-reduced-motion:reduce){
+ #app #main[data-module] *{scroll-behavior:auto}
+}
