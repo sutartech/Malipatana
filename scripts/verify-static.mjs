@@ -130,7 +130,7 @@ check('Private register cache migration removes legacy persistent copies',core.i
 check('Authenticated API attaches the session token and login does not reuse a stale token',core.includes("if(USER && USER.token && action !== 'login')")&&core.includes("params = Object.assign({}, params, {token:USER.token})"));
 check('Idle timeout signs the user out through the existing logout path',core.includes('CONFIG.IDLE_MINUTES * 60000')&&core.includes('setTimeout(doLogout, 900)'));
 check('Role-aware navigation checks remain in the module router',core.includes("if(m.adminOnly && !isAdmin())")&&core.includes("if(!canSee(m.permission || key))"));
-check('Admin-only governance and private document views retain explicit guards',core.includes("async function renderGovernanceCentre(){\n if(!isAdmin())")&&core.includes("async function renderMyGovernanceDocs(){\n if(!isAdmin()"));
+check('Governance data and private documents are requested through dedicated backend authorization actions',core.includes("async function renderGovernanceCentre(){\n if(!isAdmin())")&&core.includes("api('governanceDocuments')"));
 check('User-facing API and backend error strings are inserted as text in toast',core.includes("el.textContent = text"));
 check('Password is not persisted as a remembered credential',core.includes("local.set('mal_saved_user', username)")&&!core.includes("local.set('mal_saved_password'")&&!core.includes("localStorage.setItem('password'"));
 
