@@ -71,7 +71,7 @@
    ========================================================================= */
 const CONFIG = {
   API_URL: 'https://script.google.com/macros/s/AKfycbwkweVh5BM35fHP86Uxs2bEjODXq0TpcnP3q665nAG2Z0Z8GIKzSa5Oe6l7KqZZCf6oSA/exec',
-  VERSION: 'FE V3.11.0-FINANCIAL-TRANSPARENCY',
+  VERSION: 'FE V3.12.0-PUBLIC-FINANCIAL-DISCLOSURE',
   EXPECTED_BACKEND: 'BE V1.8.46-GOVERNANCE-READONLY-DOCUMENTS',
   IDLE_MINUTES: 30,
   /* Photo shown when no photo has been set in Settings.
@@ -977,11 +977,11 @@ function renderGuidance(){
    admin could never answer "what does a villager actually see?" without
    hunting. Rows are things; columns are who sees them. */
 const PUBLIC_SWITCHES = [
-  ['Public Show Fund', 'The balance in hand', 'The single big figure at the top.'],
-  ['Public Show Breakdown', 'Income and spending lines', 'Opening fund, contributions, expenditure, help paid.'],
+  ['Public Show Fund', 'Fund balance snapshot', 'The register balance only; label it as not independently bank-reconciled.'],
+  ['Public Show Breakdown', 'Aggregate financial register lines', 'Opening fund, contributions, other income and separate outflow entries. No contributor or recipient names.'],
   ['Public Show Counts', 'Village counts', 'Families, members, people helped this year.'],
   ['Public Show Major Expenses', 'Completed major expenses', 'Raja Parba and the like, with budget and spend.'],
-  ['Public Show Recent Spending', 'Recent spending list', 'Last ten entries. Never shows who received help.']
+  ['Public Show Recent Spending', 'Recent spending descriptions', 'Last ten approved-to-publish descriptions and amounts. No recipient names or contact details.']
 ];
 
 /* [label, note, sign-in setting or null, public setting or null, default] */
@@ -1071,8 +1071,7 @@ function renderPublicPage(){
           ${['top-left','top-centre','top-right','bottom-left','bottom-centre','bottom-right']
             .map(v => `<option value="${v}" ${spot === v ? 'selected' : ''}>${v.replace('-', ' ')}</option>`).join('')}
         </select>
-        <div class="fieldnote" style="margin-top:12px">Names of people who received help, mobile numbers,
-        incomes and member details are never sent outside the dashboard, whatever is ticked here.</div>
+        <div class="fieldnote" style="margin-top:12px">Only aggregate fund figures and the specific descriptions you choose are published. Contributor names, recipient names, mobile numbers, household-level payments, member details and private welfare records are not published here.</div>
       </div>
       <div class="panel-body" style="border-top:1px solid var(--line-soft)">
         <label class="lbl" for="pubIntro" style="display:block;margin-bottom:6px">A word from the committee</label>
