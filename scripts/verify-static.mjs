@@ -85,7 +85,7 @@ check('Family profile dialog has a definite height and independently scrollable 
 check('Family profile scroll fix is cache-busted in the page shell',index.includes('malipatana-ui.css?v=3.5.63-family-profile-scroll')&&index.includes('malipatana-layout-fit.css?v=1.0.0'));
 
 
-check('Phase 3.6 family financial summary is versioned and cache-busted',core.includes("VERSION: 'FE V3.14.0-COMPLETION-BUNDLE'")&&index.includes('malipatana-core.js?v=3.14.0-completion-bundle')&&index.includes('malipatana-family-welfare.css?v=3.6.0-family-financial-summary'));
+check('Phase 3.6 family financial summary is versioned and cache-busted',core.includes("VERSION: 'FE V3.14.0-COMPLETION-BUNDLE'")&&index.includes('malipatana-core.js?v=3.14.0-completion-bundle')&&index.includes('malipatana-family-welfare.css?v=3.14.0-monthly-close-accessibility'));
 check('Family financial summary shows contribution, emergency, medical, education and regular support categories',core.includes("label:'Contributions made'")&&core.includes("label:'Emergency assistance paid'")&&core.includes("label:'Medical assistance'")&&core.includes("label:'Education assistance'")&&core.includes("label:'Regular support'"));
 check('Family financial summary enforces existing module permissions',core.includes("if(canSee('contributions')) financialItems.push")&&core.includes("if(canSee('emergency')) financialItems.push")&&core.includes("if(canSee('medical')) financialItems.push")&&core.includes("if(canSee('education')) financialItems.push")&&core.includes("if(canSee('regularSupport')) financialItems.push"));
 check('Family financial summary avoids combining potentially overlapping assistance totals',core.includes('They are not added into one grand total')&&core.includes('secondary:familyMedicalRows.reduce'));
@@ -120,7 +120,7 @@ check('Audit-readiness checks derive only from existing FY financial register ro
 check('Audit-readiness report does not expose personal transaction names or amounts',core.includes('Audit-readiness checks')&&core.includes('Record completeness only')&&core.includes('auditRowsHtml'));
 check('Audit-readiness distinguishes field completeness from genuine evidence and approval',core.includes('not proof that a receipt is genuine')&&core.includes('Verify original documents and approvals separately'));
 check('No automated bank matching is claimed without statement data',core.includes('do not provide bank-statement lines, statement closing balances or transaction references'));
-check('Audit-readiness styling is responsive and loaded through existing stylesheet',index.includes('malipatana-family-welfare.css?v=3.6.0-family-financial-summary')&&welfare.includes('.mal-fin-audit-readiness{'));
+check('Audit-readiness styling is responsive and loaded through existing stylesheet',index.includes('malipatana-family-welfare.css?v=3.14.0-monthly-close-accessibility')&&welfare.includes('.mal-fin-audit-readiness{'));
 
 const failures=results.filter(r=>!r.pass).length;
 console.log('\n'+(results.length-failures)+'/'+results.length+' static checks passed.');
