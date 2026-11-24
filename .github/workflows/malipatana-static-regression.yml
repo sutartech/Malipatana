@@ -1,0 +1,52 @@
+name: Malipatana static regression
+
+on:
+  push:
+    branches:
+      - "transformation/**"
+    paths:
+      - "index.html"
+      - "malipatana-*.js"
+      - "malipatana-*.css"
+      - "register.html"
+      - "entry.html"
+      - "quick-add.html"
+      - "scripts/**"
+      - ".github/workflows/malipatana-static-regression.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "index.html"
+      - "malipatana-*.js"
+      - "malipatana-*.css"
+      - "register.html"
+      - "entry.html"
+      - "quick-add.html"
+      - "scripts/**"
+      - ".github/workflows/malipatana-static-regression.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  static-regression:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Check JavaScript syntax
+        run: |
+          node --check malipatana-core.js
+          node --check malipatana-ops.js
+          node --check malipatana-connectivity.js
+          node --check malipatana-suggestions.js
+          node --check malipatana-notice-rich.js
+          node --check malipatana-ux20.js
+          node --check scripts/verify-static.mjs
+      - name: Run read-only source regression checks
+        run: node scripts/verify-static.mjs
