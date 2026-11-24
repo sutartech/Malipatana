@@ -21,6 +21,24 @@ function panel(id){document.querySelectorAll('[data-panel]').forEach(b=>b.classL
 document.querySelectorAll('[data-panel]').forEach(b=>b.onclick=()=>panel(b.dataset.panel));
 if(['track','published'].includes(location.hash.slice(1)))panel(location.hash.slice(1));
 let attempt=null;
+// Accessible inline validation feedback; retain native constraints and existing submission contract.
+const ideaForm=$('ideaForm');
+ideaForm.addEventListener('invalid',e=>{
+ const field=e.target;
+ if(!field.matches('input,select,textarea'))return;
+ field.setAttribute('aria-invalid','true');
+ const label=field.closest('label')?.childNodes?.[0]?.textContent?.trim()||'A required field';
+ $('submitResult').textContent=field.validity.valueMissing?label+' is required.':field.validity.tooShort?'Please provide a little more detail.':field.validity.patternMismatch?'Enter a valid mobile number.':'Please check this field.';
+},true);
+ideaForm.addEventListener('input',e=>{
+ if(e.target.matches('input,select,textarea')&&e.target.hasAttribute('aria-invalid')){
+  if(e.target.checkValidity())e.target.removeAttribute('aria-invalid');
+  if(!ideaForm.querySelector('[aria-invalid="true"]'))$('submitResult').textContent='';
+ }
+});
+ideaForm.addEventListener('change',e=>{
+ if(e.target.matches('input,select,textarea')&&e.target.checkValidity())e.target.removeAttribute('aria-invalid');
+});
 $('ideaForm').addEventListener('submit',async e=>{e.preventDefault();const btn=$('submitIdea'),msg=$('submitResult');if(!attempt){const values=Object.fromEntries(new FormData(e.currentTarget));attempt={receipt:randomReceipt(),values};}btn.disabled=true;msg.textContent='Submitting and checking confirmation…';try{const a=attempt;let already=await api('suggestionStatus',{receipt:a.receipt},10000).catch(()=>null);if(!already?.found){await post({...a.values,receipt:a.receipt,action:'publicSuggestion'});for(let n=0;n<13;n++){await new Promise(r=>setTimeout(r,1300));already=await api('suggestionStatus',{receipt:a.receipt},10000).catch(()=>null);if(already?.found)break;}}if(!already?.found)throw Error('Not yet confirmed. Keep this page open; press the button again to check using the SAME receipt.');msg.textContent='Suggestion received for review. Suggestion ID: '+already.id+'\nPRIVATE TRACKING CODE (save this): '+a.receipt; $('trackCode').value=a.receipt;attempt=null;btn.textContent='Submit another suggestion';e.currentTarget.reset()}catch(err){msg.textContent='Could not confirm submission: '+err.message+' Do not start a new request with the same details.'}finally{btn.disabled=false}});
 $('trackBtn').onclick=async()=>{const code=$('trackCode').value.trim().toLowerCase(),msg=$('trackResult');if(!/^[a-f0-9]{64}$/.test(code)){msg.textContent='Enter your private 64-character tracking code.';return}msg.textContent='Checking…';try{const r=await api('suggestionStatus',{receipt:code});msg.textContent=r?.found?'ID: '+r.id+'\nStatus: '+r.status+'\nCategory: '+r.category+(r.remark?'\nCommittee decision: '+r.remark:'')+(r.action?'\nPublished action taken: '+r.action:''):'No suggestion found for that code.'}catch(e){msg.textContent=e.message}};
 async function refreshPublished(){const host=$('publishedList');host.textContent='Loading approved ideas…';try{const r=await api('suggestionPublic');if(!r?.ok)throw Error(r?.error||'Cannot load');const rows=r.items||[];host.innerHTML=rows.length?rows.map(x=>'<article class="publicitem"><b>'+esc(x.title)+' <span class="chip">'+esc(x.status)+'</span></b><small>'+esc(x.category)+' · '+esc(x.date)+'</small><p>'+esc(x.summary)+'</p>'+(x.action?'<p><b>Action taken:</b> '+esc(x.action)+'</p>':'')+'</article>').join(''):'No approved suggestions are published yet.'}catch(e){host.textContent=e.message}}
