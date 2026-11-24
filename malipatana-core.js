@@ -71,8 +71,8 @@
    ========================================================================= */
 const CONFIG = {
   API_URL: 'https://script.google.com/macros/s/AKfycbwkweVh5BM35fHP86Uxs2bEjODXq0TpcnP3q665nAG2Z0Z8GIKzSa5Oe6l7KqZZCf6oSA/exec',
-  VERSION: 'FE V3.6.6-GOVERNANCE-READONLY-VIEWER',
-  EXPECTED_BACKEND: 'BE V1.8.45-GOVERNANCE-DOCUMENT-ACCESS-CONTROL',
+  VERSION: 'FE V3.6.7-GOVERNANCE-DOC-FILTERS',
+  EXPECTED_BACKEND: 'BE V1.8.46-GOVERNANCE-READONLY-DOCUMENTS',
   IDLE_MINUTES: 30,
   /* Photo shown when no photo has been set in Settings.
      village.jpg sits in the same folder as this file on GitHub. */
@@ -1575,10 +1575,12 @@ async function renderMyGovernanceDocs(){
   const r=await api('governanceDocuments');if(!r||!r.ok)throw Error(r&&r.error||'Could not check document access.');
   const files=r.files||[],admin=isAdmin();
   if(!files.length){box.innerHTML='<div class="empty">No governance documents have been assigned to your account. Contact the Malipatana Admin if you require access.</div>';return;}
-  box.innerHTML=files.map(f=>{
-   const canDownload=admin||(f.access&&f.access.canDownload!==false);
-   return '<article style="border:1px solid var(--line);border-radius:12px;padding:14px;margin:10px 0"><b>'+esc(f.name)+'</b><div class="small muted" style="margin:5px 0">Status: '+esc(f.status||'Draft')+' · Version '+esc(f.version||'1.0')+'</div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:9px"><button class="btn btn-sm btn-primary" data-gov-view="'+esc(f.id)+'" data-gov-name="'+esc(f.name)+'">View document</button>'+(canDownload?'<button class="btn btn-sm" data-gov-download="'+esc(f.id)+'" data-gov-name="'+esc(f.name)+'">Download document</button>':'<span class="small muted" style="align-self:center">View only · Download disabled</span>')+'</div></article>';
-  }).join('');
+  box.innerHTML='<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px"><input id="govDocSearch" class="input" style="flex:1;min-width:190px" placeholder="Search document name…"><select id="govDocStatus" class="input" style="max-width:190px"><option value="">All statuses</option><option>Draft</option><option>Under Review</option><option>Approved</option><option>Registered</option><option>Archived</option></select><span id="govDocCount" class="small muted" style="align-self:center"></span></div><div id="govDocCards">'+files.map(f=>{
+   const canDownload=admin||(f.access&&f.access.canDownload===true);
+   return '<article data-gov-card="1" data-search="'+esc((f.name||'').toLowerCase())+'" data-status="'+esc(f.status||'Draft')+'" style="border:1px solid var(--line);border-radius:12px;padding:14px;margin:10px 0"><b>'+esc(f.name)+'</b><div class="small muted" style="margin:5px 0">Status: '+esc(f.status||'Draft')+' · Version '+esc(f.version||'1.0')+'</div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:9px"><button class="btn btn-sm btn-primary" data-gov-view="'+esc(f.id)+'" data-gov-name="'+esc(f.name)+'">View document</button>'+(canDownload?'<button class="btn btn-sm" data-gov-download="'+esc(f.id)+'" data-gov-name="'+esc(f.name)+'">Download document</button>':'<span class="small muted" style="align-self:center">View only · Download disabled</span>')+'</div></article>';
+  }).join('')+'</div>';
+  const filterDocs=()=>{const q=document.getElementById('govDocSearch').value.toLowerCase(),st=document.getElementById('govDocStatus').value;let n=0;box.querySelectorAll('[data-gov-card]').forEach(card=>{const show=(!q||card.dataset.search.includes(q))&&(!st||card.dataset.status===st);card.hidden=!show;if(show)n++;});document.getElementById('govDocCount').textContent=n+' of '+files.length+' documents';};
+  document.getElementById('govDocSearch').oninput=filterDocs;document.getElementById('govDocStatus').onchange=filterDocs;filterDocs();
   const retrieve=async(btn,purpose)=>{
    const popup=purpose==='view'?window.open('about:blank','_blank'):null;
    if(purpose==='view'&&!popup){toast('Allow pop-ups for this site to view the document.','bad');return;}
