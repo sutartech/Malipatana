@@ -2077,9 +2077,10 @@ function enterApp(){
     od.onclick = toggleOdia;
     host.parentNode.insertBefore(big, host.nextSibling);
     host.parentNode.insertBefore(od, host.nextSibling);
-    /* Keep clock immediately LEFT of Odia selector after dynamic controls load. */
+    /* Keep the India clock at the far right, immediately before Sign out. */
     const clock = document.getElementById('malLiveDateBar');
-    if(clock && od.parentNode) od.parentNode.insertBefore(clock, od);
+    const signOut = document.getElementById('logoutBtn');
+    if(clock && signOut && signOut.parentNode) signOut.parentNode.insertBefore(clock, signOut);
 
     buildStickyTab();
     applyComfort();
