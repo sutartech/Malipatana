@@ -79,7 +79,8 @@ check('Village home dashboard fills the available workspace without a narrow max
 check('Family profile body has a dedicated scroll target',core.includes('class="body mal-family-profile-body"')&&core.includes('aria-label="Family profile details"'));
 check('Family profile dialog has a definite height and independently scrollable body',layoutCss.includes('.modal:has(>.mal-family-profile-body)')&&layoutCss.includes('height:92dvh;')&&layoutCss.includes('.modal>.mal-family-profile-body')&&layoutCss.includes('flex:1 1 0%;')&&layoutCss.includes('height:0;'));
 check('Family profile scroll fix is cache-busted in the page shell',index.includes('malipatana-ui.css?v=3.5.63-family-profile-scroll')&&index.includes('malipatana-layout-fit.css?v=1.0.0'));
-\nconst failures=results.filter(r=>!r.pass).length;
+
+const failures=results.filter(r=>!r.pass).length;
 console.log('\n'+(results.length-failures)+'/'+results.length+' static checks passed.');
 if(failures){console.error('Static checks failed. Do not assume this deployment is ready.');process.exitCode=1;}
 else console.log('Static checks passed. Live registration, permissions, mobile and backup tests remain required.');
