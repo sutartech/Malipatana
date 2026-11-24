@@ -90,6 +90,35 @@
  #app .mal-notice-label{max-width:76px!important;font-size:8.5px!important}
  #app .mal-notice-detail .ntc{grid-template-columns:minmax(78px,28%) minmax(0,1fr)!important}
 }
+
+/* Keep compact mobile KPI labels readable beside their values.
+   The previous icon-first grid left too little width for longer labels. */
+@media(max-width:760px){
+ #app .ux-home .ux-kpi{
+   grid-template-columns:minmax(0,1fr) auto!important;
+   grid-template-rows:auto auto!important;
+   align-items:center!important;
+   column-gap:8px!important;
+ }
+ #app .ux-home .ux-kpi-icon{display:none!important}
+ #app .ux-home .ux-kpi-label{
+   grid-column:1!important;grid-row:1!important;
+   min-width:0!important;width:auto!important;
+   white-space:normal!important;overflow-wrap:normal!important;word-break:normal!important;
+   font-size:12px!important;line-height:1.3!important;
+ }
+ #app .ux-home .ux-kpi strong{
+   grid-column:2!important;grid-row:1!important;
+   justify-self:end!important;white-space:nowrap!important;
+   font-size:clamp(20px,5.4vw,24px)!important;
+ }
+ #app .ux-home .ux-kpi-foot{
+   grid-column:1/-1!important;grid-row:2!important;
+   white-space:normal!important;overflow-wrap:anywhere!important;
+   font-size:10px!important;line-height:1.3!important;
+ }
+}
+
 @media(max-width:330px){
  #app .ux-home .ux-kpi-grid{grid-template-columns:minmax(0,1fr)!important}
  #app .ux-home .ux-kpi{min-height:88px!important;grid-template-columns:32px minmax(0,1fr)!important}
