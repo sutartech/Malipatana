@@ -71,7 +71,7 @@
    ========================================================================= */
 const CONFIG = {
   API_URL: 'https://script.google.com/macros/s/AKfycbwkweVh5BM35fHP86Uxs2bEjODXq0TpcnP3q665nAG2Z0Z8GIKzSa5Oe6l7KqZZCf6oSA/exec',
-  VERSION: 'FE V3.7.4-INLINE-SIDEBAR-COLOURS',
+  VERSION: 'FE V3.7.5-SIDEBAR-HEADING-CONTRAST',
   EXPECTED_BACKEND: 'BE V1.8.46-GOVERNANCE-READONLY-DOCUMENTS',
   IDLE_MINUTES: 30,
   /* Photo shown when no photo has been set in Settings.
@@ -2160,6 +2160,34 @@ function buildNav(){
     }).join('');
   });
   $('#sidebar').innerHTML = html;
+  /* Apply section heading colours as CSS-important inline declarations.
+     The legacy sidebar stylesheet uses !important rules, which otherwise
+     override ordinary inline styles and leave the headings muted. */
+  const headingPalette=[
+    {bg:'#dff3ff',fg:'#075078',edge:'#35b9ed'},
+    {bg:'#fff0c9',fg:'#795000',edge:'#efb83d'},
+    {bg:'#ffe2e8',fg:'#8a2942',edge:'#ed7893'},
+    {bg:'#e7f6d9',fg:'#35651d',edge:'#8ac65d'},
+    {bg:'#d9f5ee',fg:'#075b51',edge:'#25b99b'},
+    {bg:'#eee7ff',fg:'#513c88',edge:'#a48ae9'}
+  ];
+  $('#sidebar').querySelectorAll('.navgroup').forEach((el,i)=>{
+    const p=headingPalette[i]||headingPalette[0];
+    el.style.setProperty('display','flex','important');
+    el.style.setProperty('align-items','center','important');
+    el.style.setProperty('min-height','39px','important');
+    el.style.setProperty('margin','13px 3px 6px','important');
+    el.style.setProperty('padding','9px 10px','important');
+    el.style.setProperty('border-radius','9px','important');
+    el.style.setProperty('border-left','5px solid '+p.edge,'important');
+    el.style.setProperty('background','linear-gradient(100deg,'+p.bg+',#ffffff)!important','important');
+    el.style.setProperty('color',p.fg,'important');
+    el.style.setProperty('font-size','11.5px','important');
+    el.style.setProperty('font-weight','950','important');
+    el.style.setProperty('letter-spacing','.08em','important');
+    el.style.setProperty('text-shadow','none','important');
+    el.style.setProperty('box-shadow','0 2px 8px #001d2c25','important');
+  });
   $('#sidebar').querySelectorAll('.nav').forEach(b => b.onclick = () => go(b.dataset.page));
 }
 function go(page){
