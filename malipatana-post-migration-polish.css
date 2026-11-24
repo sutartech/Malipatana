@@ -46,3 +46,23 @@
 @media(prefers-reduced-motion:reduce){
  #app .mal-notice-track{animation:none!important;transform:none!important}
 }
+
+
+/* Header right-side date/time + labelled sign-out — V2. */
+#app .topbar #malLiveDateBar{order:8;flex:0 1 218px;min-width:176px;max-width:218px;margin-left:auto;padding:0 7px;box-sizing:border-box;text-align:right;overflow:hidden}
+#app .topbar #malLiveDateTime{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:clamp(10px,.78vw,12px);font-weight:800;line-height:1.25;font-variant-numeric:tabular-nums;color:#16445a}
+#app .topbar #logoutBtn{order:9;display:inline-flex;align-items:center;justify-content:center;gap:7px;flex:0 0 auto;width:auto;min-width:112px;height:40px;padding:0 14px;border:1px solid #ef7778;background:linear-gradient(135deg,#df4b50,#bd3038)!important;color:#fff!important;border-radius:999px;font-size:14px;font-weight:800;line-height:1;white-space:nowrap;box-shadow:0 4px 12px rgba(153,35,42,.22);transition:transform .16s ease,box-shadow .16s ease,filter .16s ease}
+#app .topbar #logoutBtn:hover{filter:brightness(1.06);transform:translateY(-1px);box-shadow:0 7px 17px rgba(115,20,20,.3)}
+#app .topbar #logoutBtn:focus-visible{outline:3px solid #ffd2a8!important;outline-offset:2px}
+#app .topbar #logoutBtn .logout-arrow{font-size:19px;font-weight:900;line-height:1}
+#app .topbar #logoutBtn .logout-label{display:inline}
+@media(max-width:900px){#app .topbar #malLiveDateBar{flex-basis:184px;min-width:150px;max-width:184px}}
+@media(max-width:620px){
+ #app .topbar{position:relative;min-height:68px;flex-wrap:wrap;align-content:flex-end;padding-top:25px;padding-bottom:6px;gap:4px}
+ #app .topbar #malLiveDateBar{display:block!important;position:absolute;top:3px;right:8px;left:auto;order:0;width:auto;min-width:0;max-width:calc(100% - 100px);margin:0;padding:0;text-align:right}
+ #app .topbar #malLiveDateTime{font-size:9px;line-height:1.15}
+ #app .topbar #logoutBtn{order:9;min-width:88px;height:34px;padding:0 9px;gap:5px;font-size:12px}
+ #app .topbar #logoutBtn .logout-arrow{font-size:16px}
+ #app .topbar .pubjump{display:none}
+ #app .topbar .whochip{max-width:70px}
+}
